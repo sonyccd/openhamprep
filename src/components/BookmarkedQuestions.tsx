@@ -55,7 +55,7 @@ export function BookmarkedQuestions({ onBack }: BookmarkedQuestionsProps) {
               <ArrowLeft className="w-4 h-4" />
               Back to Bookmarks
             </Button>
-            <div className="flex items-center gap-2 text-primary">
+            <div className="flex items-center gap-2 text-foreground">
               <Bookmark className="w-5 h-5" />
               <span className="font-mono font-semibold">Bookmarked</span>
             </div>
@@ -115,7 +115,7 @@ export function BookmarkedQuestions({ onBack }: BookmarkedQuestionsProps) {
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
-          <div className="flex items-center gap-2 text-primary">
+          <div className="flex items-center gap-2 text-foreground">
             <Bookmark className="w-5 h-5" />
             <span className="font-mono font-semibold">Bookmarked Questions</span>
           </div>

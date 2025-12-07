@@ -113,7 +113,7 @@ export function PracticeTest({ onBack }: PracticeTestProps) {
             <ArrowLeft className="w-4 h-4" />
             Exit Test
           </Button>
-          <div className="flex items-center gap-2 text-primary">
+          <div className="flex items-center gap-2 text-foreground">
             <Radio className="w-5 h-5" />
             <span className="font-mono font-semibold">Practice Test</span>
           </div>

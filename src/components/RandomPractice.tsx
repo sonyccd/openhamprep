@@ -116,7 +116,7 @@ export function RandomPractice({ onBack }: RandomPracticeProps) {
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
-          <div className="flex items-center gap-2 text-accent">
+          <div className="flex items-center gap-2 text-foreground">
             <Zap className="w-5 h-5" />
             <span className="font-mono font-semibold">Random Practice</span>
           </div>

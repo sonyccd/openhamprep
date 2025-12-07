@@ -128,7 +128,7 @@ export function WeakQuestionsReview({ weakQuestionIds, onBack }: WeakQuestionsRe
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
-          <div className="flex items-center gap-2 text-destructive">
+          <div className="flex items-center gap-2 text-foreground">
             <AlertTriangle className="w-5 h-5" />
             <span className="font-mono font-semibold">Review Weak Areas</span>
           </div>
