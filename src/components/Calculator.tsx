@@ -156,7 +156,7 @@ export function Calculator({ className }: CalculatorProps) {
                 {row.map((btn) => (
                   <Button
                     key={btn}
-                    variant={btn === "C" ? "destructive" : ["+", "-", "×", "÷", "="].includes(btn) ? "secondary" : "outline"}
+                    variant={["+", "-", "×", "÷", "=", "C"].includes(btn) ? "secondary" : "outline"}
                     size="sm"
                     className={cn(
                       "h-9 font-mono text-sm",
