@@ -1,41 +1,31 @@
-import { useState } from "react";
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { LicenseSelector } from "@/components/LicenseSelector";
-import { ModeSelector } from "@/components/ModeSelector";
-import { PracticeTest } from "@/components/PracticeTest";
-import { RandomPractice } from "@/components/RandomPractice";
-
-type View = 'license-select' | 'mode-select' | 'practice-test' | 'random-practice';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
-  const [view, setView] = useState<View>('license-select');
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show license selector for non-logged in users
   const handleSelectLicense = () => {
-    setView('mode-select');
+    navigate('/auth');
   };
-
-  const handleSelectMode = (selectedMode: 'practice-test' | 'random-practice') => {
-    setView(selectedMode);
-  };
-
-  const handleBackToMode = () => {
-    setView('mode-select');
-  };
-
-  const handleBackToLicense = () => {
-    setView('license-select');
-  };
-
-  if (view === 'practice-test') {
-    return <PracticeTest onBack={handleBackToMode} />;
-  }
-
-  if (view === 'random-practice') {
-    return <RandomPractice onBack={handleBackToMode} />;
-  }
-
-  if (view === 'mode-select') {
-    return <ModeSelector onSelectMode={handleSelectMode} onBack={handleBackToLicense} />;
-  }
 
   return <LicenseSelector onSelectLicense={handleSelectLicense} />;
 };
