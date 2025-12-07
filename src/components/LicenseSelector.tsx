@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Radio, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface LicenseSelectorProps {
   onSelectLicense: () => void;
@@ -9,7 +10,11 @@ interface LicenseSelectorProps {
 
 export function LicenseSelector({ onSelectLicense }: LicenseSelectorProps) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 radio-wave-bg">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 radio-wave-bg relative">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -30 }}

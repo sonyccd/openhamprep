@@ -8,6 +8,7 @@ import { Radio, Loader2, Mail, Lock, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -93,7 +94,11 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 radio-wave-bg">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 radio-wave-bg relative">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
