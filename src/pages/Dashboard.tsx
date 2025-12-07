@@ -36,6 +36,7 @@ import { RandomPractice } from '@/components/RandomPractice';
 import { WeakQuestionsReview } from '@/components/WeakQuestionsReview';
 import { BookmarkedQuestions } from '@/components/BookmarkedQuestions';
 import { SubelementPractice } from '@/components/SubelementPractice';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 type TestType = 'technician' | 'general' | 'extra';
 type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice';
@@ -251,11 +252,12 @@ export default function Dashboard() {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground hidden md:inline">
               {user.email}
             </span>
-            <Button variant="ghost" size="sm" onClick={signOut} className="gap-2">
+            <ThemeToggle />
+            <Button variant="ghost" size="sm" onClick={signOut} className="gap-2 hover:bg-muted hover:text-foreground">
               <LogOut className="w-4 h-4" />
               <span className="hidden md:inline">Sign Out</span>
             </Button>
