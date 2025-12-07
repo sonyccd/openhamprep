@@ -362,13 +362,13 @@ export default function Dashboard() {
             className={cn(
               "h-auto p-6 flex items-center gap-4 justify-start",
               isTestAvailable 
-                ? "hover:bg-accent/5 hover:border-accent hover:shadow-lg hover:shadow-accent/10" 
+                ? "hover:bg-secondary hover:border-foreground/20 hover:shadow-lg" 
                 : "opacity-60"
             )}
           >
             <div className={cn(
               "w-12 h-12 rounded-lg flex items-center justify-center shrink-0",
-              isTestAvailable ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+              isTestAvailable ? "bg-secondary text-foreground" : "bg-muted text-muted-foreground"
             )}>
               <Zap className="w-6 h-6" />
             </div>
@@ -385,17 +385,17 @@ export default function Dashboard() {
             className={cn(
               "h-auto p-6 flex items-center gap-4 justify-start",
               isTestAvailable && weakQuestionIds.length > 0
-                ? "hover:bg-destructive/5 hover:border-destructive hover:shadow-lg hover:shadow-destructive/10" 
+                ? "hover:bg-secondary hover:border-foreground/20 hover:shadow-lg" 
                 : "opacity-60"
             )}
           >
             <div className={cn(
               "w-12 h-12 rounded-lg flex items-center justify-center shrink-0 relative",
-              isTestAvailable && weakQuestionIds.length > 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"
+              isTestAvailable && weakQuestionIds.length > 0 ? "bg-secondary text-foreground" : "bg-muted text-muted-foreground"
             )}>
               <AlertTriangle className="w-6 h-6" />
               {weakQuestionIds.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-background">
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-background">
                   {weakQuestionIds.length}
                 </span>
               )}
@@ -413,9 +413,9 @@ export default function Dashboard() {
           <Button
             onClick={() => setView('bookmarks')}
             variant="outline"
-            className="h-auto p-6 flex items-center gap-4 justify-start hover:bg-primary/5 hover:border-primary hover:shadow-lg hover:shadow-primary/10"
+            className="h-auto p-6 flex items-center gap-4 justify-start hover:bg-secondary hover:border-foreground/20 hover:shadow-lg"
           >
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 bg-primary text-primary-foreground relative">
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 bg-secondary text-foreground relative">
               <Bookmark className="w-6 h-6" />
               {bookmarks && bookmarks.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-background">
