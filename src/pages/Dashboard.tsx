@@ -448,13 +448,13 @@ export default function Dashboard() {
             className={cn(
               "h-auto p-6 flex items-center gap-4 justify-start",
               isTestAvailable 
-                ? "hover:bg-primary/5 hover:border-primary hover:shadow-lg hover:shadow-primary/10" 
+                ? "hover:bg-secondary hover:border-foreground/20 hover:shadow-lg" 
                 : "opacity-60"
             )}
           >
             <div className={cn(
               "w-12 h-12 rounded-lg flex items-center justify-center shrink-0",
-              isTestAvailable ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              isTestAvailable ? "bg-secondary text-foreground" : "bg-muted text-muted-foreground"
             )}>
               <Play className="w-6 h-6" />
             </div>
