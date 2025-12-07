@@ -147,11 +147,70 @@ export default function Dashboard() {
 
   const recentTests = testResults?.slice(0, 3) || [];
 
+  // Calculate test readiness
+  const lastFiveTests = testResults?.slice(0, 5) || [];
+  const recentPassCount = lastFiveTests.filter(t => t.passed).length;
+  const recentAvgScore = lastFiveTests.length > 0
+    ? Math.round(lastFiveTests.reduce((sum, t) => sum + Number(t.percentage), 0) / lastFiveTests.length)
+    : 0;
+  
+  // Readiness levels: not-started, needs-work, getting-close, ready
+  type ReadinessLevel = 'not-started' | 'needs-work' | 'getting-close' | 'ready';
+  let readinessLevel: ReadinessLevel = 'not-started';
+  let readinessMessage = "Take some practice tests to see your readiness";
+  
+  if (totalTests >= 1) {
+    if (recentAvgScore >= 85 && recentPassCount >= Math.min(3, lastFiveTests.length)) {
+      readinessLevel = 'ready';
+      readinessMessage = "You're ready to take the real exam!";
+    } else if (recentAvgScore >= 74 && recentPassCount >= 1) {
+      readinessLevel = 'getting-close';
+      readinessMessage = "Almost there! A few more passing scores and you'll be ready";
+    } else {
+      readinessLevel = 'needs-work';
+      readinessMessage = "Keep practicing to improve your scores";
+    }
+  }
+
+  const readinessConfig = {
+    'not-started': { 
+      color: 'text-muted-foreground', 
+      bg: 'bg-secondary', 
+      border: 'border-border',
+      icon: Target,
+      progress: 0
+    },
+    'needs-work': { 
+      color: 'text-foreground', 
+      bg: 'bg-secondary', 
+      border: 'border-border',
+      icon: TrendingUp,
+      progress: 33
+    },
+    'getting-close': { 
+      color: 'text-primary', 
+      bg: 'bg-primary/10', 
+      border: 'border-primary/30',
+      icon: TrendingUp,
+      progress: 66
+    },
+    'ready': { 
+      color: 'text-success', 
+      bg: 'bg-success/10', 
+      border: 'border-success/30',
+      icon: CheckCircle,
+      progress: 100
+    },
+  };
+
+  const config = readinessConfig[readinessLevel];
+  const ReadinessIcon = config.icon;
+
   return (
     <div className="min-h-screen bg-background py-6 px-4 radio-wave-bg">
       <div className="max-w-4xl mx-auto">
         {/* Header with Test Selector */}
-        <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <Radio className="w-8 h-8 text-primary" />
@@ -196,6 +255,56 @@ export default function Dashboard() {
             </Button>
           </div>
         </div>
+
+        {/* Test Readiness Indicator */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={cn(
+            "rounded-xl p-4 mb-6 border",
+            config.bg,
+            config.border
+          )}
+        >
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "w-12 h-12 rounded-full flex items-center justify-center shrink-0",
+              readinessLevel === 'ready' ? 'bg-success/20' : 
+              readinessLevel === 'getting-close' ? 'bg-primary/20' : 'bg-secondary'
+            )}>
+              <ReadinessIcon className={cn("w-6 h-6", config.color)} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <h2 className={cn("font-mono font-bold", config.color)}>
+                  {readinessLevel === 'not-started' ? 'Test Readiness' :
+                   readinessLevel === 'needs-work' ? 'Keep Studying' :
+                   readinessLevel === 'getting-close' ? 'Almost Ready' :
+                   'Ready to Test!'}
+                </h2>
+                {totalTests > 0 && (
+                  <span className="text-sm font-mono text-muted-foreground">
+                    {recentAvgScore}% avg
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground mb-2">{readinessMessage}</p>
+              <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${config.progress}%` }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className={cn(
+                    "h-full rounded-full",
+                    readinessLevel === 'ready' ? 'bg-success' :
+                    readinessLevel === 'getting-close' ? 'bg-primary' :
+                    'bg-muted-foreground/30'
+                  )}
+                />
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Stats Grid */}
         <motion.div
