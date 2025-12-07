@@ -26,7 +26,8 @@ import {
   AlertTriangle,
   Play,
   Bookmark,
-  Lock
+  Lock,
+  BookOpen
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -34,9 +35,10 @@ import { PracticeTest } from '@/components/PracticeTest';
 import { RandomPractice } from '@/components/RandomPractice';
 import { WeakQuestionsReview } from '@/components/WeakQuestionsReview';
 import { BookmarkedQuestions } from '@/components/BookmarkedQuestions';
+import { SubelementPractice } from '@/components/SubelementPractice';
 
 type TestType = 'technician' | 'general' | 'extra';
-type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks';
+type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice';
 
 const testTypes = [
   { id: 'technician' as TestType, name: 'Technician', available: true },
@@ -120,6 +122,10 @@ export default function Dashboard() {
 
   if (view === 'bookmarks') {
     return <BookmarkedQuestions onBack={() => setView('dashboard')} />;
+  }
+
+  if (view === 'subelement-practice') {
+    return <SubelementPractice onBack={() => setView('dashboard')} />;
   }
 
   if (authLoading || testsLoading || attemptsLoading) {
@@ -484,6 +490,29 @@ export default function Dashboard() {
             <div className="text-left">
               <h3 className="text-lg font-semibold text-foreground">Random Practice</h3>
               <p className="text-sm text-muted-foreground">Quick drills, one at a time</p>
+            </div>
+          </Button>
+
+          <Button
+            onClick={() => isTestAvailable && setView('subelement-practice')}
+            disabled={!isTestAvailable}
+            variant="outline"
+            className={cn(
+              "h-auto p-6 flex items-center gap-4 justify-start",
+              isTestAvailable 
+                ? "hover:bg-secondary hover:border-foreground/20 hover:shadow-lg" 
+                : "opacity-60"
+            )}
+          >
+            <div className={cn(
+              "w-12 h-12 rounded-lg flex items-center justify-center shrink-0",
+              isTestAvailable ? "bg-secondary text-foreground" : "bg-muted text-muted-foreground"
+            )}>
+              <BookOpen className="w-6 h-6" />
+            </div>
+            <div className="text-left">
+              <h3 className="text-lg font-semibold text-foreground">Study by Topic</h3>
+              <p className="text-sm text-muted-foreground">Focus on specific subelements</p>
             </div>
           </Button>
 
