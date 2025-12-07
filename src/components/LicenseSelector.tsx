@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Radio, Lock, User, LogOut } from "lucide-react";
+import { Radio, Lock, User, LogOut, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -48,12 +48,18 @@ export function LicenseSelector({ onSelectLicense }: LicenseSelectorProps) {
       >
         {user ? (
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">
+            <Link to="/dashboard">
+              <Button variant="outline" size="sm" className="gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Dashboard
+              </Button>
+            </Link>
+            <span className="text-sm text-muted-foreground hidden md:inline">
               {user.email}
             </span>
             <Button variant="ghost" size="sm" onClick={signOut} className="gap-2">
               <LogOut className="w-4 h-4" />
-              Sign Out
+              <span className="hidden md:inline">Sign Out</span>
             </Button>
           </div>
         ) : (
