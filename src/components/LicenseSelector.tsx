@@ -25,7 +25,15 @@ export function LicenseSelector({ onSelectLicense }: LicenseSelectorProps) {
         <div className="flex items-center justify-center gap-3 mb-4">
           <Radio className="w-10 h-10 text-primary animate-pulse-slow" />
           <h1 className="text-4xl md:text-5xl font-mono font-bold text-foreground">
-            <span className="text-primary text-glow-primary">RARS</span> Test Prep
+            <a
+              href="https://www.rars.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary text-glow-primary hover:underline"
+            >
+              RARS
+            </a>{" "}
+            Test Prep
           </h1>
         </div>
         <p className="text-muted-foreground text-lg mb-2">
