@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Calculator as CalculatorIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -112,7 +112,7 @@ export function Calculator({ className }: CalculatorProps) {
     ["0", ".", "="],
   ];
 
-  const handleButtonClick = (btn: string) => {
+  const handleButtonClick = useCallback((btn: string) => {
     if (btn === "C") {
       clear();
     } else if (btn === "=") {
@@ -124,7 +124,40 @@ export function Calculator({ className }: CalculatorProps) {
     } else {
       inputDigit(btn);
     }
-  };
+  }, [display, previousValue, operation, waitingForOperand]);
+
+  // Keyboard support
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent default for calculator keys to avoid interfering with page
+      if (/^[0-9.+\-*/=]$/.test(e.key) || e.key === "Enter" || e.key === "Escape" || e.key === "Backspace") {
+        e.preventDefault();
+      }
+
+      if (/^[0-9]$/.test(e.key)) {
+        handleButtonClick(e.key);
+      } else if (e.key === ".") {
+        handleButtonClick(".");
+      } else if (e.key === "+") {
+        handleButtonClick("+");
+      } else if (e.key === "-") {
+        handleButtonClick("-");
+      } else if (e.key === "*") {
+        handleButtonClick("×");
+      } else if (e.key === "/") {
+        handleButtonClick("÷");
+      } else if (e.key === "Enter" || e.key === "=") {
+        handleButtonClick("=");
+      } else if (e.key === "Escape" || e.key === "Backspace") {
+        handleButtonClick("C");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, handleButtonClick]);
 
   return (
     <div className={cn("relative", className)}>
