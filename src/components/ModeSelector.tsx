@@ -1,14 +1,25 @@
-import { Button } from "@/components/ui/button";
-import { Radio, Zap, BookOpen } from "lucide-react";
+import { Radio, Zap, BookOpen, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 interface ModeSelectorProps {
   onSelectMode: (mode: 'practice-test' | 'random-practice') => void;
+  onBack: () => void;
 }
 
-export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
+export function ModeSelector({ onSelectMode, onBack }: ModeSelectorProps) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 radio-wave-bg">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 radio-wave-bg relative">
+      {/* Back Button */}
+      <Button
+        variant="ghost"
+        onClick={onBack}
+        className="absolute top-4 left-4 text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -30 }}
@@ -19,7 +30,7 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
         <div className="flex items-center justify-center gap-3 mb-4">
           <Radio className="w-10 h-10 text-primary animate-pulse-slow" />
           <h1 className="text-4xl md:text-5xl font-mono font-bold text-foreground">
-            <span className="text-primary text-glow-primary">HAM</span> Radio
+            <span className="text-primary text-glow-primary">RARS</span> Test Prep
           </h1>
         </div>
         <h2 className="text-2xl md:text-3xl font-mono text-foreground/90 mb-2">

@@ -1,30 +1,43 @@
 import { useState } from "react";
+import { LicenseSelector } from "@/components/LicenseSelector";
 import { ModeSelector } from "@/components/ModeSelector";
 import { PracticeTest } from "@/components/PracticeTest";
 import { RandomPractice } from "@/components/RandomPractice";
 
-type Mode = 'select' | 'practice-test' | 'random-practice';
+type View = 'license-select' | 'mode-select' | 'practice-test' | 'random-practice';
 
 const Index = () => {
-  const [mode, setMode] = useState<Mode>('select');
+  const [view, setView] = useState<View>('license-select');
+
+  const handleSelectLicense = () => {
+    setView('mode-select');
+  };
 
   const handleSelectMode = (selectedMode: 'practice-test' | 'random-practice') => {
-    setMode(selectedMode);
+    setView(selectedMode);
   };
 
-  const handleBack = () => {
-    setMode('select');
+  const handleBackToMode = () => {
+    setView('mode-select');
   };
 
-  if (mode === 'practice-test') {
-    return <PracticeTest onBack={handleBack} />;
+  const handleBackToLicense = () => {
+    setView('license-select');
+  };
+
+  if (view === 'practice-test') {
+    return <PracticeTest onBack={handleBackToMode} />;
   }
 
-  if (mode === 'random-practice') {
-    return <RandomPractice onBack={handleBack} />;
+  if (view === 'random-practice') {
+    return <RandomPractice onBack={handleBackToMode} />;
   }
 
-  return <ModeSelector onSelectMode={handleSelectMode} />;
+  if (view === 'mode-select') {
+    return <ModeSelector onSelectMode={handleSelectMode} onBack={handleBackToLicense} />;
+  }
+
+  return <LicenseSelector onSelectLicense={handleSelectLicense} />;
 };
 
 export default Index;
