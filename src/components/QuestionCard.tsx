@@ -256,9 +256,12 @@ export function QuestionCard({
             className="mt-6"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Explanation - Left side */}
+              {/* Explanation */}
               {question.explanation && (
-                <div className="p-4 rounded-lg bg-secondary/50 border border-border">
+                <div className={cn(
+                  "p-4 rounded-lg bg-secondary/50 border border-border",
+                  (!question.links || question.links.length === 0) && "md:col-span-2"
+                )}>
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-medium text-foreground">Explanation</h3>
                     {user && (
@@ -293,7 +296,7 @@ export function QuestionCard({
                 </div>
               )}
               
-              {/* Links - Right side */}
+              {/* Links */}
               {question.links && question.links.length > 0 && (
                 <div className={cn(!question.explanation && "md:col-span-2")}>
                   <h3 className="text-sm font-medium text-muted-foreground mb-2">Learn more:</h3>
