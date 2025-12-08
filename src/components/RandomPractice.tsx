@@ -8,15 +8,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Zap, SkipForward, RotateCcw, Loader2, Flame, Trophy, Award } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-
 interface RandomPracticeProps {
   onBack: () => void;
 }
-
 export function RandomPractice({
   onBack
 }: RandomPracticeProps) {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const {
     data: allQuestions,
     isLoading,
@@ -38,17 +38,21 @@ export function RandomPractice({
   const [showStreakCelebration, setShowStreakCelebration] = useState(false);
   const [celebrationMilestone, setCelebrationMilestone] = useState(0);
   const [askedIds, setAskedIds] = useState<string[]>([]);
-  
   const STREAK_MILESTONES = [5, 10, 15, 20, 25];
-  
   const getMilestoneMessage = (milestone: number) => {
     switch (milestone) {
-      case 5: return "Nice! 5 in a row!";
-      case 10: return "Amazing! 10 streak!";
-      case 15: return "Incredible! 15 streak!";
-      case 20: return "Unstoppable! 20 streak!";
-      case 25: return "LEGENDARY! 25 streak!";
-      default: return `${milestone} streak!`;
+      case 5:
+        return "Nice! 5 in a row!";
+      case 10:
+        return "Amazing! 10 streak!";
+      case 15:
+        return "Incredible! 15 streak!";
+      case 20:
+        return "Unstoppable! 20 streak!";
+      case 25:
+        return "LEGENDARY! 25 streak!";
+      default:
+        return `${milestone} streak!`;
     }
   };
 
@@ -56,30 +60,24 @@ export function RandomPractice({
   useEffect(() => {
     const loadBestStreak = async () => {
       if (!user) return;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('best_streak')
-        .eq('id', user.id)
-        .maybeSingle();
-      
+      const {
+        data,
+        error
+      } = await supabase.from('profiles').select('best_streak').eq('id', user.id).maybeSingle();
       if (data && !error) {
         setAllTimeBestStreak(data.best_streak || 0);
         setBestStreak(data.best_streak || 0);
       }
     };
-    
     loadBestStreak();
   }, [user]);
 
   // Save best streak to database when it's beaten
   const saveBestStreak = async (newBestStreak: number) => {
     if (!user) return;
-    
-    await supabase
-      .from('profiles')
-      .update({ best_streak: newBestStreak })
-      .eq('id', user.id);
+    await supabase.from('profiles').update({
+      best_streak: newBestStreak
+    }).eq('id', user.id);
   };
   const getRandomQuestion = useCallback((excludeIds: string[] = []): Question | null => {
     if (!allQuestions || allQuestions.length === 0) return null;
@@ -124,40 +122,39 @@ export function RandomPractice({
       correct: prev.correct + (isCorrect ? 1 : 0),
       total: prev.total + 1
     }));
-    
+
     // Update streak
     if (isCorrect) {
       setStreak(prev => {
         const newStreak = prev + 1;
         if (newStreak > bestStreak) {
           setBestStreak(newStreak);
-          
+
           // Save to database if it beats the all-time best
           if (newStreak > allTimeBestStreak) {
             setAllTimeBestStreak(newStreak);
             saveBestStreak(newStreak);
-            
+
             // Show special message for new all-time best
             if (newStreak > 1) {
               toast.success(`New all-time best: ${newStreak} streak!`, {
                 icon: <Award className="w-5 h-5 text-primary" />,
-                duration: 3000,
+                duration: 3000
               });
             }
           }
         }
-        
+
         // Check for milestone celebration
         if (STREAK_MILESTONES.includes(newStreak)) {
           setCelebrationMilestone(newStreak);
           setShowStreakCelebration(true);
           toast.success(getMilestoneMessage(newStreak), {
             icon: <Trophy className="w-5 h-5 text-primary" />,
-            duration: 3000,
+            duration: 3000
           });
           setTimeout(() => setShowStreakCelebration(false), 1500);
         }
-        
         return newStreak;
       });
     } else {
@@ -220,34 +217,32 @@ export function RandomPractice({
             </div>
             <div className="text-center relative">
               <AnimatePresence>
-                {showStreakCelebration && (
-                  <motion.div
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: [1, 1.5, 1], opacity: [1, 1, 0] }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 1.5 }}
-                    className="absolute inset-0 flex items-center justify-center"
-                  >
+                {showStreakCelebration && <motion.div initial={{
+                scale: 0,
+                opacity: 0
+              }} animate={{
+                scale: [1, 1.5, 1],
+                opacity: [1, 1, 0]
+              }} exit={{
+                opacity: 0
+              }} transition={{
+                duration: 1.5
+              }} className="absolute inset-0 flex items-center justify-center">
                     <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
                       <Trophy className="w-8 h-8 text-primary" />
                     </div>
-                  </motion.div>
-                )}
+                  </motion.div>}
               </AnimatePresence>
-              <motion.div 
-                className="flex items-center justify-center gap-1"
-                animate={showStreakCelebration ? { scale: [1, 1.2, 1] } : {}}
-                transition={{ duration: 0.3 }}
-              >
+              <motion.div className="flex items-center justify-center gap-1" animate={showStreakCelebration ? {
+              scale: [1, 1.2, 1]
+            } : {}} transition={{
+              duration: 0.3
+            }}>
                 <Flame className={`w-5 h-5 ${streak > 0 ? 'text-primary' : 'text-muted-foreground'} ${streak >= 5 ? 'animate-pulse' : ''}`} />
                 <p className={`text-2xl font-mono font-bold ${streak > 0 ? 'text-primary' : 'text-muted-foreground'}`}>{streak}</p>
               </motion.div>
               <p className="text-xs text-muted-foreground">Streak</p>
-              {allTimeBestStreak > 0 && (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Best: {allTimeBestStreak}
-                </p>
-              )}
+              {allTimeBestStreak > 0}
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
