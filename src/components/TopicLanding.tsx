@@ -71,7 +71,7 @@ export function TopicLanding({
   const websiteLinks = topicLinks.filter(l => l.type === 'website');
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
+    <div className="flex-1 bg-background py-8 px-4 pb-24 overflow-y-auto">
       <div className="max-w-3xl mx-auto">
         {/* Back to All Topics */}
         <div className="mb-6">

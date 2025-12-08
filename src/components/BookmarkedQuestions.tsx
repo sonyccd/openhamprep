@@ -29,7 +29,7 @@ export function BookmarkedQuestions({
   const selectedQuestion = bookmarkedQuestions.find(q => q.id === selectedQuestionId);
   const selectedBookmark = bookmarks?.find(b => b.question_id === selectedQuestionId);
   if (isLoading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="flex-1 bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading bookmarks...</p>
@@ -37,7 +37,7 @@ export function BookmarkedQuestions({
       </div>;
   }
   if (selectedQuestion) {
-    return <div className="min-h-screen bg-background py-8 px-4">
+    return <div className="flex-1 bg-background py-8 px-4 pb-24 overflow-y-auto">
         <div className="max-w-3xl mx-auto mb-8">
           <div className="flex items-center justify-between mb-6">
             <Button variant="ghost" onClick={() => {
@@ -87,7 +87,7 @@ export function BookmarkedQuestions({
           </div>}
       </div>;
   }
-  return <div className="min-h-screen bg-background py-8 px-4">
+  return <div className="flex-1 bg-background py-8 px-4 pb-24 overflow-y-auto">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-end mb-8">

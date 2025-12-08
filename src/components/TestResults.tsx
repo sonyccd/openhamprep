@@ -30,7 +30,7 @@ export function TestResults({ questions, answers, onRetake, onBack }: TestResult
   if (reviewIndex !== null) {
     const question = questions[reviewIndex];
     return (
-      <div className="min-h-screen bg-background py-8 px-4">
+      <div className="flex-1 bg-background py-8 px-4 pb-24 overflow-y-auto">
         <div className="max-w-3xl mx-auto mb-8">
           <Button
             variant="ghost"
@@ -78,7 +78,7 @@ export function TestResults({ questions, answers, onRetake, onBack }: TestResult
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4 radio-wave-bg">
+    <div className="flex-1 bg-background py-8 px-4 pb-24 overflow-y-auto radio-wave-bg">
       <div className="max-w-2xl mx-auto">
         {/* Result Header */}
         <motion.div

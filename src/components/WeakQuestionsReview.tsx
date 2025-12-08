@@ -32,7 +32,7 @@ export function WeakQuestionsReview({
   const [completed, setCompleted] = useState(false);
   const currentQuestion = weakQuestions[currentIndex];
   if (isLoading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="flex-1 bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading questions...</p>
@@ -40,7 +40,7 @@ export function WeakQuestionsReview({
       </div>;
   }
   if (error || weakQuestions.length === 0) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="flex-1 bg-background flex items-center justify-center">
         <div className="text-center">
           <CheckCircle className="w-12 h-12 text-success mx-auto mb-4" />
           <p className="text-foreground font-medium mb-2">No weak questions!</p>
@@ -51,7 +51,7 @@ export function WeakQuestionsReview({
   }
   if (completed) {
     const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
-    return <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    return <div className="flex-1 bg-background flex items-center justify-center px-4">
         <motion.div initial={{
         opacity: 0,
         scale: 0.9
@@ -115,7 +115,7 @@ export function WeakQuestionsReview({
     }
   };
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
-  return <div className="min-h-screen bg-background py-8 px-4">
+  return <div className="flex-1 bg-background py-8 px-4 pb-24 overflow-y-auto">
       {/* Header */}
       <div className="max-w-3xl mx-auto mb-8">
         <div className="flex items-center justify-end mb-6">

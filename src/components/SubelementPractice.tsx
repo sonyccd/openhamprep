@@ -106,7 +106,7 @@ export function SubelementPractice({
     setAskedIds([]);
   };
   if (isLoading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="flex-1 bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading questions...</p>
@@ -114,7 +114,7 @@ export function SubelementPractice({
       </div>;
   }
   if (error || !allQuestions || allQuestions.length === 0) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="flex-1 bg-background flex items-center justify-center">
         <div className="text-center">
           <p className="text-destructive mb-4">Failed to load questions</p>
           <Button onClick={onBack}>Go Back</Button>
@@ -124,7 +124,7 @@ export function SubelementPractice({
 
   // Show subelement selection list
   if (topicView === 'list' || !selectedSubelement) {
-    return <div className="min-h-screen bg-background py-8 px-4">
+    return <div className="flex-1 bg-background py-8 px-4 pb-24 overflow-y-auto">
       <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-end mb-8">
             
@@ -187,7 +187,7 @@ export function SubelementPractice({
 
   // Show practice view
   if (!question) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="flex-1 bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>;
   }
@@ -228,7 +228,7 @@ export function SubelementPractice({
   };
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
   const progress = Math.round(askedIds.length / currentQuestions.length * 100);
-  return <div className="min-h-screen bg-background py-8 px-4">
+  return <div className="flex-1 bg-background py-8 px-4 pb-24 overflow-y-auto">
       {/* Header */}
       <div className="max-w-3xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-6">

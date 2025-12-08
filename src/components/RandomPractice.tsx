@@ -99,7 +99,7 @@ export function RandomPractice({
     });
   };
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
-  return <div className="min-h-screen bg-background py-8 px-4">
+  return <div className="flex-1 bg-background py-8 px-4 pb-24">
       {/* Header */}
       <div className="max-w-3xl mx-auto mb-8">
         <div className="flex items-center justify-end mb-6">
