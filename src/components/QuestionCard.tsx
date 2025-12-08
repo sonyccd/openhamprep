@@ -205,7 +205,13 @@ export function QuestionCard({
               >
                 {option}
               </span>
-              <span className="flex-1 pt-1">{question.options[option]}</span>
+              <span className="flex-1 pt-1">
+                {enableGlossaryHighlight ? (
+                  <GlossaryHighlightedText text={question.options[option]} />
+                ) : (
+                  question.options[option]
+                )}
+              </span>
             </button>
           ))}
         </div>
