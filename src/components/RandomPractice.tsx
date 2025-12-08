@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
-import { Zap, SkipForward, RotateCcw, Loader2 } from "lucide-react";
+import { Zap, SkipForward, RotateCcw, Loader2, Flame } from "lucide-react";
 import { motion } from "framer-motion";
 interface RandomPracticeProps {
   onBack: () => void;
@@ -26,6 +26,8 @@ export function RandomPractice({
     correct: 0,
     total: 0
   });
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
   const [askedIds, setAskedIds] = useState<string[]>([]);
   const getRandomQuestion = useCallback((excludeIds: string[] = []): Question | null => {
     if (!allQuestions || allQuestions.length === 0) return null;
@@ -70,6 +72,19 @@ export function RandomPractice({
       correct: prev.correct + (isCorrect ? 1 : 0),
       total: prev.total + 1
     }));
+    
+    // Update streak
+    if (isCorrect) {
+      setStreak(prev => {
+        const newStreak = prev + 1;
+        if (newStreak > bestStreak) {
+          setBestStreak(newStreak);
+        }
+        return newStreak;
+      });
+    } else {
+      setStreak(0);
+    }
 
     // Save attempt to database
     await saveRandomAttempt(question, answer);
@@ -97,6 +112,8 @@ export function RandomPractice({
       correct: 0,
       total: 0
     });
+    setStreak(0);
+    setBestStreak(0);
   };
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
   return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8">
@@ -122,6 +139,13 @@ export function RandomPractice({
             <div className="text-center">
               <p className="text-2xl font-mono font-bold text-destructive">{stats.total - stats.correct}</p>
               <p className="text-xs text-muted-foreground">Incorrect</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1">
+                <Flame className={`w-5 h-5 ${streak > 0 ? 'text-primary' : 'text-muted-foreground'}`} />
+                <p className={`text-2xl font-mono font-bold ${streak > 0 ? 'text-primary' : 'text-muted-foreground'}`}>{streak}</p>
+              </div>
+              <p className="text-xs text-muted-foreground">Streak</p>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
