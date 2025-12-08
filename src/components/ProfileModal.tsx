@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ThemeSelector } from "@/components/ThemeSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { User, KeyRound, Palette, Trash2, AlertTriangle, Mail } from "lucide-react";
@@ -219,10 +219,7 @@ export function ProfileModal({
               <Palette className="w-4 h-4 text-muted-foreground" />
               Theme
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Toggle dark/light mode</span>
-              <ThemeToggle />
-            </div>
+            <ThemeSelector />
           </div>
 
           <Separator />
