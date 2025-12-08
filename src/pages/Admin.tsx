@@ -10,6 +10,7 @@ import { AdminStats } from "@/components/admin/AdminStats";
 import { Loader2, ShieldAlert } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { TestType } from "@/components/DashboardSidebar";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export default function Admin() {
   const { user, loading: authLoading } = useAuth();
@@ -54,6 +55,12 @@ export default function Admin() {
     setActiveTab("questions");
   };
 
+  const testTypeLabels = {
+    technician: 'Technician',
+    general: 'General',
+    extra: 'Extra',
+  };
+
   return (
     <AppLayout 
       currentView="dashboard"
@@ -72,11 +79,35 @@ export default function Admin() {
             setActiveTab(value);
             if (value !== "questions") setLinkQuestionId("");
           }} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8">
-              <TabsTrigger value="stats">Statistics</TabsTrigger>
-              <TabsTrigger value="glossary">Glossary Terms</TabsTrigger>
-              <TabsTrigger value="questions">Questions</TabsTrigger>
-            </TabsList>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+              <TabsList className="grid w-full sm:w-auto grid-cols-3">
+                <TabsTrigger value="stats">Statistics</TabsTrigger>
+                <TabsTrigger value="glossary">Glossary Terms</TabsTrigger>
+                <TabsTrigger value="questions">Questions</TabsTrigger>
+              </TabsList>
+
+              {activeTab !== "glossary" && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Exam:</span>
+                  <ToggleGroup 
+                    type="single" 
+                    value={selectedTest} 
+                    onValueChange={(value) => value && setSelectedTest(value as TestType)}
+                    className="bg-muted rounded-lg p-1"
+                  >
+                    <ToggleGroupItem value="technician" className="text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                      Tech
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="general" className="text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                      General
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="extra" className="text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                      Extra
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+              )}
+            </div>
 
             <TabsContent value="stats">
               <AdminStats testType={selectedTest} onAddLinkToQuestion={handleAddLinkToQuestion} />
