@@ -27,7 +27,9 @@ import {
   AlertTriangle,
   Flame,
   BookText,
-  Brain
+  Brain,
+  Settings,
+  CalendarDays
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -147,6 +149,42 @@ export default function Dashboard() {
     },
     enabled: !!user,
   });
+
+  // Fetch weekly study goals
+  const { data: weeklyGoals } = useQuery({
+    queryKey: ['weekly-goals', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('weekly_study_goals')
+        .select('*')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Calculate this week's progress (Sunday to Saturday)
+  const getWeekStart = () => {
+    const now = new Date();
+    const day = now.getDay();
+    const diff = now.getDate() - day;
+    const weekStart = new Date(now.setDate(diff));
+    weekStart.setHours(0, 0, 0, 0);
+    return weekStart;
+  };
+
+  const weekStart = getWeekStart();
+  
+  const thisWeekTests = testResults?.filter(t => 
+    new Date(t.completed_at) >= weekStart
+  ).length || 0;
+
+  const thisWeekQuestions = questionAttempts?.filter(a => 
+    new Date(a.attempted_at) >= weekStart
+  ).length || 0;
 
   // Calculate weak questions (questions answered incorrectly more than once)
   const weakQuestionIds = questionAttempts
@@ -447,6 +485,12 @@ export default function Dashboard() {
 
     const motivationalMessage = getMotivationalMessage();
 
+    // Calculate weekly goal progress
+    const questionsGoal = weeklyGoals?.questions_goal || 50;
+    const testsGoal = weeklyGoals?.tests_goal || 3;
+    const questionsProgress = Math.min(100, Math.round((thisWeekQuestions / questionsGoal) * 100));
+    const testsProgress = Math.min(100, Math.round((thisWeekTests / testsGoal) * 100));
+
     return (
       <div className="flex-1 overflow-y-auto py-8 md:py-12 px-4 md:px-8 radio-wave-bg">
         <div className="max-w-3xl mx-auto">
@@ -460,48 +504,164 @@ export default function Dashboard() {
             {motivationalMessage}
           </motion.p>
 
-          {/* Next Action Card - Primary Focus */}
+          {/* Test Readiness - Most Important */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className={cn(
-              "rounded-xl p-6 mb-6 border-2",
-              nextAction.priority === 'ready' ? "bg-success/10 border-success/40" :
-              nextAction.priority === 'weak' ? "bg-orange-500/10 border-orange-500/40" :
-              "bg-primary/10 border-primary/40"
+              "rounded-xl p-5 mb-6 border-2",
+              readinessLevel === 'ready' ? "bg-success/10 border-success/50" :
+              readinessLevel === 'getting-close' ? "bg-primary/10 border-primary/50" :
+              readinessLevel === 'needs-work' ? "bg-orange-500/10 border-orange-500/50" :
+              "bg-secondary border-border"
             )}
           >
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-4 mb-3">
               <div className={cn(
-                "w-14 h-14 rounded-full flex items-center justify-center shrink-0",
+                "w-16 h-16 rounded-full flex items-center justify-center shrink-0 text-2xl font-bold",
+                readinessLevel === 'ready' ? 'bg-success/20 text-success' :
+                readinessLevel === 'getting-close' ? 'bg-primary/20 text-primary' :
+                readinessLevel === 'needs-work' ? 'bg-orange-500/20 text-orange-500' :
+                'bg-secondary text-muted-foreground'
+              )}>
+                {recentAvgScore > 0 ? `${recentAvgScore}%` : '—'}
+              </div>
+              <div className="flex-1">
+                <h2 className={cn(
+                  "text-lg font-bold",
+                  readinessLevel === 'ready' ? 'text-success' :
+                  readinessLevel === 'getting-close' ? 'text-primary' :
+                  readinessLevel === 'needs-work' ? 'text-orange-500' :
+                  'text-foreground'
+                )}>
+                  {readinessLevel === 'not-started' ? 'Test Readiness Unknown' :
+                   readinessLevel === 'needs-work' ? 'Not Ready Yet' :
+                   readinessLevel === 'getting-close' ? 'Almost Ready!' :
+                   'Ready to Pass!'}
+                </h2>
+                <p className="text-sm text-muted-foreground">{readinessMessage}</p>
+              </div>
+              {readinessLevel === 'ready' && (
+                <CheckCircle className="w-8 h-8 text-success shrink-0" />
+              )}
+            </div>
+            <div className="h-3 bg-secondary rounded-full overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${readinessLevel === 'ready' ? 100 : readinessLevel === 'getting-close' ? 75 : readinessLevel === 'needs-work' ? 40 : 0}%` }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className={cn(
+                  "h-full rounded-full",
+                  readinessLevel === 'ready' ? 'bg-success' :
+                  readinessLevel === 'getting-close' ? 'bg-primary' :
+                  readinessLevel === 'needs-work' ? 'bg-orange-500' :
+                  'bg-muted-foreground/30'
+                )}
+              />
+            </div>
+            <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+              <span>Need 74% to pass</span>
+              <span>{passedTests}/{totalTests} tests passed</span>
+            </div>
+          </motion.div>
+
+          {/* Weekly Goals */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="bg-card border border-border rounded-xl p-4 mb-6"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-mono font-bold text-foreground">This Week</h3>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                Resets Sunday
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="text-muted-foreground">Questions</span>
+                  <span className={cn(
+                    "font-mono font-bold",
+                    thisWeekQuestions >= questionsGoal ? "text-success" : "text-foreground"
+                  )}>
+                    {thisWeekQuestions}/{questionsGoal}
+                  </span>
+                </div>
+                <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                  <div 
+                    className={cn(
+                      "h-full transition-all duration-500 rounded-full",
+                      thisWeekQuestions >= questionsGoal ? "bg-success" : "bg-primary"
+                    )}
+                    style={{ width: `${questionsProgress}%` }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="text-muted-foreground">Practice Tests</span>
+                  <span className={cn(
+                    "font-mono font-bold",
+                    thisWeekTests >= testsGoal ? "text-success" : "text-foreground"
+                  )}>
+                    {thisWeekTests}/{testsGoal}
+                  </span>
+                </div>
+                <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                  <div 
+                    className={cn(
+                      "h-full transition-all duration-500 rounded-full",
+                      thisWeekTests >= testsGoal ? "bg-success" : "bg-primary"
+                    )}
+                    style={{ width: `${testsProgress}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Next Action - Compact */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className="flex items-center justify-between gap-4 bg-card border border-border rounded-xl p-4 mb-6"
+          >
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
                 nextAction.priority === 'ready' ? 'bg-success/20' :
                 nextAction.priority === 'weak' ? 'bg-orange-500/20' :
                 'bg-primary/20'
               )}>
                 <NextActionIcon className={cn(
-                  "w-7 h-7",
+                  "w-5 h-5",
                   nextAction.priority === 'ready' ? 'text-success' :
                   nextAction.priority === 'weak' ? 'text-orange-500' :
                   'text-primary'
                 )} />
               </div>
-              <div className="flex-1">
-                <h2 className="text-lg font-bold text-foreground mb-1">{nextAction.title}</h2>
-                <p className="text-sm text-muted-foreground">{nextAction.description}</p>
+              <div>
+                <p className="text-sm font-medium text-foreground">{nextAction.title}</p>
+                <p className="text-xs text-muted-foreground hidden sm:block">{nextAction.description}</p>
               </div>
-              <Button 
-                size="lg" 
-                onClick={nextAction.action}
-                className={cn(
-                  "shrink-0 gap-2",
-                  nextAction.priority === 'ready' && "bg-success hover:bg-success/90",
-                  nextAction.priority === 'weak' && "bg-orange-500 hover:bg-orange-600"
-                )}
-              >
-                {nextAction.actionLabel}
-                <ArrowRight className="w-4 h-4" />
-              </Button>
             </div>
+            <Button 
+              onClick={nextAction.action}
+              className={cn(
+                "shrink-0 gap-2",
+                nextAction.priority === 'ready' && "bg-success hover:bg-success/90",
+                nextAction.priority === 'weak' && "bg-orange-500 hover:bg-orange-600"
+              )}
+            >
+              {nextAction.actionLabel}
+              <ArrowRight className="w-4 h-4" />
+            </Button>
           </motion.div>
 
           {/* Key Metrics - Compact Row */}
