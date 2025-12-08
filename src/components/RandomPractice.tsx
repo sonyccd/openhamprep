@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
-import { Zap, SkipForward, RotateCcw, Loader2, Flame } from "lucide-react";
-import { motion } from "framer-motion";
+import { Zap, SkipForward, RotateCcw, Loader2, Flame, Trophy } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 interface RandomPracticeProps {
   onBack: () => void;
 }
@@ -28,7 +29,22 @@ export function RandomPractice({
   });
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
+  const [showStreakCelebration, setShowStreakCelebration] = useState(false);
+  const [celebrationMilestone, setCelebrationMilestone] = useState(0);
   const [askedIds, setAskedIds] = useState<string[]>([]);
+  
+  const STREAK_MILESTONES = [5, 10, 15, 20, 25];
+  
+  const getMilestoneMessage = (milestone: number) => {
+    switch (milestone) {
+      case 5: return "Nice! 5 in a row!";
+      case 10: return "Amazing! 10 streak!";
+      case 15: return "Incredible! 15 streak!";
+      case 20: return "Unstoppable! 20 streak!";
+      case 25: return "LEGENDARY! 25 streak!";
+      default: return `${milestone} streak!`;
+    }
+  };
   const getRandomQuestion = useCallback((excludeIds: string[] = []): Question | null => {
     if (!allQuestions || allQuestions.length === 0) return null;
     const available = allQuestions.filter(q => !excludeIds.includes(q.id));
@@ -80,6 +96,18 @@ export function RandomPractice({
         if (newStreak > bestStreak) {
           setBestStreak(newStreak);
         }
+        
+        // Check for milestone celebration
+        if (STREAK_MILESTONES.includes(newStreak)) {
+          setCelebrationMilestone(newStreak);
+          setShowStreakCelebration(true);
+          toast.success(getMilestoneMessage(newStreak), {
+            icon: <Trophy className="w-5 h-5 text-primary" />,
+            duration: 3000,
+          });
+          setTimeout(() => setShowStreakCelebration(false), 1500);
+        }
+        
         return newStreak;
       });
     } else {
@@ -140,11 +168,30 @@ export function RandomPractice({
               <p className="text-2xl font-mono font-bold text-destructive">{stats.total - stats.correct}</p>
               <p className="text-xs text-muted-foreground">Incorrect</p>
             </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1">
-                <Flame className={`w-5 h-5 ${streak > 0 ? 'text-primary' : 'text-muted-foreground'}`} />
+            <div className="text-center relative">
+              <AnimatePresence>
+                {showStreakCelebration && (
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: [1, 1.5, 1], opacity: [1, 1, 0] }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 1.5 }}
+                    className="absolute inset-0 flex items-center justify-center"
+                  >
+                    <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                      <Trophy className="w-8 h-8 text-primary" />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <motion.div 
+                className="flex items-center justify-center gap-1"
+                animate={showStreakCelebration ? { scale: [1, 1.2, 1] } : {}}
+                transition={{ duration: 0.3 }}
+              >
+                <Flame className={`w-5 h-5 ${streak > 0 ? 'text-primary' : 'text-muted-foreground'} ${streak >= 5 ? 'animate-pulse' : ''}`} />
                 <p className={`text-2xl font-mono font-bold ${streak > 0 ? 'text-primary' : 'text-muted-foreground'}`}>{streak}</p>
-              </div>
+              </motion.div>
               <p className="text-xs text-muted-foreground">Streak</p>
             </div>
           </div>
