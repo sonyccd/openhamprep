@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,9 +23,31 @@ export default function Auth() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
   
   const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check for email verification success in URL
+  useEffect(() => {
+    const hashParams = new URLSearchParams(location.hash.substring(1));
+    const queryParams = new URLSearchParams(location.search);
+    
+    // Check for successful email verification (Supabase redirects with these params)
+    const accessToken = hashParams.get('access_token');
+    const type = hashParams.get('type');
+    const error = hashParams.get('error');
+    const errorDescription = hashParams.get('error_description') || queryParams.get('error_description');
+    
+    if (error) {
+      setFormError(errorDescription || 'Email verification failed. The link may have expired.');
+    } else if (accessToken && type === 'signup') {
+      setEmailVerified(true);
+      // Clear the hash from URL
+      window.history.replaceState(null, '', location.pathname);
+    }
+  }, [location]);
 
   useEffect(() => {
     if (user) {
@@ -164,6 +186,16 @@ export default function Auth() {
 
         {/* Form Card */}
         <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
+          {/* Email Verified Success Alert */}
+          {emailVerified && (
+            <Alert className="mb-4 border-green-500/50 bg-green-500/10">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <AlertDescription className="text-green-700 dark:text-green-400">
+                Your email has been verified! You can now sign in to your account.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Form Error Alert */}
           {formError && (
             <Alert variant="destructive" className="mb-4">
