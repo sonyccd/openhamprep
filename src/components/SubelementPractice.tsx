@@ -6,10 +6,13 @@ import { useProgress } from "@/hooks/useProgress";
 import { ArrowLeft, BookOpen, SkipForward, RotateCcw, Loader2, ChevronRight, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { TopicLanding } from "@/components/TopicLanding";
 
 interface SubelementPracticeProps {
   onBack: () => void;
 }
+
+type TopicView = 'list' | 'landing' | 'practice';
 
 const SUBELEMENT_NAMES: Record<string, string> = {
   T0: "Commission's Rules",
@@ -29,6 +32,7 @@ export function SubelementPractice({ onBack }: SubelementPracticeProps) {
   const { saveRandomAttempt } = useProgress();
   
   const [selectedSubelement, setSelectedSubelement] = useState<string | null>(null);
+  const [topicView, setTopicView] = useState<TopicView>('list');
   const [question, setQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -62,13 +66,14 @@ export function SubelementPractice({ onBack }: SubelementPracticeProps) {
   }, [currentQuestions]);
 
   useEffect(() => {
-    if (selectedSubelement && currentQuestions.length > 0 && !question) {
+    if (selectedSubelement && topicView === 'practice' && currentQuestions.length > 0 && !question) {
       setQuestion(getRandomQuestion());
     }
-  }, [selectedSubelement, currentQuestions, question, getRandomQuestion]);
+  }, [selectedSubelement, topicView, currentQuestions, question, getRandomQuestion]);
 
   const handleSelectSubelement = (sub: string) => {
     setSelectedSubelement(sub);
+    setTopicView('landing');
     setQuestion(null);
     setSelectedAnswer(null);
     setShowResult(false);
@@ -76,8 +81,21 @@ export function SubelementPractice({ onBack }: SubelementPracticeProps) {
     setAskedIds([]);
   };
 
+  const handleStartPractice = () => {
+    setTopicView('practice');
+    setQuestion(getRandomQuestion());
+  };
+
+  const handleBackToLanding = () => {
+    setTopicView('landing');
+    setQuestion(null);
+    setSelectedAnswer(null);
+    setShowResult(false);
+  };
+
   const handleBackToList = () => {
     setSelectedSubelement(null);
+    setTopicView('list');
     setQuestion(null);
     setSelectedAnswer(null);
     setShowResult(false);
@@ -107,8 +125,8 @@ export function SubelementPractice({ onBack }: SubelementPracticeProps) {
     );
   }
 
-  // Show subelement selection
-  if (!selectedSubelement) {
+  // Show subelement selection list
+  if (topicView === 'list' || !selectedSubelement) {
     return (
       <div className="min-h-screen bg-background py-8 px-4">
         <div className="max-w-3xl mx-auto">
@@ -177,6 +195,19 @@ export function SubelementPractice({ onBack }: SubelementPracticeProps) {
     );
   }
 
+  // Show topic landing page
+  if (topicView === 'landing') {
+    return (
+      <TopicLanding
+        subelement={selectedSubelement}
+        subelementName={SUBELEMENT_NAMES[selectedSubelement] || `Subelement ${selectedSubelement}`}
+        questions={currentQuestions}
+        onBack={handleBackToList}
+        onStartPractice={handleStartPractice}
+      />
+    );
+  }
+
   // Show practice view
   if (!question) {
     return (
@@ -233,9 +264,9 @@ export function SubelementPractice({ onBack }: SubelementPracticeProps) {
       {/* Header */}
       <div className="max-w-3xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={handleBackToList} className="gap-2">
+          <Button variant="ghost" onClick={handleBackToLanding} className="gap-2">
             <ArrowLeft className="w-4 h-4" />
-            Topics
+            Topic Overview
           </Button>
           <div className="flex items-center gap-2 text-primary">
             <span className="font-mono font-bold">{selectedSubelement}</span>
