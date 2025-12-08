@@ -8,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink, ThumbsUp, ThumbsDown, FileText } from "lucide-react";
 import { BulkImportQuestions } from "./BulkImportQuestions";
+import { useExplanationFeedbackStats } from "@/hooks/useExplanationFeedback";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,6 +66,7 @@ const TEST_TYPE_PREFIXES = {
 
 export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestionsProps) {
   const queryClient = useQueryClient();
+  const { data: feedbackStats = {} } = useExplanationFeedbackStats();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
@@ -680,6 +682,20 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
                         <Badge variant="secondary" className="text-xs">
                           <LinkIcon className="w-3 h-3 mr-1" />
                           {q.links.length}
+                        </Badge>
+                      )}
+                      {q.explanation && (
+                        <Badge variant="outline" className="text-xs text-primary border-primary/50">
+                          <FileText className="w-3 h-3 mr-1" />
+                          Explanation
+                        </Badge>
+                      )}
+                      {feedbackStats[q.id] && (
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <ThumbsUp className="w-3 h-3 text-success" />
+                          <span className="text-success">{feedbackStats[q.id].helpful}</span>
+                          <ThumbsDown className="w-3 h-3 text-destructive ml-1" />
+                          <span className="text-destructive">{feedbackStats[q.id].notHelpful}</span>
                         </Badge>
                       )}
                     </div>

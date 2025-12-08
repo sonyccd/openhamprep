@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Question } from "@/hooks/useQuestions";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import { useAuth } from "@/hooks/useAuth";
+import { useExplanationFeedback } from "@/hooks/useExplanationFeedback";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Bookmark, BookmarkCheck, MessageSquare } from "lucide-react";
+import { Bookmark, BookmarkCheck, MessageSquare, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -41,11 +42,21 @@ export function QuestionCard({
   const options = ['A', 'B', 'C', 'D'] as const;
   const { user } = useAuth();
   const { isBookmarked, addBookmark, removeBookmark, getBookmarkNote, updateNote } = useBookmarks();
+  const { userFeedback, submitFeedback, removeFeedback } = useExplanationFeedback(question.id);
   const [noteText, setNoteText] = useState('');
   const [isNoteOpen, setIsNoteOpen] = useState(false);
 
   const bookmarked = isBookmarked(question.id);
   const existingNote = getBookmarkNote(question.id);
+
+  const handleFeedback = (isHelpful: boolean) => {
+    if (userFeedback?.is_helpful === isHelpful) {
+      // Toggle off if clicking the same button
+      removeFeedback.mutate(question.id);
+    } else {
+      submitFeedback.mutate({ question_id: question.id, is_helpful: isHelpful });
+    }
+  };
 
   const handleBookmarkClick = () => {
     if (bookmarked) {
@@ -247,7 +258,36 @@ export function QuestionCard({
               {/* Explanation - Left side */}
               {question.explanation && (
                 <div className="p-4 rounded-lg bg-secondary/50 border border-border">
-                  <h3 className="text-sm font-medium text-foreground mb-2">Explanation</h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-foreground">Explanation</h3>
+                    {user && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground mr-1">Helpful?</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            "h-7 w-7",
+                            userFeedback?.is_helpful === true && "text-success bg-success/10"
+                          )}
+                          onClick={() => handleFeedback(true)}
+                        >
+                          <ThumbsUp className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            "h-7 w-7",
+                            userFeedback?.is_helpful === false && "text-destructive bg-destructive/10"
+                          )}
+                          onClick={() => handleFeedback(false)}
+                        >
+                          <ThumbsDown className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {question.explanation}
                   </p>
