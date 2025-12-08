@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Trash2, Search, Loader2 } from "lucide-react";
+import { Plus, Trash2, Search, Loader2, Pencil } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +19,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface GlossaryTerm {
   id: string;
@@ -30,6 +37,11 @@ export function AdminGlossary() {
   const [searchTerm, setSearchTerm] = useState("");
   const [newTerm, setNewTerm] = useState("");
   const [newDefinition, setNewDefinition] = useState("");
+  
+  // Edit state
+  const [editingTerm, setEditingTerm] = useState<GlossaryTerm | null>(null);
+  const [editTerm, setEditTerm] = useState("");
+  const [editDefinition, setEditDefinition] = useState("");
 
   const { data: terms = [], isLoading } = useQuery({
     queryKey: ['admin-glossary-terms'],
@@ -61,6 +73,26 @@ export function AdminGlossary() {
     },
     onError: (error) => {
       toast.error("Failed to add term: " + error.message);
+    },
+  });
+
+  const updateTerm = useMutation({
+    mutationFn: async ({ id, term, definition }: { id: string; term: string; definition: string }) => {
+      const { error } = await supabase
+        .from('glossary_terms')
+        .update({ term: term.trim(), definition: definition.trim() })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-glossary-terms'] });
+      queryClient.invalidateQueries({ queryKey: ['glossary-terms'] });
+      setEditingTerm(null);
+      toast.success("Term updated successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to update term: " + error.message);
     },
   });
 
@@ -96,8 +128,59 @@ export function AdminGlossary() {
     addTerm.mutate({ term: newTerm, definition: newDefinition });
   };
 
+  const handleEditClick = (term: GlossaryTerm) => {
+    setEditingTerm(term);
+    setEditTerm(term.term);
+    setEditDefinition(term.definition);
+  };
+
+  const handleUpdateTerm = () => {
+    if (!editingTerm || !editTerm.trim() || !editDefinition.trim()) {
+      toast.error("Please fill in both term and definition");
+      return;
+    }
+    updateTerm.mutate({ id: editingTerm.id, term: editTerm, definition: editDefinition });
+  };
+
   return (
     <div className="space-y-6">
+      {/* Edit Dialog */}
+      <Dialog open={!!editingTerm} onOpenChange={(open) => !open && setEditingTerm(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Term</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Term</Label>
+              <Input
+                value={editTerm}
+                onChange={(e) => setEditTerm(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Definition</Label>
+              <Textarea
+                value={editDefinition}
+                onChange={(e) => setEditDefinition(e.target.value)}
+                rows={5}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditingTerm(null)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateTerm} disabled={updateTerm.isPending}>
+                {updateTerm.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : null}
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Add New Term */}
       <Card>
         <CardHeader>
@@ -162,30 +245,40 @@ export function AdminGlossary() {
                     <h4 className="font-semibold text-foreground">{term.term}</h4>
                     <p className="text-sm text-muted-foreground line-clamp-2">{term.definition}</p>
                   </div>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Term</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete "{term.term}"? This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => deleteTerm.mutate(term.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <div className="flex items-center gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-muted-foreground hover:text-primary"
+                      onClick={() => handleEditClick(term)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Term</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{term.term}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => deleteTerm.mutate(term.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
               ))}
               {filteredTerms.length === 0 && (

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, Search, Loader2 } from "lucide-react";
+import { Plus, Trash2, Search, Loader2, Pencil } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +49,14 @@ export function AdminQuestions() {
   const [newCorrectAnswer, setNewCorrectAnswer] = useState("0");
   const [newSubelement, setNewSubelement] = useState("");
   const [newQuestionGroup, setNewQuestionGroup] = useState("");
+
+  // Edit state
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+  const [editQuestion, setEditQuestion] = useState("");
+  const [editOptions, setEditOptions] = useState(["", "", "", ""]);
+  const [editCorrectAnswer, setEditCorrectAnswer] = useState("0");
+  const [editSubelement, setEditSubelement] = useState("");
+  const [editQuestionGroup, setEditQuestionGroup] = useState("");
 
   const { data: questions = [], isLoading } = useQuery({
     queryKey: ['admin-questions'],
@@ -91,6 +99,32 @@ export function AdminQuestions() {
     },
     onError: (error) => {
       toast.error("Failed to add question: " + error.message);
+    },
+  });
+
+  const updateQuestion = useMutation({
+    mutationFn: async (question: Question) => {
+      const { error } = await supabase
+        .from('questions')
+        .update({
+          question: question.question.trim(),
+          options: question.options,
+          correct_answer: question.correct_answer,
+          subelement: question.subelement.trim(),
+          question_group: question.question_group.trim(),
+        })
+        .eq('id', question.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['questions'] });
+      setEditingQuestion(null);
+      toast.success("Question updated successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to update question: " + error.message);
     },
   });
 
@@ -148,8 +182,123 @@ export function AdminQuestions() {
     setNewOptions(updated);
   };
 
+  const handleEditClick = (q: Question) => {
+    setEditingQuestion(q);
+    setEditQuestion(q.question);
+    setEditOptions([...q.options]);
+    setEditCorrectAnswer(q.correct_answer.toString());
+    setEditSubelement(q.subelement);
+    setEditQuestionGroup(q.question_group);
+  };
+
+  const updateEditOption = (index: number, value: string) => {
+    const updated = [...editOptions];
+    updated[index] = value;
+    setEditOptions(updated);
+  };
+
+  const handleUpdateQuestion = () => {
+    if (!editingQuestion || !editQuestion.trim() || editOptions.some(o => !o.trim())) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    updateQuestion.mutate({
+      id: editingQuestion.id,
+      question: editQuestion,
+      options: editOptions.map(o => o.trim()),
+      correct_answer: parseInt(editCorrectAnswer),
+      subelement: editSubelement,
+      question_group: editQuestionGroup,
+    });
+  };
+
   return (
     <div className="space-y-6">
+      {/* Edit Dialog */}
+      <Dialog open={!!editingQuestion} onOpenChange={(open) => !open && setEditingQuestion(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Question: {editingQuestion?.id}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Subelement</Label>
+                <Input
+                  placeholder="e.g., T1"
+                  value={editSubelement}
+                  onChange={(e) => setEditSubelement(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Question Group</Label>
+                <Input
+                  placeholder="e.g., T1A"
+                  value={editQuestionGroup}
+                  onChange={(e) => setEditQuestionGroup(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label>Question Text</Label>
+              <Textarea
+                placeholder="Enter the question..."
+                value={editQuestion}
+                onChange={(e) => setEditQuestion(e.target.value)}
+                rows={3}
+              />
+            </div>
+            
+            <div className="space-y-3">
+              <Label>Options</Label>
+              {['A', 'B', 'C', 'D'].map((letter, index) => (
+                <div key={letter} className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-sm font-mono">
+                    {letter}
+                  </span>
+                  <Input
+                    placeholder={`Option ${letter}`}
+                    value={editOptions[index]}
+                    onChange={(e) => updateEditOption(index, e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+            
+            <div>
+              <Label>Correct Answer</Label>
+              <Select value={editCorrectAnswer} onValueChange={setEditCorrectAnswer}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">A</SelectItem>
+                  <SelectItem value="1">B</SelectItem>
+                  <SelectItem value="2">C</SelectItem>
+                  <SelectItem value="3">D</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditingQuestion(null)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleUpdateQuestion} 
+                disabled={updateQuestion.isPending}
+              >
+                {updateQuestion.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : null}
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Add New Question */}
       <Card>
         <CardHeader>
@@ -287,30 +436,40 @@ export function AdminQuestions() {
                     </div>
                     <p className="text-sm text-foreground line-clamp-2">{q.question}</p>
                   </div>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Question</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete question "{q.id}"? This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => deleteQuestion.mutate(q.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <div className="flex items-center gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-muted-foreground hover:text-primary"
+                      onClick={() => handleEditClick(q)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Question</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete question "{q.id}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => deleteQuestion.mutate(q.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
               ))}
               {filteredQuestions.length === 0 && (
