@@ -123,10 +123,6 @@ export function RandomPractice({
               <p className="text-2xl font-mono font-bold text-destructive">{stats.total - stats.correct}</p>
               <p className="text-xs text-muted-foreground">Incorrect</p>
             </div>
-            <div className="text-center">
-              <p className="text-2xl font-mono font-bold text-foreground">{percentage}%</p>
-              <p className="text-xs text-muted-foreground">Score</p>
-            </div>
           </div>
           <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
             <RotateCcw className="w-4 h-4" />
