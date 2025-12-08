@@ -6,10 +6,40 @@ interface MarkdownTextProps {
 }
 
 export function MarkdownText({ text, className }: MarkdownTextProps) {
+  // Clean up LaTeX-style formatting artifacts
+  const cleanLatex = (input: string): string => {
+    let cleaned = input;
+    
+    // Remove $ ext{...}$ patterns, keeping the content
+    cleaned = cleaned.replace(/\$\s*\\?ext\{([^}]*)\}\s*\$/g, '$1');
+    
+    // Remove $\text{...}$ patterns (alternate spelling)
+    cleaned = cleaned.replace(/\$\s*\\?text\{([^}]*)\}\s*\$/g, '$1');
+    
+    // Remove simple $...$ math delimiters but keep content
+    cleaned = cleaned.replace(/\$([^$]+)\$/g, '$1');
+    
+    // Clean up any remaining backslash commands like \times
+    cleaned = cleaned.replace(/\\times/g, '×');
+    cleaned = cleaned.replace(/\\div/g, '÷');
+    cleaned = cleaned.replace(/\\pm/g, '±');
+    cleaned = cleaned.replace(/\\approx/g, '≈');
+    cleaned = cleaned.replace(/\\neq/g, '≠');
+    cleaned = cleaned.replace(/\\leq/g, '≤');
+    cleaned = cleaned.replace(/\\geq/g, '≥');
+    cleaned = cleaned.replace(/\\infty/g, '∞');
+    cleaned = cleaned.replace(/\\pi/g, 'π');
+    cleaned = cleaned.replace(/\\Omega/g, 'Ω');
+    cleaned = cleaned.replace(/\\mu/g, 'μ');
+    cleaned = cleaned.replace(/\\ohm/g, 'Ω');
+    
+    return cleaned;
+  };
+
   // Parse markdown-style formatting
   const parseMarkdown = (input: string): React.ReactNode[] => {
     const elements: React.ReactNode[] = [];
-    let remaining = input;
+    let remaining = cleanLatex(input);
     let key = 0;
 
     while (remaining.length > 0) {
@@ -69,8 +99,8 @@ export function MarkdownText({ text, className }: MarkdownTextProps) {
     return elements;
   };
 
-  // Split by newlines to handle line breaks
-  const lines = text.split('\n');
+  // Clean and split by newlines to handle line breaks
+  const lines = cleanLatex(text).split('\n');
 
   return (
     <div className={cn("text-sm text-foreground leading-relaxed", className)}>
