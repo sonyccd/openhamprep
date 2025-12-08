@@ -145,7 +145,7 @@ export function Glossary({ onStartFlashcards }: GlossaryProps) {
   const masteryPercentage = terms.length > 0 ? Math.round((masteredCount / terms.length) * 100) : 0;
 
   return (
-    <div className="flex flex-col h-full max-w-4xl mx-auto">
+    <div className="flex flex-col h-full max-w-4xl mx-auto pt-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div>
