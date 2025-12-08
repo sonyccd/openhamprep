@@ -208,10 +208,6 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
                 </div>
               </div>
             </div>
-
-            <p className="text-xs text-muted-foreground mt-3">
-              Passing: 26/35 (74%)
-            </p>
           </motion.div>
 
           {/* Review Section - Scrollable */}
