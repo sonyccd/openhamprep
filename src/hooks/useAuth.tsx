@@ -22,18 +22,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state changed:', event);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+        
+        // Clear the hash from URL after processing auth callback
+        if (event === 'SIGNED_IN' && window.location.hash) {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+      }
+    );
+
+    // Handle auth callback from email verification (hash contains tokens)
+    const handleAuthCallback = async () => {
+      const hashParams = window.location.hash;
+      if (hashParams && hashParams.includes('access_token')) {
+        // Let Supabase process the hash - getSession will do this automatically
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Auth callback error:', error);
+        }
+        if (session) {
+          setSession(session);
+          setUser(session.user);
+        }
+        setLoading(false);
+      } else {
+        // No hash params, just get existing session
+        const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       }
-    );
+    };
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    handleAuthCallback();
 
     return () => subscription.unsubscribe();
   }, []);
