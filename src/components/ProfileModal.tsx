@@ -195,9 +195,9 @@ export function ProfileModal({
             
             {!showDeleteConfirm ? (
               <Button
-                variant="destructive"
+                variant="outline"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="w-full"
+                className="w-full border-destructive text-destructive bg-background hover:bg-destructive hover:text-destructive-foreground"
               >
                 Delete Account
               </Button>
