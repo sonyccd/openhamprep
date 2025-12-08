@@ -60,7 +60,7 @@ export default function Admin() {
   };
   return <AppLayout currentView="dashboard" onViewChange={handleViewChange} selectedTest={sidebarTest} onTestChange={setSidebarTest}>
       <div className="flex-1 p-6 md:p-8 flex flex-col h-full overflow-hidden">
-        <div className="max-w-6xl mx-auto w-full flex flex-col flex-1 min-h-0">
+        <div className="max-w-6xl mx-auto w-full flex flex-col flex-1 min-h-0 overflow-hidden">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground">Admin </h1>
             <p className="text-muted-foreground mt-2">Manage glossary terms, questions, and learning resources</p>
@@ -112,7 +112,7 @@ export default function Admin() {
                 </div>
               </div>
 
-              <TabsContent value="stats" className="flex-1 min-h-0 overflow-auto">
+              <TabsContent value="stats" className="flex-1 min-h-0 overflow-y-auto pb-6">
                 <AdminStats testType={adminExamType} onAddLinkToQuestion={handleAddLinkToQuestion} />
               </TabsContent>
 
