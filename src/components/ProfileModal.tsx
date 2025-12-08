@@ -114,11 +114,18 @@ export function ProfileModal({
     }
     setIsDeleting(true);
     try {
-      // Delete all user data from related tables
-      await supabase.from("question_attempts").delete().eq("user_id", userId);
-      await supabase.from("practice_test_results").delete().eq("user_id", userId);
-      await supabase.from("bookmarked_questions").delete().eq("user_id", userId);
-      await supabase.from("profiles").delete().eq("id", userId);
+      // Call edge function to delete the user from auth.users
+      // This will cascade delete to profiles and all related data
+      const { data, error } = await supabase.functions.invoke('delete-user');
+
+      if (error) {
+        console.error('Delete user error:', error);
+        throw new Error(error.message || 'Failed to delete account');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
       // Sign out and redirect
       await supabase.auth.signOut();
@@ -126,6 +133,7 @@ export function ProfileModal({
       onOpenChange(false);
       navigate("/");
     } catch (error: any) {
+      console.error('Account deletion failed:', error);
       toast.error(error.message || "Failed to delete account");
     } finally {
       setIsDeleting(false);
