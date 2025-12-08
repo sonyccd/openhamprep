@@ -1,10 +1,12 @@
-import { Play, Zap, BookOpen, AlertTriangle, Bookmark, LogOut, Radio, PanelLeftClose, PanelLeft, BarChart3, Menu, Lock, ChevronDown, BookText } from "lucide-react";
+import { Play, Zap, BookOpen, AlertTriangle, Bookmark, LogOut, Radio, PanelLeftClose, PanelLeft, BarChart3, Menu, Lock, ChevronDown, BookText, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileModal } from "@/components/ProfileModal";
+import { useAdmin } from "@/hooks/useAdmin";
+import { useNavigate } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -77,6 +79,8 @@ export function DashboardSidebar({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
+  const { isAdmin } = useAdmin();
+  const navigate = useNavigate();
   const getInitials = () => {
     if (userInfo?.displayName) {
       return userInfo.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -266,6 +270,29 @@ export function DashboardSidebar({
               </TooltipContent>
             </Tooltip>}
         </div>
+
+        {/* Admin Link */}
+        {isAdmin && (
+          <div className={cn("p-2 border-b border-border", !isMobile && isCollapsed && "flex justify-center")}>
+            {!isMobile && isCollapsed ? (
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" onClick={() => navigate('/admin')} className="w-full h-10 text-muted-foreground hover:text-primary">
+                    <Shield className="w-5 h-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-popover border-border">
+                  <p>Admin Dashboard</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Button variant="ghost" onClick={() => navigate('/admin')} className="w-full justify-start gap-3 text-muted-foreground hover:text-primary">
+                <Shield className="w-5 h-5" />
+                <span className="text-sm font-medium">Admin Dashboard</span>
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* Sign Out */}
         <div className="p-2">
