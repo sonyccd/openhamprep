@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -37,6 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Handle auth callback from email verification (hash contains tokens)
     const handleAuthCallback = async () => {
       const hashParams = window.location.hash;
+      const isEmailVerification = hashParams && hashParams.includes('access_token') && hashParams.includes('type=signup');
+      
       if (hashParams && hashParams.includes('access_token')) {
         // Let Supabase process the hash - getSession will do this automatically
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -46,6 +49,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session) {
           setSession(session);
           setUser(session.user);
+          
+          // Show success toast for email verification
+          if (isEmailVerification) {
+            toast({
+              title: "Email verified!",
+              description: "Your email has been verified successfully. Welcome!",
+            });
+          }
         }
         setLoading(false);
       } else {
