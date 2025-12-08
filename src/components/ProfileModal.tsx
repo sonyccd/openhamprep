@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, KeyRound, Palette, Trash2, AlertTriangle } from "lucide-react";
+import { User, KeyRound, Palette, Trash2, AlertTriangle, Mail } from "lucide-react";
 
 interface ProfileModalProps {
   open: boolean;
@@ -31,6 +31,8 @@ export function ProfileModal({
   const navigate = useNavigate();
   const [displayName, setDisplayName] = useState(userInfo.displayName || "");
   const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -57,6 +59,40 @@ export function ProfileModal({
       toast.error(error.message || "Failed to update display name");
     } finally {
       setIsUpdatingName(false);
+    }
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!newEmail.trim()) {
+      toast.error("Email cannot be empty");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail.trim())) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    if (newEmail.trim().toLowerCase() === userInfo.email?.toLowerCase()) {
+      toast.error("New email must be different from current email");
+      return;
+    }
+
+    setIsUpdatingEmail(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email: newEmail.trim(),
+      });
+
+      if (error) throw error;
+
+      toast.success("Verification email sent! Check your new email inbox to confirm the change.");
+      setNewEmail("");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update email");
+    } finally {
+      setIsUpdatingEmail(false);
     }
   };
 
@@ -146,6 +182,38 @@ export function ProfileModal({
             </div>
             <p className="text-xs text-muted-foreground">
               {userInfo.email}
+            </p>
+          </div>
+
+          <Separator />
+
+          {/* Email Change Section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Mail className="w-4 h-4 text-muted-foreground" />
+              Email Address
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Current: {userInfo.email}
+            </p>
+            <div className="flex gap-2">
+              <Input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="Enter new email address"
+                className="flex-1"
+              />
+              <Button 
+                onClick={handleUpdateEmail}
+                disabled={isUpdatingEmail || !newEmail.trim()}
+                size="sm"
+              >
+                {isUpdatingEmail ? "Sending..." : "Change"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              A verification link will be sent to confirm the new email
             </p>
           </div>
 
