@@ -191,12 +191,15 @@ export function AdminQuestions({
       queryClient.invalidateQueries({
         queryKey: ['questions']
       });
+      setEditingQuestion(null);
       toast.success("Question deleted successfully");
     },
     onError: error => {
       toast.error("Failed to delete question: " + error.message);
     }
   });
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const addLinkToQuestion = async () => {
     if (!editingQuestion || !newLinkUrl.trim()) {
       toast.error("Please enter a URL");
@@ -475,14 +478,41 @@ export function AdminQuestions({
 
             <Separator />
             
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditingQuestion(null)}>
-                Cancel
-              </Button>
-              <Button onClick={handleUpdateQuestion} disabled={updateQuestion.isPending}>
-                {updateQuestion.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Save Changes
-              </Button>
+            <div className="flex justify-between gap-2">
+              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Question
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Question</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete question "{editingQuestion?.id}"? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={() => editingQuestion && deleteQuestion.mutate(editingQuestion.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setEditingQuestion(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdateQuestion} disabled={updateQuestion.isPending}>
+                  {updateQuestion.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                  Save Changes
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
@@ -658,32 +688,9 @@ export function AdminQuestions({
                     </div>
                     <p className="text-sm text-foreground line-clamp-2">{q.question}</p>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={() => handleEditClick(q)}>
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Question</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete question "{q.id}"? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteQuestion.mutate(q.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={() => handleEditClick(q)}>
+                    <Pencil className="w-4 h-4" />
+                  </Button>
                 </div>)}
               {filteredQuestions.length === 0 && <p className="text-center text-muted-foreground py-8">
                   {searchTerm ? "No matching questions found" : "No questions found"}

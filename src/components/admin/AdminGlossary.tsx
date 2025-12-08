@@ -112,12 +112,15 @@ export function AdminGlossary() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-glossary-terms'] });
       queryClient.invalidateQueries({ queryKey: ['glossary-terms'] });
+      setEditingTerm(null);
       toast.success("Term deleted successfully");
     },
     onError: (error) => {
       toast.error("Failed to delete term: " + error.message);
     },
   });
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const filteredTerms = terms.filter(t => 
     t.term.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -170,16 +173,43 @@ export function AdminGlossary() {
                 rows={5}
               />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditingTerm(null)}>
-                Cancel
-              </Button>
-              <Button onClick={handleUpdateTerm} disabled={updateTerm.isPending}>
-                {updateTerm.isPending ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : null}
-                Save Changes
-              </Button>
+            <div className="flex justify-between gap-2">
+              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Term
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Term</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{editingTerm?.term}"? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={() => editingTerm && deleteTerm.mutate(editingTerm.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setEditingTerm(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdateTerm} disabled={updateTerm.isPending}>
+                  {updateTerm.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : null}
+                  Save Changes
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
@@ -265,40 +295,14 @@ export function AdminGlossary() {
                     <h4 className="font-semibold text-foreground">{term.term}</h4>
                     <p className="text-sm text-muted-foreground line-clamp-2">{term.definition}</p>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-muted-foreground hover:text-primary"
-                      onClick={() => handleEditClick(term)}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Term</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete "{term.term}"? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => deleteTerm.mutate(term.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-muted-foreground hover:text-primary"
+                    onClick={() => handleEditClick(term)}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
                 </div>
               ))}
               {filteredTerms.length === 0 && (
