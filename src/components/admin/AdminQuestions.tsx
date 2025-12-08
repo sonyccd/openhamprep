@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { BulkImportQuestions } from "./BulkImportQuestions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -521,13 +522,15 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
               <Plus className="w-5 h-5" />
               {testType.charAt(0).toUpperCase() + testType.slice(1)} Questions ({testTypeQuestions.length})
             </span>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Question
-                </Button>
-              </DialogTrigger>
+            <div className="flex items-center gap-2">
+              <BulkImportQuestions testType={testType} />
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Question
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Add New Question</DialogTitle>
@@ -616,6 +619,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </CardTitle>
           <div className="relative mt-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
