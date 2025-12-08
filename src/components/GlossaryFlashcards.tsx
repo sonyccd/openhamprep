@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
-import { ArrowLeft, RotateCcw, Shuffle, ChevronLeft, ChevronRight, Eye, EyeOff, CheckCircle2, XCircle, Trophy, Brain, Zap } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { ArrowLeft, RotateCcw, Shuffle, ChevronLeft, ChevronRight, Eye, EyeOff, CheckCircle2, XCircle, Trophy, Brain, Zap, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -82,6 +82,8 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
   const [orderedTerms, setOrderedTerms] = useState<GlossaryTerm[]>([]);
   const [stats, setStats] = useState<CardStats>({ known: new Set(), unknown: new Set() });
   const [hasStarted, setHasStarted] = useState(false);
+  const [sessionSaved, setSessionSaved] = useState(false);
+  const sessionStartTime = useRef<Date | null>(null);
 
   const { data: terms = [], isLoading: termsLoading } = useQuery({
     queryKey: ['glossary-terms'],
@@ -172,6 +174,89 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
     }
   });
 
+  // Save study session and update streak
+  const saveStudySession = useMutation({
+    mutationFn: async ({ termsStudied, termsCorrect }: { termsStudied: number; termsCorrect: number }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      
+      const today = new Date().toISOString().split('T')[0];
+      const sessionDuration = sessionStartTime.current 
+        ? Math.round((new Date().getTime() - sessionStartTime.current.getTime()) / 1000)
+        : 0;
+
+      // Upsert study session for today
+      const { error: sessionError } = await supabase
+        .from('glossary_study_sessions')
+        .upsert({
+          user_id: user.id,
+          study_date: today,
+          terms_studied: termsStudied,
+          terms_correct: termsCorrect,
+          session_duration_seconds: sessionDuration
+        }, {
+          onConflict: 'user_id,study_date'
+        });
+
+      if (sessionError) throw sessionError;
+
+      // Get current profile to calculate streak
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('glossary_current_streak, glossary_best_streak, glossary_last_study_date')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
+      const lastStudyDate = profile?.glossary_last_study_date;
+      const currentStreak = profile?.glossary_current_streak || 0;
+      const bestStreak = profile?.glossary_best_streak || 0;
+
+      let newStreak = 1;
+      
+      if (lastStudyDate) {
+        const lastDate = new Date(lastStudyDate);
+        const todayDate = new Date(today);
+        const diffDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) {
+          // Already studied today, keep current streak
+          newStreak = currentStreak;
+        } else if (diffDays === 1) {
+          // Consecutive day, increment streak
+          newStreak = currentStreak + 1;
+        }
+        // If diffDays > 1, streak resets to 1 (already set)
+      }
+
+      const newBestStreak = Math.max(bestStreak, newStreak);
+
+      // Update profile with new streak
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          glossary_current_streak: newStreak,
+          glossary_best_streak: newBestStreak,
+          glossary_last_study_date: today
+        })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      return { newStreak, newBestStreak, isNewBest: newStreak > bestStreak };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['profile-glossary-streak', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['glossary-study-sessions', user?.id] });
+      
+      if (data.isNewBest && data.newStreak > 1) {
+        toast.success(`New best streak: ${data.newStreak} days! 🔥`);
+      } else if (data.newStreak > 1) {
+        toast.success(`${data.newStreak} day streak! Keep it up! 🔥`);
+      }
+    }
+  });
+
   const startStudy = useCallback(() => {
     const now = new Date();
     let termsToStudy: GlossaryTerm[] = [];
@@ -210,6 +295,8 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
     setCurrentIndex(0);
     setIsFlipped(false);
     setStats({ known: new Set(), unknown: new Set() });
+    setSessionSaved(false);
+    sessionStartTime.current = new Date();
     setHasStarted(true);
   }, [terms, studyMode, progressMap, weakTermIds, unseenTermIds]);
 
@@ -217,6 +304,23 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
     if (!hasStarted || orderedTerms.length === 0) return null;
     return orderedTerms[currentIndex];
   }, [orderedTerms, currentIndex, hasStarted]);
+
+  // Save session when complete
+  useEffect(() => {
+    if (hasStarted && !sessionSaved && user?.id) {
+      const total = stats.known.size + stats.unknown.size;
+      const isComplete = currentIndex === orderedTerms.length - 1 && 
+        (stats.known.has(currentTerm?.id || '') || stats.unknown.has(currentTerm?.id || ''));
+      
+      if (isComplete && total > 0) {
+        setSessionSaved(true);
+        saveStudySession.mutate({
+          termsStudied: total,
+          termsCorrect: stats.known.size
+        });
+      }
+    }
+  }, [stats, currentIndex, orderedTerms.length, currentTerm?.id, hasStarted, sessionSaved, user?.id]);
 
   const handleNext = () => {
     if (currentIndex < orderedTerms.length - 1) {

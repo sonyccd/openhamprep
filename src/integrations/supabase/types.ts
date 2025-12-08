@@ -101,6 +101,44 @@ export type Database = {
           },
         ]
       }
+      glossary_study_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          session_duration_seconds: number | null
+          study_date: string
+          terms_correct: number
+          terms_studied: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          session_duration_seconds?: number | null
+          study_date?: string
+          terms_correct?: number
+          terms_studied?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          session_duration_seconds?: number | null
+          study_date?: string
+          terms_correct?: number
+          terms_studied?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "glossary_study_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       glossary_terms: {
         Row: {
           created_at: string
@@ -169,6 +207,9 @@ export type Database = {
           created_at: string
           display_name: string | null
           email: string | null
+          glossary_best_streak: number
+          glossary_current_streak: number
+          glossary_last_study_date: string | null
           id: string
           updated_at: string
         }
@@ -177,6 +218,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          glossary_best_streak?: number
+          glossary_current_streak?: number
+          glossary_last_study_date?: string | null
           id: string
           updated_at?: string
         }
@@ -185,6 +229,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          glossary_best_streak?: number
+          glossary_current_streak?: number
+          glossary_last_study_date?: string | null
           id?: string
           updated_at?: string
         }
