@@ -19,6 +19,12 @@ export function MarkdownText({ text, className }: MarkdownTextProps) {
     // Remove simple $...$ math delimiters but keep content
     cleaned = cleaned.replace(/\$([^$]+)\$/g, '$1');
     
+    // Remove standalone ext{...} or \ext{...} patterns (after $ removal)
+    cleaned = cleaned.replace(/\\?ext\{\s*([^}]*)\s*\}/g, '$1');
+    
+    // Remove standalone \text{...} patterns (after $ removal)
+    cleaned = cleaned.replace(/\\?text\{\s*([^}]*)\s*\}/g, '$1');
+    
     // Clean up any remaining backslash commands like \times
     cleaned = cleaned.replace(/\\times/g, '×');
     cleaned = cleaned.replace(/\\div/g, '÷');
@@ -32,6 +38,8 @@ export function MarkdownText({ text, className }: MarkdownTextProps) {
     cleaned = cleaned.replace(/\\Omega/g, 'Ω');
     cleaned = cleaned.replace(/\\mu/g, 'μ');
     cleaned = cleaned.replace(/\\ohm/g, 'Ω');
+    cleaned = cleaned.replace(/\\cdot/g, '·');
+    cleaned = cleaned.replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '$1/$2');
     
     return cleaned;
   };
