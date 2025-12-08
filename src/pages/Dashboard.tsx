@@ -248,12 +248,7 @@ export default function Dashboard() {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground hidden md:inline">
-                {user.email}
-              </span>
-              <ThemeToggle />
-            </div>
+            <ThemeToggle />
           </div>
 
           {/* Test Readiness Indicator */}

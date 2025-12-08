@@ -157,44 +157,6 @@ export function DashboardSidebar({
         )}
       </div>
 
-      {/* User Profile Section */}
-      <div className={cn(
-        "border-b border-border p-3",
-        !isMobile && isCollapsed && "flex justify-center"
-      )}>
-        {(isMobile || !isCollapsed) ? (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9 shrink-0">
-              <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
-                {userInfo?.displayName || 'User'}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {userInfo?.email || ''}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <Avatar className="h-8 w-8 cursor-default">
-                <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                  {getInitials()}
-                </AvatarFallback>
-              </Avatar>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="bg-popover border-border">
-              <p className="font-medium">{userInfo?.displayName || 'User'}</p>
-              <p className="text-xs text-muted-foreground">{userInfo?.email}</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-
       {/* Navigation */}
       <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
@@ -249,37 +211,78 @@ export function DashboardSidebar({
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="border-t border-border p-2">
-        {!isMobile && isCollapsed ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onSignOut}
-                className="w-full h-10 text-muted-foreground hover:text-destructive"
-              >
-                <LogOut className="w-5 h-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="bg-popover border-border">
-              <p>Sign Out</p>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <Button
-            variant="ghost"
-            onClick={() => {
-              onSignOut();
-              setMobileOpen(false);
-            }}
-            className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
-          >
-            <LogOut className="w-5 h-5" />
-            <span className="text-sm font-medium">Sign Out</span>
-          </Button>
-        )}
+      {/* Footer with User Profile */}
+      <div className="border-t border-border">
+        {/* User Profile Section */}
+        <div className={cn(
+          "p-3 border-b border-border",
+          !isMobile && isCollapsed && "flex justify-center"
+        )}>
+          {(isMobile || !isCollapsed) ? (
+            <div className="flex items-center gap-3">
+              <Avatar className="h-9 w-9 shrink-0">
+                <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                  {getInitials()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {userInfo?.displayName || 'User'}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {userInfo?.email || ''}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Avatar className="h-8 w-8 cursor-default">
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-popover border-border">
+                <p className="font-medium">{userInfo?.displayName || 'User'}</p>
+                <p className="text-xs text-muted-foreground">{userInfo?.email}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+
+        {/* Sign Out Button */}
+        <div className="p-2">
+          {!isMobile && isCollapsed ? (
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onSignOut}
+                  className="w-full h-10 text-muted-foreground hover:text-destructive"
+                >
+                  <LogOut className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-popover border-border">
+                <p>Sign Out</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                onSignOut();
+                setMobileOpen(false);
+              }}
+              className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="text-sm font-medium">Sign Out</span>
+            </Button>
+          )}
+        </div>
       </div>
     </>
   );
