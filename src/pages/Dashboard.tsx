@@ -27,7 +27,8 @@ import {
   Play,
   Bookmark,
   Lock,
-  BookOpen
+  BookOpen,
+  ArrowRight
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -37,9 +38,10 @@ import { WeakQuestionsReview } from '@/components/WeakQuestionsReview';
 import { BookmarkedQuestions } from '@/components/BookmarkedQuestions';
 import { SubelementPractice } from '@/components/SubelementPractice';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { TestResultReview } from '@/components/TestResultReview';
 
 type TestType = 'technician' | 'general' | 'extra';
-type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice';
+type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice' | 'review-test';
 
 const testTypes = [
   { id: 'technician' as TestType, name: 'Technician', available: true },
@@ -53,6 +55,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [selectedTest, setSelectedTest] = useState<TestType>('technician');
   const [view, setView] = useState<View>('dashboard');
+  const [reviewingTestId, setReviewingTestId] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -127,6 +130,13 @@ export default function Dashboard() {
 
   if (view === 'subelement-practice') {
     return <SubelementPractice onBack={() => setView('dashboard')} />;
+  }
+
+  if (view === 'review-test' && reviewingTestId) {
+    return <TestResultReview testResultId={reviewingTestId} onBack={() => {
+      setReviewingTestId(null);
+      setView('dashboard');
+    }} />;
   }
 
   if (authLoading || testsLoading || attemptsLoading) {
@@ -392,13 +402,17 @@ export default function Dashboard() {
             <h2 className="text-sm font-mono font-bold text-foreground mb-3">Recent Tests</h2>
             <div className="space-y-2">
               {recentTests.map((test) => (
-                <div 
+                <button 
                   key={test.id}
+                  onClick={() => {
+                    setReviewingTestId(test.id);
+                    setView('review-test');
+                  }}
                   className={cn(
-                    "flex items-center justify-between p-3 rounded-lg border",
+                    "w-full flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer",
                     test.passed 
-                      ? "border-success/30 bg-success/5" 
-                      : "border-destructive/30 bg-destructive/5"
+                      ? "border-success/30 bg-success/5 hover:bg-success/10" 
+                      : "border-destructive/30 bg-destructive/5 hover:bg-destructive/10"
                   )}
                 >
                   <div className="flex items-center gap-3">
@@ -410,7 +424,7 @@ export default function Dashboard() {
                     )}>
                       {test.passed ? '✓' : '✗'}
                     </span>
-                    <div>
+                    <div className="text-left">
                       <p className="text-sm font-medium text-foreground">
                         {test.score}/{test.total_questions}
                       </p>
@@ -419,13 +433,16 @@ export default function Dashboard() {
                       </p>
                     </div>
                   </div>
-                  <span className={cn(
-                    "text-lg font-mono font-bold",
-                    test.passed ? "text-success" : "text-destructive"
-                  )}>
-                    {test.percentage}%
-                  </span>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      "text-lg font-mono font-bold",
+                      test.passed ? "text-success" : "text-destructive"
+                    )}>
+                      {test.percentage}%
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                </button>
               ))}
             </div>
           </motion.div>
