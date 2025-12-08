@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink, ThumbsUp, ThumbsDown, FileText } from "lucide-react";
+import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink, ThumbsUp, ThumbsDown, FileText, Filter, X } from "lucide-react";
 import { BulkImportQuestions } from "./BulkImportQuestions";
 import { useExplanationFeedbackStats } from "@/hooks/useExplanationFeedback";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -52,6 +52,8 @@ export function AdminQuestions({
     data: feedbackStats = {}
   } = useExplanationFeedbackStats();
   const [searchTerm, setSearchTerm] = useState("");
+  const [subelementFilter, setSubelementFilter] = useState<string>("all");
+  const [groupFilter, setGroupFilter] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   // New question form state
@@ -275,7 +277,29 @@ export function AdminQuestions({
   };
   const prefix = TEST_TYPE_PREFIXES[testType];
   const testTypeQuestions = questions.filter(q => q.id.startsWith(prefix));
-  const filteredQuestions = testTypeQuestions.filter(q => q.id.toLowerCase().includes(searchTerm.toLowerCase()) || q.question.toLowerCase().includes(searchTerm.toLowerCase()));
+  
+  // Get unique subelements and groups for filter dropdowns
+  const subelements = [...new Set(testTypeQuestions.map(q => q.subelement))].sort();
+  const groups = [...new Set(
+    testTypeQuestions
+      .filter(q => subelementFilter === "all" || q.subelement === subelementFilter)
+      .map(q => q.question_group)
+  )].sort();
+  
+  const filteredQuestions = testTypeQuestions.filter(q => {
+    const matchesSearch = q.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          q.question.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSubelement = subelementFilter === "all" || q.subelement === subelementFilter;
+    const matchesGroup = groupFilter === "all" || q.question_group === groupFilter;
+    return matchesSearch && matchesSubelement && matchesGroup;
+  });
+  
+  // Reset group filter when subelement changes and group is no longer valid
+  useEffect(() => {
+    if (groupFilter !== "all" && !groups.includes(groupFilter)) {
+      setGroupFilter("all");
+    }
+  }, [subelementFilter, groups, groupFilter]);
   const handleAddQuestion = () => {
     if (!newId.trim() || !newQuestion.trim() || newOptions.some(o => !o.trim())) {
       toast.error("Please fill in all fields");
@@ -536,9 +560,53 @@ export function AdminQuestions({
             </Dialog>
             </div>
           </CardTitle>
-          <div className="relative mt-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search questions..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
+          <div className="flex flex-col gap-3 mt-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Search questions..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Filter className="w-4 h-4 text-muted-foreground" />
+              <Select value={subelementFilter} onValueChange={setSubelementFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Subelement" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Subelements</SelectItem>
+                  {subelements.map(sub => (
+                    <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={groupFilter} onValueChange={setGroupFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Group" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Groups</SelectItem>
+                  {groups.map(grp => (
+                    <SelectItem key={grp} value={grp}>{grp}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {(subelementFilter !== "all" || groupFilter !== "all") && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSubelementFilter("all");
+                    setGroupFilter("all");
+                  }}
+                  className="text-muted-foreground"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Clear filters
+                </Button>
+              )}
+              <span className="text-sm text-muted-foreground ml-auto">
+                {filteredQuestions.length} question{filteredQuestions.length !== 1 ? 's' : ''}
+              </span>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="flex-1 min-h-0 overflow-hidden">
