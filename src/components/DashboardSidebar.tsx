@@ -149,7 +149,12 @@ export function DashboardSidebar({
         {(isMobile || !isCollapsed) ? (
           <div>
             <label className="text-xs text-muted-foreground font-medium mb-1.5 block">License Class</label>
-            <Select value={selectedTest} onValueChange={(v) => onTestChange(v as TestType)}>
+            <Select value={selectedTest} onValueChange={(v) => {
+              const test = testTypes.find(t => t.id === v);
+              if (test?.available) {
+                onTestChange(v as TestType);
+              }
+            }}>
               <SelectTrigger className="w-full bg-secondary/50 border-border">
                 <SelectValue />
               </SelectTrigger>
@@ -158,11 +163,13 @@ export function DashboardSidebar({
                   <SelectItem 
                     key={test.id} 
                     value={test.id}
+                    disabled={!test.available}
+                    className={cn(!test.available && "opacity-50 cursor-not-allowed")}
                   >
                     <span className="flex items-center gap-2">
                       {test.name}
                       {!test.available && (
-                        <Lock className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-[10px] text-muted-foreground ml-1">(Coming Soon)</span>
                       )}
                     </span>
                   </SelectItem>
