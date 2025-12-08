@@ -169,13 +169,15 @@ export function QuestionCard({
         </div>
 
         {/* Question Text */}
-        <h2 className="text-lg md:text-xl font-semibold text-foreground mb-6 leading-relaxed">
-          {enableGlossaryHighlight ? (
-            <GlossaryHighlightedText text={question.question} />
-          ) : (
-            question.question
-          )}
-        </h2>
+        <div className="min-h-[4.5rem] mb-6">
+          <h2 className="text-lg md:text-xl font-semibold text-foreground leading-relaxed">
+            {enableGlossaryHighlight ? (
+              <GlossaryHighlightedText text={question.question} />
+            ) : (
+              question.question
+            )}
+          </h2>
+        </div>
 
         {/* Options */}
         <div className="space-y-3">
