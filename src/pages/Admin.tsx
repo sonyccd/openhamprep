@@ -16,7 +16,8 @@ export default function Admin() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdmin();
   const navigate = useNavigate();
-  const [selectedTest, setSelectedTest] = useState<TestType>('technician');
+  const [sidebarTest, setSidebarTest] = useState<TestType>('technician');
+  const [adminExamType, setAdminExamType] = useState<TestType>('technician');
   const [activeTab, setActiveTab] = useState("stats");
   const [linkQuestionId, setLinkQuestionId] = useState("");
 
@@ -65,8 +66,8 @@ export default function Admin() {
     <AppLayout 
       currentView="dashboard"
       onViewChange={handleViewChange}
-      selectedTest={selectedTest}
-      onTestChange={setSelectedTest}
+      selectedTest={sidebarTest}
+      onTestChange={setSidebarTest}
     >
       <div className="flex-1 p-6 md:p-8">
         <div className="max-w-6xl mx-auto">
@@ -91,8 +92,8 @@ export default function Admin() {
                   <span className="text-sm text-muted-foreground">Exam:</span>
                   <ToggleGroup 
                     type="single" 
-                    value={selectedTest} 
-                    onValueChange={(value) => value && setSelectedTest(value as TestType)}
+                    value={adminExamType} 
+                    onValueChange={(value) => value && setAdminExamType(value as TestType)}
                     className="bg-muted rounded-lg p-1"
                   >
                     <ToggleGroupItem value="technician" className="text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
@@ -110,7 +111,7 @@ export default function Admin() {
             </div>
 
             <TabsContent value="stats">
-              <AdminStats testType={selectedTest} onAddLinkToQuestion={handleAddLinkToQuestion} />
+              <AdminStats testType={adminExamType} onAddLinkToQuestion={handleAddLinkToQuestion} />
             </TabsContent>
 
             <TabsContent value="glossary">
@@ -118,7 +119,7 @@ export default function Admin() {
             </TabsContent>
 
             <TabsContent value="questions">
-              <AdminQuestions testType={selectedTest} highlightQuestionId={linkQuestionId} />
+              <AdminQuestions testType={adminExamType} highlightQuestionId={linkQuestionId} />
             </TabsContent>
           </Tabs>
         </div>
