@@ -1,13 +1,15 @@
-import { useState, useMemo, useCallback } from "react";
-import { ArrowLeft, RotateCcw, Shuffle, ChevronLeft, ChevronRight, Eye, EyeOff, CheckCircle2, XCircle } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { ArrowLeft, RotateCcw, Shuffle, ChevronLeft, ChevronRight, Eye, EyeOff, CheckCircle2, XCircle, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 type FlashcardMode = 'term-to-definition' | 'definition-to-term';
 
@@ -20,7 +22,19 @@ interface CardStats {
   unknown: Set<string>;
 }
 
+interface GlossaryProgress {
+  id: string;
+  user_id: string;
+  term_id: string;
+  mastered: boolean;
+  times_seen: number;
+  times_correct: number;
+  last_seen_at: string;
+}
+
 export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<FlashcardMode>('term-to-definition');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -28,7 +42,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
   const [stats, setStats] = useState<CardStats>({ known: new Set(), unknown: new Set() });
   const [hasStarted, setHasStarted] = useState(false);
 
-  const { data: terms = [], isLoading } = useQuery({
+  const { data: terms = [], isLoading: termsLoading } = useQuery({
     queryKey: ['glossary-terms'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,6 +52,63 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
       
       if (error) throw error;
       return data;
+    }
+  });
+
+  const { data: progress = [], isLoading: progressLoading } = useQuery({
+    queryKey: ['glossary-progress', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('glossary_progress')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      return data as GlossaryProgress[];
+    },
+    enabled: !!user?.id
+  });
+
+  const masteredTermIds = useMemo(() => {
+    return new Set(progress.filter(p => p.mastered).map(p => p.term_id));
+  }, [progress]);
+
+  const progressMap = useMemo(() => {
+    return new Map(progress.map(p => [p.term_id, p]));
+  }, [progress]);
+
+  const upsertProgress = useMutation({
+    mutationFn: async ({ termId, isCorrect }: { termId: string; isCorrect: boolean }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      
+      const existing = progressMap.get(termId);
+      const newTimesSeen = (existing?.times_seen || 0) + 1;
+      const newTimesCorrect = (existing?.times_correct || 0) + (isCorrect ? 1 : 0);
+      // Mark as mastered if correct 3+ times with 75%+ accuracy
+      const newMastered = newTimesCorrect >= 3 && (newTimesCorrect / newTimesSeen) >= 0.75;
+
+      const { error } = await supabase
+        .from('glossary_progress')
+        .upsert({
+          user_id: user.id,
+          term_id: termId,
+          times_seen: newTimesSeen,
+          times_correct: newTimesCorrect,
+          mastered: newMastered,
+          last_seen_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,term_id'
+        });
+
+      if (error) throw error;
+      return { termId, mastered: newMastered };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['glossary-progress', user?.id] });
+      if (data.mastered) {
+        toast.success('Term mastered!', { icon: '🎯' });
+      }
     }
   });
 
@@ -82,6 +153,12 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
       newUnknown.delete(currentTerm.id);
       return { known: newKnown, unknown: newUnknown };
     });
+    
+    // Save progress to database
+    if (user?.id) {
+      upsertProgress.mutate({ termId: currentTerm.id, isCorrect: true });
+    }
+    
     handleNext();
   };
 
@@ -94,14 +171,22 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
       newKnown.delete(currentTerm.id);
       return { known: newKnown, unknown: newUnknown };
     });
+    
+    // Save progress to database
+    if (user?.id) {
+      upsertProgress.mutate({ termId: currentTerm.id, isCorrect: false });
+    }
+    
     handleNext();
   };
 
-  const progress = shuffledIndices.length > 0 
+  const sessionProgress = shuffledIndices.length > 0 
     ? ((stats.known.size + stats.unknown.size) / shuffledIndices.length) * 100 
     : 0;
 
   const isComplete = hasStarted && currentIndex === shuffledIndices.length - 1 && (stats.known.has(currentTerm?.id || '') || stats.unknown.has(currentTerm?.id || ''));
+
+  const isLoading = termsLoading || progressLoading;
 
   if (isLoading) {
     return (
@@ -113,6 +198,9 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
 
   // Mode selection / Start screen
   if (!hasStarted) {
+    const totalMastered = masteredTermIds.size;
+    const masteryPercentage = terms.length > 0 ? Math.round((totalMastered / terms.length) * 100) : 0;
+
     return (
       <div className="flex flex-col h-full max-w-2xl mx-auto">
         <Button variant="ghost" onClick={onBack} className="self-start mb-6 gap-2">
@@ -122,9 +210,28 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
 
         <div className="flex-1 flex flex-col items-center justify-center">
           <h1 className="text-2xl font-bold text-foreground mb-2">Glossary Flashcards</h1>
-          <p className="text-muted-foreground mb-8 text-center">
+          <p className="text-muted-foreground mb-4 text-center">
             {terms.length} terms available • Choose your study mode
           </p>
+
+          {/* Mastery Progress */}
+          {user && (
+            <Card className="w-full max-w-md mb-6 bg-primary/5 border-primary/20">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-primary" />
+                    <span className="font-medium text-sm">Your Progress</span>
+                  </div>
+                  <Badge variant="secondary">{totalMastered} / {terms.length} mastered</Badge>
+                </div>
+                <Progress value={masteryPercentage} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Master a term by answering it correctly 3+ times with 75%+ accuracy
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="grid gap-4 w-full max-w-md mb-8">
             <Card 
@@ -183,6 +290,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
     const unknownCount = stats.unknown.size;
     const total = knownCount + unknownCount;
     const percentage = total > 0 ? Math.round((knownCount / total) * 100) : 0;
+    const totalMastered = masteredTermIds.size;
 
     return (
       <div className="flex flex-col h-full max-w-2xl mx-auto">
@@ -198,7 +306,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
             You reviewed all {total} cards
           </p>
 
-          <div className="grid grid-cols-2 gap-4 w-full max-w-xs mb-8">
+          <div className="grid grid-cols-2 gap-4 w-full max-w-xs mb-6">
             <Card className="bg-green-500/10 border-green-500/30">
               <CardContent className="py-4 text-center">
                 <div className="text-3xl font-bold text-green-500">{knownCount}</div>
@@ -213,9 +321,21 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
             </Card>
           </div>
 
-          <p className="text-lg font-semibold text-foreground mb-6">
-            Score: {percentage}%
+          <p className="text-lg font-semibold text-foreground mb-2">
+            Session Score: {percentage}%
           </p>
+
+          {user && (
+            <Card className="w-full max-w-xs mb-6 bg-primary/5 border-primary/20">
+              <CardContent className="py-3 text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Trophy className="w-4 h-4 text-primary" />
+                  <span className="font-medium text-sm">Total Mastered</span>
+                </div>
+                <div className="text-2xl font-bold text-primary">{totalMastered} / {terms.length}</div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="flex gap-3">
             <Button variant="outline" onClick={onBack} className="gap-2">
@@ -237,6 +357,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
   const backContent = mode === 'term-to-definition' ? currentTerm?.definition : currentTerm?.term;
   const frontLabel = mode === 'term-to-definition' ? 'Term' : 'Definition';
   const backLabel = mode === 'term-to-definition' ? 'Definition' : 'Term';
+  const isMastered = currentTerm ? masteredTermIds.has(currentTerm.id) : false;
 
   return (
     <div className="flex flex-col h-full max-w-2xl mx-auto">
@@ -247,6 +368,12 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
           Back
         </Button>
         <div className="flex items-center gap-2">
+          {isMastered && (
+            <Badge variant="default" className="bg-primary gap-1">
+              <Trophy className="w-3 h-3" />
+              Mastered
+            </Badge>
+          )}
           <Badge variant="outline" className="font-mono">
             {currentIndex + 1} / {shuffledIndices.length}
           </Badge>
@@ -262,7 +389,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
           <span className="text-green-500">{stats.known.size} known</span>
           <span className="text-red-500">{stats.unknown.size} need review</span>
         </div>
-        <Progress value={progress} className="h-2" />
+        <Progress value={sessionProgress} className="h-2" />
       </div>
 
       {/* Flashcard */}
@@ -280,7 +407,10 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
               transition={{ duration: 0.2 }}
               className="w-full h-full"
             >
-              <Card className="w-full h-full flex flex-col items-center justify-center p-6 bg-card border-2 hover:border-primary/30 transition-colors">
+              <Card className={cn(
+                "w-full h-full flex flex-col items-center justify-center p-6 border-2 hover:border-primary/30 transition-colors",
+                isMastered && "bg-primary/5 border-primary/20"
+              )}>
                 <Badge variant="secondary" className="mb-4">
                   {isFlipped ? backLabel : frontLabel}
                 </Badge>
