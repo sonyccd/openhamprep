@@ -20,13 +20,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    const hashParams = window.location.hash;
+    const hasAuthCallback = hashParams && hashParams.includes('access_token');
+    
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state changed:', event);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+        console.log('Auth state changed:', event, 'hasSession:', !!session);
+        
+        // Only update state from listener if not handling auth callback
+        // This prevents race condition where INITIAL_SESSION sets loading=false too early
+        if (!hasAuthCallback || event === 'SIGNED_IN') {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          // Only set loading false if we're not waiting for auth callback
+          if (!hasAuthCallback) {
+            setLoading(false);
+          }
+        }
         
         // Clear the hash from URL after processing auth callback
         if (event === 'SIGNED_IN' && window.location.hash) {
@@ -37,25 +49,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Handle auth callback from email verification (hash contains tokens)
     const handleAuthCallback = async () => {
-      const hashParams = window.location.hash;
-      const isEmailVerification = hashParams && hashParams.includes('access_token') && hashParams.includes('type=signup');
-      
-      if (hashParams && hashParams.includes('access_token')) {
-        // Let Supabase process the hash - getSession will do this automatically
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Auth callback error:', error);
-        }
-        if (session) {
-          setSession(session);
-          setUser(session.user);
+      if (hasAuthCallback) {
+        const isEmailVerification = hashParams.includes('type=signup');
+        console.log('Processing auth callback, isEmailVerification:', isEmailVerification);
+        
+        // Parse the hash to get tokens
+        const params = new URLSearchParams(hashParams.substring(1));
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        
+        if (accessToken && refreshToken) {
+          // Explicitly set the session with the tokens from the URL
+          const { data: { session }, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
           
-          // Show success toast for email verification
-          if (isEmailVerification) {
-            toast({
-              title: "Email verified!",
-              description: "Your email has been verified successfully. Welcome!",
-            });
+          if (error) {
+            console.error('Auth callback error:', error);
+          }
+          
+          if (session) {
+            console.log('Session set successfully, user:', session.user?.email);
+            setSession(session);
+            setUser(session.user);
+            
+            // Show success toast for email verification
+            if (isEmailVerification) {
+              toast({
+                title: "Email verified!",
+                description: "Your email has been verified successfully. Welcome!",
+              });
+            }
           }
         }
         setLoading(false);
