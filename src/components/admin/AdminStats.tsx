@@ -2,8 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, BarChart3, TrendingDown, Link as LinkIcon, AlertTriangle } from "lucide-react";
+import { Loader2, BarChart3, TrendingDown, Link as LinkIcon, AlertTriangle, ThumbsUp, ThumbsDown, FileText, MessageSquareWarning } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useExplanationFeedbackStats } from "@/hooks/useExplanationFeedback";
 
 interface AdminStatsProps {
   testType: 'technician' | 'general' | 'extra';
@@ -30,6 +31,7 @@ interface QuestionStats {
 
 export function AdminStats({ testType, onAddLinkToQuestion }: AdminStatsProps) {
   const prefix = TEST_TYPE_PREFIXES[testType];
+  const { data: feedbackStats = {} } = useExplanationFeedbackStats();
 
   // Fetch questions with their link status
   const { data: questions = [], isLoading: questionsLoading } = useQuery({
@@ -37,14 +39,15 @@ export function AdminStats({ testType, onAddLinkToQuestion }: AdminStatsProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
-        .select('id, question, subelement, question_group, links')
+        .select('id, question, subelement, question_group, links, explanation')
         .like('id', `${prefix}%`)
         .order('id');
       
       if (error) throw error;
       return data.map(q => ({
         ...q,
-        hasLinks: Array.isArray(q.links) && q.links.length > 0
+        hasLinks: Array.isArray(q.links) && q.links.length > 0,
+        hasExplanation: !!q.explanation
       }));
     },
   });
@@ -145,10 +148,34 @@ export function AdminStats({ testType, onAddLinkToQuestion }: AdminStatsProps) {
   // Overall stats
   const totalQuestions = questions.length;
   const questionsWithLinks = questions.filter(q => q.hasLinks).length;
+  const questionsWithExplanations = questions.filter(q => q.hasExplanation).length;
   const questionsWithAttempts = fullQuestionStats.filter(q => q.totalAttempts > 0).length;
   const totalAttempts = attempts.length;
   const correctAttempts = attempts.filter(a => a.is_correct).length;
   const overallCorrectRate = totalAttempts > 0 ? (correctAttempts / totalAttempts) * 100 : 0;
+
+  // Feedback stats for this test type
+  const testTypeFeedback = Object.entries(feedbackStats)
+    .filter(([questionId]) => questionId.startsWith(prefix))
+    .reduce((acc, [_, stats]) => {
+      acc.helpful += stats.helpful;
+      acc.notHelpful += stats.notHelpful;
+      return acc;
+    }, { helpful: 0, notHelpful: 0 });
+  
+  const totalFeedback = testTypeFeedback.helpful + testTypeFeedback.notHelpful;
+  const feedbackPositiveRate = totalFeedback > 0 ? (testTypeFeedback.helpful / totalFeedback) * 100 : 0;
+
+  // Questions with negative feedback
+  const questionsWithNegativeFeedback = Object.entries(feedbackStats)
+    .filter(([questionId, stats]) => questionId.startsWith(prefix) && stats.notHelpful > stats.helpful)
+    .map(([questionId, stats]) => {
+      const q = questions.find(q => q.id === questionId);
+      return q ? { ...q, ...stats } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => (b!.notHelpful - b!.helpful) - (a!.notHelpful - a!.helpful))
+    .slice(0, 10);
 
   if (isLoading) {
     return (
@@ -366,6 +393,104 @@ export function AdminStats({ testType, onAddLinkToQuestion }: AdminStatsProps) {
                 </div>
               ))}
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Explanation Feedback Stats */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquareWarning className="w-5 h-5 text-primary" />
+            Explanation Feedback
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            User feedback on explanation quality
+          </p>
+        </CardHeader>
+        <CardContent>
+          {/* Feedback Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="p-4 rounded-lg bg-secondary/50 border border-border">
+              <div className="flex items-center gap-2 mb-1">
+                <FileText className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-foreground">Explanations</span>
+              </div>
+              <div className="text-2xl font-bold text-foreground">{questionsWithExplanations}</div>
+              <p className="text-xs text-muted-foreground">
+                {totalQuestions > 0 ? ((questionsWithExplanations / totalQuestions) * 100).toFixed(0) : 0}% of questions
+              </p>
+            </div>
+
+            <div className="p-4 rounded-lg bg-success/10 border border-success/30">
+              <div className="flex items-center gap-2 mb-1">
+                <ThumbsUp className="w-4 h-4 text-success" />
+                <span className="text-sm font-medium text-foreground">Helpful</span>
+              </div>
+              <div className="text-2xl font-bold text-success">{testTypeFeedback.helpful}</div>
+              <p className="text-xs text-muted-foreground">
+                {feedbackPositiveRate.toFixed(0)}% positive rate
+              </p>
+            </div>
+
+            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30">
+              <div className="flex items-center gap-2 mb-1">
+                <ThumbsDown className="w-4 h-4 text-destructive" />
+                <span className="text-sm font-medium text-foreground">Not Helpful</span>
+              </div>
+              <div className="text-2xl font-bold text-destructive">{testTypeFeedback.notHelpful}</div>
+              <p className="text-xs text-muted-foreground">
+                {totalFeedback} total ratings
+              </p>
+            </div>
+          </div>
+
+          {/* Questions with Negative Feedback */}
+          {questionsWithNegativeFeedback.length > 0 ? (
+            <div>
+              <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+                Explanations Needing Improvement
+              </h4>
+              <div className="space-y-2">
+                {questionsWithNegativeFeedback.map((q: any) => (
+                  <div 
+                    key={q.id} 
+                    className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/5 cursor-pointer hover:bg-amber-500/10 transition-colors"
+                    onClick={() => onAddLinkToQuestion?.(q.id)}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-mono text-xs text-primary bg-primary/10 px-2 py-0.5 rounded">
+                            {q.id}
+                          </span>
+                        </div>
+                        <p className="text-sm text-foreground line-clamp-1">{q.question}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="flex items-center gap-1 text-sm text-success">
+                          <ThumbsUp className="w-3 h-3" />
+                          {q.helpful}
+                        </span>
+                        <span className="flex items-center gap-1 text-sm text-destructive">
+                          <ThumbsDown className="w-3 h-3" />
+                          {q.notHelpful}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : totalFeedback === 0 ? (
+            <p className="text-muted-foreground text-center py-4">
+              No feedback received yet
+            </p>
+          ) : (
+            <p className="text-muted-foreground text-center py-4">
+              All explanations have positive or neutral feedback!
+            </p>
           )}
         </CardContent>
       </Card>
