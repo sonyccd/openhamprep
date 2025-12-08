@@ -21,6 +21,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ProfileModal } from "@/components/ProfileModal";
 import { useState } from "react";
 
 type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice' | 'review-test';
@@ -48,6 +49,8 @@ interface DashboardSidebarProps {
   bookmarkCount: number;
   isTestAvailable: boolean;
   userInfo?: UserInfo;
+  userId?: string;
+  onProfileUpdate?: () => void;
 }
 
 export function DashboardSidebar({
@@ -60,8 +63,11 @@ export function DashboardSidebar({
   bookmarkCount,
   isTestAvailable,
   userInfo,
+  userId,
+  onProfileUpdate,
 }: DashboardSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   const getInitials = () => {
     if (userInfo?.displayName) {
@@ -219,13 +225,16 @@ export function DashboardSidebar({
           !isMobile && isCollapsed && "flex justify-center"
         )}>
           {(isMobile || !isCollapsed) ? (
-            <div className="flex items-center gap-3">
+            <button
+              onClick={() => setProfileModalOpen(true)}
+              className="w-full flex items-center gap-3 p-2 -m-2 rounded-lg hover:bg-secondary transition-colors"
+            >
               <Avatar className="h-9 w-9 shrink-0">
                 <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
                   {getInitials()}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 text-left">
                 <p className="text-sm font-medium text-foreground truncate">
                   {userInfo?.displayName || 'User'}
                 </p>
@@ -233,15 +242,20 @@ export function DashboardSidebar({
                   {userInfo?.email || ''}
                 </p>
               </div>
-            </div>
+            </button>
           ) : (
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <Avatar className="h-8 w-8 cursor-default">
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                    {getInitials()}
-                  </AvatarFallback>
-                </Avatar>
+                <button
+                  onClick={() => setProfileModalOpen(true)}
+                  className="rounded-full hover:ring-2 hover:ring-primary/20 transition-all"
+                >
+                  <Avatar className="h-8 w-8 cursor-pointer">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                      {getInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
               </TooltipTrigger>
               <TooltipContent side="right" className="bg-popover border-border">
                 <p className="font-medium">{userInfo?.displayName || 'User'}</p>
@@ -307,6 +321,17 @@ export function DashboardSidebar({
 
   return (
     <>
+      {/* Profile Modal */}
+      {userId && userInfo && onProfileUpdate && (
+        <ProfileModal
+          open={profileModalOpen}
+          onOpenChange={setProfileModalOpen}
+          userInfo={{ displayName: userInfo.displayName, email: userInfo.email }}
+          userId={userId}
+          onProfileUpdate={onProfileUpdate}
+        />
+      )}
+
       {/* Mobile Hamburger Button */}
       <div className="md:hidden fixed top-4 left-4 z-50">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
