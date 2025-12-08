@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminGlossary } from "@/components/admin/AdminGlossary";
 import { AdminQuestions } from "@/components/admin/AdminQuestions";
 import { AdminLinks } from "@/components/admin/AdminLinks";
+import { AdminStats } from "@/components/admin/AdminStats";
 import { Loader2, ShieldAlert } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { TestType } from "@/components/DashboardSidebar";
@@ -60,12 +61,17 @@ export default function Admin() {
             <p className="text-muted-foreground mt-2">Manage glossary terms, questions, and learning resources</p>
           </div>
 
-          <Tabs defaultValue="glossary" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8">
+          <Tabs defaultValue="stats" className="w-full">
+            <TabsList className="grid w-full grid-cols-4 mb-8">
+              <TabsTrigger value="stats">Statistics</TabsTrigger>
               <TabsTrigger value="glossary">Glossary Terms</TabsTrigger>
               <TabsTrigger value="questions">Questions</TabsTrigger>
               <TabsTrigger value="links">Question Links</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="stats">
+              <AdminStats testType={selectedTest} />
+            </TabsContent>
 
             <TabsContent value="glossary">
               <AdminGlossary />
