@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Question, useQuestions } from "@/hooks/useQuestions";
 import { QuestionCard } from "@/components/QuestionCard";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, ArrowRight, RotateCcw, Home, Trophy, XCircle, Loader2, Calendar } from "lucide-react";
+import { ArrowLeft, ArrowRight, Trophy, XCircle, Loader2, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -144,13 +144,6 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
   return (
     <div className="min-h-screen bg-background py-8 px-4 radio-wave-bg">
       <div className="max-w-2xl mx-auto">
-        {/* Back Button */}
-        <div className="mb-6">
-          <Button variant="ghost" onClick={onBack} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </Button>
-        </div>
 
         {/* Result Header */}
         <motion.div
@@ -214,19 +207,6 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
           <p className="text-sm text-muted-foreground mt-4">
             Passing score: 26 out of 35 (74%)
           </p>
-        </motion.div>
-
-        {/* Action Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="flex flex-col sm:flex-row gap-4 mb-8"
-        >
-          <Button onClick={onBack} variant="outline" className="flex-1 gap-2">
-            <Home className="w-4 h-4" />
-            Back to Dashboard
-          </Button>
         </motion.div>
 
         {/* Review Section */}

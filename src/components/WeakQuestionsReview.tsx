@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
-import { ArrowLeft, AlertTriangle, SkipForward, RotateCcw, Loader2, CheckCircle } from "lucide-react";
+import { AlertTriangle, SkipForward, RotateCcw, Loader2, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface WeakQuestionsReviewProps {
@@ -123,11 +123,7 @@ export function WeakQuestionsReview({ weakQuestionIds, onBack }: WeakQuestionsRe
     <div className="min-h-screen bg-background py-8 px-4">
       {/* Header */}
       <div className="max-w-3xl mx-auto mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={onBack} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
+        <div className="flex items-center justify-end mb-6">
           <div className="flex items-center gap-2 text-foreground">
             <AlertTriangle className="w-5 h-5" />
             <span className="font-mono font-semibold">Review Weak Areas</span>

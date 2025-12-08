@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useBookmarks } from "@/hooks/useBookmarks";
-import { ArrowLeft, Bookmark, Loader2, Trash2, MessageSquare } from "lucide-react";
+import { Bookmark, Loader2, Trash2, MessageSquare, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -110,11 +110,7 @@ export function BookmarkedQuestions({ onBack }: BookmarkedQuestionsProps) {
     <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <Button variant="ghost" onClick={onBack} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
+        <div className="flex items-center justify-end mb-8">
           <div className="flex items-center gap-2 text-foreground">
             <Bookmark className="w-5 h-5" />
             <span className="font-mono font-semibold">Bookmarked Questions</span>

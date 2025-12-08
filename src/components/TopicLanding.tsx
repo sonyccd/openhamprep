@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Question, LinkData } from "@/hooks/useQuestions";
 import { LinkPreview } from "@/components/LinkPreview";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BookOpen, Play, ExternalLink } from "lucide-react";
+import { BookOpen, Play, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -73,13 +73,6 @@ export function TopicLanding({
   return (
     <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <Button variant="ghost" onClick={onBack} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            All Topics
-          </Button>
-        </div>
 
         {/* Topic Header */}
         <motion.div
