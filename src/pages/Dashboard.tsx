@@ -131,6 +131,22 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
+  // Fetch glossary streak from profile
+  const { data: glossaryStreak } = useQuery({
+    queryKey: ['profile-glossary-streak', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('glossary_current_streak, glossary_best_streak, glossary_last_study_date')
+        .eq('id', user!.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
   // Calculate weak questions (questions answered incorrectly more than once)
   const weakQuestionIds = questionAttempts
     ? Object.entries(
@@ -525,7 +541,7 @@ export default function Dashboard() {
                       style={{ width: `${masteryPercentage}%` }}
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="grid grid-cols-4 gap-2 text-center">
                     <div className="bg-primary/10 rounded-lg p-2">
                       <div className="text-lg font-mono font-bold text-primary">{masteredTerms}</div>
                       <div className="text-xs text-muted-foreground">Mastered</div>
@@ -537,6 +553,25 @@ export default function Dashboard() {
                     <div className="bg-secondary rounded-lg p-2">
                       <div className="text-lg font-mono font-bold text-muted-foreground">{unseenTerms}</div>
                       <div className="text-xs text-muted-foreground">Unseen</div>
+                    </div>
+                    <div className={cn(
+                      "rounded-lg p-2",
+                      (glossaryStreak?.glossary_current_streak || 0) > 0 
+                        ? "bg-orange-500/10" 
+                        : "bg-secondary"
+                    )}>
+                      <div className={cn(
+                        "text-lg font-mono font-bold flex items-center justify-center gap-1",
+                        (glossaryStreak?.glossary_current_streak || 0) > 0 
+                          ? "text-orange-500" 
+                          : "text-muted-foreground"
+                      )}>
+                        {glossaryStreak?.glossary_current_streak || 0}
+                        {(glossaryStreak?.glossary_current_streak || 0) > 0 && (
+                          <Flame className="w-4 h-4" />
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">Day Streak</div>
                     </div>
                   </div>
                 </>
