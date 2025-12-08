@@ -51,7 +51,7 @@ export default function Admin() {
 
   const handleAddLinkToQuestion = (questionId: string) => {
     setLinkQuestionId(questionId);
-    setActiveTab("links");
+    setActiveTab("questions");
   };
 
   return (
@@ -70,7 +70,7 @@ export default function Admin() {
 
           <Tabs value={activeTab} onValueChange={(value) => {
             setActiveTab(value);
-            if (value !== "links") setLinkQuestionId("");
+            if (value !== "questions") setLinkQuestionId("");
           }} className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-8">
               <TabsTrigger value="stats">Statistics</TabsTrigger>
@@ -88,7 +88,7 @@ export default function Admin() {
             </TabsContent>
 
             <TabsContent value="questions">
-              <AdminQuestions testType={selectedTest} />
+              <AdminQuestions testType={selectedTest} highlightQuestionId={linkQuestionId} />
             </TabsContent>
 
             <TabsContent value="links">

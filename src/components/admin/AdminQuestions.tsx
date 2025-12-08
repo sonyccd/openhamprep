@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, Search, Loader2, Pencil } from "lucide-react";
+import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +27,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+
+interface LinkData {
+  url: string;
+  title: string;
+  description: string;
+  image: string;
+  type: 'video' | 'article' | 'website';
+  siteName: string;
+  unfurledAt?: string;
+}
 
 interface Question {
   id: string;
@@ -35,10 +47,12 @@ interface Question {
   correct_answer: number;
   subelement: string;
   question_group: string;
+  links?: LinkData[];
 }
 
 interface AdminQuestionsProps {
   testType: 'technician' | 'general' | 'extra';
+  highlightQuestionId?: string;
 }
 
 const TEST_TYPE_PREFIXES = {
@@ -47,7 +61,7 @@ const TEST_TYPE_PREFIXES = {
   extra: 'E',
 };
 
-export function AdminQuestions({ testType }: AdminQuestionsProps) {
+export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestionsProps) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -67,22 +81,36 @@ export function AdminQuestions({ testType }: AdminQuestionsProps) {
   const [editCorrectAnswer, setEditCorrectAnswer] = useState("0");
   const [editSubelement, setEditSubelement] = useState("");
   const [editQuestionGroup, setEditQuestionGroup] = useState("");
+  const [editLinks, setEditLinks] = useState<LinkData[]>([]);
+  const [newLinkUrl, setNewLinkUrl] = useState("");
+  const [isAddingLink, setIsAddingLink] = useState(false);
 
   const { data: questions = [], isLoading } = useQuery({
-    queryKey: ['admin-questions'],
+    queryKey: ['admin-questions-full'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
-        .select('id, question, options, correct_answer, subelement, question_group')
+        .select('id, question, options, correct_answer, subelement, question_group, links')
         .order('id', { ascending: true });
       
       if (error) throw error;
       return data.map(q => ({
         ...q,
-        options: q.options as string[]
+        options: q.options as string[],
+        links: (Array.isArray(q.links) ? q.links : []) as unknown as LinkData[]
       })) as Question[];
     },
   });
+
+  // Auto-open edit dialog when highlightQuestionId is set
+  useEffect(() => {
+    if (highlightQuestionId && questions.length > 0) {
+      const question = questions.find(q => q.id === highlightQuestionId);
+      if (question) {
+        handleEditClick(question);
+      }
+    }
+  }, [highlightQuestionId, questions]);
 
   const addQuestion = useMutation({
     mutationFn: async (question: Omit<Question, 'links'>) => {
@@ -101,7 +129,8 @@ export function AdminQuestions({ testType }: AdminQuestionsProps) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-questions-full'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats-questions'] });
       queryClient.invalidateQueries({ queryKey: ['questions'] });
       resetForm();
       setIsAddDialogOpen(false);
@@ -128,7 +157,8 @@ export function AdminQuestions({ testType }: AdminQuestionsProps) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-questions-full'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats-questions'] });
       queryClient.invalidateQueries({ queryKey: ['questions'] });
       setEditingQuestion(null);
       toast.success("Question updated successfully");
@@ -148,7 +178,8 @@ export function AdminQuestions({ testType }: AdminQuestionsProps) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-questions-full'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats-questions'] });
       queryClient.invalidateQueries({ queryKey: ['questions'] });
       toast.success("Question deleted successfully");
     },
@@ -156,6 +187,75 @@ export function AdminQuestions({ testType }: AdminQuestionsProps) {
       toast.error("Failed to delete question: " + error.message);
     },
   });
+
+  const addLinkToQuestion = async () => {
+    if (!editingQuestion || !newLinkUrl.trim()) {
+      toast.error("Please enter a URL");
+      return;
+    }
+
+    setIsAddingLink(true);
+    try {
+      const response = await supabase.functions.invoke('manage-question-links', {
+        body: {
+          action: 'add',
+          questionId: editingQuestion.id,
+          url: newLinkUrl.trim()
+        }
+      });
+
+      if (response.error) throw response.error;
+
+      queryClient.invalidateQueries({ queryKey: ['admin-questions-full'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-questions-with-links'] });
+      queryClient.invalidateQueries({ queryKey: ['questions'] });
+      
+      // Refresh the edit dialog with updated links
+      const { data } = await supabase
+        .from('questions')
+        .select('links')
+        .eq('id', editingQuestion.id)
+        .single();
+      
+      if (data) {
+        setEditLinks((Array.isArray(data.links) ? data.links : []) as unknown as LinkData[]);
+      }
+      
+      setNewLinkUrl("");
+      toast.success("Link added successfully");
+    } catch (error: any) {
+      toast.error("Failed to add link: " + error.message);
+    } finally {
+      setIsAddingLink(false);
+    }
+  };
+
+  const removeLinkFromQuestion = async (url: string) => {
+    if (!editingQuestion) return;
+
+    try {
+      const response = await supabase.functions.invoke('manage-question-links', {
+        body: {
+          action: 'remove',
+          questionId: editingQuestion.id,
+          url
+        }
+      });
+
+      if (response.error) throw response.error;
+
+      queryClient.invalidateQueries({ queryKey: ['admin-questions-full'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-questions-with-links'] });
+      queryClient.invalidateQueries({ queryKey: ['questions'] });
+      
+      setEditLinks(prev => prev.filter(l => l.url !== url));
+      toast.success("Link removed successfully");
+    } catch (error: any) {
+      toast.error("Failed to remove link: " + error.message);
+    }
+  };
 
   const resetForm = () => {
     setNewId("");
@@ -202,6 +302,8 @@ export function AdminQuestions({ testType }: AdminQuestionsProps) {
     setEditCorrectAnswer(q.correct_answer.toString());
     setEditSubelement(q.subelement);
     setEditQuestionGroup(q.question_group);
+    setEditLinks(q.links || []);
+    setNewLinkUrl("");
   };
 
   const updateEditOption = (index: number, value: string) => {
@@ -231,7 +333,14 @@ export function AdminQuestions({ testType }: AdminQuestionsProps) {
       <Dialog open={!!editingQuestion} onOpenChange={(open) => !open && setEditingQuestion(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Question: {editingQuestion?.id}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              Edit Question: {editingQuestion?.id}
+              {highlightQuestionId === editingQuestion?.id && (
+                <Badge variant="secondary" className="bg-amber-500/20 text-amber-500">
+                  From Stats
+                </Badge>
+              )}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
@@ -293,6 +402,98 @@ export function AdminQuestions({ testType }: AdminQuestionsProps) {
                 </SelectContent>
               </Select>
             </div>
+
+            <Separator />
+
+            {/* Learning Resources Section */}
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <LinkIcon className="w-4 h-4" />
+                Learning Resources ({editLinks.length})
+              </Label>
+              
+              {/* Add new link */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="https://..."
+                  value={newLinkUrl}
+                  onChange={(e) => setNewLinkUrl(e.target.value)}
+                  className="flex-1"
+                />
+                <Button 
+                  onClick={addLinkToQuestion} 
+                  disabled={isAddingLink}
+                  size="sm"
+                >
+                  {isAddingLink ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+
+              {/* Existing links */}
+              {editLinks.length > 0 ? (
+                <div className="space-y-2">
+                  {editLinks.map((link, index) => (
+                    <div 
+                      key={index}
+                      className="flex items-center justify-between gap-2 p-2 rounded bg-secondary/30 border border-border"
+                    >
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${
+                          link.type === 'video' ? 'bg-red-500/20 text-red-400' :
+                          link.type === 'article' ? 'bg-blue-500/20 text-blue-400' :
+                          'bg-secondary text-muted-foreground'
+                        }`}>
+                          {link.type}
+                        </span>
+                        <a 
+                          href={link.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-foreground hover:text-primary truncate flex items-center gap-1"
+                        >
+                          {link.title || link.url}
+                          <ExternalLink className="w-3 h-3 shrink-0" />
+                        </a>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive h-7 w-7 shrink-0">
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove Link</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Remove this learning resource from the question?
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => removeLinkFromQuestion(link.url)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Remove
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">
+                  No learning resources attached yet
+                </p>
+              )}
+            </div>
+
+            <Separator />
             
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setEditingQuestion(null)}>
@@ -436,7 +637,11 @@ export function AdminQuestions({ testType }: AdminQuestionsProps) {
               {filteredQuestions.map((q) => (
                 <div 
                   key={q.id} 
-                  className="flex items-start justify-between p-4 rounded-lg border border-border bg-card hover:bg-secondary/30 transition-colors"
+                  className={`flex items-start justify-between p-4 rounded-lg border bg-card hover:bg-secondary/30 transition-colors ${
+                    highlightQuestionId === q.id 
+                      ? 'border-amber-500 bg-amber-500/5' 
+                      : 'border-border'
+                  }`}
                 >
                   <div className="flex-1 min-w-0 mr-4">
                     <div className="flex items-center gap-2 mb-1">
@@ -446,6 +651,12 @@ export function AdminQuestions({ testType }: AdminQuestionsProps) {
                       <span className="text-xs text-muted-foreground">
                         {q.subelement} / {q.question_group}
                       </span>
+                      {q.links && q.links.length > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          <LinkIcon className="w-3 h-3 mr-1" />
+                          {q.links.length}
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm text-foreground line-clamp-2">{q.question}</p>
                   </div>
@@ -486,7 +697,9 @@ export function AdminQuestions({ testType }: AdminQuestionsProps) {
                 </div>
               ))}
               {filteredQuestions.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">No questions found</p>
+                <p className="text-center text-muted-foreground py-8">
+                  {searchTerm ? "No matching questions found" : "No questions found"}
+                </p>
               )}
             </div>
           )}
