@@ -35,7 +35,17 @@ interface QuestionWithLinks {
   links: LinkData[];
 }
 
-export function AdminLinks() {
+interface AdminLinksProps {
+  testType: 'technician' | 'general' | 'extra';
+}
+
+const TEST_TYPE_PREFIXES = {
+  technician: 'T',
+  general: 'G',
+  extra: 'E',
+};
+
+export function AdminLinks({ testType }: AdminLinksProps) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedQuestionId, setSelectedQuestionId] = useState("");
@@ -110,7 +120,9 @@ export function AdminLinks() {
     },
   });
 
-  const questionsWithLinks = questions.filter(q => q.links && q.links.length > 0);
+  const prefix = TEST_TYPE_PREFIXES[testType];
+  const testTypeQuestions = questions.filter(q => q.id.startsWith(prefix));
+  const questionsWithLinks = testTypeQuestions.filter(q => q.links && q.links.length > 0);
   
   const filteredQuestions = questionsWithLinks.filter(q => 
     q.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -164,7 +176,7 @@ export function AdminLinks() {
       {/* Questions with Links */}
       <Card>
         <CardHeader>
-          <CardTitle>Questions with Links ({questionsWithLinks.length})</CardTitle>
+          <CardTitle>{testType.charAt(0).toUpperCase() + testType.slice(1)} Questions with Links ({questionsWithLinks.length})</CardTitle>
           <div className="relative mt-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input

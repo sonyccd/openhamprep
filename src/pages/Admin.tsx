@@ -72,11 +72,11 @@ export default function Admin() {
             </TabsContent>
 
             <TabsContent value="questions">
-              <AdminQuestions />
+              <AdminQuestions testType={selectedTest} />
             </TabsContent>
 
             <TabsContent value="links">
-              <AdminLinks />
+              <AdminLinks testType={selectedTest} />
             </TabsContent>
           </Tabs>
         </div>

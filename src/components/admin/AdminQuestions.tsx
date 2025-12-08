@@ -37,7 +37,17 @@ interface Question {
   question_group: string;
 }
 
-export function AdminQuestions() {
+interface AdminQuestionsProps {
+  testType: 'technician' | 'general' | 'extra';
+}
+
+const TEST_TYPE_PREFIXES = {
+  technician: 'T',
+  general: 'G',
+  extra: 'E',
+};
+
+export function AdminQuestions({ testType }: AdminQuestionsProps) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -156,7 +166,10 @@ export function AdminQuestions() {
     setNewQuestionGroup("");
   };
 
-  const filteredQuestions = questions.filter(q => 
+  const prefix = TEST_TYPE_PREFIXES[testType];
+  const testTypeQuestions = questions.filter(q => q.id.startsWith(prefix));
+  
+  const filteredQuestions = testTypeQuestions.filter(q => 
     q.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     q.question.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -305,7 +318,7 @@ export function AdminQuestions() {
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Plus className="w-5 h-5" />
-              Questions ({questions.length})
+              {testType.charAt(0).toUpperCase() + testType.slice(1)} Questions ({testTypeQuestions.length})
             </span>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
