@@ -121,10 +121,7 @@ export function PracticeTest({
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             
-            <div className="flex items-center gap-2 text-foreground">
-              <Radio className="w-5 h-5" />
-              <span className="font-mono font-semibold">Practice Test</span>
-            </div>
+            
           </div>
 
           {/* Start Card */}
