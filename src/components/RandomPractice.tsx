@@ -3,15 +3,20 @@ import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
-import { Zap, SkipForward, RotateCcw, Loader2, Flame, Trophy } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { Zap, SkipForward, RotateCcw, Loader2, Flame, Trophy, Award } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+
 interface RandomPracticeProps {
   onBack: () => void;
 }
+
 export function RandomPractice({
   onBack
 }: RandomPracticeProps) {
+  const { user } = useAuth();
   const {
     data: allQuestions,
     isLoading,
@@ -29,6 +34,7 @@ export function RandomPractice({
   });
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
+  const [allTimeBestStreak, setAllTimeBestStreak] = useState(0);
   const [showStreakCelebration, setShowStreakCelebration] = useState(false);
   const [celebrationMilestone, setCelebrationMilestone] = useState(0);
   const [askedIds, setAskedIds] = useState<string[]>([]);
@@ -44,6 +50,36 @@ export function RandomPractice({
       case 25: return "LEGENDARY! 25 streak!";
       default: return `${milestone} streak!`;
     }
+  };
+
+  // Load all-time best streak from database
+  useEffect(() => {
+    const loadBestStreak = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('best_streak')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (data && !error) {
+        setAllTimeBestStreak(data.best_streak || 0);
+        setBestStreak(data.best_streak || 0);
+      }
+    };
+    
+    loadBestStreak();
+  }, [user]);
+
+  // Save best streak to database when it's beaten
+  const saveBestStreak = async (newBestStreak: number) => {
+    if (!user) return;
+    
+    await supabase
+      .from('profiles')
+      .update({ best_streak: newBestStreak })
+      .eq('id', user.id);
   };
   const getRandomQuestion = useCallback((excludeIds: string[] = []): Question | null => {
     if (!allQuestions || allQuestions.length === 0) return null;
@@ -95,6 +131,20 @@ export function RandomPractice({
         const newStreak = prev + 1;
         if (newStreak > bestStreak) {
           setBestStreak(newStreak);
+          
+          // Save to database if it beats the all-time best
+          if (newStreak > allTimeBestStreak) {
+            setAllTimeBestStreak(newStreak);
+            saveBestStreak(newStreak);
+            
+            // Show special message for new all-time best
+            if (newStreak > 1) {
+              toast.success(`New all-time best: ${newStreak} streak!`, {
+                icon: <Award className="w-5 h-5 text-primary" />,
+                duration: 3000,
+              });
+            }
+          }
         }
         
         // Check for milestone celebration
@@ -141,7 +191,7 @@ export function RandomPractice({
       total: 0
     });
     setStreak(0);
-    setBestStreak(0);
+    setBestStreak(allTimeBestStreak); // Reset to all-time best, not zero
   };
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
   return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8">
@@ -193,6 +243,11 @@ export function RandomPractice({
                 <p className={`text-2xl font-mono font-bold ${streak > 0 ? 'text-primary' : 'text-muted-foreground'}`}>{streak}</p>
               </motion.div>
               <p className="text-xs text-muted-foreground">Streak</p>
+              {allTimeBestStreak > 0 && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Best: {allTimeBestStreak}
+                </p>
+              )}
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
