@@ -329,7 +329,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Edit Dialog */}
       <Dialog open={!!editingQuestion} onOpenChange={(open) => !open && setEditingQuestion(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -515,8 +515,8 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
       </Dialog>
 
       {/* Add New Question */}
-      <Card>
-        <CardHeader>
+      <Card className="flex-1 flex flex-col min-h-0">
+        <CardHeader className="shrink-0">
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Plus className="w-5 h-5" />
@@ -631,13 +631,13 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
             />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 min-h-0 overflow-hidden">
           {isLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="space-y-3 max-h-[calc(100vh-400px)] min-h-[200px] overflow-y-auto pb-8">
+            <div className="space-y-3 h-full overflow-y-auto pb-4">
               {filteredQuestions.map((q) => (
                 <div 
                   key={q.id} 

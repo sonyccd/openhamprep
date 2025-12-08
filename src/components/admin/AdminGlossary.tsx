@@ -147,7 +147,7 @@ export function AdminGlossary() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Edit Dialog */}
       <Dialog open={!!editingTerm} onOpenChange={(open) => !open && setEditingTerm(null)}>
         <DialogContent className="max-w-lg">
@@ -227,8 +227,8 @@ export function AdminGlossary() {
       </Dialog>
 
       {/* Search and List */}
-      <Card>
-        <CardHeader>
+      <Card className="flex-1 flex flex-col min-h-0">
+        <CardHeader className="shrink-0">
           <CardTitle className="flex items-center justify-between">
             <span>Glossary Terms ({terms.length})</span>
             <div className="flex items-center gap-2">
@@ -249,13 +249,13 @@ export function AdminGlossary() {
             />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 min-h-0 overflow-hidden">
           {isLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="space-y-3 max-h-[calc(100vh-400px)] min-h-[200px] overflow-y-auto pb-8">
+            <div className="space-y-3 h-full overflow-y-auto pb-4">
               {filteredTerms.map((term) => (
                 <div 
                   key={term.id} 
