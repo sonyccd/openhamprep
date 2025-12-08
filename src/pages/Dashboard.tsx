@@ -41,7 +41,6 @@ import { RandomPractice } from '@/components/RandomPractice';
 import { WeakQuestionsReview } from '@/components/WeakQuestionsReview';
 import { BookmarkedQuestions } from '@/components/BookmarkedQuestions';
 import { SubelementPractice } from '@/components/SubelementPractice';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { TestResultReview } from '@/components/TestResultReview';
 import { AppLayout } from '@/components/AppLayout';
 
@@ -285,7 +284,6 @@ export default function Dashboard() {
                 </span>
               )}
             </div>
-            <ThemeToggle />
           </div>
 
           {/* Test Readiness Indicator */}
