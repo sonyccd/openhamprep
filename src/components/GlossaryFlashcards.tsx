@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { ArrowLeft, RotateCcw, Shuffle, ChevronLeft, ChevronRight, Eye, EyeOff, CheckCircle2, XCircle, Trophy } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { ArrowLeft, RotateCcw, Shuffle, ChevronLeft, ChevronRight, Eye, EyeOff, CheckCircle2, XCircle, Trophy, Brain, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 type FlashcardMode = 'term-to-definition' | 'definition-to-term';
+type StudyMode = 'all' | 'smart' | 'weak';
 
 interface GlossaryFlashcardsProps {
   onBack: () => void;
@@ -32,13 +33,53 @@ interface GlossaryProgress {
   last_seen_at: string;
 }
 
+interface GlossaryTerm {
+  id: string;
+  term: string;
+  definition: string;
+  created_at: string;
+}
+
+// Calculate priority score for spaced repetition (lower = higher priority)
+function calculatePriority(progress: GlossaryProgress | undefined, now: Date): number {
+  if (!progress) {
+    // Never seen - highest priority
+    return 0;
+  }
+
+  const lastSeen = new Date(progress.last_seen_at);
+  const hoursSinceLastSeen = (now.getTime() - lastSeen.getTime()) / (1000 * 60 * 60);
+  
+  // Calculate accuracy (0-1)
+  const accuracy = progress.times_seen > 0 
+    ? progress.times_correct / progress.times_seen 
+    : 0;
+
+  // If mastered, deprioritize significantly
+  if (progress.mastered) {
+    return 1000 + hoursSinceLastSeen; // Still bring back after long time
+  }
+
+  // Priority factors:
+  // - Lower accuracy = higher priority (multiply by inverse)
+  // - More time since last seen = higher priority
+  // - Fewer times seen = higher priority
+  const accuracyFactor = 1 - accuracy; // 0 (perfect) to 1 (always wrong)
+  const timeFactor = Math.min(hoursSinceLastSeen / 24, 30); // Cap at 30 days
+  const exposureFactor = Math.max(0, 10 - progress.times_seen) / 10; // Less exposure = higher priority
+
+  // Combine factors (lower score = higher priority)
+  return 100 - (accuracyFactor * 40 + timeFactor * 30 + exposureFactor * 30);
+}
+
 export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<FlashcardMode>('term-to-definition');
+  const [studyMode, setStudyMode] = useState<StudyMode>('smart');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
+  const [orderedTerms, setOrderedTerms] = useState<GlossaryTerm[]>([]);
   const [stats, setStats] = useState<CardStats>({ known: new Set(), unknown: new Set() });
   const [hasStarted, setHasStarted] = useState(false);
 
@@ -51,7 +92,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
         .order('term', { ascending: true });
       
       if (error) throw error;
-      return data;
+      return data as GlossaryTerm[];
     }
   });
 
@@ -78,6 +119,26 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
     return new Map(progress.map(p => [p.term_id, p]));
   }, [progress]);
 
+  // Calculate weak terms (low accuracy, not mastered)
+  const weakTermIds = useMemo(() => {
+    const weak = new Set<string>();
+    progress.forEach(p => {
+      if (!p.mastered && p.times_seen >= 2) {
+        const accuracy = p.times_correct / p.times_seen;
+        if (accuracy < 0.6) {
+          weak.add(p.term_id);
+        }
+      }
+    });
+    return weak;
+  }, [progress]);
+
+  // Terms that haven't been seen yet
+  const unseenTermIds = useMemo(() => {
+    const seenIds = new Set(progress.map(p => p.term_id));
+    return new Set(terms.filter(t => !seenIds.has(t.id)).map(t => t.id));
+  }, [terms, progress]);
+
   const upsertProgress = useMutation({
     mutationFn: async ({ termId, isCorrect }: { termId: string; isCorrect: boolean }) => {
       if (!user?.id) throw new Error('Not authenticated');
@@ -85,7 +146,6 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
       const existing = progressMap.get(termId);
       const newTimesSeen = (existing?.times_seen || 0) + 1;
       const newTimesCorrect = (existing?.times_correct || 0) + (isCorrect ? 1 : 0);
-      // Mark as mastered if correct 3+ times with 75%+ accuracy
       const newMastered = newTimesCorrect >= 3 && (newTimesCorrect / newTimesSeen) >= 0.75;
 
       const { error } = await supabase
@@ -112,26 +172,54 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
     }
   });
 
-  const shuffleCards = useCallback(() => {
-    const indices = Array.from({ length: terms.length }, (_, i) => i);
-    for (let i = indices.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [indices[i], indices[j]] = [indices[j], indices[i]];
+  const startStudy = useCallback(() => {
+    const now = new Date();
+    let termsToStudy: GlossaryTerm[] = [];
+
+    if (studyMode === 'all') {
+      // Random shuffle all terms
+      termsToStudy = [...terms];
+      for (let i = termsToStudy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [termsToStudy[i], termsToStudy[j]] = [termsToStudy[j], termsToStudy[i]];
+      }
+    } else if (studyMode === 'weak') {
+      // Only weak + unseen terms
+      termsToStudy = terms.filter(t => weakTermIds.has(t.id) || unseenTermIds.has(t.id));
+      // Sort by priority
+      termsToStudy.sort((a, b) => {
+        const priorityA = calculatePriority(progressMap.get(a.id), now);
+        const priorityB = calculatePriority(progressMap.get(b.id), now);
+        return priorityA - priorityB;
+      });
+    } else {
+      // Smart mode: prioritize by spaced repetition algorithm
+      termsToStudy = [...terms].sort((a, b) => {
+        const priorityA = calculatePriority(progressMap.get(a.id), now);
+        const priorityB = calculatePriority(progressMap.get(b.id), now);
+        return priorityA - priorityB;
+      });
     }
-    setShuffledIndices(indices);
+
+    if (termsToStudy.length === 0) {
+      toast.info('No terms match this filter. Try "All Terms" mode.');
+      return;
+    }
+
+    setOrderedTerms(termsToStudy);
     setCurrentIndex(0);
     setIsFlipped(false);
     setStats({ known: new Set(), unknown: new Set() });
     setHasStarted(true);
-  }, [terms.length]);
+  }, [terms, studyMode, progressMap, weakTermIds, unseenTermIds]);
 
   const currentTerm = useMemo(() => {
-    if (!hasStarted || terms.length === 0 || shuffledIndices.length === 0) return null;
-    return terms[shuffledIndices[currentIndex]];
-  }, [terms, shuffledIndices, currentIndex, hasStarted]);
+    if (!hasStarted || orderedTerms.length === 0) return null;
+    return orderedTerms[currentIndex];
+  }, [orderedTerms, currentIndex, hasStarted]);
 
   const handleNext = () => {
-    if (currentIndex < shuffledIndices.length - 1) {
+    if (currentIndex < orderedTerms.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setIsFlipped(false);
     }
@@ -154,7 +242,6 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
       return { known: newKnown, unknown: newUnknown };
     });
     
-    // Save progress to database
     if (user?.id) {
       upsertProgress.mutate({ termId: currentTerm.id, isCorrect: true });
     }
@@ -172,7 +259,6 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
       return { known: newKnown, unknown: newUnknown };
     });
     
-    // Save progress to database
     if (user?.id) {
       upsertProgress.mutate({ termId: currentTerm.id, isCorrect: false });
     }
@@ -180,11 +266,11 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
     handleNext();
   };
 
-  const sessionProgress = shuffledIndices.length > 0 
-    ? ((stats.known.size + stats.unknown.size) / shuffledIndices.length) * 100 
+  const sessionProgress = orderedTerms.length > 0 
+    ? ((stats.known.size + stats.unknown.size) / orderedTerms.length) * 100 
     : 0;
 
-  const isComplete = hasStarted && currentIndex === shuffledIndices.length - 1 && (stats.known.has(currentTerm?.id || '') || stats.unknown.has(currentTerm?.id || ''));
+  const isComplete = hasStarted && currentIndex === orderedTerms.length - 1 && (stats.known.has(currentTerm?.id || '') || stats.unknown.has(currentTerm?.id || ''));
 
   const isLoading = termsLoading || progressLoading;
 
@@ -200,6 +286,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
   if (!hasStarted) {
     const totalMastered = masteredTermIds.size;
     const masteryPercentage = terms.length > 0 ? Math.round((totalMastered / terms.length) * 100) : 0;
+    const weakCount = weakTermIds.size + unseenTermIds.size;
 
     return (
       <div className="flex flex-col h-full max-w-2xl mx-auto">
@@ -211,7 +298,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
         <div className="flex-1 flex flex-col items-center justify-center">
           <h1 className="text-2xl font-bold text-foreground mb-2">Glossary Flashcards</h1>
           <p className="text-muted-foreground mb-4 text-center">
-            {terms.length} terms available • Choose your study mode
+            {terms.length} terms available
           </p>
 
           {/* Mastery Progress */}
@@ -226,57 +313,115 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
                   <Badge variant="secondary">{totalMastered} / {terms.length} mastered</Badge>
                 </div>
                 <Progress value={masteryPercentage} className="h-2" />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Master a term by answering it correctly 3+ times with 75%+ accuracy
-                </p>
+                <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                  <span>{unseenTermIds.size} unseen</span>
+                  <span>{weakTermIds.size} need practice</span>
+                </div>
               </CardContent>
             </Card>
           )}
 
-          <div className="grid gap-4 w-full max-w-md mb-8">
-            <Card 
-              className={cn(
-                "cursor-pointer transition-all hover:border-primary/50",
-                mode === 'term-to-definition' && "border-primary bg-primary/5"
-              )}
-              onClick={() => setMode('term-to-definition')}
-            >
-              <CardContent className="py-4 px-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">Term → Definition</h3>
-                    <p className="text-sm text-muted-foreground">See the term, recall the meaning</p>
+          {/* Study Mode Selection */}
+          <div className="w-full max-w-md mb-6">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">Study Mode</h3>
+            <div className="grid gap-3">
+              <Card 
+                className={cn(
+                  "cursor-pointer transition-all hover:border-primary/50",
+                  studyMode === 'smart' && "border-primary bg-primary/5"
+                )}
+                onClick={() => setStudyMode('smart')}
+              >
+                <CardContent className="py-3 px-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Brain className="w-5 h-5 text-primary" />
+                      <div>
+                        <h3 className="font-semibold text-sm">Smart Review</h3>
+                        <p className="text-xs text-muted-foreground">Prioritizes weak & unseen terms using spaced repetition</p>
+                      </div>
+                    </div>
+                    {studyMode === 'smart' && <Badge variant="default">Selected</Badge>}
                   </div>
-                  {mode === 'term-to-definition' && (
-                    <Badge variant="default">Selected</Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card 
-              className={cn(
-                "cursor-pointer transition-all hover:border-primary/50",
-                mode === 'definition-to-term' && "border-primary bg-primary/5"
-              )}
-              onClick={() => setMode('definition-to-term')}
-            >
-              <CardContent className="py-4 px-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">Definition → Term</h3>
-                    <p className="text-sm text-muted-foreground">See the meaning, recall the term</p>
+              <Card 
+                className={cn(
+                  "cursor-pointer transition-all hover:border-primary/50",
+                  studyMode === 'weak' && "border-primary bg-primary/5"
+                )}
+                onClick={() => setStudyMode('weak')}
+              >
+                <CardContent className="py-3 px-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Zap className="w-5 h-5 text-orange-500" />
+                      <div>
+                        <h3 className="font-semibold text-sm">Focus Mode</h3>
+                        <p className="text-xs text-muted-foreground">Only weak & unseen terms ({weakCount} terms)</p>
+                      </div>
+                    </div>
+                    {studyMode === 'weak' && <Badge variant="default">Selected</Badge>}
                   </div>
-                  {mode === 'definition-to-term' && (
-                    <Badge variant="default">Selected</Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className={cn(
+                  "cursor-pointer transition-all hover:border-primary/50",
+                  studyMode === 'all' && "border-primary bg-primary/5"
+                )}
+                onClick={() => setStudyMode('all')}
+              >
+                <CardContent className="py-3 px-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Shuffle className="w-5 h-5 text-muted-foreground" />
+                      <div>
+                        <h3 className="font-semibold text-sm">All Terms</h3>
+                        <p className="text-xs text-muted-foreground">Random shuffle of all {terms.length} terms</p>
+                      </div>
+                    </div>
+                    {studyMode === 'all' && <Badge variant="default">Selected</Badge>}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
-          <Button size="lg" onClick={shuffleCards} className="gap-2">
-            <Shuffle className="w-4 h-4" />
+          {/* Card Mode Selection */}
+          <div className="w-full max-w-md mb-6">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">Card Direction</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <Card 
+                className={cn(
+                  "cursor-pointer transition-all hover:border-primary/50",
+                  mode === 'term-to-definition' && "border-primary bg-primary/5"
+                )}
+                onClick={() => setMode('term-to-definition')}
+              >
+                <CardContent className="py-3 px-4 text-center">
+                  <h3 className="font-semibold text-sm">Term → Definition</h3>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className={cn(
+                  "cursor-pointer transition-all hover:border-primary/50",
+                  mode === 'definition-to-term' && "border-primary bg-primary/5"
+                )}
+                onClick={() => setMode('definition-to-term')}
+              >
+                <CardContent className="py-3 px-4 text-center">
+                  <h3 className="font-semibold text-sm">Definition → Term</h3>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          <Button size="lg" onClick={startStudy} className="gap-2">
+            <Brain className="w-4 h-4" />
             Start Studying
           </Button>
         </div>
@@ -303,7 +448,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
           <div className="text-6xl mb-4">🎉</div>
           <h1 className="text-2xl font-bold text-foreground mb-2">Session Complete!</h1>
           <p className="text-muted-foreground mb-8">
-            You reviewed all {total} cards
+            You reviewed {total} cards
           </p>
 
           <div className="grid grid-cols-2 gap-4 w-full max-w-xs mb-6">
@@ -342,9 +487,9 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
               <ArrowLeft className="w-4 h-4" />
               Back to Glossary
             </Button>
-            <Button onClick={shuffleCards} className="gap-2">
+            <Button onClick={() => setHasStarted(false)} className="gap-2">
               <RotateCcw className="w-4 h-4" />
-              Study Again
+              New Session
             </Button>
           </div>
         </div>
@@ -358,6 +503,8 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
   const frontLabel = mode === 'term-to-definition' ? 'Term' : 'Definition';
   const backLabel = mode === 'term-to-definition' ? 'Definition' : 'Term';
   const isMastered = currentTerm ? masteredTermIds.has(currentTerm.id) : false;
+  const isWeak = currentTerm ? weakTermIds.has(currentTerm.id) : false;
+  const isUnseen = currentTerm ? unseenTermIds.has(currentTerm.id) : false;
 
   return (
     <div className="flex flex-col h-full max-w-2xl mx-auto">
@@ -374,12 +521,20 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
               Mastered
             </Badge>
           )}
+          {isWeak && !isMastered && (
+            <Badge variant="outline" className="border-orange-500/50 text-orange-500 gap-1">
+              <Zap className="w-3 h-3" />
+              Needs Work
+            </Badge>
+          )}
+          {isUnseen && (
+            <Badge variant="outline" className="border-blue-500/50 text-blue-500">
+              New
+            </Badge>
+          )}
           <Badge variant="outline" className="font-mono">
-            {currentIndex + 1} / {shuffledIndices.length}
+            {currentIndex + 1} / {orderedTerms.length}
           </Badge>
-          <Button variant="ghost" size="icon" onClick={shuffleCards} title="Reshuffle">
-            <Shuffle className="w-4 h-4" />
-          </Button>
         </div>
       </div>
 
@@ -409,7 +564,8 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
             >
               <Card className={cn(
                 "w-full h-full flex flex-col items-center justify-center p-6 border-2 hover:border-primary/30 transition-colors",
-                isMastered && "bg-primary/5 border-primary/20"
+                isMastered && "bg-primary/5 border-primary/20",
+                isWeak && !isMastered && "bg-orange-500/5 border-orange-500/20"
               )}>
                 <Badge variant="secondary" className="mb-4">
                   {isFlipped ? backLabel : frontLabel}
@@ -466,7 +622,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
             variant="outline" 
             size="icon"
             onClick={handleNext}
-            disabled={currentIndex === shuffledIndices.length - 1}
+            disabled={currentIndex === orderedTerms.length - 1}
           >
             <ChevronRight className="w-5 h-5" />
           </Button>
