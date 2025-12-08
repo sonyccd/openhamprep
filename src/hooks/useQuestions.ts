@@ -8,6 +8,7 @@ export interface LinkData {
   image: string;
   type: 'video' | 'article' | 'website';
   siteName: string;
+  unfurledAt?: string;
 }
 
 export interface Question {

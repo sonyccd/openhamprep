@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.unfurl-url]
 verify_jwt = false
+
+[functions.manage-question-links]
+verify_jwt = false
