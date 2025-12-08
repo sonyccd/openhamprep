@@ -132,7 +132,9 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
   const parseJSON = (content: string): ImportQuestion[] => {
     try {
       // Remove BOM if present
-      const cleanContent = content.replace(/^\uFEFF/, '');
+      let cleanContent = content.replace(/^\uFEFF/, '');
+      // Fix common invalid escape sequences (like \F, \S, etc.)
+      cleanContent = cleanContent.replace(/\\([^"\\\/bfnrtu])/g, '\\\\$1');
       const data = JSON.parse(cleanContent);
       console.log('JSON parsed successfully, data type:', Array.isArray(data) ? 'array' : typeof data, 'length:', Array.isArray(data) ? data.length : 'n/a');
       
