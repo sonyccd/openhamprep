@@ -142,124 +142,126 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4 radio-wave-bg">
-      <div className="max-w-2xl mx-auto">
+    <div className="h-full flex flex-col bg-background radio-wave-bg">
+      <div className="flex-1 overflow-y-auto py-8 px-4">
+        <div className="max-w-2xl mx-auto">
 
-        {/* Result Header */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className={cn(
-            "text-center p-8 rounded-2xl border-2 mb-8",
-            passed
-              ? "bg-success/10 border-success/30"
-              : "bg-destructive/10 border-destructive/30"
-          )}
-        >
-          <div className="flex justify-center mb-4">
-            {passed ? (
-              <Trophy className="w-16 h-16 text-success" />
-            ) : (
-              <XCircle className="w-16 h-16 text-destructive" />
-            )}
-          </div>
-          <h1
+          {/* Result Header */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
             className={cn(
-              "text-4xl font-mono font-bold mb-2",
-              passed ? "text-success" : "text-destructive"
+              "text-center p-8 rounded-2xl border-2 mb-8",
+              passed
+                ? "bg-success/10 border-success/30"
+                : "bg-destructive/10 border-destructive/30"
             )}
           >
-            {passed ? "PASSED" : "NOT PASSED"}
-          </h1>
-          
-          {/* Date */}
-          <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
-            <Calendar className="w-4 h-4" />
-            <span className="text-sm">
-              {completedAt.toLocaleDateString()} at {completedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          </div>
-
-          {/* Score Display */}
-          <div className="flex items-center justify-center gap-8 mt-6">
-            <div className="text-center">
-              <p className="text-5xl font-mono font-bold text-foreground">
-                {correctCount}
-              </p>
-              <p className="text-sm text-muted-foreground">Correct</p>
+            <div className="flex justify-center mb-4">
+              {passed ? (
+                <Trophy className="w-16 h-16 text-success" />
+              ) : (
+                <XCircle className="w-16 h-16 text-destructive" />
+              )}
             </div>
-            <div className="w-px h-16 bg-border" />
-            <div className="text-center">
-              <p className="text-5xl font-mono font-bold text-foreground">
-                {totalQuestions - correctCount}
-              </p>
-              <p className="text-sm text-muted-foreground">Incorrect</p>
+            <h1
+              className={cn(
+                "text-4xl font-mono font-bold mb-2",
+                passed ? "text-success" : "text-destructive"
+              )}
+            >
+              {passed ? "PASSED" : "NOT PASSED"}
+            </h1>
+            
+            {/* Date */}
+            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
+              <Calendar className="w-4 h-4" />
+              <span className="text-sm">
+                {completedAt.toLocaleDateString()} at {completedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </div>
-            <div className="w-px h-16 bg-border" />
-            <div className="text-center">
-              <p className="text-5xl font-mono font-bold text-foreground">
-                {percentage}%
-              </p>
-              <p className="text-sm text-muted-foreground">Score</p>
+
+            {/* Score Display */}
+            <div className="flex items-center justify-center gap-8 mt-6">
+              <div className="text-center">
+                <p className="text-5xl font-mono font-bold text-foreground">
+                  {correctCount}
+                </p>
+                <p className="text-sm text-muted-foreground">Correct</p>
+              </div>
+              <div className="w-px h-16 bg-border" />
+              <div className="text-center">
+                <p className="text-5xl font-mono font-bold text-foreground">
+                  {totalQuestions - correctCount}
+                </p>
+                <p className="text-sm text-muted-foreground">Incorrect</p>
+              </div>
+              <div className="w-px h-16 bg-border" />
+              <div className="text-center">
+                <p className="text-5xl font-mono font-bold text-foreground">
+                  {percentage}%
+                </p>
+                <p className="text-sm text-muted-foreground">Score</p>
+              </div>
             </div>
-          </div>
 
-          <p className="text-sm text-muted-foreground mt-4">
-            Passing score: 26 out of 35 (74%)
-          </p>
-        </motion.div>
+            <p className="text-sm text-muted-foreground mt-4">
+              Passing score: 26 out of 35 (74%)
+            </p>
+          </motion.div>
 
-        {/* Review Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-card border border-border rounded-xl p-6"
-        >
-          <h2 className="text-xl font-mono font-bold text-foreground mb-4">
-            Review Your Answers
-          </h2>
+          {/* Review Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-card border border-border rounded-xl p-6"
+          >
+            <h2 className="text-xl font-mono font-bold text-foreground mb-4">
+              Review Your Answers
+            </h2>
 
-          <div className="space-y-2">
-            {questions.map((q, idx) => {
-              const isCorrect = answers[q.id] === q.correctAnswer;
-              return (
-                <button
-                  key={q.id}
-                  onClick={() => setReviewIndex(idx)}
-                  className={cn(
-                    "w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left",
-                    isCorrect
-                      ? "border-success/30 bg-success/5 hover:bg-success/10"
-                      : "border-destructive/30 bg-destructive/5 hover:bg-destructive/10"
-                  )}
-                >
-                  <span
+            <div className="space-y-2">
+              {questions.map((q, idx) => {
+                const isCorrect = answers[q.id] === q.correctAnswer;
+                return (
+                  <button
+                    key={q.id}
+                    onClick={() => setReviewIndex(idx)}
                     className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-mono font-bold",
+                      "w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left",
                       isCorrect
-                        ? "bg-success text-success-foreground"
-                        : "bg-destructive text-destructive-foreground"
+                        ? "border-success/30 bg-success/5 hover:bg-success/10"
+                        : "border-destructive/30 bg-destructive/5 hover:bg-destructive/10"
                     )}
                   >
-                    {idx + 1}
-                  </span>
-                  <span className="flex-1 text-sm text-muted-foreground truncate">
-                    {q.id}: {q.question.substring(0, 60)}...
-                  </span>
-                  <span
-                    className={cn(
-                      "text-xs font-mono",
-                      isCorrect ? "text-success" : "text-destructive"
-                    )}
-                  >
-                    {isCorrect ? "✓" : "✗"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </motion.div>
+                    <span
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-mono font-bold",
+                        isCorrect
+                          ? "bg-success text-success-foreground"
+                          : "bg-destructive text-destructive-foreground"
+                      )}
+                    >
+                      {idx + 1}
+                    </span>
+                    <span className="flex-1 text-sm text-muted-foreground truncate">
+                      {q.id}: {q.question.substring(0, 60)}...
+                    </span>
+                    <span
+                      className={cn(
+                        "text-xs font-mono",
+                        isCorrect ? "text-success" : "text-destructive"
+                      )}
+                    >
+                      {isCorrect ? "✓" : "✗"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
