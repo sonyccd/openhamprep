@@ -4,7 +4,7 @@ import { QuestionCard } from "@/components/QuestionCard";
 import { TestResults } from "@/components/TestResults";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
-import { ArrowLeft, ArrowRight, CheckCircle, Radio, Loader2, Clock, Info, Play, AlertTriangle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Clock, Info, Play, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -237,13 +237,10 @@ export function PracticeTest({
       {/* Header */}
       <div className="max-w-3xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={onBack} className="gap-2 hover:bg-muted hover:text-foreground">
-            <ArrowLeft className="w-4 h-4" />
-            Exit Test
-          </Button>
+          
           <div className="flex items-center gap-2 text-foreground">
-            <Radio className="w-5 h-5" />
-            <span className="font-mono font-semibold">Practice Test</span>
+            
+            
           </div>
         </div>
 
