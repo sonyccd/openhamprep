@@ -138,8 +138,7 @@ export function DashboardSidebar({
               <span className="text-primary">RARS Test Prep</span>
             </span>
           </div>}
-        {!isMobile && isCollapsed && <Radio className="w-5 h-5 text-primary" />}
-        {!isMobile && <Button variant="ghost" size="icon" onClick={onToggleCollapse} className={cn("h-7 w-7 shrink-0", isCollapsed && "hidden md:flex")}>
+        {!isMobile && <Button variant="ghost" size="icon" onClick={onToggleCollapse} className="h-7 w-7 shrink-0">
             {isCollapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
           </Button>}
       </div>
