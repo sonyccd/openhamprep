@@ -36,6 +36,8 @@ import { BookmarkedQuestions } from '@/components/BookmarkedQuestions';
 import { SubelementPractice } from '@/components/SubelementPractice';
 import { TestResultReview } from '@/components/TestResultReview';
 import { AppLayout } from '@/components/AppLayout';
+import { Glossary } from '@/components/Glossary';
+import { GlossaryFlashcards } from '@/components/GlossaryFlashcards';
 import { TestType, testTypes } from '@/components/DashboardSidebar';
 
 export default function Dashboard() {
@@ -167,6 +169,14 @@ export default function Dashboard() {
         setReviewingTestId(null);
         setCurrentView('dashboard');
       }} />;
+    }
+
+    if (currentView === 'glossary') {
+      return <Glossary onStartFlashcards={() => setCurrentView('glossary-flashcards')} />;
+    }
+
+    if (currentView === 'glossary-flashcards') {
+      return <GlossaryFlashcards onBack={() => setCurrentView('glossary')} />;
     }
 
     if (authLoading || testsLoading || attemptsLoading) {

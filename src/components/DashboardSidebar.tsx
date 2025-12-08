@@ -1,4 +1,4 @@
-import { Play, Zap, BookOpen, AlertTriangle, Bookmark, LogOut, Radio, PanelLeftClose, PanelLeft, BarChart3, Menu, Lock, ChevronDown } from "lucide-react";
+import { Play, Zap, BookOpen, AlertTriangle, Bookmark, LogOut, Radio, PanelLeftClose, PanelLeft, BarChart3, Menu, Lock, ChevronDown, BookText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -32,7 +32,7 @@ export const testTypes = [
   { id: 'extra' as TestType, name: 'Amateur Extra', available: false },
 ];
 
-type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice' | 'review-test';
+type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice' | 'review-test' | 'glossary' | 'glossary-flashcards';
 interface NavItem {
   id: View;
   label: string;
@@ -116,6 +116,10 @@ export function DashboardSidebar({
     label: 'Bookmarked',
     icon: Bookmark,
     badge: bookmarkCount
+  }, {
+    id: 'glossary',
+    label: 'Glossary',
+    icon: BookText
   }];
   const handleNavClick = (view: View, disabled?: boolean) => {
     if (!disabled) {
