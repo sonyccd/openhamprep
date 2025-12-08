@@ -53,6 +53,54 @@ export type Database = {
           },
         ]
       }
+      glossary_progress: {
+        Row: {
+          created_at: string
+          id: string
+          last_seen_at: string | null
+          mastered: boolean
+          term_id: string
+          times_correct: number
+          times_seen: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string | null
+          mastered?: boolean
+          term_id: string
+          times_correct?: number
+          times_seen?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string | null
+          mastered?: boolean
+          term_id?: string
+          times_correct?: number
+          times_seen?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "glossary_progress_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "glossary_terms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "glossary_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       glossary_terms: {
         Row: {
           created_at: string
