@@ -4,7 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Radio, Loader2, Mail, Lock, User } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Radio, Loader2, Mail, Lock, User, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -20,6 +21,8 @@ export default function Auth() {
   const [displayName, setDisplayName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   
   const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
@@ -49,6 +52,7 @@ export default function Auth() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     
     if (!validateForm()) return;
     
@@ -59,9 +63,9 @@ export default function Auth() {
         const { error } = await signIn(email, password);
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
-            toast.error('Invalid email or password');
+            setFormError('Invalid email or password');
           } else {
-            toast.error(error.message);
+            setFormError(error.message);
           }
         } else {
           toast.success('Welcome back!');
@@ -71,13 +75,12 @@ export default function Auth() {
         const { error } = await signUp(email, password, displayName || undefined);
         if (error) {
           if (error.message.includes('User already registered')) {
-            toast.error('An account with this email already exists');
+            setFormError('An account with this email already exists');
           } else {
-            toast.error(error.message);
+            setFormError(error.message);
           }
         } else {
-          toast.success('Account created successfully!');
-          navigate('/');
+          setShowEmailConfirmation(true);
         }
       }
     } finally {
@@ -89,6 +92,46 @@ export default function Auth() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show email confirmation screen after successful signup
+  if (showEmailConfirmation) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 radio-wave-bg relative">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
+        >
+          <div className="bg-card border border-border rounded-xl p-8 shadow-xl text-center">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Check Your Email</h2>
+            <p className="text-muted-foreground mb-6">
+              We've sent a confirmation link to <span className="font-medium text-foreground">{email}</span>. 
+              Please check your inbox and click the link to verify your account.
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">
+              Don't see the email? Check your spam folder or try signing up again.
+            </p>
+            <Button
+              onClick={() => {
+                setShowEmailConfirmation(false);
+                setIsLogin(true);
+              }}
+              variant="outline"
+              className="w-full"
+            >
+              Back to Sign In
+            </Button>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -121,6 +164,14 @@ export default function Auth() {
 
         {/* Form Card */}
         <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
+          {/* Form Error Alert */}
+          {formError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div className="space-y-2">
@@ -152,6 +203,7 @@ export default function Auth() {
                   onChange={(e) => {
                     setEmail(e.target.value);
                     setErrors((prev) => ({ ...prev, email: undefined }));
+                    setFormError(null);
                   }}
                   className="pl-10"
                   required
@@ -174,6 +226,7 @@ export default function Auth() {
                   onChange={(e) => {
                     setPassword(e.target.value);
                     setErrors((prev) => ({ ...prev, password: undefined }));
+                    setFormError(null);
                   }}
                   className="pl-10"
                   required
@@ -205,6 +258,7 @@ export default function Auth() {
               onClick={() => {
                 setIsLogin(!isLogin);
                 setErrors({});
+                setFormError(null);
               }}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
