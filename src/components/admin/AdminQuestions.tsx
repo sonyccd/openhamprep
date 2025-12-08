@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink, ThumbsUp, ThumbsDown, FileText, Filter, X } from "lucide-react";
 import { BulkImportQuestions } from "./BulkImportQuestions";
+import { BulkExport, escapeCSVField } from "./BulkExport";
 import { EditHistoryViewer, EditHistoryEntry } from "./EditHistoryViewer";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useExplanationFeedbackStats } from "@/hooks/useExplanationFeedback";
@@ -622,6 +623,37 @@ export function AdminQuestions({
               {testType.charAt(0).toUpperCase() + testType.slice(1)} Questions ({testTypeQuestions.length})
             </span>
             <div className="flex items-center gap-2">
+              <BulkExport
+                data={testTypeQuestions}
+                filename={`${testType}_questions`}
+                itemLabel="questions"
+                formatCSV={(items) => {
+                  const header = 'id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group,explanation';
+                  const rows = items.map(q => [
+                    escapeCSVField(q.id),
+                    escapeCSVField(q.question),
+                    escapeCSVField(q.options[0]),
+                    escapeCSVField(q.options[1]),
+                    escapeCSVField(q.options[2]),
+                    escapeCSVField(q.options[3]),
+                    ['A', 'B', 'C', 'D'][q.correct_answer],
+                    escapeCSVField(q.subelement),
+                    escapeCSVField(q.question_group),
+                    escapeCSVField(q.explanation || ''),
+                  ].join(','));
+                  return [header, ...rows].join('\n');
+                }}
+                formatJSON={(items) => items.map(q => ({
+                  id: q.id,
+                  question: q.question,
+                  options: q.options,
+                  correct_answer: q.correct_answer,
+                  subelement: q.subelement,
+                  question_group: q.question_group,
+                  explanation: q.explanation || null,
+                  links: q.links || [],
+                }))}
+              />
               <BulkImportQuestions testType={testType} />
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Plus, Trash2, Search, Loader2, Pencil } from "lucide-react";
 import { BulkImportGlossary } from "./BulkImportGlossary";
+import { BulkExport, escapeCSVField } from "./BulkExport";
 import { EditHistoryViewer, EditHistoryEntry } from "./EditHistoryViewer";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -312,6 +313,22 @@ export function AdminGlossary() {
           <CardTitle className="flex items-center justify-between">
             <span>Glossary Terms ({terms.length})</span>
             <div className="flex items-center gap-2">
+              <BulkExport
+                data={terms}
+                filename="glossary_terms"
+                itemLabel="terms"
+                formatCSV={(items) => {
+                  const header = 'term,definition';
+                  const rows = items.map(t => 
+                    `${escapeCSVField(t.term)},${escapeCSVField(t.definition)}`
+                  );
+                  return [header, ...rows].join('\n');
+                }}
+                formatJSON={(items) => items.map(t => ({
+                  term: t.term,
+                  definition: t.definition,
+                }))}
+              />
               <BulkImportGlossary />
               <Button onClick={() => setIsAddDialogOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
