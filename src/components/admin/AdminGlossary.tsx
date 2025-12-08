@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Plus, Trash2, Search, Loader2, Pencil } from "lucide-react";
+import { BulkImportGlossary } from "./BulkImportGlossary";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -230,10 +231,13 @@ export function AdminGlossary() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Glossary Terms ({terms.length})</span>
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Term
-            </Button>
+            <div className="flex items-center gap-2">
+              <BulkImportGlossary />
+              <Button onClick={() => setIsAddDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Term
+              </Button>
+            </div>
           </CardTitle>
           <div className="relative mt-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
