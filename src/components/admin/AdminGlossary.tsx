@@ -255,7 +255,7 @@ export function AdminGlossary() {
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="space-y-3 max-h-[calc(100vh-320px)] min-h-[200px] overflow-y-auto pb-8">
+            <div className="space-y-3 max-h-[calc(100vh-400px)] min-h-[200px] overflow-y-auto pb-8">
               {filteredTerms.map((term) => (
                 <div 
                   key={term.id} 

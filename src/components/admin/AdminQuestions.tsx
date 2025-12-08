@@ -637,7 +637,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="space-y-3 max-h-[calc(100vh-320px)] min-h-[200px] overflow-y-auto pb-8">
+            <div className="space-y-3 max-h-[calc(100vh-400px)] min-h-[200px] overflow-y-auto pb-8">
               {filteredQuestions.map((q) => (
                 <div 
                   key={q.id} 
