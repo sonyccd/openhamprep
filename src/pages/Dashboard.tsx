@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookmarks } from '@/hooks/useBookmarks';
@@ -37,11 +37,20 @@ export default function Dashboard() {
     reviewingTestId,
     setReviewingTestId
   } = useAppNavigation();
+  const [searchParams] = useSearchParams();
   const [selectedTest, setSelectedTest] = useState<TestType>('technician');
   const [testInProgress, setTestInProgress] = useState(false);
   const [pendingView, setPendingView] = useState<typeof currentView | null>(null);
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
   const [showGoalsModal, setShowGoalsModal] = useState(false);
+
+  // Handle view from URL query parameter
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    if (viewParam && viewParam !== currentView) {
+      setCurrentView(viewParam as typeof currentView);
+    }
+  }, [searchParams, setCurrentView]);
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/');

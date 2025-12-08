@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileModal } from "@/components/ProfileModal";
 import { useAdmin } from "@/hooks/useAdmin";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useState } from "react";
@@ -73,6 +73,8 @@ export function DashboardSidebar({
     isAdmin
   } = useAdmin();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isOnAdminPage = location.pathname === '/admin';
   const getInitials = () => {
     if (userInfo?.displayName) {
       return userInfo.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -119,6 +121,8 @@ export function DashboardSidebar({
   }];
   const handleNavClick = (view: View, disabled?: boolean) => {
     if (!disabled) {
+      // Navigate to dashboard with the selected view
+      navigate(`/dashboard?view=${view}`);
       onViewChange(view);
       setMobileOpen(false);
     }
@@ -249,16 +253,16 @@ export function DashboardSidebar({
         {isAdmin && <div className={cn("p-2 border-b border-border", !isMobile && isCollapsed && "flex justify-center")}>
             {!isMobile && isCollapsed ? <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={() => navigate('/admin')} className="w-full h-10 text-muted-foreground hover:text-primary">
+                  <Button variant="ghost" size="icon" onClick={() => navigate('/admin')} className={cn("w-full h-10", isOnAdminPage ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary")}>
                     <Shield className="w-5 h-5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="right" className="bg-popover border-border">
                   <p>Admin Dashboard</p>
                 </TooltipContent>
-              </Tooltip> : <Button variant="ghost" onClick={() => navigate('/admin')} className="w-full justify-start gap-3 text-muted-foreground hover:text-primary">
+              </Tooltip> : <Button variant="ghost" onClick={() => navigate('/admin')} className={cn("w-full justify-start gap-3", isOnAdminPage ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary")}>
                 <Shield className="w-5 h-5" />
-                <span className="text-sm font-medium">Admin </span>
+                <span className="text-sm font-medium">Admin</span>
               </Button>}
           </div>}
 
