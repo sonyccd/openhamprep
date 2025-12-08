@@ -55,6 +55,54 @@ export function MarkdownText({ text, className }: MarkdownTextProps) {
         continue;
       }
 
+      // Check for superscript with braces (^{text})
+      const superBraceMatch = remaining.match(/^\^\{([^}]+)\}/);
+      if (superBraceMatch) {
+        elements.push(
+          <sup key={key++} className="text-xs">
+            {superBraceMatch[1]}
+          </sup>
+        );
+        remaining = remaining.slice(superBraceMatch[0].length);
+        continue;
+      }
+
+      // Check for superscript single character (^2, ^n, etc.)
+      const superMatch = remaining.match(/^\^([0-9a-zA-Z])/);
+      if (superMatch) {
+        elements.push(
+          <sup key={key++} className="text-xs">
+            {superMatch[1]}
+          </sup>
+        );
+        remaining = remaining.slice(superMatch[0].length);
+        continue;
+      }
+
+      // Check for subscript with braces (_{text})
+      const subBraceMatch = remaining.match(/^_\{([^}]+)\}/);
+      if (subBraceMatch) {
+        elements.push(
+          <sub key={key++} className="text-xs">
+            {subBraceMatch[1]}
+          </sub>
+        );
+        remaining = remaining.slice(subBraceMatch[0].length);
+        continue;
+      }
+
+      // Check for subscript single character (_2, _n, etc.) - but not before letters (to avoid breaking italic)
+      const subMatch = remaining.match(/^_([0-9])/);
+      if (subMatch) {
+        elements.push(
+          <sub key={key++} className="text-xs">
+            {subMatch[1]}
+          </sub>
+        );
+        remaining = remaining.slice(subMatch[0].length);
+        continue;
+      }
+
       // Check for italic (*text* or _text_) - but not ** or __
       const italicMatch = remaining.match(/^(\*|_)(?!\1)(.+?)\1(?!\1)/);
       if (italicMatch) {
@@ -80,7 +128,7 @@ export function MarkdownText({ text, className }: MarkdownTextProps) {
       }
 
       // Find the next special character
-      const nextSpecial = remaining.search(/[*_`]/);
+      const nextSpecial = remaining.search(/[*_`\^]/);
       if (nextSpecial === -1) {
         // No more special characters, add the rest as text
         elements.push(<span key={key++}>{remaining}</span>);
