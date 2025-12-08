@@ -10,7 +10,7 @@ import {
   PanelLeft,
   BarChart3,
   Menu,
-  X
+  User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 
 type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice' | 'review-test';
@@ -32,6 +33,11 @@ interface NavItem {
   disabled?: boolean;
 }
 
+interface UserInfo {
+  displayName: string | null;
+  email: string | null;
+}
+
 interface DashboardSidebarProps {
   currentView: View;
   onViewChange: (view: View) => void;
@@ -41,6 +47,7 @@ interface DashboardSidebarProps {
   weakQuestionCount: number;
   bookmarkCount: number;
   isTestAvailable: boolean;
+  userInfo?: UserInfo;
 }
 
 export function DashboardSidebar({
@@ -52,8 +59,24 @@ export function DashboardSidebar({
   weakQuestionCount,
   bookmarkCount,
   isTestAvailable,
+  userInfo,
 }: DashboardSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const getInitials = () => {
+    if (userInfo?.displayName) {
+      return userInfo.displayName
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    if (userInfo?.email) {
+      return userInfo.email[0].toUpperCase();
+    }
+    return 'U';
+  };
   const navItems: NavItem[] = [
     { 
       id: 'dashboard', 
@@ -102,28 +125,28 @@ export function DashboardSidebar({
 
   const NavContent = ({ isMobile = false }: { isMobile?: boolean }) => (
     <>
-      {/* Header */}
+      {/* Header with Logo */}
       <div className={cn(
-        "flex items-center h-16 border-b border-border px-4",
+        "flex items-center h-14 border-b border-border px-4",
         !isMobile && isCollapsed ? "justify-center" : "justify-between"
       )}>
         {(isMobile || !isCollapsed) && (
           <div className="flex items-center gap-2">
-            <Radio className="w-6 h-6 text-primary" />
-            <span className="font-mono font-bold text-foreground">
+            <Radio className="w-5 h-5 text-primary" />
+            <span className="font-mono font-bold text-foreground text-sm">
               <span className="text-primary">RARS</span>
             </span>
           </div>
         )}
         {!isMobile && isCollapsed && (
-          <Radio className="w-6 h-6 text-primary" />
+          <Radio className="w-5 h-5 text-primary" />
         )}
         {!isMobile && (
           <Button
             variant="ghost"
             size="icon"
             onClick={onToggleCollapse}
-            className={cn("h-8 w-8 shrink-0", isCollapsed && "hidden md:flex")}
+            className={cn("h-7 w-7 shrink-0", isCollapsed && "hidden md:flex")}
           >
             {isCollapsed ? (
               <PanelLeft className="w-4 h-4" />
@@ -131,6 +154,44 @@ export function DashboardSidebar({
               <PanelLeftClose className="w-4 h-4" />
             )}
           </Button>
+        )}
+      </div>
+
+      {/* User Profile Section */}
+      <div className={cn(
+        "border-b border-border p-3",
+        !isMobile && isCollapsed && "flex justify-center"
+      )}>
+        {(isMobile || !isCollapsed) ? (
+          <div className="flex items-center gap-3">
+            <Avatar className="h-9 w-9 shrink-0">
+              <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                {getInitials()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {userInfo?.displayName || 'User'}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {userInfo?.email || ''}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <Avatar className="h-8 w-8 cursor-default">
+                <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                  {getInitials()}
+                </AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="bg-popover border-border">
+              <p className="font-medium">{userInfo?.displayName || 'User'}</p>
+              <p className="text-xs text-muted-foreground">{userInfo?.email}</p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
 

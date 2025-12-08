@@ -22,6 +22,21 @@ export function AppLayout({ children, currentView, onViewChange }: AppLayoutProp
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user!.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const { data: questionAttempts } = useQuery({
     queryKey: ['question-attempts', user?.id],
     queryFn: async () => {
@@ -67,6 +82,11 @@ export function AppLayout({ children, currentView, onViewChange }: AppLayoutProp
     return <>{children}</>;
   }
 
+  const userInfo = {
+    displayName: profile?.display_name || null,
+    email: user.email || null,
+  };
+
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background flex w-full">
@@ -79,6 +99,7 @@ export function AppLayout({ children, currentView, onViewChange }: AppLayoutProp
           weakQuestionCount={weakQuestionIds.length}
           bookmarkCount={bookmarks?.length || 0}
           isTestAvailable={true}
+          userInfo={userInfo}
         />
         <div className="flex-1 overflow-auto pt-16 md:pt-0">
           {children}
