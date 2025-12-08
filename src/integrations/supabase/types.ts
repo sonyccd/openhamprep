@@ -248,7 +248,6 @@ export type Database = {
           best_streak: number
           created_at: string
           display_name: string | null
-          email: string | null
           glossary_best_streak: number
           glossary_current_streak: number
           glossary_last_study_date: string | null
@@ -259,7 +258,6 @@ export type Database = {
           best_streak?: number
           created_at?: string
           display_name?: string | null
-          email?: string | null
           glossary_best_streak?: number
           glossary_current_streak?: number
           glossary_last_study_date?: string | null
@@ -270,7 +268,6 @@ export type Database = {
           best_streak?: number
           created_at?: string
           display_name?: string | null
-          email?: string | null
           glossary_best_streak?: number
           glossary_current_streak?: number
           glossary_last_study_date?: string | null
