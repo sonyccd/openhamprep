@@ -99,7 +99,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, displayName?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    // Always redirect to the production domain for email verification
+    const redirectUrl = 'https://rarstestprep.app/';
     
     const { error } = await supabase.auth.signUp({
       email,
