@@ -146,6 +146,7 @@ export default function Auth() {
               onClick={() => {
                 setShowEmailConfirmation(false);
                 setIsLogin(true);
+                setPassword('');
               }}
               variant="outline"
               className="w-full"
