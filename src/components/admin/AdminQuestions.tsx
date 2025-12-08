@@ -69,6 +69,10 @@ export function AdminQuestions({
   const [newCorrectAnswer, setNewCorrectAnswer] = useState("0");
   const [newSubelement, setNewSubelement] = useState("");
   const [newQuestionGroup, setNewQuestionGroup] = useState("");
+  const [newExplanation, setNewExplanation] = useState("");
+  const [newLinks, setNewLinks] = useState<LinkData[]>([]);
+  const [newLinkUrlForAdd, setNewLinkUrlForAdd] = useState("");
+  const [isAddingLinkForNew, setIsAddingLinkForNew] = useState(false);
 
   // Edit state
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
@@ -114,7 +118,7 @@ export function AdminQuestions({
     }
   }, [highlightQuestionId, questions]);
   const addQuestion = useMutation({
-    mutationFn: async (question: Omit<Question, 'links' | 'edit_history'>) => {
+    mutationFn: async (question: Omit<Question, 'edit_history'> & { links: LinkData[]; explanation?: string }) => {
       const historyEntry: EditHistoryEntry = {
         user_id: user?.id || '',
         user_email: user?.email || 'Unknown',
@@ -132,7 +136,8 @@ export function AdminQuestions({
         correct_answer: question.correct_answer,
         subelement: question.subelement.trim(),
         question_group: question.question_group.trim(),
-        links: [],
+        explanation: question.explanation?.trim() || null,
+        links: JSON.parse(JSON.stringify(question.links)),
         edit_history: JSON.parse(JSON.stringify([historyEntry]))
       });
       if (error) throw error;
@@ -325,6 +330,9 @@ export function AdminQuestions({
     setNewCorrectAnswer("0");
     setNewSubelement("");
     setNewQuestionGroup("");
+    setNewExplanation("");
+    setNewLinks([]);
+    setNewLinkUrlForAdd("");
   };
   const prefix = TEST_TYPE_PREFIXES[testType];
   const testTypeQuestions = questions.filter(q => q.id.startsWith(prefix));
@@ -364,9 +372,42 @@ export function AdminQuestions({
       options: newOptions.map(o => o.trim()),
       correct_answer: parseInt(newCorrectAnswer),
       subelement: newSubelement,
-      question_group: newQuestionGroup
+      question_group: newQuestionGroup,
+      explanation: newExplanation,
+      links: newLinks
     });
   };
+
+  const addLinkForNewQuestion = async () => {
+    if (!newLinkUrlForAdd.trim()) {
+      toast.error("Please enter a URL");
+      return;
+    }
+    setIsAddingLinkForNew(true);
+    try {
+      // Use the edge function to unfurl the link
+      const response = await supabase.functions.invoke('manage-question-links', {
+        body: {
+          action: 'unfurl',
+          url: newLinkUrlForAdd.trim()
+        }
+      });
+      if (response.error) throw response.error;
+      const linkData = response.data as LinkData;
+      setNewLinks(prev => [...prev, linkData]);
+      setNewLinkUrlForAdd("");
+      toast.success("Link added");
+    } catch (error: any) {
+      toast.error("Failed to add link: " + error.message);
+    } finally {
+      setIsAddingLinkForNew(false);
+    }
+  };
+
+  const removeLinkFromNewQuestion = (url: string) => {
+    setNewLinks(prev => prev.filter(l => l.url !== url));
+  };
+
   const updateOption = (index: number, value: string) => {
     const updated = [...newOptions];
     updated[index] = value;
@@ -637,6 +678,84 @@ export function AdminQuestions({
                         <SelectItem value="3">D</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Explanation Section */}
+                  <div>
+                    <Label>Explanation (shown after answering)</Label>
+                    <Textarea 
+                      placeholder="Explain why this is the correct answer..." 
+                      value={newExplanation} 
+                      onChange={e => setNewExplanation(e.target.value)} 
+                      rows={3} 
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      This explanation will be shown to users after they answer the question.
+                    </p>
+                  </div>
+
+                  <Separator />
+
+                  {/* Learning Resources Section */}
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2">
+                      <LinkIcon className="w-4 h-4" />
+                      Learning Resources ({newLinks.length})
+                    </Label>
+                    
+                    {/* Add new link */}
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="https://..." 
+                        value={newLinkUrlForAdd} 
+                        onChange={e => setNewLinkUrlForAdd(e.target.value)} 
+                        className="flex-1" 
+                      />
+                      <Button onClick={addLinkForNewQuestion} disabled={isAddingLinkForNew} size="sm">
+                        {isAddingLinkForNew ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                      </Button>
+                    </div>
+
+                    {/* Existing links */}
+                    {newLinks.length > 0 ? (
+                      <div className="space-y-2">
+                        {newLinks.map((link, index) => (
+                          <div key={index} className="flex items-center justify-between gap-2 p-2 rounded bg-secondary/30 border border-border">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${
+                                link.type === 'video' ? 'bg-red-500/20 text-red-400' : 
+                                link.type === 'article' ? 'bg-blue-500/20 text-blue-400' : 
+                                'bg-secondary text-muted-foreground'
+                              }`}>
+                                {link.type}
+                              </span>
+                              <a 
+                                href={link.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-sm text-foreground hover:text-primary truncate flex items-center gap-1"
+                              >
+                                {link.title || link.url}
+                                <ExternalLink className="w-3 h-3 shrink-0" />
+                              </a>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-destructive hover:text-destructive h-7 w-7 shrink-0"
+                              onClick={() => removeLinkFromNewQuestion(link.url)}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">
+                        No learning resources added yet (optional)
+                      </p>
+                    )}
                   </div>
                   
                   <Button onClick={handleAddQuestion} disabled={addQuestion.isPending} className="w-full">

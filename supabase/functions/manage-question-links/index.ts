@@ -123,7 +123,24 @@ serve(async (req) => {
 
     const { action, questionId, url } = await req.json();
 
-    if (action === 'add') {
+    if (action === 'unfurl') {
+      // Just unfurl a URL and return the metadata without saving
+      if (!url) {
+        return new Response(
+          JSON.stringify({ error: 'url is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`Unfurling URL: ${url}`);
+      const unfurled = await unfurlUrl(url);
+
+      return new Response(
+        JSON.stringify(unfurled),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } else if (action === 'add') {
       // Add a new link to a question
       if (!questionId || !url) {
         return new Response(
@@ -282,7 +299,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ error: 'Invalid action. Use: add, remove, or refresh' }),
+      JSON.stringify({ error: 'Invalid action. Use: unfurl, add, remove, or refresh' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
