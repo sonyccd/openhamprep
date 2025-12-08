@@ -379,9 +379,86 @@ export default function Dashboard() {
     const masteredTerms = glossaryProgress.filter(p => p.mastered).length;
     const glossaryPercentage = totalTerms > 0 ? Math.round((masteredTerms / totalTerms) * 100) : 0;
 
+    // Get motivational message based on time of day and progress
+    const getMotivationalMessage = () => {
+      const hour = new Date().getHours();
+      const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'night';
+      
+      // Progress-based messages
+      if (readinessLevel === 'ready') {
+        const readyMessages = [
+          "You've put in the work. Time to get that license! 📻",
+          "Your practice has paid off. You're exam ready!",
+          "Confidence earned through preparation. Go get it!"
+        ];
+        return readyMessages[Math.floor(Math.random() * readyMessages.length)];
+      }
+
+      if (readinessLevel === 'getting-close') {
+        const closeMessages = [
+          "Almost there! A few more sessions and you'll be ready.",
+          "Great progress! Keep pushing through the finish line.",
+          "You're in the home stretch. Stay focused!"
+        ];
+        return closeMessages[Math.floor(Math.random() * closeMessages.length)];
+      }
+
+      if (weakQuestionIds.length > 10) {
+        return "Focus on your weak areas today. Small improvements add up!";
+      }
+
+      if (totalTests === 0) {
+        const newUserMessages: Record<string, string> = {
+          morning: "Good morning! Ready to start your ham radio journey?",
+          afternoon: "Great time to begin studying. Take your first practice test!",
+          evening: "Evening study sessions can be very effective. Let's go!",
+          night: "Night owl studying? Let's make some progress!"
+        };
+        return newUserMessages[timeOfDay];
+      }
+
+      // Time-based encouragement for regular users
+      const timeMessages: Record<string, string[]> = {
+        morning: [
+          "Morning studies stick best. Great time to learn!",
+          "Early bird catches the license! Let's study.",
+          "Fresh mind, fresh start. Ready to practice?"
+        ],
+        afternoon: [
+          "Afternoon study break? Perfect timing!",
+          "Keep the momentum going this afternoon.",
+          "A little progress each day leads to big results."
+        ],
+        evening: [
+          "Wind down with some practice questions.",
+          "Evening review helps lock in what you've learned.",
+          "Consistent evening practice builds lasting knowledge."
+        ],
+        night: [
+          "Late night study session? Your dedication is inspiring!",
+          "Burning the midnight oil? Every bit of practice counts.",
+          "Night study can be peaceful and productive."
+        ]
+      };
+
+      const messages = timeMessages[timeOfDay];
+      return messages[Math.floor(Math.random() * messages.length)];
+    };
+
+    const motivationalMessage = getMotivationalMessage();
+
     return (
       <div className="flex-1 overflow-y-auto py-8 md:py-12 px-4 md:px-8 radio-wave-bg">
         <div className="max-w-3xl mx-auto">
+
+          {/* Motivational Greeting */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-sm text-muted-foreground mb-4 italic"
+          >
+            {motivationalMessage}
+          </motion.p>
 
           {/* Next Action Card - Primary Focus */}
           <motion.div
