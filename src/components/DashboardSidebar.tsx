@@ -187,7 +187,8 @@ export function DashboardSidebar({
       {/* Navigation */}
       <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
         {navItems.map(item => {
-        const isActive = currentView === item.id;
+        // Don't highlight nav items when on admin page
+        const isActive = !isOnAdminPage && currentView === item.id;
         const Icon = item.icon;
         const showExpanded = isMobile || !isCollapsed;
         const buttonContent = <button onClick={() => handleNavClick(item.id, item.disabled)} disabled={item.disabled} className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors", isActive ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-secondary", item.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground", !showExpanded && "justify-center px-2")}>
