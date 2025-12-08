@@ -447,11 +447,27 @@ export default function Dashboard() {
                     {thisWeekQuestions}/{questionsGoal}
                   </span>
                 </div>
-                <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                <div className="h-2 bg-secondary rounded-full overflow-hidden mb-2">
                   <div className={cn("h-full transition-all duration-500 rounded-full", thisWeekQuestions >= questionsGoal ? "bg-success" : "bg-primary")} style={{
                   width: `${questionsProgress}%`
                 }} />
                 </div>
+                {thisWeekQuestions >= questionsGoal ? (
+                  <div className="flex items-center gap-1 text-xs text-success">
+                    <CheckCircle className="w-3 h-3" />
+                    <span>Goal reached!</span>
+                  </div>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full text-xs h-7 gap-1"
+                    onClick={() => setCurrentView('random-practice')}
+                  >
+                    <Brain className="w-3 h-3" />
+                    Practice Questions
+                  </Button>
+                )}
               </div>
               <div>
                 <div className="flex items-center justify-between text-xs mb-1">
@@ -460,11 +476,27 @@ export default function Dashboard() {
                     {thisWeekTests}/{testsGoal}
                   </span>
                 </div>
-                <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                <div className="h-2 bg-secondary rounded-full overflow-hidden mb-2">
                   <div className={cn("h-full transition-all duration-500 rounded-full", thisWeekTests >= testsGoal ? "bg-success" : "bg-primary")} style={{
                   width: `${testsProgress}%`
                 }} />
                 </div>
+                {thisWeekTests >= testsGoal ? (
+                  <div className="flex items-center gap-1 text-xs text-success">
+                    <CheckCircle className="w-3 h-3" />
+                    <span>Goal reached!</span>
+                  </div>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full text-xs h-7 gap-1"
+                    onClick={() => setCurrentView('practice-test')}
+                  >
+                    <Target className="w-3 h-3" />
+                    Take Test
+                  </Button>
+                )}
               </div>
             </div>
           </motion.div>
