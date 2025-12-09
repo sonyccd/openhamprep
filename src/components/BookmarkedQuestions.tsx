@@ -3,9 +3,12 @@ import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useBookmarks } from "@/hooks/useBookmarks";
+import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
+import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { Bookmark, Loader2, Trash2, MessageSquare, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+
 interface BookmarkedQuestionsProps {
   onBack: () => void;
 }
@@ -36,6 +39,24 @@ export function BookmarkedQuestions({
         </div>
       </div>;
   }
+  // Keyboard shortcuts for bookmarked question view
+  const handleAnswerSelect = (answer: 'A' | 'B' | 'C' | 'D') => {
+    if (!showResult) {
+      setSelectedAnswer(answer);
+      setShowResult(true);
+    }
+  };
+
+  const shortcuts: KeyboardShortcut[] = [
+    { key: 'a', description: 'Select A', action: () => handleAnswerSelect('A'), disabled: showResult },
+    { key: 'b', description: 'Select B', action: () => handleAnswerSelect('B'), disabled: showResult },
+    { key: 'c', description: 'Select C', action: () => handleAnswerSelect('C'), disabled: showResult },
+    { key: 'd', description: 'Select D', action: () => handleAnswerSelect('D'), disabled: showResult },
+    { key: 'Escape', description: 'Go back', action: () => { setSelectedQuestionId(null); setSelectedAnswer(null); setShowResult(false); } },
+  ];
+
+  useKeyboardShortcuts(shortcuts, { enabled: !!selectedQuestion });
+
   if (selectedQuestion) {
     return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
         <div className="max-w-3xl mx-auto mb-8">
@@ -48,9 +69,12 @@ export function BookmarkedQuestions({
               <ArrowLeft className="w-4 h-4" />
               Back to Bookmarks
             </Button>
-            <div className="flex items-center gap-2 text-foreground">
-              <Bookmark className="w-5 h-5" />
-              <span className="font-mono font-semibold">Bookmarked</span>
+            <div className="flex items-center gap-2">
+              <KeyboardShortcutsHelp />
+              <div className="flex items-center gap-2 text-foreground">
+                <Bookmark className="w-5 h-5" />
+                <span className="font-mono font-semibold">Bookmarked</span>
+              </div>
             </div>
           </div>
 

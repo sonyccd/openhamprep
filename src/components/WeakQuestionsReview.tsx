@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
+import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
+import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { AlertTriangle, SkipForward, RotateCcw, Loader2, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 interface WeakQuestionsReviewProps {
@@ -114,12 +116,24 @@ export function WeakQuestionsReview({
       setCompleted(true);
     }
   };
+  // Keyboard shortcuts
+  const shortcuts: KeyboardShortcut[] = [
+    { key: 'a', description: 'Select A', action: () => !showResult && handleSelectAnswer('A'), disabled: showResult },
+    { key: 'b', description: 'Select B', action: () => !showResult && handleSelectAnswer('B'), disabled: showResult },
+    { key: 'c', description: 'Select C', action: () => !showResult && handleSelectAnswer('C'), disabled: showResult },
+    { key: 'd', description: 'Select D', action: () => !showResult && handleSelectAnswer('D'), disabled: showResult },
+    { key: 'ArrowRight', description: 'Next', action: handleNext, disabled: !showResult },
+    { key: 's', description: 'Skip', action: handleSkip, disabled: showResult },
+  ];
+
+  useKeyboardShortcuts(shortcuts);
+
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
   return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
       {/* Header */}
       <div className="max-w-3xl mx-auto mb-8">
         <div className="flex items-center justify-end mb-6">
-          
+          <KeyboardShortcutsHelp />
         </div>
 
         {/* Progress Bar */}

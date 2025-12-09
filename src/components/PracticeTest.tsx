@@ -5,6 +5,8 @@ import { TestResults } from "@/components/TestResults";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
 import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
+import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
+import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Clock, Info, Play, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
@@ -251,17 +253,29 @@ export function PracticeTest({
       setTimeRemaining(120 * 60);
     }
   };
+  // Keyboard shortcuts for practice test
+  const practiceShortcuts: KeyboardShortcut[] = [
+    { key: 'a', description: 'Select A', action: () => handleSelectAnswer('A') },
+    { key: 'b', description: 'Select B', action: () => handleSelectAnswer('B') },
+    { key: 'c', description: 'Select C', action: () => handleSelectAnswer('C') },
+    { key: 'd', description: 'Select D', action: () => handleSelectAnswer('D') },
+    { key: 'ArrowRight', description: 'Next', action: handleNext, disabled: currentIndex >= questions.length - 1 },
+    { key: 'ArrowLeft', description: 'Previous', action: handlePrevious, disabled: currentIndex === 0 },
+  ];
+
+  useKeyboardShortcuts(practiceShortcuts, { enabled: hasStarted && !isFinished });
+
   if (isFinished) {
     return <TestResults questions={questions} answers={answers} onRetake={handleRetake} onBack={onBack} />;
   }
+
   return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
       {/* Header */}
       <div className="max-w-3xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-6">
-          
+          <div />
           <div className="flex items-center gap-2 text-foreground">
-            
-            
+            <KeyboardShortcutsHelp />
           </div>
         </div>
 
