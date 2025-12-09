@@ -261,6 +261,7 @@ export function LicenseSelector({
               Raleigh Amateur Radio Society (RARS)
             </a>
           </p>
+          <p className="text-sm">Made with ❤️ in North Carolina</p>
           <p className="text-xs mt-4">© {new Date().getFullYear()} Brad Bazemore. All rights reserved.</p>
         </div>
       </footer>

@@ -468,8 +468,8 @@ export default function Features() {
 
       {/* Footer */}
       <footer className="py-8 px-4 border-t border-border">
-        <div className="max-w-6xl mx-auto text-center">
-          <p className="text-sm text-muted-foreground">
+        <div className="max-w-6xl mx-auto text-center text-muted-foreground space-y-3">
+          <p className="text-sm">
             © {new Date().getFullYear()} Brad Bazemore &{" "}
             <a
               href="https://www.rars.org/"
@@ -481,6 +481,7 @@ export default function Features() {
             </a>
             . All rights reserved.
           </p>
+          <p className="text-sm">Made with ❤️ in North Carolina</p>
         </div>
       </footer>
     </div>
