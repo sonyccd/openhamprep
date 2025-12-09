@@ -135,15 +135,8 @@ export const AdminExamSessions = () => {
         return;
       }
 
-      // Check date is in the future
-      const examDate = new Date(session.exam_date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      if (examDate < today) {
-        errors.push({ row: rowNum, message: 'Exam date is in the past' });
-        return;
-      }
+      // Past dates are allowed - the ARRL data may include recent sessions
+      // The search UI will filter to future dates for users
 
       valid.push(session);
     });
