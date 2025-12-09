@@ -110,7 +110,7 @@ export const ExamSessionMap = ({
   return (
     <div
       ref={mapRef}
-      className={`w-full h-[400px] rounded-lg border border-border ${className}`}
+      className={`w-full h-full min-h-[300px] rounded-lg border border-border ${className}`}
     />
   );
 };
