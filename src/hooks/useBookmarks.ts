@@ -22,6 +22,7 @@ export function useBookmarks() {
       return data;
     },
     enabled: !!user,
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
   });
 
   const addBookmark = useMutation({

@@ -92,6 +92,8 @@ export const useExamSessions = (filters?: {
         totalPages: Math.ceil((count ?? 0) / pageSize),
       };
     },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    gcTime: 1000 * 60 * 30, // Keep in garbage collection for 30 minutes
   });
 };
 
@@ -107,6 +109,7 @@ export const useExamSessionsCount = () => {
       if (error) throw error;
       return count ?? 0;
     },
+    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
   });
 };
 
@@ -125,6 +128,7 @@ export const useExamSessionsLastUpdated = () => {
       if (error) throw error;
       return data?.updated_at ?? null;
     },
+    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
   });
 };
 
@@ -147,6 +151,7 @@ export const useUserTargetExam = (userId?: string) => {
       return data as (UserTargetExam & { exam_session: ExamSession }) | null;
     },
     enabled: !!userId,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 };
 

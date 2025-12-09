@@ -73,7 +73,8 @@ export default function Dashboard() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
   });
   const {
     data: questionAttempts,
@@ -88,7 +89,8 @@ export default function Dashboard() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
   });
   const {
     data: profile
@@ -102,7 +104,8 @@ export default function Dashboard() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   // Fetch weekly study goals
@@ -118,7 +121,8 @@ export default function Dashboard() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   // Fetch user's target exam
