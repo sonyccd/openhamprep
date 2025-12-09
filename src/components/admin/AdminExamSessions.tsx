@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useExamSessions, useBulkImportExamSessions, type ExamSession } from '@/hooks/useExamSessions';
+import { useExamSessions, useExamSessionsCount, useBulkImportExamSessions, type ExamSession } from '@/hooks/useExamSessions';
 
 interface ParsedSession {
   title: string | null;
@@ -40,6 +40,7 @@ export const AdminExamSessions = () => {
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
 
   const { data: existingSessions = [] } = useExamSessions();
+  const { data: totalCount = 0 } = useExamSessionsCount();
   const importMutation = useBulkImportExamSessions();
 
   const parseCSV = (content: string): ParsedSession[] => {
@@ -334,16 +335,16 @@ export const AdminExamSessions = () => {
         <CardHeader>
           <CardTitle>Current Sessions</CardTitle>
           <CardDescription>
-            {existingSessions.length} exam sessions in database
+            {totalCount} exam sessions in database
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {existingSessions.length === 0 ? (
+          {totalCount === 0 ? (
             <p className="text-muted-foreground">No exam sessions uploaded yet.</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
-                <p className="text-2xl font-bold">{existingSessions.length}</p>
+                <p className="text-2xl font-bold">{totalCount}</p>
                 <p className="text-sm text-muted-foreground">Total Sessions</p>
               </div>
               <div>

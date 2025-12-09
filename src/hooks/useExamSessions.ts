@@ -49,7 +49,8 @@ export const useExamSessions = (filters?: {
         .from('exam_sessions')
         .select('*')
         .gte('exam_date', new Date().toISOString().split('T')[0])
-        .order('exam_date', { ascending: true });
+        .order('exam_date', { ascending: true })
+        .limit(5000); // Increase limit to handle larger datasets
 
       if (filters?.startDate) {
         query = query.gte('exam_date', filters.startDate);
@@ -64,6 +65,21 @@ export const useExamSessions = (filters?: {
       const { data, error } = await query;
       if (error) throw error;
       return data as ExamSession[];
+    },
+  });
+};
+
+// Hook to get total count of sessions (for admin stats)
+export const useExamSessionsCount = () => {
+  return useQuery({
+    queryKey: ['exam-sessions-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('exam_sessions')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) throw error;
+      return count ?? 0;
     },
   });
 };
