@@ -64,7 +64,7 @@ export function HelpButton() {
       </Tooltip>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-lg" aria-describedby="help-description">
+        <DialogContent className="sm:max-w-lg min-h-[420px]" aria-describedby="help-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <HelpCircle className="h-5 w-5" aria-hidden="true" />
