@@ -1,73 +1,160 @@
-# Welcome to your Lovable project
+# RARS Ham Radio Test Prep
 
-## Project info
+A modern web application for studying and preparing for FCC Amateur Radio license exams, built for the [Raleigh Amateur Radio Society (RARS)](https://www.rars.org/).
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Overview
 
-## How can I edit this code?
+This application helps users prepare for their Technician, General, and Extra class ham radio license exams through:
 
-There are several ways of editing your application.
+- **Practice Tests** - Simulated exam experience with optional timer
+- **Random Practice** - Study questions in random order with instant feedback
+- **Study by Topics** - Focus on specific subelements with topic overviews and learning resources
+- **Weak Questions Review** - Target questions you've previously answered incorrectly
+- **Glossary & Flashcards** - Learn key terms with spaced repetition
+- **Progress Tracking** - Dashboard with test readiness metrics, streaks, and weekly goals
+- **Bookmarks** - Save questions for later review with personal notes
 
-**Use Lovable**
+## Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### Frontend
+- **React 18** with TypeScript
+- **Vite** for fast development and optimized builds
+- **Tailwind CSS** for styling with a custom design system
+- **shadcn/ui** components built on Radix UI primitives
+- **React Router** for client-side routing
+- **TanStack Query** for server state management
+- **Framer Motion** for animations
 
-Changes made via Lovable will be committed automatically to this repo.
+### Backend (Lovable Cloud / Supabase)
+- **PostgreSQL** database with Row Level Security (RLS)
+- **Supabase Auth** for user authentication
+- **Edge Functions** for serverless backend logic
+- **PostHog** for analytics (authenticated users only)
 
-**Use your preferred IDE**
+## Project Structure
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+```
+├── src/
+│   ├── components/
+│   │   ├── ui/              # shadcn/ui base components
+│   │   ├── admin/           # Admin dashboard components
+│   │   └── *.tsx            # Feature components
+│   ├── hooks/               # Custom React hooks
+│   │   ├── useAuth.tsx      # Authentication context
+│   │   ├── useQuestions.ts  # Question data fetching
+│   │   ├── useProgress.ts   # User progress tracking
+│   │   └── ...
+│   ├── pages/               # Route page components
+│   ├── integrations/
+│   │   └── supabase/        # Supabase client & types (auto-generated)
+│   ├── lib/                 # Utility functions
+│   └── index.css            # Design system tokens
+├── supabase/
+│   ├── functions/           # Edge functions
+│   └── migrations/          # Database migrations (read-only)
+└── public/                  # Static assets
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Architecture
 
-Follow these steps:
+### Data Flow
+1. **Questions** are stored in the database with subelement/group categorization
+2. **User attempts** are tracked per question for progress analytics
+3. **Practice test results** are saved for historical review
+4. **Glossary progress** tracks term mastery with spaced repetition
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+### Key Patterns
+- **Global License Filter** - The test type selector (Technician/General/Extra) filters all content app-wide
+- **Lazy Loading** - Pages are code-split for faster initial load
+- **Optimistic Updates** - UI updates immediately while syncing with backend
+- **RLS Policies** - All user data is protected at the database level
+
+### Design System
+The app uses semantic design tokens defined in `src/index.css` and `tailwind.config.ts`:
+- Never use direct colors in components (e.g., `text-white`)
+- Always use semantic tokens (e.g., `text-foreground`, `bg-muted`)
+- HSL color format throughout for theme consistency
+
+## Local Development
+
+### Prerequisites
+- Node.js 18+ (recommend using [nvm](https://github.com/nvm-sh/nvm))
+- npm or bun
+
+### Setup
+
+```bash
+# Clone the repository
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Environment Variables
+The `.env` file is auto-configured when connected to Lovable Cloud. For local development without Lovable:
+- `VITE_SUPABASE_URL` - Your Supabase project URL
+- `VITE_SUPABASE_PUBLISHABLE_KEY` - Your Supabase anon key
 
-**Use GitHub Codespaces**
+## Contributing
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Guidelines
 
-## What technologies are used for this project?
+1. **Keep changes focused** - One feature or fix per PR
+2. **Follow the design system** - Use semantic tokens, not direct colors
+3. **Create small components** - Avoid monolithic files; extract reusable pieces
+4. **Maintain type safety** - TypeScript strict mode is enabled
+5. **Test on mobile** - The app is responsive; verify mobile layouts
 
-This project is built with:
+### Code Style
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- Use functional components with hooks
+- Prefer `const` arrow functions for component definitions
+- Keep business logic in hooks, UI logic in components
+- Use TanStack Query for all data fetching
+- Follow existing patterns in the codebase
 
-## How can I deploy this project?
+### Admin Features
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+Admin access is granted via database role assignment (no UI for role management). Admins can:
+- Manage questions and glossary terms
+- Bulk import/export content via CSV/JSON
+- View usage statistics and identify content gaps
+- Track edit history for accountability
 
-## Can I connect a custom domain to my Lovable project?
+### Bulk Content Import
 
-Yes, you can!
+Questions and glossary terms can be bulk imported via CSV:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+**Questions CSV format:**
+```csv
+id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,What is...?,Answer A,Answer B,Answer C,Answer D,0,T1,T1A
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+**Glossary CSV format:**
+```csv
+term,definition
+Antenna,A device for transmitting or receiving radio waves
+```
+
+## Deployment
+
+The app is deployed via Lovable's publish feature:
+- **Frontend changes** require clicking "Update" in the publish dialog
+- **Backend changes** (edge functions, migrations) deploy automatically
+
+## License
+
+Copyright © Brad Bazemore and the Raleigh Amateur Radio Society (RARS)
+
+## Support
+
+- Join the [RARS community](https://www.rars.org/) for ham radio learning resources
+- File issues via the in-app help button (Bug Report / Feature Request)
