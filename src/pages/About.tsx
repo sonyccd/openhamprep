@@ -332,7 +332,7 @@ export default function About() {
                     
                     {/* Marker overlay - positioned near Raleigh */}
                     <div className="absolute" style={{
-                    left: '72%',
+                    left: '65%',
                     top: '38%',
                     transform: 'translate(-50%, -50%)'
                   }}>
