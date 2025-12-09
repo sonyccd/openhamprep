@@ -373,7 +373,7 @@ export const ExamSessionSearch = () => {
           )}
           {/* Pagination Controls */}
           {viewMode === 'list' && totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t mt-4">
+            <div className="flex items-center justify-between pt-4 border-t mt-4 flex-wrap gap-4">
               <p className="text-sm text-muted-foreground">
                 Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalCount)} of {totalCount}
               </p>
@@ -387,6 +387,23 @@ export const ExamSessionSearch = () => {
                   <ChevronLeft className="h-4 w-4" />
                   Previous
                 </Button>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm text-muted-foreground">Page</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={totalPages}
+                    value={page}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!isNaN(val) && val >= 1 && val <= totalPages) {
+                        setPage(val);
+                      }
+                    }}
+                    className="w-16 h-8 text-center"
+                  />
+                  <span className="text-sm text-muted-foreground">of {totalPages}</span>
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
