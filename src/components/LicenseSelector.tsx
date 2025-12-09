@@ -2,10 +2,13 @@ import { Link } from "react-router-dom";
 import { Radio, BookOpen, Target, BarChart3, Bookmark, Zap, CheckCircle2, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { LandingNav } from "@/components/LandingNav";
+import { UIPreviewSection } from "@/components/UIPreview";
+
 interface LicenseSelectorProps {
   onSelectLicense: () => void;
 }
+
 export function LicenseSelector({
   onSelectLicense
 }: LicenseSelectorProps) {
@@ -31,8 +34,8 @@ export function LicenseSelector({
     icon: BarChart3,
     title: "Progress Tracking",
     description: "Monitor your improvement over time. See which topics need more attention.",
-    color: "text-warning",
-    bgColor: "bg-warning/10"
+    color: "text-primary",
+    bgColor: "bg-primary/10"
   }, {
     icon: Bookmark,
     title: "Bookmark Questions",
@@ -43,20 +46,20 @@ export function LicenseSelector({
     icon: CheckCircle2,
     title: "Weak Area Review",
     description: "Focus your study time on questions you've missed. Master your problem areas.",
-    color: "text-primary",
-    bgColor: "bg-primary/10"
+    color: "text-accent",
+    bgColor: "bg-accent/10"
   }];
+
   const benefits = ["Free to use - no hidden costs", "Study anywhere, anytime", "Track your progress across sessions", "Built by hams, for hams"];
-  return <div className="min-h-screen flex flex-col radio-wave-bg relative">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-10">
-        <ThemeToggle />
-      </div>
+
+  return <div className="min-h-screen flex flex-col bg-background">
+      {/* Navigation */}
+      <LandingNav />
 
       {/* Main Content */}
       <main>
         {/* Hero Section */}
-        <section className="flex flex-col items-center justify-center px-4 pt-16 pb-12 md:pt-24 md:pb-16">
+        <section className="flex flex-col items-center justify-center px-4 pt-12 pb-12 md:pt-20 md:pb-16 radio-wave-bg">
         <motion.div initial={{
         opacity: 0,
         y: -30
@@ -127,8 +130,11 @@ export function LicenseSelector({
         </div>
       </motion.section>
 
+      {/* UI Preview Section */}
+      <UIPreviewSection />
+
       {/* Features Section */}
-      <section className="py-16 px-4">
+      <section id="features" className="py-16 px-4 scroll-mt-16">
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{
           opacity: 0,
@@ -170,7 +176,7 @@ export function LicenseSelector({
       </section>
 
       {/* How It Works Section */}
-      <section className="py-16 px-4 bg-muted/30">
+      <section id="how-it-works" className="py-16 px-4 bg-muted/30 scroll-mt-16">
         <div className="max-w-4xl mx-auto">
           <motion.div initial={{
           opacity: 0,
