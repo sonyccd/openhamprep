@@ -4,6 +4,8 @@ import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
 import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
+import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
+import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { BookOpen, SkipForward, RotateCcw, Loader2, ChevronRight, CheckCircle, ArrowLeft, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -301,6 +303,19 @@ export function SubelementPractice({
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
   const progress = Math.round(askedIds.length / currentQuestions.length * 100);
 
+  // Keyboard shortcuts
+  const shortcuts: KeyboardShortcut[] = [
+    { key: 'a', description: 'Select A', action: () => !showResult && handleSelectAnswer('A'), disabled: showResult },
+    { key: 'b', description: 'Select B', action: () => !showResult && handleSelectAnswer('B'), disabled: showResult },
+    { key: 'c', description: 'Select C', action: () => !showResult && handleSelectAnswer('C'), disabled: showResult },
+    { key: 'd', description: 'Select D', action: () => !showResult && handleSelectAnswer('D'), disabled: showResult },
+    { key: 'ArrowRight', description: 'Next', action: handleNextQuestion, disabled: !showResult },
+    { key: 'ArrowLeft', description: 'Previous', action: handlePreviousQuestion, disabled: !canGoBack },
+    { key: 's', description: 'Skip', action: handleSkip, disabled: showResult },
+  ];
+
+  useKeyboardShortcuts(shortcuts, { enabled: topicView === 'practice' });
+
   return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
       {/* Header */}
       <div className="max-w-3xl mx-auto mb-8">
@@ -309,12 +324,15 @@ export function SubelementPractice({
             <ArrowLeft className="w-4 h-4" />
             Topic Overview
           </Button>
-          <div className="flex items-center gap-2 text-primary">
-            <span className="font-mono font-bold">{selectedSubelement}</span>
-            <span className="text-muted-foreground">•</span>
-            <span className="text-sm text-muted-foreground">
-              {SUBELEMENT_NAMES[selectedSubelement] || `Subelement ${selectedSubelement}`}
-            </span>
+          <div className="flex items-center gap-2">
+            <KeyboardShortcutsHelp />
+            <div className="flex items-center gap-2 text-primary">
+              <span className="font-mono font-bold">{selectedSubelement}</span>
+              <span className="text-muted-foreground">•</span>
+              <span className="text-sm text-muted-foreground">
+                {SUBELEMENT_NAMES[selectedSubelement] || `Subelement ${selectedSubelement}`}
+              </span>
+            </div>
           </div>
         </div>
 

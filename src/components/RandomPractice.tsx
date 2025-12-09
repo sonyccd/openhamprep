@@ -5,15 +5,19 @@ import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
 import { useAuth } from "@/hooks/useAuth";
 import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
+import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
+import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { supabase } from "@/integrations/supabase/client";
 import { Zap, SkipForward, RotateCcw, Loader2, Flame, Trophy, Award, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+
 interface HistoryEntry {
   question: Question;
   selectedAnswer: 'A' | 'B' | 'C' | 'D' | null;
   showResult: boolean;
 }
+
 interface RandomPracticeProps {
   onBack: () => void;
 }
@@ -281,13 +285,28 @@ export function RandomPractice({
     setStreak(0);
     setBestStreak(allTimeBestStreak);
   };
+
   const canGoBack = historyIndex > 0;
   const isViewingHistory = historyIndex < questionHistory.length - 1;
+
+  // Keyboard shortcuts
+  const shortcuts: KeyboardShortcut[] = [
+    { key: 'a', description: 'Select A', action: () => !showResult && handleSelectAnswer('A'), disabled: showResult },
+    { key: 'b', description: 'Select B', action: () => !showResult && handleSelectAnswer('B'), disabled: showResult },
+    { key: 'c', description: 'Select C', action: () => !showResult && handleSelectAnswer('C'), disabled: showResult },
+    { key: 'd', description: 'Select D', action: () => !showResult && handleSelectAnswer('D'), disabled: showResult },
+    { key: 'ArrowRight', description: 'Next', action: handleNextQuestion, disabled: !showResult },
+    { key: 'ArrowLeft', description: 'Previous', action: handlePreviousQuestion, disabled: !canGoBack },
+    { key: 's', description: 'Skip', action: handleSkip, disabled: showResult },
+  ];
+
+  useKeyboardShortcuts(shortcuts);
+
   return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8">
       {/* Header */}
       <div className="max-w-3xl mx-auto mb-8">
         <div className="flex items-center justify-end mb-6">
-          
+          <KeyboardShortcutsHelp />
         </div>
 
         {/* Stats Bar */}
