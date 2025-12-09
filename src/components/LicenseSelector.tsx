@@ -73,10 +73,8 @@ export function LicenseSelector({
           <div className="flex items-center justify-center gap-3 mb-6">
             <Radio className="w-12 h-12 text-primary animate-pulse-slow" />
             <h1 className="text-4xl md:text-6xl font-mono font-bold text-foreground">
-              <a href="https://www.rars.org/" target="_blank" rel="noopener noreferrer" className="text-primary text-glow-primary hover:underline">
-                RARS
-              </a>{" "}
-              Test Prep
+              <span className="text-primary text-glow-primary">Open Ham</span>{" "}
+              Prep
             </h1>
           </div>
           <p className="text-xl md:text-2xl text-muted-foreground mb-4">
@@ -84,11 +82,7 @@ export function LicenseSelector({
           </p>
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
             Prepare for your Technician, General, or Amateur Extra license exam with our comprehensive study tools.
-            Built by the{" "}
-            <a href="https://www.rars.org/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
-              Raleigh Amateur Radio Society
-            </a>
-            .
+            Built by ham radio enthusiasts in North Carolina.
           </p>
 
           {/* CTA Button */}
@@ -240,7 +234,7 @@ export function LicenseSelector({
           <div className="bg-card border-2 border-primary/20 rounded-2xl p-8 md:p-12">
             <Radio className="w-12 h-12 text-primary mx-auto mb-4" />
             <h2 className="text-2xl md:text-3xl font-mono font-bold text-foreground mb-4">Ready to Get Licensed?</h2>
-            <p className="text-muted-foreground mb-6">Join other aspiring hams who have used RARS Test Prep to pass their exams. Your amateur radio journey starts here.</p>
+            <p className="text-muted-foreground mb-6">Join other aspiring hams who have used Open Ham Prep to pass their exams. Your amateur radio journey starts here.</p>
             <Link to="/auth">
               <Button size="lg" className="text-lg px-8 py-6 group">
                 Get Started Now

@@ -38,7 +38,7 @@ const faqs: FAQItem[] = [
   {
     category: "licensing",
     question: "How do I find an exam session near me?",
-    answer: "Visit the ARRL exam finder at arrl.org/find-an-amateur-radio-license-exam-session or contact your local amateur radio club. Many clubs, including RARS, regularly host exam sessions. Online remote exams are also available through various VECs."
+    answer: "Visit the ARRL exam finder at arrl.org/find-an-amateur-radio-license-exam-session or contact your local amateur radio club. Many clubs regularly host exam sessions. Online remote exams are also available through various VECs."
   },
   {
     category: "licensing",
@@ -59,8 +59,8 @@ const faqs: FAQItem[] = [
   // App Questions
   {
     category: "app",
-    question: "Is RARS Test Prep really free?",
-    answer: "Yes, completely free with no hidden costs, subscriptions, or premium features locked behind a paywall. This app was built by volunteers from the Raleigh Amateur Radio Society to help people get licensed."
+    question: "Is Open Ham Prep really free?",
+    answer: "Yes, completely free with no hidden costs, subscriptions, or premium features locked behind a paywall. This app was built by ham radio enthusiasts in North Carolina to help people get licensed."
   },
   {
     category: "app",
@@ -75,7 +75,7 @@ const faqs: FAQItem[] = [
   {
     category: "app",
     question: "Can I use this app on my phone?",
-    answer: "Absolutely! RARS Test Prep is fully responsive and works great on phones, tablets, and computers. You can study anywhere, anytime."
+    answer: "Absolutely! Open Ham Prep is fully responsive and works great on phones, tablets, and computers. You can study anywhere, anytime."
   },
   {
     category: "app",
@@ -197,7 +197,7 @@ export default function FAQ() {
                 Frequently Asked Questions
               </h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Everything you need to know about ham radio licensing and using RARS Test Prep.
+                Everything you need to know about ham radio licensing and using Open Ham Prep.
               </p>
             </motion.div>
           </div>
@@ -266,17 +266,16 @@ export default function FAQ() {
               Still Have Questions?
             </h2>
             <p className="text-muted-foreground mb-6">
-              Can't find what you're looking for? The RARS community is here to help.
-              Visit our website or join a club meeting to connect with experienced hams.
+              Can't find what you're looking for? Check out the ARRL resources or join your local ham radio club to connect with experienced operators.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="https://www.rars.org/"
+                href="https://www.arrl.org/getting-licensed"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <Button variant="outline" size="lg">
-                  Visit RARS.org
+                  ARRL Licensing Info
                 </Button>
               </a>
               <Link to="/auth">

@@ -30,7 +30,7 @@ export function ModeSelector({ onSelectMode, onBack }: ModeSelectorProps) {
         <div className="flex items-center justify-center gap-3 mb-4">
           <Radio className="w-10 h-10 text-primary animate-pulse-slow" />
           <h1 className="text-4xl md:text-5xl font-mono font-bold text-foreground">
-            <span className="text-primary text-glow-primary">RARS</span> Test Prep
+            <span className="text-primary text-glow-primary">Open Ham</span> Prep
           </h1>
         </div>
         <h2 className="text-2xl md:text-3xl font-mono text-foreground/90 mb-2">

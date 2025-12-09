@@ -217,7 +217,7 @@ export default function Features() {
             transition={{ delay: 0.1 }}
             className="text-lg text-muted-foreground max-w-2xl mx-auto"
           >
-            RARS Test Prep is packed with features designed to help you study efficiently, 
+            Open Ham Prep is packed with features designed to help you study efficiently, 
             track your progress, and pass the FCC amateur radio license exam on your first try.
           </motion.p>
         </div>
@@ -361,14 +361,14 @@ export default function Features() {
             viewport={{ once: true }}
             className="text-3xl font-bold text-center text-foreground mb-12"
           >
-            Why Study With RARS Test Prep?
+            Why Study With Open Ham Prep?
           </motion.h2>
 
           <div className="space-y-8">
             {[
               {
                 title: "Built by Hams, for Hams",
-                description: "Created by the Raleigh Amateur Radio Society, a community of active amateur radio operators who understand what it takes to pass the exam.",
+                description: "Created by ham radio enthusiasts in North Carolina who understand what it takes to pass the exam and want to help more people join the hobby.",
               },
               {
                 title: "Complete Question Pool",
@@ -388,7 +388,7 @@ export default function Features() {
               },
               {
                 title: "Completely Free",
-                description: "No hidden fees, no premium tiers, no ads. RARS provides this as a free service to help more people join the amateur radio community.",
+                description: "No hidden fees, no premium tiers, no ads. We provide this as a free service to help more people join the amateur radio community.",
               },
             ].map((item, index) => (
               <motion.div
@@ -447,7 +447,7 @@ export default function Features() {
             transition={{ delay: 0.1 }}
             className="text-muted-foreground mb-8"
           >
-            Join thousands of aspiring ham radio operators who have used RARS Test Prep 
+            Join thousands of aspiring ham radio operators who have used Open Ham Prep 
             to pass their FCC exams. Your license is just a few study sessions away.
           </motion.p>
           <motion.div

@@ -113,7 +113,7 @@ export function HelpButton() {
                 </p>
 
                 <div className="space-y-3">
-                  <a href="https://github.com/sonyccd/rars-test-prep/issues/new?template=bug_report.md" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
+                  <a href="https://github.com/sonyccd/openhamprep/issues/new?template=bug_report.md" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
                     <div className="flex items-center justify-center h-10 w-10 rounded-full bg-destructive/10 text-destructive">
                       <Bug className="h-5 w-5" aria-hidden="true" />
                     </div>
@@ -126,7 +126,7 @@ export function HelpButton() {
                     <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   </a>
 
-                  <a href="https://github.com/sonyccd/rars-test-prep/issues/new?template=feature_request.md" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
+                  <a href="https://github.com/sonyccd/openhamprep/issues/new?template=feature_request.md" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
                     <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 text-primary">
                       <Lightbulb className="h-5 w-5" aria-hidden="true" />
                     </div>

@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Radio, Users, Heart, Code, ExternalLink, ArrowRight, Globe, Sparkles, BookOpen, Unlock, MessageCircle, Zap, GitBranch, Shield, Target } from "lucide-react";
+import { Radio, Users, Heart, Code, ExternalLink, ArrowRight, Globe, Sparkles, BookOpen, Unlock, MessageCircle, Zap, GitBranch, Shield, Target, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LandingNav } from "@/components/LandingNav";
 import { MarketingFooter } from "@/components/MarketingFooter";
 import { cn } from "@/lib/utils";
+
 export default function About() {
   const values = [{
     icon: Unlock,
@@ -31,6 +32,7 @@ export default function About() {
     color: "text-success",
     bg: "bg-success/10"
   }];
+
   const principles = [{
     icon: Target,
     title: "More Than a Ticket",
@@ -42,8 +44,9 @@ export default function About() {
   }, {
     icon: MessageCircle,
     title: "Ready for the Air",
-    description: "When you pass using RARS Test Prep, you'll be confident making your first contact."
+    description: "When you pass using Open Ham Prep, you'll be confident making your first contact."
   }];
+
   return <div className="min-h-screen flex flex-col bg-background">
       <LandingNav />
 
@@ -116,7 +119,7 @@ export default function About() {
                     platforms that prioritize profit over education.
                   </p>
                   <p>
-                    We started RARS Test Prep with a simple belief: <strong className="text-foreground">if you want 
+                    We started Open Ham Prep with a simple belief: <strong className="text-foreground">if you want 
                     to become a ham, nothing should stand in your way</strong>. Not money. Not access. Not geography.
                   </p>
                   <p>
@@ -252,14 +255,14 @@ export default function About() {
                     </h2>
                     <div className="space-y-4 text-muted-foreground">
                       <p>
-                        RARS Test Prep is <strong className="text-foreground">100% open source</strong>. 
+                        Open Ham Prep is <strong className="text-foreground">100% open source</strong>. 
                         Our code is public, our development is transparent, and our community is welcome to 
                         contribute. This isn't just about building software—it's about building trust.
                       </p>
                       <p>When you use open-source software, you know exactly what you're getting. No surprise monetization, no rug pulls. Just honest tools built by people who care about the same things you do.</p>
                       <p className="text-foreground font-medium">
                         Want to contribute? Found a bug? Have an idea?{" "}
-                        <a href="https://github.com/sonyccd/rars-test-prep" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                        <a href="https://github.com/sonyccd/openhamprep" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
                           Check out our GitHub repo
                           <ExternalLink className="w-4 h-4" />
                         </a>
@@ -283,7 +286,7 @@ export default function About() {
           </div>
         </section>
 
-        {/* About RARS Section */}
+        {/* Born in North Carolina Section */}
         <section className="py-16 md:py-20 px-4">
           <div className="max-w-4xl mx-auto">
             <motion.div initial={{
@@ -297,30 +300,26 @@ export default function About() {
           }} className="grid md:grid-cols-2 gap-8 items-center">
               <div>
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4">
-                  <Users className="w-4 h-4" />
-                  The Team
+                  <MapPin className="w-4 h-4" />
+                  Our Story
                 </div>
                 <h2 className="text-3xl md:text-4xl font-mono font-bold text-foreground mb-4">
-                  Raleigh Amateur Radio Society
+                  Born in North Carolina
                 </h2>
                 <div className="space-y-4 text-muted-foreground">
                   <p>
-                    This project was born in the{" "}
-                    <a href="https://www.rars.org/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
-                      Raleigh Amateur Radio Society (RARS)
-                    </a>
-                    —a nonprofit club dedicated to promoting amateur radio in North Carolina and beyond.
+                    This project started when a group of ham radio enthusiasts in North Carolina realized 
+                    that quality test prep resources were either expensive, outdated, or locked behind paywalls. 
+                    We believed that if amateur radio is about open communication, then the path to getting 
+                    licensed should be just as open.
                   </p>
                   <p>
-                    We host license exam sessions, mentor new operators, and build tools like this one to 
-                    make ham radio accessible to everyone. Whether you're in Raleigh or around the world, 
-                    we're here to help you get on the air.
+                    What began as a local effort to help friends and neighbors get their licenses has grown 
+                    into an open-source project serving aspiring hams around the world. We're not a company 
+                    selling a product—we're radio operators who remember what it was like to study for our 
+                    first exam, and we want to make that journey easier for everyone who comes after us.
                   </p>
                 </div>
-                <a href="https://www.rars.org/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline font-medium mt-4">
-                  Visit RARS.org
-                  <ExternalLink className="w-4 h-4" />
-                </a>
               </div>
               <motion.div initial={{
               opacity: 0,
@@ -342,10 +341,10 @@ export default function About() {
                     filter: 'brightness(0) saturate(100%) invert(43%) sepia(93%) saturate(364%) hue-rotate(143deg) brightness(95%) contrast(90%)'
                   }} />
                     
-                    {/* Raleigh marker overlay */}
+                    {/* Marker overlay */}
                     <div className="absolute" style={{
-                    left: '62%',
-                    top: '42%',
+                    left: '50%',
+                    top: '50%',
                     transform: 'translate(-50%, -50%)'
                   }}>
                       <div className="relative">
@@ -365,20 +364,11 @@ export default function About() {
                         <div className="relative w-4 h-4 rounded-full bg-primary border-2 border-primary-foreground shadow-lg" />
                       </div>
                     </div>
-                    
-                    {/* Raleigh label */}
-                    <div className="absolute font-mono font-bold text-xs text-foreground" style={{
-                    left: '62%',
-                    top: '58%',
-                    transform: 'translateX(-50%)'
-                  }}>
-                      RALEIGH
-                    </div>
                   </div>
                   
                   {/* Caption */}
                   <p className="text-center text-sm text-muted-foreground mt-4 relative z-10">
-                    Born in <span className="text-primary font-medium">Raleigh, NC</span> • Serving hams worldwide
+                    Born in <span className="text-primary font-medium">North Carolina</span> • Serving hams worldwide
                   </p>
                 </div>
               </motion.div>
@@ -438,7 +428,7 @@ export default function About() {
                   Your Journey Starts Here
                 </h2>
                 <p className="text-muted-foreground mb-8 text-lg">
-                  Join thousands of aspiring hams who've used RARS Test Prep to earn their licenses. 
+                  Join thousands of aspiring hams who've used Open Ham Prep to earn their licenses. 
                   The airwaves are waiting for you.
                 </p>
                 <Link to="/auth">

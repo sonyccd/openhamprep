@@ -138,7 +138,7 @@ export function DashboardSidebar({
         {(isMobile || !isCollapsed) && <div className="flex items-center gap-2">
             <Radio className="w-5 h-5 text-primary" />
             <span className="font-mono font-bold text-foreground text-sm">
-              <span className="text-primary">RARS Test Prep</span>
+              <span className="text-primary">Open Ham Prep</span>
             </span>
           </div>}
         {!isMobile && (

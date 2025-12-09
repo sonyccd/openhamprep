@@ -35,7 +35,7 @@ export function LandingNav() {
           <Link to="/" className="flex items-center gap-2 group">
             <Radio className="w-7 h-7 text-primary group-hover:animate-pulse" />
             <span className="font-mono font-bold text-lg text-foreground">
-              RARS Test Prep
+              Open Ham Prep
             </span>
           </Link>
 

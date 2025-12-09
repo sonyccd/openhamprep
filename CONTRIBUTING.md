@@ -1,6 +1,6 @@
-# Contributing to RARS Ham Radio Test Prep
+# Contributing to Open Ham Prep
 
-Thank you for your interest in contributing to the RARS Ham Radio Test Prep application! This guide will help you get started.
+Thank you for your interest in contributing to the Open Ham Prep application! This guide will help you get started.
 
 ## Table of Contents
 
@@ -30,8 +30,8 @@ Thank you for your interest in contributing to the RARS Ham Radio Test Prep appl
 
 ```bash
 # Fork the repository on GitHub first, then:
-git clone https://github.com/YOUR_USERNAME/rars-test-prep.git
-cd rars-test-prep
+git clone https://github.com/YOUR_USERNAME/openhamprep.git
+cd openhamprep
 npm install
 npm run dev
 ```

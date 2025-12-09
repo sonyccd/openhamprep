@@ -1,6 +1,6 @@
-# RARS Ham Radio Test Prep
+# Open Ham Prep
 
-A modern web application for studying and preparing for FCC Amateur Radio license exams, built for the [Raleigh Amateur Radio Society (RARS)](https://www.rars.org/).
+A modern web application for studying and preparing for FCC Amateur Radio license exams—a community-driven open-source project born in North Carolina.
 
 ## Overview
 
@@ -85,8 +85,8 @@ The app uses semantic design tokens defined in `src/index.css` and `tailwind.con
 
 ```bash
 # Clone the repository
-git clone <YOUR_GIT_URL>
-cd <YOUR_PROJECT_NAME>
+git clone https://github.com/sonyccd/openhamprep.git
+cd openhamprep
 
 # Install dependencies
 npm install
@@ -152,9 +152,9 @@ The app is deployed via Lovable's publish feature:
 
 ## License
 
-Copyright © Brad Bazemore and the Raleigh Amateur Radio Society (RARS)
+© Brad Bazemore
 
 ## Support
 
-- Join the [RARS community](https://www.rars.org/) for ham radio learning resources
 - File issues via the in-app help button (Bug Report / Feature Request)
+- Visit [ARRL.org](https://www.arrl.org/) for general ham radio learning resources
