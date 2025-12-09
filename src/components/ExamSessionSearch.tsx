@@ -69,7 +69,7 @@ export const ExamSessionSearch = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [studyIntensity, setStudyIntensity] = useState<'light' | 'moderate' | 'intensive'>('moderate');
   const [page, setPage] = useState(1);
-  const pageSize = 50;
+  const pageSize = 20;
 
   const { data, isLoading } = useExamSessions({
     startDate,
@@ -380,38 +380,74 @@ export const ExamSessionSearch = () => {
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setPage(1)}
                   disabled={page <= 1 || isLoading}
+                  aria-label="First page"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  Previous
+                  <ChevronLeft className="h-4 w-4 -ml-3" />
                 </Button>
-                <div className="flex items-center gap-1">
-                  <span className="text-sm text-muted-foreground">Page</span>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={totalPages}
-                    value={page}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      if (!isNaN(val) && val >= 1 && val <= totalPages) {
-                        setPage(val);
-                      }
-                    }}
-                    className="w-16 h-8 text-center"
-                  />
-                  <span className="text-sm text-muted-foreground">of {totalPages}</span>
-                </div>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1 || isLoading}
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                {/* Page number buttons */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (page <= 3) {
+                      pageNum = i + 1;
+                    } else if (page >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = page - 2 + i;
+                    }
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={page === pageNum ? "default" : "outline"}
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setPage(pageNum)}
+                        disabled={isLoading}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages || isLoading}
+                  aria-label="Next page"
                 >
-                  Next
                   <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setPage(totalPages)}
+                  disabled={page >= totalPages || isLoading}
+                  aria-label="Last page"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-4 w-4 -ml-3" />
                 </Button>
               </div>
             </div>
