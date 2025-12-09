@@ -71,7 +71,7 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/');
+    navigate('/auth');
   };
 
   const handleProfileUpdate = () => {
