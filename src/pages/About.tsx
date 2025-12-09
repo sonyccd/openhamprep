@@ -304,12 +304,7 @@ export default function About() {
                   Born in North Carolina
                 </h2>
                 <div className="space-y-4 text-muted-foreground">
-                  <p>
-                    This project started when a group of ham radio enthusiasts in North Carolina realized 
-                    that quality test prep resources were either expensive, outdated, or locked behind paywalls. 
-                    We believed that if amateur radio is about open communication, then the path to getting 
-                    licensed should be just as open.
-                  </p>
+                  <p>This project started when a group of ham radio enthusiasts in North Carolina realized that quality test prep resources were either, outdated, locked behind paywalls, or just frustrating to use. We believed that if amateur radio is about open communication, then the path to getting licensed should be just as open.</p>
                   <p>
                     What began as a local effort to help friends and neighbors get their licenses has grown 
                     into an open-source project serving aspiring hams around the world. We're not a company 
