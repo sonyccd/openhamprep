@@ -117,7 +117,7 @@ export default function About() {
                   </p>
                   <p>
                     We started Open Ham Prep with a simple belief: <strong className="text-foreground">if you want 
-                    to become a ham, nothing should stand in your way</strong>​
+                    to become a ham, nothing should stand in your way.</strong>
                   </p>
                   <p>
                     This isn't just about passing an exam. It's about preparing you to{" "}
