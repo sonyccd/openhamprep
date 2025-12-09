@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, ReactNode, useCallback } from 're
 import posthog from 'posthog-js';
 import { useAuth } from './useAuth';
 
-const POSTHOG_KEY = 'phc_7CxjA0EIeU4J1oVDzRo1dVpgiTJ15qac0mYhid2Zvm4';
+const POSTHOG_KEY = 'phc_dADgppY50Dyh9adNuDYcGFoJ9JwaAubQMOagrqAMbv5';
 const POSTHOG_HOST = 'https://us.i.posthog.com';
 
 interface PostHogContextType {
