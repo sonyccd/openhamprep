@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Radio, BookOpen, Target, BarChart3, Bookmark, Zap, CheckCircle2, ArrowRight } from "lucide-react";
+import { Radio, BookOpen, Target, BarChart3, Bookmark, Zap, CheckCircle2, ArrowRight, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { LandingNav } from "@/components/LandingNav";
@@ -26,17 +26,23 @@ export function LicenseSelector({
     color: "text-accent",
     bgColor: "bg-accent/10"
   }, {
+    icon: MapPin,
+    title: "Find Exam Sessions",
+    description: "Search for exam sessions near you by location or date. Set a target exam and get a personalized study plan.",
+    color: "text-success",
+    bgColor: "bg-success/10"
+  }, {
     icon: Zap,
     title: "Random Practice",
     description: "Drill through unlimited random questions to build confidence and reinforce learning.",
-    color: "text-success",
-    bgColor: "bg-success/10"
+    color: "text-primary",
+    bgColor: "bg-primary/10"
   }, {
     icon: BarChart3,
     title: "Progress Tracking",
     description: "Monitor your improvement over time. See which topics need more attention.",
-    color: "text-primary",
-    bgColor: "bg-primary/10"
+    color: "text-accent",
+    bgColor: "bg-accent/10"
   }, {
     icon: Bookmark,
     title: "Bookmark Questions",
@@ -47,8 +53,8 @@ export function LicenseSelector({
     icon: CheckCircle2,
     title: "Weak Area Review",
     description: "Focus your study time on questions you've missed. Master your problem areas.",
-    color: "text-accent",
-    bgColor: "bg-accent/10"
+    color: "text-success",
+    bgColor: "bg-success/10"
   }];
 
   const benefits = ["Free to use - no hidden costs", "Study anywhere, anytime", "Track your progress across sessions", "Built by hams, for hams"];
