@@ -41,6 +41,7 @@ export const useExamSessions = (filters?: {
   startDate?: string;
   endDate?: string;
   state?: string;
+  walkInsOnly?: boolean;
   page?: number;
   pageSize?: number;
 }) => {
@@ -72,6 +73,10 @@ export const useExamSessions = (filters?: {
       if (filters?.zip && filters.zip.length >= 3) {
         const zipPrefix = filters.zip.substring(0, 3);
         query = query.like('zip', `${zipPrefix}%`);
+      }
+      // Filter by walk-ins allowed
+      if (filters?.walkInsOnly) {
+        query = query.eq('walk_ins_allowed', true);
       }
 
       // Apply pagination after all filters

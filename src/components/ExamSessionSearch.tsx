@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ExamSessionMap } from './ExamSessionMap';
 import { useExamSessions, useSaveTargetExam, useUserTargetExam, useRemoveTargetExam, type ExamSession } from '@/hooks/useExamSessions';
 import { useAuth } from '@/hooks/useAuth';
@@ -109,6 +110,7 @@ export const ExamSessionSearch = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [studyIntensity, setStudyIntensity] = useState<'light' | 'moderate' | 'intensive'>('moderate');
   const [page, setPage] = useState(1);
+  const [walkInsOnly, setWalkInsOnly] = useState(false);
   const pageSize = 20;
   const {
     data,
@@ -118,6 +120,7 @@ export const ExamSessionSearch = () => {
     endDate,
     state: state || undefined,
     zip: zipCode || undefined,
+    walkInsOnly,
     page,
     pageSize
   });
@@ -148,6 +151,10 @@ export const ExamSessionSearch = () => {
   };
   const handleZipChange = (v: string) => {
     setZipCode(v.replace(/\D/g, '').slice(0, 5));
+    setPage(1);
+  };
+  const handleWalkInsChange = (checked: boolean) => {
+    setWalkInsOnly(checked);
     setPage(1);
   };
   const handleSaveTarget = () => {
@@ -237,6 +244,10 @@ export const ExamSessionSearch = () => {
               <Label htmlFor="end-date">To Date</Label>
               <Input id="end-date" type="date" value={endDate} onChange={e => handleEndDateChange(e.target.value)} />
             </div>
+          </div>
+          <div className="flex items-center space-x-2 mt-4">
+            <Checkbox id="walk-ins" checked={walkInsOnly} onCheckedChange={handleWalkInsChange} />
+            <Label htmlFor="walk-ins" className="cursor-pointer">Walk-ins allowed only</Label>
           </div>
         </CardContent>
       </Card>
