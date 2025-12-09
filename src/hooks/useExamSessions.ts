@@ -167,18 +167,25 @@ export const useBulkImportExamSessions = () => {
 
       if (deleteError) throw deleteError;
 
-      // Insert new sessions
-      const { data, error } = await supabase
-        .from('exam_sessions')
-        .insert(sessions)
-        .select();
+      // Insert in batches of 500 to avoid Supabase limits
+      const BATCH_SIZE = 500;
+      let totalInserted = 0;
 
-      if (error) throw error;
-      return data;
+      for (let i = 0; i < sessions.length; i += BATCH_SIZE) {
+        const batch = sessions.slice(i, i + BATCH_SIZE);
+        const { error } = await supabase
+          .from('exam_sessions')
+          .insert(batch);
+
+        if (error) throw error;
+        totalInserted += batch.length;
+      }
+
+      return { count: totalInserted };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['exam-sessions'] });
-      toast.success(`Imported ${data.length} exam sessions`);
+      toast.success(`Imported ${data.count} exam sessions`);
     },
     onError: (error) => {
       console.error('Error importing exam sessions:', error);
