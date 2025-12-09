@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react';
-import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, Download } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, Download, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useExamSessions, useExamSessionsCount, useBulkImportExamSessions, type ExamSession } from '@/hooks/useExamSessions';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface ParsedSession {
   title: string | null;
@@ -38,10 +40,39 @@ export const AdminExamSessions = () => {
   const [file, setFile] = useState<File | null>(null);
   const [parsing, setParsing] = useState(false);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
 
-  const { data: existingSessions = [] } = useExamSessions();
-  const { data: totalCount = 0 } = useExamSessionsCount();
+  const { data: existingSessions = [], refetch } = useExamSessions();
+  const { data: totalCount = 0, refetch: refetchCount } = useExamSessionsCount();
   const importMutation = useBulkImportExamSessions();
+
+  const handleGeocode = async () => {
+    setGeocoding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('geocode-addresses');
+      
+      if (error) {
+        toast.error('Geocoding failed: ' + error.message);
+        return;
+      }
+
+      toast.success(data.message);
+      
+      // If there are more to process, show remaining count
+      if (data.remaining > 0) {
+        toast.info(`${data.remaining} sessions still need coordinates. Run geocoding again.`);
+      }
+      
+      // Refresh the data
+      refetch();
+      refetchCount();
+    } catch (err) {
+      toast.error('Geocoding failed');
+      console.error(err);
+    } finally {
+      setGeocoding(false);
+    }
+  };
 
   const parseCSV = (content: string): ParsedSession[] => {
     const lines = content.split('\n').filter((line) => line.trim());
@@ -333,10 +364,29 @@ export const AdminExamSessions = () => {
       {/* Current Sessions Stats */}
       <Card>
         <CardHeader>
-          <CardTitle>Current Sessions</CardTitle>
-          <CardDescription>
-            {totalCount} exam sessions in database
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Current Sessions</CardTitle>
+              <CardDescription>
+                {totalCount} exam sessions in database
+              </CardDescription>
+            </div>
+            {totalCount > 0 && existingSessions.some((s) => !s.latitude || !s.longitude) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGeocode}
+                disabled={geocoding}
+              >
+                {geocoding ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <MapPin className="h-4 w-4 mr-2" />
+                )}
+                Geocode Addresses
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {totalCount === 0 ? (
