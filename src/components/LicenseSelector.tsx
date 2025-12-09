@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Radio, BookOpen, Target, BarChart3, Bookmark, Zap, CheckCircle2, ArrowRight, MapPin } from "lucide-react";
+import { Radio, BookOpen, Target, BarChart3, Zap, CheckCircle2, ArrowRight, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { LandingNav } from "@/components/LandingNav";
@@ -43,12 +43,6 @@ export function LicenseSelector({
     description: "Monitor your improvement over time. See which topics need more attention.",
     color: "text-accent",
     bgColor: "bg-accent/10"
-  }, {
-    icon: Bookmark,
-    title: "Bookmark Questions",
-    description: "Save tricky questions for later review. Add personal notes to help you remember.",
-    color: "text-destructive",
-    bgColor: "bg-destructive/10"
   }, {
     icon: CheckCircle2,
     title: "Weak Area Review",
