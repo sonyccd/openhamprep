@@ -6,7 +6,7 @@ import {
   ClipboardCheck,
   BookOpen,
   Target,
-  Bookmark,
+  MapPin,
   BookText,
   Timer,
   TrendingUp,
@@ -26,7 +26,7 @@ import {
   PracticeTestMockup,
   StudyByTopicsMockup,
   WeakQuestionsMockup,
-  BookmarksMockup,
+  FindExamSessionsMockup,
   GlossaryMockup,
 } from "@/components/FeatureMockups";
 import { type LucideIcon } from "lucide-react";
@@ -80,13 +80,13 @@ const features: Feature[] = [
     mockup: <WeakQuestionsMockup />,
   },
   {
-    icon: Bookmark,
-    title: "Bookmarked Questions",
-    description: "Save questions you want to review later. Add personal notes to bookmarks to remember why you saved them.",
-    benefits: ["Personal study list", "Add notes for context", "Quick access anytime"],
+    icon: MapPin,
+    title: "Find Exam Sessions",
+    description: "Search for FCC exam sessions near you by ZIP code or state. Set a target exam date and get a personalized study plan based on your timeline.",
+    benefits: ["Search by location or date", "Filter for walk-ins allowed", "Set target exam with study plan"],
     color: "text-yellow-500",
     bgColor: "bg-yellow-500/10",
-    mockup: <BookmarksMockup />,
+    mockup: <FindExamSessionsMockup />,
   },
   {
     icon: BookText,

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Check, X, ChevronRight, Flame, BookmarkPlus, RotateCcw } from "lucide-react";
+import { Check, X, ChevronRight, Flame, BookmarkPlus, RotateCcw, MapPin, Calendar, Target } from "lucide-react";
 
 // Random Practice Mockup
 export function RandomPracticeMockup() {
@@ -180,6 +180,65 @@ export function WeakQuestionsMockup() {
         </motion.button>
       </div>
     </div>;
+}
+
+// Find Exam Sessions Mockup
+export function FindExamSessionsMockup() {
+  const sessions = [
+    { location: "Raleigh Community Center", date: "Jan 15, 2025", city: "Raleigh, NC", walkIns: true },
+    { location: "Durham Public Library", date: "Jan 22, 2025", city: "Durham, NC", walkIns: false },
+    { location: "Cary VFW Hall", date: "Feb 1, 2025", city: "Cary, NC", walkIns: true },
+  ];
+
+  return (
+    <div className="bg-background rounded-lg border border-border shadow-lg overflow-hidden">
+      <div className="bg-card px-4 py-3 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <MapPin className="w-3 h-3 text-primary" />
+          <span className="text-xs font-mono text-muted-foreground">Find Exam Sessions</span>
+        </div>
+        <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">Near 27601</span>
+      </div>
+      
+      <div className="p-4 space-y-2">
+        {sessions.map((session, i) => (
+          <motion.div
+            key={session.location}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="p-2 rounded-md border border-border hover:border-primary/50 transition-colors"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-xs font-medium text-foreground">{session.location}</div>
+                <div className="text-[10px] text-muted-foreground">{session.city}</div>
+              </div>
+              {session.walkIns && (
+                <span className="text-[9px] px-1.5 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded">
+                  Walk-ins OK
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground">
+              <Calendar className="w-2.5 h-2.5" />
+              {session.date}
+            </div>
+          </motion.div>
+        ))}
+        
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="w-full mt-2 py-2 text-xs bg-primary text-primary-foreground rounded-md font-medium flex items-center justify-center gap-1"
+        >
+          <Target className="w-3 h-3" />
+          Set Target Exam Date
+        </motion.button>
+      </div>
+    </div>
+  );
 }
 
 // Bookmarks Mockup
