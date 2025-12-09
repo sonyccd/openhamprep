@@ -10,7 +10,7 @@ import { AdminExamSessions } from "@/components/admin/AdminExamSessions";
 import { Loader2, ShieldAlert, BookOpen, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppLayout } from "@/components/AppLayout";
-import { TestType } from "@/components/DashboardSidebar";
+import { TestType } from "@/types/navigation";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 export default function Admin() {
   const {

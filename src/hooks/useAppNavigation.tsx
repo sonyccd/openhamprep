@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-
-type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice' | 'review-test' | 'glossary' | 'glossary-flashcards' | 'find-test-site';
+import { View } from '@/types/navigation';
 
 interface AppNavigationContextType {
   currentView: View;

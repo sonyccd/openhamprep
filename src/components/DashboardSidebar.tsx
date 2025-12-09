@@ -10,21 +10,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useState } from "react";
-export type TestType = 'technician' | 'general' | 'extra';
-export const testTypes = [{
-  id: 'technician' as TestType,
-  name: 'Technician',
-  available: true
-}, {
-  id: 'general' as TestType,
-  name: 'General',
-  available: false
-}, {
-  id: 'extra' as TestType,
-  name: 'Amateur Extra',
-  available: false
-}];
-type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice' | 'review-test' | 'glossary' | 'glossary-flashcards' | 'find-test-site';
+import { View, TestType, testTypes } from "@/types/navigation";
 interface NavItem {
   id: View;
   label: string;

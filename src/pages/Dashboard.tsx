@@ -21,7 +21,7 @@ import { Glossary } from '@/components/Glossary';
 import { GlossaryFlashcards } from '@/components/GlossaryFlashcards';
 import { WeeklyGoalsModal } from '@/components/WeeklyGoalsModal';
 import { ExamSessionSearch } from '@/components/ExamSessionSearch';
-import { TestType, testTypes } from '@/components/DashboardSidebar';
+import { TestType, testTypes } from '@/types/navigation';
 export default function Dashboard() {
   const {
     user,

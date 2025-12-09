@@ -4,12 +4,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { DashboardSidebar, TestType, testTypes } from '@/components/DashboardSidebar';
+import { DashboardSidebar } from '@/components/DashboardSidebar';
+import { View, TestType, testTypes } from '@/types/navigation';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Loader2 } from 'lucide-react';
 import { HelpButton } from '@/components/HelpButton';
-
-type View = 'dashboard' | 'practice-test' | 'random-practice' | 'weak-questions' | 'bookmarks' | 'subelement-practice' | 'review-test' | 'glossary' | 'glossary-flashcards';
 
 interface AppLayoutProps {
   children: ReactNode;
