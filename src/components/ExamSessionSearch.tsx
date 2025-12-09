@@ -293,7 +293,7 @@ export const ExamSessionSearch = () => {
                 <div className="space-y-3">
                   {sessions.length === 0 ? <div className="text-center py-12 text-muted-foreground">
                       No exam sessions found. Try adjusting your search criteria.
-                    </div> : sessions.map(session => <Card key={session.id} className={`cursor-pointer transition-colors hover:bg-accent/50 ${selectedSession?.id === session.id ? 'ring-2 ring-primary' : ''}`} onClick={() => setSelectedSession(session)}>
+                    </div> : sessions.map(session => <Card key={session.id} className={`cursor-pointer transition-colors hover:bg-accent/50 ${selectedSession?.id === session.id ? 'border-primary bg-primary/5' : ''}`} onClick={() => setSelectedSession(session)}>
                         <CardContent className="p-4">
                           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                             <div className="flex-1 space-y-2">
@@ -327,7 +327,7 @@ export const ExamSessionSearch = () => {
                                   <span>{session.sponsor}</span>
                                 </div>}
                             </div>
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-2 items-end">
                               {session.phone && <a href={`tel:${session.phone}`} className="flex items-center gap-1 text-sm text-primary hover:underline" onClick={e => e.stopPropagation()}>
                                   <Phone className="h-4 w-4" />
                                   {session.phone}
@@ -336,6 +336,10 @@ export const ExamSessionSearch = () => {
                                   <Mail className="h-4 w-4" />
                                   Contact
                                 </a>}
+                              {user && selectedSession?.id === session.id && <Button size="sm" className="mt-2" onClick={(e) => { e.stopPropagation(); setShowSaveDialog(true); }}>
+                                  <Target className="h-4 w-4 mr-2" />
+                                  Set as Target
+                                </Button>}
                             </div>
                           </div>
                         </CardContent>
@@ -388,28 +392,6 @@ export const ExamSessionSearch = () => {
         </CardContent>
       </Card>
 
-      {/* Selected Session Actions */}
-      {selectedSession && user && <Card className="border-primary">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{selectedSession.location_name || selectedSession.title}</p>
-                <p className="text-sm text-muted-foreground">
-                  {formatDate(selectedSession.exam_date)} • {selectedSession.city}, {selectedSession.state}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button onClick={() => setShowSaveDialog(true)}>
-                  <Target className="h-4 w-4 mr-2" />
-                  Set as Target Date
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => setSelectedSession(null)} aria-label="Close selection">
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>}
 
       {/* Save Target Dialog */}
       <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
