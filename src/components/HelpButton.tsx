@@ -58,11 +58,11 @@ export function HelpButton() {
           <Button
             variant="default"
             size="icon"
-            className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg z-50"
+            className="fixed bottom-4 right-4 h-9 w-9 rounded-full shadow-lg z-50"
             onClick={() => setOpen(true)}
             aria-label="Open help dialog"
           >
-            <HelpCircle className="h-6 w-6" aria-hidden="true" />
+            <HelpCircle className="h-5 w-5" aria-hidden="true" />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="left">
