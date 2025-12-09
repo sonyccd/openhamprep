@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { format, addMonths } from 'date-fns';
 import { MapPin, Calendar, List, Map, Clock, Phone, Mail, Users, Target, Loader2, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -75,6 +75,7 @@ export const ExamSessionSearch = () => {
     startDate,
     endDate,
     state: state || undefined,
+    zip: zipCode || undefined,
     page,
     pageSize,
   });
@@ -87,14 +88,8 @@ export const ExamSessionSearch = () => {
   const saveTargetMutation = useSaveTargetExam();
   const removeTargetMutation = useRemoveTargetExam();
 
-  // Filter sessions by zip code prefix for local search
-  const filteredSessions = useMemo(() => {
-    if (!zipCode) return sessions;
-    const zipPrefix = zipCode.substring(0, 3);
-    return sessions.filter((s) => s.zip.startsWith(zipPrefix));
-  }, [sessions, zipCode]);
-
-  const displayedSessions = viewMode === 'map' && showAllOnMap ? sessions : filteredSessions;
+  // Sessions are now filtered server-side
+  const displayedSessions = sessions;
 
   // Reset to page 1 when filters change
   const handleStateChange = (v: string) => {
@@ -107,6 +102,10 @@ export const ExamSessionSearch = () => {
   };
   const handleEndDateChange = (v: string) => {
     setEndDate(v);
+    setPage(1);
+  };
+  const handleZipChange = (v: string) => {
+    setZipCode(v.replace(/\D/g, '').slice(0, 5));
     setPage(1);
   };
 
@@ -190,7 +189,7 @@ export const ExamSessionSearch = () => {
                 id="zip"
                 placeholder="Enter ZIP code"
                 value={zipCode}
-                onChange={(e) => setZipCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                onChange={(e) => handleZipChange(e.target.value)}
                 maxLength={5}
               />
             </div>
@@ -290,12 +289,12 @@ export const ExamSessionSearch = () => {
           ) : (
             <ScrollArea className="h-full pr-4">
               <div className="space-y-3">
-                {filteredSessions.length === 0 ? (
+                {sessions.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     No exam sessions found. Try adjusting your search criteria.
                   </div>
                 ) : (
-                  filteredSessions.map((session) => (
+                  sessions.map((session) => (
                     <Card
                       key={session.id}
                       className={`cursor-pointer transition-colors hover:bg-accent/50 ${

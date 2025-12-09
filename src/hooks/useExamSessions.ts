@@ -57,8 +57,7 @@ export const useExamSessions = (filters?: {
         .from('exam_sessions')
         .select('*', { count: 'exact' })
         .gte('exam_date', new Date().toISOString().split('T')[0])
-        .order('exam_date', { ascending: true })
-        .range(from, to);
+        .order('exam_date', { ascending: true });
 
       if (filters?.startDate) {
         query = query.gte('exam_date', filters.startDate);
@@ -69,6 +68,14 @@ export const useExamSessions = (filters?: {
       if (filters?.state) {
         query = query.eq('state', filters.state);
       }
+      // Filter by zip code prefix (first 3 digits) on server
+      if (filters?.zip && filters.zip.length >= 3) {
+        const zipPrefix = filters.zip.substring(0, 3);
+        query = query.like('zip', `${zipPrefix}%`);
+      }
+
+      // Apply pagination after all filters
+      query = query.range(from, to);
 
       const { data, error, count } = await query;
       if (error) throw error;
