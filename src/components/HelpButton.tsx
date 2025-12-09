@@ -75,7 +75,7 @@ export function HelpButton() {
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs defaultValue="shortcuts" className="mt-2 flex flex-col">
+          <Tabs defaultValue="shortcuts" className="mt-2">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="shortcuts" className="flex items-center gap-2">
                 <Keyboard className="h-4 w-4" aria-hidden="true" />
@@ -87,8 +87,8 @@ export function HelpButton() {
               </TabsTrigger>
             </TabsList>
 
-            <div className="min-h-[280px]">
-              <TabsContent value="shortcuts" className="mt-4 space-y-4">
+            <div className="h-[280px]">
+              <TabsContent value="shortcuts" className="mt-4 space-y-4 h-full">
                 {shortcutGroups.map(group => <div key={group.title}>
                     <h3 className="text-sm font-medium text-muted-foreground mb-2">
                       {group.title}
@@ -108,39 +108,39 @@ export function HelpButton() {
                   </div>)}
               </TabsContent>
 
-            <TabsContent value="feedback" className="mt-4 space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Found a bug or have an idea to improve the app? Let us know on GitHub!
-              </p>
+              <TabsContent value="feedback" className="mt-4 space-y-4 h-full">
+                <p className="text-sm text-muted-foreground">
+                  Found a bug or have an idea to improve the app? Let us know on GitHub!
+                </p>
 
-              <div className="space-y-3">
-                <a href="https://github.com/sonyccd/rars-test-prep/issues/new?template=bug_report.md" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
-                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-destructive/10 text-destructive">
-                    <Bug className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-foreground">Report a Bug</div>
-                    <div className="text-sm text-muted-foreground">
-                      Something not working? Let us know
+                <div className="space-y-3">
+                  <a href="https://github.com/sonyccd/rars-test-prep/issues/new?template=bug_report.md" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-destructive/10 text-destructive">
+                      <Bug className="h-5 w-5" aria-hidden="true" />
                     </div>
-                  </div>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                </a>
+                    <div className="flex-1">
+                      <div className="font-medium text-foreground">Report a Bug</div>
+                      <div className="text-sm text-muted-foreground">
+                        Something not working? Let us know
+                      </div>
+                    </div>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  </a>
 
-                <a href="https://github.com/sonyccd/rars-test-prep/issues/new?template=feature_request.md" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
-                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 text-primary">
-                    <Lightbulb className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-foreground">Request a Feature</div>
-                    <div className="text-sm text-muted-foreground">
-                      Have an idea? We'd love to hear it
+                  <a href="https://github.com/sonyccd/rars-test-prep/issues/new?template=feature_request.md" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 text-primary">
+                      <Lightbulb className="h-5 w-5" aria-hidden="true" />
                     </div>
-                  </div>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                </a>
-              </div>
-            </TabsContent>
+                    <div className="flex-1">
+                      <div className="font-medium text-foreground">Request a Feature</div>
+                      <div className="text-sm text-muted-foreground">
+                        Have an idea? We'd love to hear it
+                      </div>
+                    </div>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  </a>
+                </div>
+              </TabsContent>
             </div>
           </Tabs>
         </DialogContent>
