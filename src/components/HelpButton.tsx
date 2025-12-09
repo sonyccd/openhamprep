@@ -87,8 +87,7 @@ export function HelpButton() {
               </TabsTrigger>
             </TabsList>
 
-            <div className="h-[280px]">
-              <TabsContent value="shortcuts" className="mt-4 space-y-4 h-full">
+              <TabsContent value="shortcuts" className="mt-4 space-y-4">
                 {shortcutGroups.map(group => <div key={group.title}>
                     <h3 className="text-sm font-medium text-muted-foreground mb-2">
                       {group.title}
@@ -108,7 +107,7 @@ export function HelpButton() {
                   </div>)}
               </TabsContent>
 
-              <TabsContent value="feedback" className="mt-4 space-y-4 h-full">
+              <TabsContent value="feedback" className="mt-4 space-y-4 min-h-[280px]">
                 <p className="text-sm text-muted-foreground">
                   Found a bug or have an idea to improve the app? Let us know on GitHub!
                 </p>
@@ -141,7 +140,6 @@ export function HelpButton() {
                   </a>
                 </div>
               </TabsContent>
-            </div>
           </Tabs>
         </DialogContent>
       </Dialog>
