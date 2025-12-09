@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, BookText, Layers } from "lucide-react";
+import { Search, BookText, Layers, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -57,7 +57,7 @@ export function Glossary({ onStartFlashcards }: GlossaryProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-muted-foreground">Loading glossary...</div>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }

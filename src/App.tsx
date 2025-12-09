@@ -21,10 +21,12 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
+import { Loader2 } from "lucide-react";
+
 // Simple loading fallback
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="animate-pulse text-muted-foreground">Loading...</div>
+    <Loader2 className="w-8 h-8 animate-spin text-primary" />
   </div>
 );
 
