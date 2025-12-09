@@ -274,7 +274,7 @@ export const ExamSessionSearch = () => {
             </div>
           )}
         </CardHeader>
-        <CardContent className="flex-1 min-h-0 overflow-hidden">
+        <CardContent className="flex-1 min-h-0 overflow-hidden flex flex-col">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -287,170 +287,170 @@ export const ExamSessionSearch = () => {
               hasFilters={!!state || !!zipCode}
             />
           ) : (
-            <ScrollArea className="h-full pr-4">
-              <div className="space-y-3">
-                {sessions.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    No exam sessions found. Try adjusting your search criteria.
-                  </div>
-                ) : (
-                  sessions.map((session) => (
-                    <Card
-                      key={session.id}
-                      className={`cursor-pointer transition-colors hover:bg-accent/50 ${
-                        selectedSession?.id === session.id ? 'ring-2 ring-primary' : ''
-                      }`}
-                      onClick={() => setSelectedSession(session)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className="font-semibold">
-                                {session.location_name || session.title || 'Exam Session'}
-                              </h4>
-                              {session.walk_ins_allowed && (
-                                <Badge variant="secondary" className="text-xs">
-                                  Walk-ins OK
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <MapPin className="h-4 w-4" />
-                              <span>
-                                {session.address && `${session.address}, `}
-                                {session.city}, {session.state} {session.zip}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-4 w-4" />
-                                <span>{formatDate(session.exam_date)}</span>
+            <>
+              <ScrollArea className="flex-1 pr-4">
+                <div className="space-y-3">
+                  {sessions.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      No exam sessions found. Try adjusting your search criteria.
+                    </div>
+                  ) : (
+                    sessions.map((session) => (
+                      <Card
+                        key={session.id}
+                        className={`cursor-pointer transition-colors hover:bg-accent/50 ${
+                          selectedSession?.id === session.id ? 'ring-2 ring-primary' : ''
+                        }`}
+                        onClick={() => setSelectedSession(session)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-semibold">
+                                  {session.location_name || session.title || 'Exam Session'}
+                                </h4>
+                                {session.walk_ins_allowed && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    Walk-ins OK
+                                  </Badge>
+                                )}
                               </div>
-                              {session.exam_time && (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <MapPin className="h-4 w-4" />
+                                <span>
+                                  {session.address && `${session.address}, `}
+                                  {session.city}, {session.state} {session.zip}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                                 <div className="flex items-center gap-1">
-                                  <Clock className="h-4 w-4" />
-                                  <span>{session.exam_time} {getTimezoneLabel(session.state)}</span>
+                                  <Calendar className="h-4 w-4" />
+                                  <span>{formatDate(session.exam_date)}</span>
+                                </div>
+                                {session.exam_time && (
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="h-4 w-4" />
+                                    <span>{session.exam_time} {getTimezoneLabel(session.state)}</span>
+                                  </div>
+                                )}
+                              </div>
+                              {session.sponsor && (
+                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                  <Users className="h-4 w-4" />
+                                  <span>{session.sponsor}</span>
                                 </div>
                               )}
                             </div>
-                            {session.sponsor && (
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <Users className="h-4 w-4" />
-                                <span>{session.sponsor}</span>
-                              </div>
-                            )}
+                            <div className="flex flex-col gap-2">
+                              {session.phone && (
+                                <a
+                                  href={`tel:${session.phone}`}
+                                  className="flex items-center gap-1 text-sm text-primary hover:underline"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Phone className="h-4 w-4" />
+                                  {session.phone}
+                                </a>
+                              )}
+                              {session.email && (
+                                <a
+                                  href={`mailto:${session.email}`}
+                                  className="flex items-center gap-1 text-sm text-primary hover:underline"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Mail className="h-4 w-4" />
+                                  Contact
+                                </a>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex flex-col gap-2">
-                            {session.phone && (
-                              <a
-                                href={`tel:${session.phone}`}
-                                className="flex items-center gap-1 text-sm text-primary hover:underline"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Phone className="h-4 w-4" />
-                                {session.phone}
-                              </a>
-                            )}
-                            {session.email && (
-                              <a
-                                href={`mailto:${session.email}`}
-                                className="flex items-center gap-1 text-sm text-primary hover:underline"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Mail className="h-4 w-4" />
-                                Contact
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
-          )}
-          {/* Pagination Controls */}
-          {viewMode === 'list' && totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t mt-4 flex-wrap gap-4">
-              <p className="text-sm text-muted-foreground">
-                Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalCount)} of {totalCount}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setPage(1)}
-                  disabled={page <= 1 || isLoading}
-                  aria-label="First page"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  <ChevronLeft className="h-4 w-4 -ml-3" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1 || isLoading}
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                
-                {/* Page number buttons */}
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum: number;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (page <= 3) {
-                      pageNum = i + 1;
-                    } else if (page >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = page - 2 + i;
-                    }
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={page === pageNum ? "default" : "outline"}
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setPage(pageNum)}
-                        disabled={isLoading}
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
+              </ScrollArea>
+              {/* Pagination Controls - Always visible at bottom */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t mt-4 flex-wrap gap-4 shrink-0">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, totalCount)} of {totalCount}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setPage(1)}
+                      disabled={page <= 1 || isLoading}
+                      aria-label="First page"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <ChevronLeft className="h-4 w-4 -ml-3" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page <= 1 || isLoading}
+                      aria-label="Previous page"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    
+                    {/* Page number buttons */}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum: number;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (page <= 3) {
+                        pageNum = i + 1;
+                      } else if (page >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = page - 2 + i;
+                      }
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={page === pageNum ? "default" : "outline"}
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setPage(pageNum)}
+                          disabled={isLoading}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
 
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages || isLoading}
-                  aria-label="Next page"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setPage(totalPages)}
-                  disabled={page >= totalPages || isLoading}
-                  aria-label="Last page"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                  <ChevronRight className="h-4 w-4 -ml-3" />
-                </Button>
-              </div>
-            </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page >= totalPages || isLoading}
+                      aria-label="Next page"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setPage(totalPages)}
+                      disabled={page >= totalPages || isLoading}
+                      aria-label="Last page"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                      <ChevronRight className="h-4 w-4 -ml-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
