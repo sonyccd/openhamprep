@@ -174,12 +174,12 @@ export const ExamSessionSearch = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="state">State</Label>
-              <Select value={state} onValueChange={setState}>
+              <Select value={state || 'all'} onValueChange={(v) => setState(v === 'all' ? '' : v)}>
                 <SelectTrigger id="state">
                   <SelectValue placeholder="All states" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All states</SelectItem>
+                  <SelectItem value="all">All states</SelectItem>
                   {US_STATES.map((s) => (
                     <SelectItem key={s} value={s}>{s}</SelectItem>
                   ))}
