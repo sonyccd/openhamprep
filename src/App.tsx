@@ -29,7 +29,7 @@ const PageLoader = () => (
 );
 
 const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
+  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={true}>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <PostHogProvider>
