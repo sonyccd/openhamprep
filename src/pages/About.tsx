@@ -110,10 +110,7 @@ export default function About() {
                 </h2>
                 <div className="space-y-6 text-lg text-muted-foreground leading-relaxed">
                   <p>
-                    Amateur radio has always been about <strong className="text-foreground">open access</strong>—anyone 
-                    with a license and a radio can communicate around the world. But too often, the path to 
-                    getting licensed feels closed off: expensive study materials, outdated resources, or 
-                    platforms that prioritize profit over education.
+                    Amateur radio has always been about <strong className="text-foreground">open access</strong>—anyone with a license and a radio can communicate around the world. But too often, the path to getting licensed feels closed off: expensive study materials or outdated resources.
                   </p>
                   <p>
                     We started Open Ham Prep with a simple belief: <strong className="text-foreground">if you want 
