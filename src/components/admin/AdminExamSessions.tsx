@@ -123,6 +123,11 @@ export const AdminExamSessions = () => {
     const errors: { row: number; message: string }[] = [];
     const seen = new Set<string>();
 
+    // Calculate yesterday's date for filtering old sessions
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+
     sessions.forEach((session, index) => {
       const rowNum = index + 2; // +2 for 1-indexed and header row
 
@@ -136,6 +141,13 @@ export const AdminExamSessions = () => {
         return;
       }
 
+      // Skip sessions more than 1 day in the past
+      const examDate = new Date(session.exam_date);
+      if (examDate < yesterday) {
+        // Silently skip old sessions - don't treat as error
+        return;
+      }
+
       // Deduplicate by composite key: date + city + state + address + time
       const key = `${session.exam_date}|${session.city.toLowerCase()}|${session.state.toLowerCase()}|${(session.address || '').toLowerCase()}|${(session.exam_time || '').toLowerCase()}`;
       if (seen.has(key)) {
@@ -143,9 +155,6 @@ export const AdminExamSessions = () => {
         return;
       }
       seen.add(key);
-
-      // Past dates are allowed - the ARRL data may include recent sessions
-      // The search UI will filter to future dates for users
 
       valid.push(session);
     });
