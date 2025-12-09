@@ -16,6 +16,7 @@ interface ExamSessionMapProps {
   selectedSession?: ExamSession | null;
   onSessionSelect?: (session: ExamSession) => void;
   className?: string;
+  hasFilters?: boolean; // Whether filters (state or zip) are applied
 }
 
 export const ExamSessionMap = ({
@@ -23,6 +24,7 @@ export const ExamSessionMap = ({
   selectedSession,
   onSessionSelect,
   className = '',
+  hasFilters = false,
 }: ExamSessionMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -54,10 +56,10 @@ export const ExamSessionMap = ({
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
 
-    // Add markers for sessions with coordinates
-    const sessionsWithCoords = sessions.filter(
-      (s) => s.latitude !== null && s.longitude !== null
-    );
+    // Limit to first 50 sessions for map display
+    const sessionsWithCoords = sessions
+      .filter((s) => s.latitude !== null && s.longitude !== null)
+      .slice(0, 50);
 
     sessionsWithCoords.forEach((session) => {
       if (session.latitude === null || session.longitude === null) return;
@@ -92,14 +94,18 @@ export const ExamSessionMap = ({
       markersRef.current.push(marker);
     });
 
-    // Fit bounds if we have sessions
-    if (sessionsWithCoords.length > 0) {
+    // Handle map bounds based on filters
+    if (sessionsWithCoords.length > 0 && hasFilters) {
+      // If filters are applied, fit to the filtered sessions
       const bounds = L.latLngBounds(
         sessionsWithCoords.map((s) => [s.latitude!, s.longitude!])
       );
-      mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
+      mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 });
+    } else if (!hasFilters) {
+      // No filters - zoom out to show all of US
+      mapInstanceRef.current.setView([39.8283, -98.5795], 4);
     }
-  }, [sessions, selectedSession, onSessionSelect]);
+  }, [sessions, selectedSession, onSessionSelect, hasFilters]);
 
   // Pan to selected session
   useEffect(() => {

@@ -285,6 +285,7 @@ export const ExamSessionSearch = () => {
               sessions={displayedSessions}
               selectedSession={selectedSession}
               onSessionSelect={setSelectedSession}
+              hasFilters={!!state || !!zipCode}
             />
           ) : (
             <ScrollArea className="h-full pr-4">
