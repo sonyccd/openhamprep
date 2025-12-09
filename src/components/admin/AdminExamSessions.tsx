@@ -121,6 +121,7 @@ export const AdminExamSessions = () => {
   const validateSessions = (sessions: ParsedSession[]): ValidationResult => {
     const valid: ParsedSession[] = [];
     const errors: { row: number; message: string }[] = [];
+    const seen = new Set<string>();
 
     sessions.forEach((session, index) => {
       const rowNum = index + 2; // +2 for 1-indexed and header row
@@ -134,6 +135,14 @@ export const AdminExamSessions = () => {
         errors.push({ row: rowNum, message: 'Missing city, state, or ZIP' });
         return;
       }
+
+      // Deduplicate by composite key: date + city + state + address + time
+      const key = `${session.exam_date}|${session.city.toLowerCase()}|${session.state.toLowerCase()}|${(session.address || '').toLowerCase()}|${(session.exam_time || '').toLowerCase()}`;
+      if (seen.has(key)) {
+        errors.push({ row: rowNum, message: 'Duplicate session (same date, location, and time)' });
+        return;
+      }
+      seen.add(key);
 
       // Past dates are allowed - the ARRL data may include recent sessions
       // The search UI will filter to future dates for users
