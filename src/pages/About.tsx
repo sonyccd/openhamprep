@@ -1,78 +1,49 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { 
-  Radio, 
-  Users, 
-  Heart, 
-  Code, 
-  ExternalLink, 
-  ArrowRight, 
-  Globe, 
-  Sparkles, 
-  BookOpen,
-  Unlock,
-  MessageCircle,
-  Zap,
-  GitBranch,
-  Shield,
-  Target
-} from "lucide-react";
+import { Radio, Users, Heart, Code, ExternalLink, ArrowRight, Globe, Sparkles, BookOpen, Unlock, MessageCircle, Zap, GitBranch, Shield, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LandingNav } from "@/components/LandingNav";
 import { cn } from "@/lib/utils";
-
 export default function About() {
-  const values = [
-    {
-      icon: Unlock,
-      title: "Open Access",
-      description: "No paywalls, no premium tiers, no hidden costs. Quality education should be available to everyone.",
-      color: "text-primary",
-      bg: "bg-primary/10",
-    },
-    {
-      icon: Heart,
-      title: "Built With Passion",
-      description: "Created by amateur radio enthusiasts who remember the excitement of their first QSO.",
-      color: "text-destructive",
-      bg: "bg-destructive/10",
-    },
-    {
-      icon: Users,
-      title: "Community First",
-      description: "We're not building a product—we're growing a community of operators who help each other.",
-      color: "text-accent",
-      bg: "bg-accent/10",
-    },
-    {
-      icon: GitBranch,
-      title: "Open Source",
-      description: "Transparent, auditable, and community-driven. Contribute, fork, or learn from the code.",
-      color: "text-success",
-      bg: "bg-success/10",
-    },
-  ];
-
-  const principles = [
-    {
-      icon: Target,
-      title: "More Than a Ticket",
-      description: "We don't just help you pass an exam—we help you understand the material so you can truly enjoy the hobby.",
-    },
-    {
-      icon: Sparkles,
-      title: "Learn by Understanding",
-      description: "Every explanation is written to help you grasp concepts, not just memorize answers.",
-    },
-    {
-      icon: MessageCircle,
-      title: "Ready for the Air",
-      description: "When you pass using RARS Test Prep, you'll be confident making your first contact.",
-    },
-  ];
-
-  return (
-    <div className="min-h-screen flex flex-col bg-background">
+  const values = [{
+    icon: Unlock,
+    title: "Open Access",
+    description: "No paywalls, no premium tiers, no hidden costs. Quality education should be available to everyone.",
+    color: "text-primary",
+    bg: "bg-primary/10"
+  }, {
+    icon: Heart,
+    title: "Built With Passion",
+    description: "Created by amateur radio enthusiasts who remember the excitement of their first QSO.",
+    color: "text-destructive",
+    bg: "bg-destructive/10"
+  }, {
+    icon: Users,
+    title: "Community First",
+    description: "We're not building a product—we're growing a community of operators who help each other.",
+    color: "text-accent",
+    bg: "bg-accent/10"
+  }, {
+    icon: GitBranch,
+    title: "Open Source",
+    description: "Transparent, auditable, and community-driven. Contribute, fork, or learn from the code.",
+    color: "text-success",
+    bg: "bg-success/10"
+  }];
+  const principles = [{
+    icon: Target,
+    title: "More Than a Ticket",
+    description: "We don't just help you pass an exam—we help you understand the material so you can truly enjoy the hobby."
+  }, {
+    icon: Sparkles,
+    title: "Learn by Understanding",
+    description: "Every explanation is written to help you grasp concepts, not just memorize answers."
+  }, {
+    icon: MessageCircle,
+    title: "Ready for the Air",
+    description: "When you pass using RARS Test Prep, you'll be confident making your first contact."
+  }];
+  return <div className="min-h-screen flex flex-col bg-background">
       <LandingNav />
 
       <main className="flex-1">
@@ -85,16 +56,23 @@ export default function About() {
           </div>
 
           <div className="max-w-4xl mx-auto text-center relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
+            <motion.div initial={{
+            opacity: 0,
+            y: -20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.6
+          }}>
               <div className="flex items-center justify-center gap-3 mb-8">
-                <motion.div
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                >
+                <motion.div animate={{
+                rotate: [0, 10, -10, 0]
+              }} transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}>
                   <Radio className="w-16 h-16 text-primary" />
                 </motion.div>
               </div>
@@ -113,13 +91,17 @@ export default function About() {
         {/* Mission Statement */}
         <section className="py-16 md:py-20 px-4">
           <div className="max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="relative"
-            >
+            <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} viewport={{
+            once: true
+          }} transition={{
+            duration: 0.5
+          }} className="relative">
               <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-accent to-primary/20 rounded-full hidden md:block" />
               <div className="md:pl-8">
                 <h2 className="text-3xl md:text-4xl font-mono font-bold text-foreground mb-6">
@@ -151,12 +133,15 @@ export default function About() {
         {/* Values Grid */}
         <section className="py-16 md:py-20 px-4 bg-muted/30">
           <div className="max-w-6xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-12"
-            >
+            <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} viewport={{
+            once: true
+          }} className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-mono font-bold text-foreground mb-4">
                 What We Stand For
               </h2>
@@ -166,15 +151,18 @@ export default function About() {
             </motion.div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              {values.map((value, index) => (
-                <motion.div
-                  key={value.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                  className="bg-card border border-border rounded-xl p-6 hover:border-primary/30 transition-colors group"
-                >
+              {values.map((value, index) => <motion.div key={value.title} initial={{
+              opacity: 0,
+              y: 20
+            }} whileInView={{
+              opacity: 1,
+              y: 0
+            }} viewport={{
+              once: true
+            }} transition={{
+              duration: 0.4,
+              delay: index * 0.1
+            }} className="bg-card border border-border rounded-xl p-6 hover:border-primary/30 transition-colors group">
                   <div className="flex items-start gap-4">
                     <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0", value.bg)}>
                       <value.icon className={cn("w-6 h-6", value.color)} />
@@ -186,8 +174,7 @@ export default function About() {
                       <p className="text-muted-foreground">{value.description}</p>
                     </div>
                   </div>
-                </motion.div>
-              ))}
+                </motion.div>)}
             </div>
           </div>
         </section>
@@ -195,12 +182,15 @@ export default function About() {
         {/* More Than a Ticket Section */}
         <section className="py-16 md:py-20 px-4">
           <div className="max-w-5xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-12"
-            >
+            <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} viewport={{
+            once: true
+          }} className="text-center mb-12">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
                 <Sparkles className="w-4 h-4" />
                 Our Philosophy
@@ -214,22 +204,24 @@ export default function About() {
             </motion.div>
 
             <div className="grid md:grid-cols-3 gap-6">
-              {principles.map((principle, index) => (
-                <motion.div
-                  key={principle.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                  className="text-center"
-                >
+              {principles.map((principle, index) => <motion.div key={principle.title} initial={{
+              opacity: 0,
+              y: 20
+            }} whileInView={{
+              opacity: 1,
+              y: 0
+            }} viewport={{
+              once: true
+            }} transition={{
+              duration: 0.4,
+              delay: index * 0.1
+            }} className="text-center">
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto mb-4 border border-primary/20">
                     <principle.icon className="w-7 h-7 text-primary" />
                   </div>
                   <h3 className="text-lg font-bold text-foreground mb-2">{principle.title}</h3>
                   <p className="text-muted-foreground text-sm">{principle.description}</p>
-                </motion.div>
-              ))}
+                </motion.div>)}
             </div>
           </div>
         </section>
@@ -239,11 +231,15 @@ export default function About() {
           <div className="absolute inset-0 grid-pattern opacity-30 pointer-events-none" />
           
           <div className="max-w-4xl mx-auto relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
+            <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} viewport={{
+            once: true
+          }}>
               <div className="bg-card border-2 border-primary/20 rounded-2xl p-8 md:p-10">
                 <div className="flex flex-col md:flex-row items-start gap-6">
                   <div className="w-16 h-16 rounded-2xl bg-success/10 flex items-center justify-center flex-shrink-0">
@@ -259,20 +255,13 @@ export default function About() {
                         Our code is public, our development is transparent, and our community is welcome to 
                         contribute. This isn't just about building software—it's about building trust.
                       </p>
-                      <p>
-                        When you use open-source software, you know exactly what you're getting. No hidden 
-                        tracking, no surprise monetization, no rug pulls. Just honest tools built by people 
-                        who care about the same things you do.
-                      </p>
+                      <p>When you use open-source software, you know exactly what you're getting. No surprise monetization, no rug pulls. Just honest tools built by people who care about the same things you do.</p>
                       <p className="text-foreground font-medium">
                         Want to contribute? Found a bug? Have an idea? We'd love to hear from you.
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-3 mt-6">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary text-sm text-foreground">
-                        <Shield className="w-4 h-4 text-success" />
-                        No Tracking
-                      </div>
+                      
                       <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary text-sm text-foreground">
                         <Globe className="w-4 h-4 text-primary" />
                         Free Forever
@@ -292,12 +281,15 @@ export default function About() {
         {/* About RARS Section */}
         <section className="py-16 md:py-20 px-4">
           <div className="max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="grid md:grid-cols-2 gap-8 items-center"
-            >
+            <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} viewport={{
+            once: true
+          }} className="grid md:grid-cols-2 gap-8 items-center">
               <div>
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4">
                   <Users className="w-4 h-4" />
@@ -309,12 +301,7 @@ export default function About() {
                 <div className="space-y-4 text-muted-foreground">
                   <p>
                     This project was born in the{" "}
-                    <a
-                      href="https://www.rars.org/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline font-medium"
-                    >
+                    <a href="https://www.rars.org/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
                       Raleigh Amateur Radio Society (RARS)
                     </a>
                     —a nonprofit club dedicated to promoting amateur radio in North Carolina and beyond.
@@ -325,46 +312,49 @@ export default function About() {
                     we're here to help you get on the air.
                   </p>
                 </div>
-                <a
-                  href="https://www.rars.org/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-primary hover:underline font-medium mt-4"
-                >
+                <a href="https://www.rars.org/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline font-medium mt-4">
                   Visit RARS.org
                   <ExternalLink className="w-4 h-4" />
                 </a>
               </div>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-                className="relative"
-              >
+              <motion.div initial={{
+              opacity: 0,
+              scale: 0.9
+            }} whileInView={{
+              opacity: 1,
+              scale: 1
+            }} viewport={{
+              once: true
+            }} transition={{
+              delay: 0.2
+            }} className="relative">
                 {/* North Carolina State Shape */}
                 <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 pointer-events-none" />
                   
                   <div className="relative">
-                    <img 
-                      src="/nc-outline.svg" 
-                      alt="North Carolina state outline"
-                      className="w-full h-auto opacity-80"
-                      style={{ 
-                        filter: 'brightness(0) saturate(100%) invert(43%) sepia(93%) saturate(364%) hue-rotate(143deg) brightness(95%) contrast(90%)'
-                      }}
-                    />
+                    <img src="/nc-outline.svg" alt="North Carolina state outline" className="w-full h-auto opacity-80" style={{
+                    filter: 'brightness(0) saturate(100%) invert(43%) sepia(93%) saturate(364%) hue-rotate(143deg) brightness(95%) contrast(90%)'
+                  }} />
                     
                     {/* Raleigh marker overlay */}
-                    <div className="absolute" style={{ left: '62%', top: '42%', transform: 'translate(-50%, -50%)' }}>
+                    <div className="absolute" style={{
+                    left: '62%',
+                    top: '42%',
+                    transform: 'translate(-50%, -50%)'
+                  }}>
                       <div className="relative">
                         {/* Pulsing rings */}
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-8 h-8 rounded-full bg-primary/30 animate-ping" style={{ animationDuration: '2s' }} />
+                          <div className="w-8 h-8 rounded-full bg-primary/30 animate-ping" style={{
+                          animationDuration: '2s'
+                        }} />
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-12 h-12 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.5s' }} />
+                          <div className="w-12 h-12 rounded-full bg-primary/20 animate-ping" style={{
+                          animationDuration: '2s',
+                          animationDelay: '0.5s'
+                        }} />
                         </div>
                         {/* Center dot */}
                         <div className="relative w-4 h-4 rounded-full bg-primary border-2 border-primary-foreground shadow-lg" />
@@ -372,7 +362,11 @@ export default function About() {
                     </div>
                     
                     {/* Raleigh label */}
-                    <div className="absolute font-mono font-bold text-xs text-foreground" style={{ left: '62%', top: '58%', transform: 'translateX(-50%)' }}>
+                    <div className="absolute font-mono font-bold text-xs text-foreground" style={{
+                    left: '62%',
+                    top: '58%',
+                    transform: 'translateX(-50%)'
+                  }}>
                       RALEIGH
                     </div>
                   </div>
@@ -389,12 +383,15 @@ export default function About() {
 
         {/* Inspiring Quote Section */}
         <section className="py-16 md:py-20 px-4 bg-gradient-to-br from-primary/5 via-background to-accent/5">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-3xl mx-auto text-center"
-          >
+          <motion.div initial={{
+          opacity: 0,
+          y: 20
+        }} whileInView={{
+          opacity: 1,
+          y: 0
+        }} viewport={{
+          once: true
+        }} className="max-w-3xl mx-auto text-center">
             <div className="relative">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-6xl text-primary/20 font-serif">"</div>
               <blockquote className="text-2xl md:text-3xl font-medium text-foreground leading-relaxed pt-8">
@@ -411,19 +408,25 @@ export default function About() {
 
         {/* CTA Section */}
         <section className="py-16 md:py-20 px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-2xl mx-auto text-center"
-          >
+          <motion.div initial={{
+          opacity: 0,
+          y: 20
+        }} whileInView={{
+          opacity: 1,
+          y: 0
+        }} viewport={{
+          once: true
+        }} className="max-w-2xl mx-auto text-center">
             <div className="bg-card border-2 border-primary/30 rounded-2xl p-8 md:p-12 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 pointer-events-none" />
               <div className="relative z-10">
-                <motion.div
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                >
+                <motion.div animate={{
+                y: [0, -5, 0]
+              }} transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}>
                   <Radio className="w-14 h-14 text-primary mx-auto mb-6" />
                 </motion.div>
                 <h2 className="text-2xl md:text-3xl font-mono font-bold text-foreground mb-4">
@@ -451,18 +454,12 @@ export default function About() {
           <p className="text-sm">Official FCC question pools • Free to use • Open Source</p>
           <p className="text-sm">
             A test prep app for the{" "}
-            <a
-              href="https://www.rars.org/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline font-medium"
-            >
+            <a href="https://www.rars.org/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
               Raleigh Amateur Radio Society (RARS)
             </a>
           </p>
           <p className="text-xs mt-4">© {new Date().getFullYear()} Brad Bazemore. All rights reserved.</p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 }
