@@ -136,29 +136,9 @@ export function RandomPractice({
       return newHistory;
     });
   };
-  if (isLoading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading questions...</p>
-        </div>
-      </div>;
-  }
-  if (error || !allQuestions || allQuestions.length === 0) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-destructive mb-4">Failed to load questions</p>
-          <Button onClick={onBack}>Go Back</Button>
-        </div>
-      </div>;
-  }
-  if (!question) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>;
-  }
+
   const handleSelectAnswer = async (answer: 'A' | 'B' | 'C' | 'D') => {
-    if (showResult) return;
+    if (showResult || !question) return;
     updateCurrentEntry({
       selectedAnswer: answer,
       showResult: true
@@ -291,16 +271,38 @@ export function RandomPractice({
 
   // Keyboard shortcuts
   const shortcuts: KeyboardShortcut[] = [
-    { key: 'a', description: 'Select A', action: () => !showResult && handleSelectAnswer('A'), disabled: showResult },
-    { key: 'b', description: 'Select B', action: () => !showResult && handleSelectAnswer('B'), disabled: showResult },
-    { key: 'c', description: 'Select C', action: () => !showResult && handleSelectAnswer('C'), disabled: showResult },
-    { key: 'd', description: 'Select D', action: () => !showResult && handleSelectAnswer('D'), disabled: showResult },
+    { key: 'a', description: 'Select A', action: () => handleSelectAnswer('A'), disabled: showResult || !question },
+    { key: 'b', description: 'Select B', action: () => handleSelectAnswer('B'), disabled: showResult || !question },
+    { key: 'c', description: 'Select C', action: () => handleSelectAnswer('C'), disabled: showResult || !question },
+    { key: 'd', description: 'Select D', action: () => handleSelectAnswer('D'), disabled: showResult || !question },
     { key: 'ArrowRight', description: 'Next', action: handleNextQuestion, disabled: !showResult },
     { key: 'ArrowLeft', description: 'Previous', action: handlePreviousQuestion, disabled: !canGoBack },
-    { key: 's', description: 'Skip', action: handleSkip, disabled: showResult },
+    { key: 's', description: 'Skip', action: handleSkip, disabled: showResult || !question },
   ];
 
   useKeyboardShortcuts(shortcuts);
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading questions...</p>
+        </div>
+      </div>;
+  }
+  if (error || !allQuestions || allQuestions.length === 0) {
+    return <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive mb-4">Failed to load questions</p>
+          <Button onClick={onBack}>Go Back</Button>
+        </div>
+      </div>;
+  }
+  if (!question) {
+    return <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>;
+  }
 
   return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8">
       {/* Header */}
