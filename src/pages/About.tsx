@@ -357,7 +357,7 @@ export default function About() {
                     />
                     
                     {/* Raleigh marker overlay */}
-                    <div className="absolute" style={{ left: '52%', top: '38%', transform: 'translate(-50%, -50%)' }}>
+                    <div className="absolute" style={{ left: '62%', top: '42%', transform: 'translate(-50%, -50%)' }}>
                       <div className="relative">
                         {/* Pulsing rings */}
                         <div className="absolute inset-0 flex items-center justify-center">
@@ -372,7 +372,7 @@ export default function About() {
                     </div>
                     
                     {/* Raleigh label */}
-                    <div className="absolute font-mono font-bold text-xs text-foreground" style={{ left: '52%', top: '55%', transform: 'translateX(-50%)' }}>
+                    <div className="absolute font-mono font-bold text-xs text-foreground" style={{ left: '62%', top: '58%', transform: 'translateX(-50%)' }}>
                       RALEIGH
                     </div>
                   </div>
