@@ -31,15 +31,8 @@ export function BookmarkedQuestions({
   const bookmarkedQuestions = allQuestions?.filter(q => bookmarks?.some(b => b.question_id === q.id)) || [];
   const selectedQuestion = bookmarkedQuestions.find(q => q.id === selectedQuestionId);
   const selectedBookmark = bookmarks?.find(b => b.question_id === selectedQuestionId);
-  if (isLoading) {
-    return <div className="flex-1 bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading bookmarks...</p>
-        </div>
-      </div>;
-  }
-  // Keyboard shortcuts for bookmarked question view
+
+  // Keyboard shortcuts for bookmarked question view - must be before any early returns
   const handleAnswerSelect = (answer: 'A' | 'B' | 'C' | 'D') => {
     if (!showResult) {
       setSelectedAnswer(answer);
@@ -56,6 +49,15 @@ export function BookmarkedQuestions({
   ];
 
   useKeyboardShortcuts(shortcuts, { enabled: !!selectedQuestion });
+
+  if (isLoading) {
+    return <div className="flex-1 bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading bookmarks...</p>
+        </div>
+      </div>;
+  }
 
   if (selectedQuestion) {
     return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
