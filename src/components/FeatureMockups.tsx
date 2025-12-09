@@ -184,12 +184,6 @@ export function WeakQuestionsMockup() {
 
 // Find Exam Sessions Mockup
 export function FindExamSessionsMockup() {
-  const sessions = [
-    { location: "Raleigh Community Center", date: "Jan 15, 2025", city: "Raleigh, NC", walkIns: true },
-    { location: "Durham Public Library", date: "Jan 22, 2025", city: "Durham, NC", walkIns: false },
-    { location: "Cary VFW Hall", date: "Feb 1, 2025", city: "Cary, NC", walkIns: true },
-  ];
-
   return (
     <div className="bg-background rounded-lg border border-border shadow-lg overflow-hidden">
       <div className="bg-card px-4 py-3 border-b border-border flex items-center justify-between">
@@ -200,29 +194,90 @@ export function FindExamSessionsMockup() {
         <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">Near 27601</span>
       </div>
       
-      <div className="p-4 space-y-2">
-        {sessions.map((session, i) => (
+      {/* Map Preview */}
+      <div className="relative h-32 bg-gradient-to-br from-blue-100 to-green-50 dark:from-blue-950/30 dark:to-green-950/20 overflow-hidden">
+        {/* Grid lines to simulate map */}
+        <div className="absolute inset-0 opacity-20">
+          {[...Array(6)].map((_, i) => (
+            <div key={`h-${i}`} className="absolute w-full h-px bg-muted-foreground" style={{ top: `${i * 20}%` }} />
+          ))}
+          {[...Array(8)].map((_, i) => (
+            <div key={`v-${i}`} className="absolute h-full w-px bg-muted-foreground" style={{ left: `${i * 14}%` }} />
+          ))}
+        </div>
+        
+        {/* "Roads" */}
+        <div className="absolute inset-0">
+          <div className="absolute h-0.5 bg-muted-foreground/30 w-full top-1/3 transform -rotate-12" />
+          <div className="absolute h-0.5 bg-muted-foreground/30 w-full top-2/3 transform rotate-6" />
+          <div className="absolute w-0.5 bg-muted-foreground/30 h-full left-1/4 transform rotate-6" />
+          <div className="absolute w-0.5 bg-muted-foreground/30 h-full left-2/3 transform -rotate-3" />
+        </div>
+        
+        {/* Location markers */}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+          className="absolute top-6 left-1/4"
+        >
+          <div className="relative">
+            <MapPin className="w-5 h-5 text-primary fill-primary/20" />
+            <div className="absolute inset-0 animate-ping">
+              <MapPin className="w-5 h-5 text-primary/30" />
+            </div>
+          </div>
+        </motion.div>
+        
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.3, type: "spring", stiffness: 300 }}
+          className="absolute top-16 left-1/2"
+        >
+          <MapPin className="w-5 h-5 text-green-500 fill-green-500/20" />
+        </motion.div>
+        
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.4, type: "spring", stiffness: 300 }}
+          className="absolute top-10 right-1/4"
+        >
+          <MapPin className="w-5 h-5 text-yellow-500 fill-yellow-500/20" />
+        </motion.div>
+        
+        {/* Zoom controls */}
+        <div className="absolute bottom-2 right-2 flex flex-col gap-0.5">
+          <div className="w-5 h-5 bg-background/90 border border-border rounded text-[10px] flex items-center justify-center text-muted-foreground">+</div>
+          <div className="w-5 h-5 bg-background/90 border border-border rounded text-[10px] flex items-center justify-center text-muted-foreground">−</div>
+        </div>
+      </div>
+      
+      {/* Session list */}
+      <div className="p-3 space-y-2">
+        {[
+          { location: "Raleigh Community Center", date: "Jan 15", walkIns: true },
+          { location: "Durham Public Library", date: "Jan 22", walkIns: false },
+        ].map((session, i) => (
           <motion.div
             key={session.location}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="p-2 rounded-md border border-border hover:border-primary/50 transition-colors"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 + i * 0.1 }}
+            className="flex items-center justify-between p-2 rounded-md border border-border text-xs"
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-xs font-medium text-foreground">{session.location}</div>
-                <div className="text-[10px] text-muted-foreground">{session.city}</div>
-              </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-3 h-3 text-muted-foreground" />
+              <span className="text-foreground truncate max-w-[120px]">{session.location}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
               {session.walkIns && (
-                <span className="text-[9px] px-1.5 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded">
-                  Walk-ins OK
+                <span className="text-[9px] px-1 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded">
+                  Walk-ins
                 </span>
               )}
-            </div>
-            <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground">
-              <Calendar className="w-2.5 h-2.5" />
-              {session.date}
+              <span className="text-muted-foreground">{session.date}</span>
             </div>
           </motion.div>
         ))}
@@ -230,11 +285,11 @@ export function FindExamSessionsMockup() {
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="w-full mt-2 py-2 text-xs bg-primary text-primary-foreground rounded-md font-medium flex items-center justify-center gap-1"
+          transition={{ delay: 0.7 }}
+          className="w-full py-1.5 text-[10px] bg-primary text-primary-foreground rounded-md font-medium flex items-center justify-center gap-1"
         >
           <Target className="w-3 h-3" />
-          Set Target Exam Date
+          Set Target Date
         </motion.button>
       </div>
     </div>
