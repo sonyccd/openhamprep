@@ -4,29 +4,31 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
-
 export function LandingNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const navLinks = [
-    { label: "Features", href: "/features" },
-    { label: "FAQ", href: "/faq" },
-    { label: "About", href: "/about" },
-  ];
-
+  const navLinks = [{
+    label: "Features",
+    href: "/features"
+  }, {
+    label: "FAQ",
+    href: "/faq"
+  }, {
+    label: "About",
+    href: "/about"
+  }];
   const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     if (href.startsWith("#")) {
       e.preventDefault();
       const element = document.querySelector(href);
       if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
+        element.scrollIntoView({
+          behavior: "smooth"
+        });
       }
       setMobileMenuOpen(false);
     }
   };
-
-  return (
-    <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+  return <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -39,85 +41,39 @@ export function LandingNav() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
-            {navLinks.map((link) => (
-              link.href.startsWith("#") ? (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  onClick={(e) => handleAnchorClick(e, link.href)}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                >
+            {navLinks.map(link => link.href.startsWith("#") ? <a key={link.label} href={link.href} onClick={e => handleAnchorClick(e, link.href)} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                   {link.label}
-                </a>
-              ) : (
-                <Link
-                  key={link.label}
-                  to={link.href}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                >
+                </a> : <Link key={link.label} to={link.href} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                   {link.label}
-                </Link>
-              )
-            ))}
+                </Link>)}
             <ThemeToggle />
             <Link to="/auth">
-              <Button size="sm">Get Started</Button>
+              <Button size="sm">Sign Up/Sing In </Button>
             </Link>
           </div>
 
           {/* Mobile Menu Button */}
           <div className="flex items-center gap-2 md:hidden">
             <ThemeToggle />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
+            <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
           </div>
         </div>
 
         {/* Mobile Menu */}
-        <div
-          className={cn(
-            "md:hidden overflow-hidden transition-all duration-300 ease-in-out",
-            mobileMenuOpen ? "max-h-64 pb-4" : "max-h-0"
-          )}
-        >
+        <div className={cn("md:hidden overflow-hidden transition-all duration-300 ease-in-out", mobileMenuOpen ? "max-h-64 pb-4" : "max-h-0")}>
           <div className="flex flex-col gap-3 pt-2">
-            {navLinks.map((link) => (
-              link.href.startsWith("#") ? (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  onClick={(e) => handleAnchorClick(e, link.href)}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
-                >
+            {navLinks.map(link => link.href.startsWith("#") ? <a key={link.label} href={link.href} onClick={e => handleAnchorClick(e, link.href)} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2">
                   {link.label}
-                </a>
-              ) : (
-                <Link
-                  key={link.label}
-                  to={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
-                >
+                </a> : <Link key={link.label} to={link.href} onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2">
                   {link.label}
-                </Link>
-              )
-            ))}
+                </Link>)}
             <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
               <Button size="sm" className="w-full">Get Started</Button>
             </Link>
           </div>
         </div>
       </div>
-    </nav>
-  );
+    </nav>;
 }
