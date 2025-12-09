@@ -48,7 +48,7 @@ export function LandingNav() {
                 </Link>)}
             <ThemeToggle />
             <Link to="/auth">
-              <Button size="sm">Sign Up/Sing In </Button>
+              <Button size="sm">Sign Up/Sign In </Button>
             </Link>
           </div>
 
