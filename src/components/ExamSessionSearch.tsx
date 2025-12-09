@@ -23,6 +23,34 @@ const US_STATES = [
   'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
 ];
 
+// Map US states to timezone abbreviations (simplified - uses primary timezone for each state)
+const STATE_TIMEZONES: Record<string, string> = {
+  'AL': 'CT', 'AK': 'AKT', 'AZ': 'MT', 'AR': 'CT', 'CA': 'PT',
+  'CO': 'MT', 'CT': 'ET', 'DE': 'ET', 'FL': 'ET', 'GA': 'ET',
+  'HI': 'HT', 'ID': 'MT', 'IL': 'CT', 'IN': 'ET', 'IA': 'CT',
+  'KS': 'CT', 'KY': 'ET', 'LA': 'CT', 'ME': 'ET', 'MD': 'ET',
+  'MA': 'ET', 'MI': 'ET', 'MN': 'CT', 'MS': 'CT', 'MO': 'CT',
+  'MT': 'MT', 'NE': 'CT', 'NV': 'PT', 'NH': 'ET', 'NJ': 'ET',
+  'NM': 'MT', 'NY': 'ET', 'NC': 'ET', 'ND': 'CT', 'OH': 'ET',
+  'OK': 'CT', 'OR': 'PT', 'PA': 'ET', 'RI': 'ET', 'SC': 'ET',
+  'SD': 'CT', 'TN': 'CT', 'TX': 'CT', 'UT': 'MT', 'VT': 'ET',
+  'VA': 'ET', 'WA': 'PT', 'WV': 'ET', 'WI': 'CT', 'WY': 'MT'
+};
+
+const getTimezoneLabel = (state: string): string => {
+  const tz = STATE_TIMEZONES[state];
+  if (!tz) return 'local';
+  const labels: Record<string, string> = {
+    'ET': 'Eastern',
+    'CT': 'Central', 
+    'MT': 'Mountain',
+    'PT': 'Pacific',
+    'AKT': 'Alaska',
+    'HT': 'Hawaii'
+  };
+  return labels[tz] || 'local';
+};
+
 const STUDY_INTENSITIES = [
   { value: 'light', label: 'Light', description: '10 questions/day, 1 test/week' },
   { value: 'moderate', label: 'Moderate', description: '25 questions/day, 2 tests/week' },
@@ -281,7 +309,7 @@ export const ExamSessionSearch = () => {
                               {session.exam_time && (
                                 <div className="flex items-center gap-1">
                                   <Clock className="h-4 w-4" />
-                                  <span>{session.exam_time}</span>
+                                  <span>{session.exam_time} {getTimezoneLabel(session.state)}</span>
                                 </div>
                               )}
                             </div>
