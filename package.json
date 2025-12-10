@@ -19,7 +19,12 @@
     "dev:local": "cp .env.local .env && npm run dev",
     "dev:hosted": "cp .env.production .env && npm run dev",
     "dev:full": "npm run supabase:start && npm run dev",
-    "test:local": "cp .env.local .env && vitest run"
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:local": "cp .env.local .env && vitest run",
+    "test:watch": "vitest --watch"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

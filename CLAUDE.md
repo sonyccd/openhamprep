@@ -31,11 +31,15 @@ npm run dev:hosted         # Use hosted Supabase config
 
 ### Testing
 ```bash
-npx vitest           # Run tests in watch mode
-npx vitest run       # Run tests once
-npx vitest --ui      # Open Vitest UI
-npm run test:local   # Run tests with local Supabase
+npm test                # Run tests in watch mode
+npm run test:run        # Run tests once (CI mode)
+npm run test:ui         # Open Vitest UI
+npm run test:coverage   # Run with coverage report
+npm run test:local      # Run tests with local Supabase
+npx vitest              # Run vitest directly
 ```
+
+See `TESTING.md` for comprehensive testing guide.
 
 ## Architecture Overview
 

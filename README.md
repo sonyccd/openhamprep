@@ -133,6 +133,23 @@ Create a `.env` file with:
 - `VITE_SUPABASE_PUBLISHABLE_KEY` - Your Supabase anon key
 - `VITE_SUPABASE_PROJECT_ID` - Your Supabase project ID
 
+## Testing
+
+This project has comprehensive test coverage using Vitest and React Testing Library.
+
+```bash
+# Run tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests in UI mode
+npm run test:ui
+```
+
+See [TESTING.md](TESTING.md) for detailed testing guidelines.
+
 ## Contributing
 
 ### Guidelines
@@ -142,6 +159,7 @@ Create a `.env` file with:
 3. **Create small components** - Avoid monolithic files; extract reusable pieces
 4. **Maintain type safety** - TypeScript strict mode is enabled
 5. **Test on mobile** - The app is responsive; verify mobile layouts
+6. **Write tests** - Add tests for new features (see [TESTING.md](TESTING.md))
 
 ### Code Style
 
