@@ -7,7 +7,7 @@ import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShort
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { Bookmark, Loader2, Trash2, MessageSquare, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+
 
 interface BookmarkedQuestionsProps {
   onBack: () => void;

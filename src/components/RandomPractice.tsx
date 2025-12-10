@@ -267,18 +267,18 @@ export function RandomPractice({
   const canGoBack = historyIndex > 0;
   const isViewingHistory = historyIndex < questionHistory.length - 1;
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts - must be called before any early returns
   const shortcuts: KeyboardShortcut[] = [
-    { key: 'a', description: 'Select A', action: () => handleSelectAnswer('A'), disabled: showResult || !question },
-    { key: 'b', description: 'Select B', action: () => handleSelectAnswer('B'), disabled: showResult || !question },
-    { key: 'c', description: 'Select C', action: () => handleSelectAnswer('C'), disabled: showResult || !question },
-    { key: 'd', description: 'Select D', action: () => handleSelectAnswer('D'), disabled: showResult || !question },
-    { key: 'ArrowRight', description: 'Next', action: handleNextQuestion, disabled: !showResult },
-    { key: 'ArrowLeft', description: 'Previous', action: handlePreviousQuestion, disabled: !canGoBack },
-    { key: 's', description: 'Skip', action: handleSkip, disabled: showResult || !question },
+    { key: 'a', description: 'Select A', action: () => handleSelectAnswer('A'), disabled: showResult || !question || isLoading },
+    { key: 'b', description: 'Select B', action: () => handleSelectAnswer('B'), disabled: showResult || !question || isLoading },
+    { key: 'c', description: 'Select C', action: () => handleSelectAnswer('C'), disabled: showResult || !question || isLoading },
+    { key: 'd', description: 'Select D', action: () => handleSelectAnswer('D'), disabled: showResult || !question || isLoading },
+    { key: 'ArrowRight', description: 'Next', action: handleNextQuestion, disabled: !showResult || isLoading },
+    { key: 'ArrowLeft', description: 'Previous', action: handlePreviousQuestion, disabled: !canGoBack || isLoading },
+    { key: 's', description: 'Skip', action: handleSkip, disabled: showResult || !question || isLoading },
   ];
 
-  useKeyboardShortcuts(shortcuts);
+  useKeyboardShortcuts(shortcuts, { enabled: !isLoading && !!question });
 
   if (isLoading) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
