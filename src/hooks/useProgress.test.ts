@@ -199,7 +199,7 @@ describe('useProgress', () => {
         select: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({
             data: null,
-            error: new Error('Database error'),
+            error: { message: 'Database error' },
           }),
         }),
       });
@@ -210,13 +210,19 @@ describe('useProgress', () => {
       const testResult = await result.current.saveTestResult([mockQuestion], { 'T1A01': 'A' });
 
       expect(testResult).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Error saving test result:', { message: 'Database error' });
 
       consoleErrorSpy.mockRestore();
     });
   });
 
   describe('saveRandomAttempt', () => {
+    beforeEach(() => {
+      // Reset useAuth mock for these tests
+      const { useAuth } = require('./useAuth');
+      (useAuth as any).mockReturnValue({ user: { id: 'test-user-id' } });
+    });
+
     it('saves random practice attempt', async () => {
       const { supabase } = await import('@/integrations/supabase/client');
 

@@ -29,3 +29,11 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }));
+
+// Mock PostHog
+vi.mock('@/hooks/usePostHog', () => ({
+  usePostHog: vi.fn(() => ({
+    capture: vi.fn(),
+    identify: vi.fn(),
+  })),
+}));
