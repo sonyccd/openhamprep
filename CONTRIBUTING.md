@@ -33,6 +33,35 @@ Thank you for your interest in contributing to the Open Ham Prep application! Th
 git clone https://github.com/YOUR_USERNAME/openhamprep.git
 cd openhamprep
 npm install
+```
+
+#### Option 1: Local Supabase (Recommended for Contributors)
+
+Run the full stack locally without needing hosted Supabase access:
+
+```bash
+# Start local Supabase (requires Docker)
+npm run supabase:start
+
+# Start the dev server
+npm run dev
+
+# Or start both at once:
+npm run dev:full
+```
+
+See [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) for detailed setup.
+
+#### Option 2: Hosted Supabase
+
+If you have access to a hosted Supabase project:
+
+```bash
+# Copy example env file
+cp .env.example .env
+
+# Edit .env with your Supabase credentials
+# Then start dev server
 npm run dev
 ```
 

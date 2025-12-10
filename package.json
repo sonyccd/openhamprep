@@ -8,7 +8,18 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "supabase:start": "supabase start && npm run supabase:setup-env",
+    "supabase:stop": "supabase stop",
+    "supabase:restart": "supabase stop && supabase start",
+    "supabase:reset": "supabase db reset",
+    "supabase:status": "supabase status",
+    "supabase:studio": "open http://localhost:54323",
+    "supabase:setup-env": "node scripts/setup-local-env.js",
+    "dev:local": "cp .env.local .env && npm run dev",
+    "dev:hosted": "cp .env.production .env && npm run dev",
+    "dev:full": "npm run supabase:start && npm run dev",
+    "test:local": "cp .env.local .env && vitest run"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

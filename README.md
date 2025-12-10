@@ -79,9 +79,12 @@ The app uses semantic design tokens defined in `src/index.css` and `tailwind.con
 
 ### Prerequisites
 - Node.js 18+ (recommend using [nvm](https://github.com/nvm-sh/nvm))
+- Docker Desktop (for local Supabase)
 - npm or bun
 
-### Setup
+### Quick Start (Local Supabase)
+
+**Recommended for contributors** - run the full stack locally without needing hosted Supabase access:
 
 ```bash
 # Clone the repository
@@ -91,16 +94,44 @@ cd openhamprep
 # Install dependencies
 npm install
 
-# Start the development server
+# Start local Supabase (first run downloads Docker images)
+npm run supabase:start
+
+# Start the development server (in another terminal)
 npm run dev
+
+# Or start both at once:
+npm run dev:full
 ```
 
 The app will be available at `http://localhost:8080`.
+Supabase Studio (database GUI) at `http://localhost:54323`.
+
+See [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) for detailed instructions.
+
+### Alternative: Hosted Supabase
+
+If you have access to a hosted Supabase project:
+
+```bash
+# Copy example env file
+cp .env.example .env
+
+# Edit .env with your Supabase credentials
+# Then start dev server
+npm run dev
+```
 
 ### Environment Variables
-The `.env` file is auto-configured when connected to Lovable Cloud. For local development without Lovable:
+
+**Local Supabase (auto-configured):**
+- `.env.local` is created automatically by `npm run supabase:start`
+
+**Hosted Supabase (manual):**
+Create a `.env` file with:
 - `VITE_SUPABASE_URL` - Your Supabase project URL
 - `VITE_SUPABASE_PUBLISHABLE_KEY` - Your Supabase anon key
+- `VITE_SUPABASE_PROJECT_ID` - Your Supabase project ID
 
 ## Contributing
 

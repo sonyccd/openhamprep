@@ -17,11 +17,24 @@ npm run lint         # Run ESLint
 npm run preview      # Preview production build
 ```
 
+### Local Supabase (for contributors)
+```bash
+npm run supabase:start     # Start local Supabase with Docker
+npm run supabase:stop      # Stop local Supabase (keeps data)
+npm run supabase:reset     # Reset database (wipes data, reseeds)
+npm run supabase:status    # Check Supabase status
+npm run supabase:studio    # Open Supabase Studio (GUI)
+npm run dev:full           # Start both Supabase and dev server
+npm run dev:local          # Use local Supabase config
+npm run dev:hosted         # Use hosted Supabase config
+```
+
 ### Testing
 ```bash
 npx vitest           # Run tests in watch mode
 npx vitest run       # Run tests once
 npx vitest --ui      # Open Vitest UI
+npm run test:local   # Run tests with local Supabase
 ```
 
 ## Architecture Overview
@@ -183,6 +196,47 @@ When saving question attempts, use these `attempt_type` values:
 - `'random_practice'` - From random practice mode
 - `'subelement_practice'` - From subelement-focused study
 - `'weak_questions'` - From weak questions review
+
+## Local Development Setup
+
+### For Contributors (Recommended)
+
+Contributors can run the entire stack locally without needing hosted Supabase access:
+
+```bash
+# One-time setup
+./scripts/local-dev-setup.sh
+
+# Daily workflow
+npm run dev:full
+```
+
+This starts:
+- Local PostgreSQL database
+- PostgREST API
+- GoTrue auth server
+- Supabase Studio (GUI) at http://localhost:54323
+- Dev server at http://localhost:8080
+
+See `LOCAL_SETUP_QUICKSTART.md` and `LOCAL_DEVELOPMENT.md` for details.
+
+### Sample Data
+
+Local Supabase automatically seeds:
+- 7 sample questions (T, G, E license types)
+- 10 glossary terms
+- 2 exam sessions
+- See `supabase/seed.sql` to customize
+
+### Creating Admin User (Local)
+
+1. Sign up at http://localhost:8080/auth
+2. Get user ID from Studio: http://localhost:54323 → Auth → Users
+3. Run in SQL Editor:
+   ```sql
+   INSERT INTO user_roles (user_id, role)
+   VALUES ('your-user-id', 'admin');
+   ```
 
 ## Deployment
 
