@@ -146,9 +146,18 @@ Antenna,A device for transmitting or receiving radio waves
 
 ## Deployment
 
-The app is deployed via Lovable's publish feature:
-- **Frontend changes** require clicking "Update" in the publish dialog
-- **Backend changes** (edge functions, migrations) deploy automatically
+The app uses Supabase as the backend infrastructure:
+- **Database**: PostgreSQL with Row Level Security
+- **Authentication**: Supabase Auth
+- **Edge Functions**: Serverless functions for backend logic
+- **Migrations**: Version-controlled database schema
+
+### Migrating to Supabase
+
+If you're migrating from Lovable Cloud to a standalone Supabase project:
+1. Run `./migrate-to-supabase.sh` for automated migration
+2. See `MIGRATION_QUICKSTART.md` for quick steps
+3. See `docs/SUPABASE_MIGRATION.md` for detailed instructions
 
 ## License
 
