@@ -82,8 +82,6 @@ The app uses semantic design tokens defined in `src/index.css` and `tailwind.con
 - Docker Desktop (for local Supabase)
 - npm or bun
 
-**Note**: This project uses `.npmrc` with `legacy-peer-deps=true` to resolve peer dependency conflicts with `react-leaflet@5.x` (which requires React 19) while the project uses React 18.
-
 ### Quick Start (Local Supabase)
 
 **Recommended for contributors** - run the full stack locally without needing hosted Supabase access:
