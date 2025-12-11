@@ -3,6 +3,71 @@
 -- Provides enough data to test all app features
 
 -- =============================================================================
+-- TEST USER (for preview branch testing)
+-- Email: test@example.com
+-- Password: password123
+-- =============================================================================
+
+-- Create test user in auth.users
+INSERT INTO auth.users (
+  id,
+  instance_id,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  created_at,
+  updated_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  is_super_admin,
+  role,
+  aud,
+  confirmation_token,
+  recovery_token,
+  email_change_token_new,
+  email_change
+) VALUES (
+  '00000000-0000-0000-0000-000000000001',
+  '00000000-0000-0000-0000-000000000000',
+  'test@example.com',
+  -- bcrypt hash of 'password123'
+  '$2a$10$PznXpsLnpJzNUVvlGpLOaO0LEFGK3X0p6/NqJyTl5dLbeGxDUmSNu',
+  NOW(),
+  NOW(),
+  NOW(),
+  '{"provider": "email", "providers": ["email"]}',
+  '{"display_name": "Test User"}',
+  FALSE,
+  'authenticated',
+  'authenticated',
+  '',
+  '',
+  '',
+  ''
+) ON CONFLICT (id) DO NOTHING;
+
+-- Create identity for the test user
+INSERT INTO auth.identities (
+  id,
+  user_id,
+  identity_data,
+  provider,
+  provider_id,
+  created_at,
+  updated_at,
+  last_sign_in_at
+) VALUES (
+  '00000000-0000-0000-0000-000000000001',
+  '00000000-0000-0000-0000-000000000001',
+  '{"sub": "00000000-0000-0000-0000-000000000001", "email": "test@example.com"}',
+  'email',
+  'test@example.com',
+  NOW(),
+  NOW(),
+  NOW()
+) ON CONFLICT (id) DO NOTHING;
+
+-- =============================================================================
 -- QUESTIONS (35+ per license type for full practice tests)
 -- =============================================================================
 
@@ -616,13 +681,13 @@ BEGIN
   RAISE NOTICE '========================================';
   RAISE NOTICE 'Preview Branch Seeded Successfully!';
   RAISE NOTICE '========================================';
+  RAISE NOTICE 'Test User: test@example.com / password123';
+  RAISE NOTICE '';
   RAISE NOTICE 'Questions: % (35+ per license type)', (SELECT COUNT(*) FROM public.questions);
   RAISE NOTICE '  - Technician: %', (SELECT COUNT(*) FROM public.questions WHERE id LIKE 'T%');
   RAISE NOTICE '  - General: %', (SELECT COUNT(*) FROM public.questions WHERE id LIKE 'G%');
   RAISE NOTICE '  - Extra: %', (SELECT COUNT(*) FROM public.questions WHERE id LIKE 'E%');
   RAISE NOTICE 'Glossary Terms: %', (SELECT COUNT(*) FROM public.glossary_terms);
   RAISE NOTICE 'Exam Sessions: %', (SELECT COUNT(*) FROM public.exam_sessions);
-  RAISE NOTICE '';
-  RAISE NOTICE 'Ready for testing! Sign up to create your profile.';
   RAISE NOTICE '========================================';
 END $$;
