@@ -4,117 +4,17 @@
 
 -- =============================================================================
 -- TEST USER (for preview branch testing)
--- Email: test@example.com
--- Password: preview-<project-ref>
---   - Find project ref in Supabase URL: supabase.com/dashboard/project/<ref>
---   - Or in the preview deployment logs
---   - For local dev: preview-local
+--
+-- After deployment, call the seed-test-user Edge Function to create the test user:
+--   curl -X POST https://<project-ref>.supabase.co/functions/v1/seed-test-user
+--
+-- Credentials:
+--   Email: test@example.com
+--   Password: testuser123
+--
+-- NOTE: Direct SQL inserts into auth.users are not supported by Supabase.
+--       The Edge Function uses the Admin API instead.
 -- =============================================================================
-
-DO $$
-DECLARE
-  test_user_id UUID := '00000000-0000-0000-0000-000000000001';
-  proj_instance_id UUID;
-  project_ref TEXT := 'local';  -- default for local development
-  test_password TEXT;
-  hashed_password TEXT;
-BEGIN
-  -- Try to get the Supabase project ref (unique per preview branch)
-  -- The ref appears in: supabase.com/dashboard/project/<ref>
-  BEGIN
-    SELECT id::text INTO project_ref FROM auth.instances LIMIT 1;
-    -- Use first 12 chars of instance ID as the ref
-    IF project_ref IS NOT NULL AND length(project_ref) > 12 THEN
-      project_ref := substr(project_ref, 1, 12);
-    END IF;
-  EXCEPTION WHEN OTHERS THEN
-    project_ref := 'local';
-  END;
-
-  IF project_ref IS NULL OR project_ref = '' THEN
-    project_ref := 'local';
-  END IF;
-
-  -- Password: preview-<ref>
-  test_password := 'preview-' || project_ref;
-
-  -- Hash the password using bcrypt
-  hashed_password := crypt(test_password, gen_salt('bf'));
-
-  -- Get the actual instance_id from the project (required for hosted Supabase)
-  SELECT id INTO proj_instance_id FROM auth.instances LIMIT 1;
-
-  -- Fallback for local development where instances table may be empty
-  IF proj_instance_id IS NULL THEN
-    proj_instance_id := '00000000-0000-0000-0000-000000000000';
-  END IF;
-
-  -- Delete existing test user if exists
-  DELETE FROM auth.identities WHERE user_id = test_user_id;
-  DELETE FROM auth.users WHERE id = test_user_id;
-
-  -- Create test user in auth.users
-  INSERT INTO auth.users (
-    id,
-    instance_id,
-    email,
-    encrypted_password,
-    email_confirmed_at,
-    created_at,
-    updated_at,
-    raw_app_meta_data,
-    raw_user_meta_data,
-    is_super_admin,
-    role,
-    aud,
-    confirmation_token,
-    recovery_token,
-    email_change_token_new,
-    email_change
-  ) VALUES (
-    test_user_id,
-    proj_instance_id,
-    'test@example.com',
-    hashed_password,
-    NOW(),
-    NOW(),
-    NOW(),
-    '{"provider": "email", "providers": ["email"]}',
-    '{"display_name": "Test User"}',
-    FALSE,
-    'authenticated',
-    'authenticated',
-    '',
-    '',
-    '',
-    ''
-  );
-
-  -- Create identity for the test user
-  INSERT INTO auth.identities (
-    id,
-    user_id,
-    identity_data,
-    provider,
-    provider_id,
-    created_at,
-    updated_at,
-    last_sign_in_at
-  ) VALUES (
-    test_user_id,
-    test_user_id,
-    jsonb_build_object('sub', test_user_id::text, 'email', 'test@example.com'),
-    'email',
-    'test@example.com',
-    NOW(),
-    NOW(),
-    NOW()
-  );
-
-EXCEPTION
-  WHEN OTHERS THEN
-    RAISE WARNING 'Test user creation failed: %', SQLERRM;
-END $$;
 
 -- =============================================================================
 -- QUESTIONS (35+ per license type for full practice tests)
@@ -730,7 +630,7 @@ BEGIN
   RAISE NOTICE '========================================';
   RAISE NOTICE 'Preview Branch Seeded Successfully!';
   RAISE NOTICE '========================================';
-  RAISE NOTICE 'Test User: test@example.com / preview-<project-ref>';
+  RAISE NOTICE 'Test User: Call seed-test-user Edge Function first!';
   RAISE NOTICE '';
   RAISE NOTICE 'Questions: % (35+ per license type)', (SELECT COUNT(*) FROM public.questions);
   RAISE NOTICE '  - Technician: %', (SELECT COUNT(*) FROM public.questions WHERE id LIKE 'T%');
