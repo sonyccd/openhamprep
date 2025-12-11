@@ -6,11 +6,10 @@ on:
 
 jobs:
   seed-test-user:
-    # Only run when deployment succeeds and it's a Supabase preview deployment
+    # Only run for Supabase deployments (URL contains supabase.co)
     if: |
       github.event.deployment_status.state == 'success' &&
-      contains(github.event.deployment.environment, 'Preview') &&
-      github.event.deployment_status.environment_url != ''
+      contains(github.event.deployment_status.environment_url, 'supabase.co')
 
     runs-on: ubuntu-latest
 
@@ -18,38 +17,21 @@ jobs:
       - name: Extract Supabase URL
         id: extract-url
         run: |
-          # The deployment environment URL contains the Supabase project ref
-          # Format: https://<project-ref>.supabase.co
-          DEPLOYMENT_URL="${{ github.event.deployment_status.environment_url }}"
-          echo "Deployment URL: $DEPLOYMENT_URL"
-
-          # Try to extract Supabase URL from deployment payload or environment
-          # Supabase sets the URL in the deployment
-          if [[ "$DEPLOYMENT_URL" == *"supabase.co"* ]]; then
-            SUPABASE_URL="$DEPLOYMENT_URL"
-          else
-            # Check if there's a Supabase URL in the deployment payload
-            SUPABASE_URL=$(echo '${{ toJson(github.event.deployment.payload) }}' | jq -r '.supabase_url // empty')
-          fi
-
-          if [ -z "$SUPABASE_URL" ]; then
-            echo "Could not find Supabase URL, skipping..."
-            echo "skip=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
+          SUPABASE_URL="${{ github.event.deployment_status.environment_url }}"
+          BRANCH="${{ github.event.deployment.ref }}"
 
           echo "Supabase URL: $SUPABASE_URL"
+          echo "Branch: $BRANCH"
+
           echo "supabase_url=$SUPABASE_URL" >> $GITHUB_OUTPUT
-          echo "skip=false" >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
 
       - name: Wait for Supabase to be fully ready
-        if: steps.extract-url.outputs.skip != 'true'
         run: |
           echo "Waiting 30 seconds for Supabase services to initialize..."
           sleep 30
 
       - name: Seed test user
-        if: steps.extract-url.outputs.skip != 'true'
         run: |
           SUPABASE_URL="${{ steps.extract-url.outputs.supabase_url }}"
           FUNCTION_URL="${SUPABASE_URL}/functions/v1/seed-test-user"
@@ -100,7 +82,7 @@ jobs:
           exit 1
 
       - name: Add PR comment with credentials
-        if: steps.extract-url.outputs.skip != 'true' && github.event.deployment.ref != 'main'
+        if: github.event.deployment.ref != 'main'
         uses: actions/github-script@v7
         continue-on-error: true
         with:
