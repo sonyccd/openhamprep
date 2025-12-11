@@ -5,21 +5,41 @@
 -- =============================================================================
 -- TEST USER (for preview branch testing)
 -- Email: test@example.com
--- Password: randomly generated each deployment (check logs below)
+-- Password: preview-<project-ref>
+--   - Find project ref in Supabase URL: supabase.com/dashboard/project/<ref>
+--   - Or in the preview deployment logs
+--   - For local dev: preview-local
 -- =============================================================================
 
 DO $$
 DECLARE
   test_user_id UUID := '00000000-0000-0000-0000-000000000001';
   proj_instance_id UUID;
-  random_password TEXT;
+  project_ref TEXT := 'local';  -- default for local development
+  test_password TEXT;
   hashed_password TEXT;
 BEGIN
-  -- Generate a random 16-character password
-  random_password := substr(md5(random()::text || clock_timestamp()::text), 1, 16);
+  -- Try to get the Supabase project ref (unique per preview branch)
+  -- The ref appears in: supabase.com/dashboard/project/<ref>
+  BEGIN
+    SELECT id::text INTO project_ref FROM auth.instances LIMIT 1;
+    -- Use first 12 chars of instance ID as the ref
+    IF project_ref IS NOT NULL AND length(project_ref) > 12 THEN
+      project_ref := substr(project_ref, 1, 12);
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    project_ref := 'local';
+  END;
 
-  -- Hash the password using bcrypt (pgcrypto)
-  hashed_password := crypt(random_password, gen_salt('bf'));
+  IF project_ref IS NULL OR project_ref = '' THEN
+    project_ref := 'local';
+  END IF;
+
+  -- Password: preview-<ref>
+  test_password := 'preview-' || project_ref;
+
+  -- Hash the password using bcrypt
+  hashed_password := crypt(test_password, gen_salt('bf'));
 
   -- Get the actual instance_id from the project (required for hosted Supabase)
   SELECT id INTO proj_instance_id FROM auth.instances LIMIT 1;
@@ -29,7 +49,7 @@ BEGIN
     proj_instance_id := '00000000-0000-0000-0000-000000000000';
   END IF;
 
-  -- Delete existing test user if exists (to update password)
+  -- Delete existing test user if exists
   DELETE FROM auth.identities WHERE user_id = test_user_id;
   DELETE FROM auth.users WHERE id = test_user_id;
 
@@ -91,19 +111,9 @@ BEGIN
     NOW()
   );
 
-  -- Print credentials to deployment logs
-  RAISE NOTICE '';
-  RAISE NOTICE '╔════════════════════════════════════════════════════════════╗';
-  RAISE NOTICE '║           PREVIEW BRANCH TEST CREDENTIALS                  ║';
-  RAISE NOTICE '╠════════════════════════════════════════════════════════════╣';
-  RAISE NOTICE '║  Email:    test@example.com                                ║';
-  RAISE NOTICE '║  Password: %                                ║', random_password;
-  RAISE NOTICE '╚════════════════════════════════════════════════════════════╝';
-  RAISE NOTICE '';
-
 EXCEPTION
   WHEN OTHERS THEN
-    RAISE NOTICE 'Test user creation failed: % - %', SQLSTATE, SQLERRM;
+    RAISE WARNING 'Test user creation failed: %', SQLERRM;
 END $$;
 
 -- =============================================================================
@@ -720,7 +730,7 @@ BEGIN
   RAISE NOTICE '========================================';
   RAISE NOTICE 'Preview Branch Seeded Successfully!';
   RAISE NOTICE '========================================';
-  RAISE NOTICE 'Test User: see credentials box above';
+  RAISE NOTICE 'Test User: test@example.com / preview-<project-ref>';
   RAISE NOTICE '';
   RAISE NOTICE 'Questions: % (35+ per license type)', (SELECT COUNT(*) FROM public.questions);
   RAISE NOTICE '  - Technician: %', (SELECT COUNT(*) FROM public.questions WHERE id LIKE 'T%');
