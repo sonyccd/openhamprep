@@ -81,7 +81,9 @@ export function SubelementPractice({
     return Object.keys(questionsBySubelement).sort();
   }, [questionsBySubelement]);
 
-  const currentQuestions = selectedSubelement ? questionsBySubelement[selectedSubelement] || [] : [];
+  const currentQuestions = useMemo(() => {
+    return selectedSubelement ? questionsBySubelement[selectedSubelement] || [] : [];
+  }, [selectedSubelement, questionsBySubelement]);
 
   const getRandomQuestion = useCallback((excludeIds: string[] = []): Question | null => {
     if (currentQuestions.length === 0) return null;

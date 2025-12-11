@@ -56,13 +56,14 @@ describe('useProgress', () => {
         error: null,
       });
 
-      (supabase.from as any).mockImplementation((table: string) => {
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
         if (table === 'practice_test_results') {
-          return { insert: mockInsert };
+          return { insert: mockInsert } as ReturnType<typeof supabase.from>;
         }
         if (table === 'question_attempts') {
-          return { insert: mockAttemptsInsert };
+          return { insert: mockAttemptsInsert } as ReturnType<typeof supabase.from>;
         }
+        return {} as ReturnType<typeof supabase.from>;
       });
 
       const { result } = renderHook(() => useProgress());
@@ -105,13 +106,14 @@ describe('useProgress', () => {
         }),
       });
 
-      (supabase.from as any).mockImplementation((table: string) => {
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
         if (table === 'practice_test_results') {
-          return { insert: mockInsert };
+          return { insert: mockInsert } as ReturnType<typeof supabase.from>;
         }
         if (table === 'question_attempts') {
-          return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) };
+          return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) } as ReturnType<typeof supabase.from>;
         }
+        return {} as ReturnType<typeof supabase.from>;
       });
 
       const { result } = renderHook(() => useProgress());
@@ -157,13 +159,14 @@ describe('useProgress', () => {
         error: null,
       });
 
-      (supabase.from as any).mockImplementation((table: string) => {
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
         if (table === 'practice_test_results') {
-          return { insert: mockInsert };
+          return { insert: mockInsert } as ReturnType<typeof supabase.from>;
         }
         if (table === 'question_attempts') {
-          return { insert: mockAttemptsInsert };
+          return { insert: mockAttemptsInsert } as ReturnType<typeof supabase.from>;
         }
+        return {} as ReturnType<typeof supabase.from>;
       });
 
       const { result } = renderHook(() => useProgress());
@@ -183,7 +186,7 @@ describe('useProgress', () => {
 
     it('returns null when no user', async () => {
       const { useAuth } = await import('./useAuth');
-      (useAuth as any).mockReturnValue({ user: null });
+      vi.mocked(useAuth).mockReturnValue({ user: null } as ReturnType<typeof useAuth>);
 
       const { result } = renderHook(() => useProgress());
 
@@ -204,7 +207,7 @@ describe('useProgress', () => {
         }),
       });
 
-      (supabase.from as any).mockReturnValue({ insert: mockInsert });
+      vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
 
       const { result } = renderHook(() => useProgress());
       const testResult = await result.current.saveTestResult([mockQuestion], { 'T1A01': 'A' });
@@ -220,7 +223,7 @@ describe('useProgress', () => {
     beforeEach(async () => {
       // Reset useAuth mock for these tests
       const { useAuth } = await import('./useAuth');
-      vi.mocked(useAuth).mockReturnValue({ user: { id: 'test-user-id' } } as any);
+      vi.mocked(useAuth).mockReturnValue({ user: { id: 'test-user-id' } } as ReturnType<typeof useAuth>);
     });
 
     it('saves random practice attempt', async () => {
@@ -231,7 +234,7 @@ describe('useProgress', () => {
         error: null,
       });
 
-      (supabase.from as any).mockReturnValue({ insert: mockInsert });
+      vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
 
       const { result } = renderHook(() => useProgress());
 
@@ -254,7 +257,7 @@ describe('useProgress', () => {
         error: null,
       });
 
-      (supabase.from as any).mockReturnValue({ insert: mockInsert });
+      vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
 
       const { result } = renderHook(() => useProgress());
 
@@ -270,11 +273,11 @@ describe('useProgress', () => {
 
     it('does not save when no user', async () => {
       const { useAuth } = await import('./useAuth');
-      (useAuth as any).mockReturnValue({ user: null });
+      vi.mocked(useAuth).mockReturnValue({ user: null } as ReturnType<typeof useAuth>);
 
       const { supabase } = await import('@/integrations/supabase/client');
       const mockInsert = vi.fn();
-      (supabase.from as any).mockReturnValue({ insert: mockInsert });
+      vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
 
       const { result } = renderHook(() => useProgress());
 
@@ -291,7 +294,7 @@ describe('useProgress', () => {
         error: null,
       });
 
-      (supabase.from as any).mockReturnValue({ insert: mockInsert });
+      vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
 
       const { result } = renderHook(() => useProgress());
 

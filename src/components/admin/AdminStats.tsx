@@ -453,7 +453,7 @@ export function AdminStats({ testType, onAddLinkToQuestion }: AdminStatsProps) {
                 Explanations Needing Improvement
               </h4>
               <div className="space-y-2">
-                {questionsWithNegativeFeedback.map((q: any) => (
+                {questionsWithNegativeFeedback.map((q) => (
                   <div 
                     key={q.id} 
                     className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/5 cursor-pointer hover:bg-amber-500/10 transition-colors"

@@ -51,8 +51,8 @@ export function ProfileModal({
       if (error) throw error;
       toast.success("Display name updated successfully");
       onProfileUpdate();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update display name");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to update display name");
     } finally {
       setIsUpdatingName(false);
     }
@@ -81,8 +81,8 @@ export function ProfileModal({
       if (error) throw error;
       toast.success("Verification email sent! Check your new email inbox to confirm the change.");
       setNewEmail("");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update email");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to update email");
     } finally {
       setIsUpdatingEmail(false);
     }
@@ -101,8 +101,8 @@ export function ProfileModal({
       });
       if (error) throw error;
       toast.success("Password reset email sent! Check your inbox.");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to send password reset email");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to send password reset email");
     } finally {
       setIsResettingPassword(false);
     }
@@ -132,9 +132,9 @@ export function ProfileModal({
       toast.success("Account and all data deleted successfully");
       onOpenChange(false);
       navigate("/");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Account deletion failed:', error);
-      toast.error(error.message || "Failed to delete account");
+      toast.error(error instanceof Error ? error.message : "Failed to delete account");
     } finally {
       setIsDeleting(false);
     }

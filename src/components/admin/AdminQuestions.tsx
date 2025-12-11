@@ -289,8 +289,8 @@ export function AdminQuestions({
       }
       setNewLinkUrl("");
       toast.success("Link added successfully");
-    } catch (error: any) {
-      toast.error("Failed to add link: " + error.message);
+    } catch (error: unknown) {
+      toast.error("Failed to add link: " + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsAddingLink(false);
     }
@@ -320,8 +320,8 @@ export function AdminQuestions({
       });
       setEditLinks(prev => prev.filter(l => l.url !== url));
       toast.success("Link removed successfully");
-    } catch (error: any) {
-      toast.error("Failed to remove link: " + error.message);
+    } catch (error: unknown) {
+      toast.error("Failed to remove link: " + (error instanceof Error ? error.message : String(error)));
     }
   };
   const resetForm = () => {
@@ -398,8 +398,8 @@ export function AdminQuestions({
       setNewLinks(prev => [...prev, linkData]);
       setNewLinkUrlForAdd("");
       toast.success("Link added");
-    } catch (error: any) {
-      toast.error("Failed to add link: " + error.message);
+    } catch (error: unknown) {
+      toast.error("Failed to add link: " + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsAddingLinkForNew(false);
     }

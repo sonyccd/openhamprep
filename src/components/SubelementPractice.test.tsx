@@ -92,17 +92,17 @@ vi.mock('@/hooks/useGlossaryTerms', () => ({
 
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    p: ({ children, ...props }: any) => <p {...props}>{children}</p>,
-    button: ({ children, onClick, ...props }: any) => (
+    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
+    p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement> & { children?: React.ReactNode }) => <p {...props}>{children}</p>,
+    button: ({ children, onClick, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
       <button onClick={onClick} {...props}>{children}</button>
     ),
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
 vi.mock('@/components/TopicLanding', () => ({
-  TopicLanding: ({ onStartPractice }: any) => (
+  TopicLanding: ({ onStartPractice }: { onStartPractice: () => void }) => (
     <div data-testid="topic-landing">
       <button onClick={onStartPractice}>Start Practice</button>
     </div>

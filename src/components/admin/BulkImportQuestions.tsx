@@ -26,12 +26,12 @@ interface ImportQuestion {
   subelement: string;
   question_group: string;
   explanation?: string;
-  links?: any[];
+  links?: unknown[];
 }
 
 interface ExistingQuestion extends ImportQuestion {
   created_at?: string;
-  edit_history?: any[];
+  edit_history?: unknown[];
 }
 
 interface ValidationResult {
@@ -134,28 +134,28 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
       // Remove BOM if present
       let cleanContent = content.replace(/^\uFEFF/, '');
       // Fix common invalid escape sequences (like \F, \S, etc.)
-      cleanContent = cleanContent.replace(/\\([^"\\\/bfnrtu])/g, '\\\\$1');
+      cleanContent = cleanContent.replace(/\\([^"\\/bfnrtu])/g, '\\\\$1');
       const data = JSON.parse(cleanContent);
       const questions = Array.isArray(data) ? data : data.questions || [];
       
-      return questions.map((q: any) => ({
-        id: q.id || '',
-        question: q.question || '',
-        options: Array.isArray(q.options) ? q.options : [
-          q.option_a || q.a || '',
-          q.option_b || q.b || '',
-          q.option_c || q.c || '',
-          q.option_d || q.d || '',
+      return questions.map((q: Record<string, unknown>) => ({
+        id: String(q.id || ''),
+        question: String(q.question || ''),
+        options: Array.isArray(q.options) ? q.options.map(String) : [
+          String(q.option_a || q.a || ''),
+          String(q.option_b || q.b || ''),
+          String(q.option_c || q.c || ''),
+          String(q.option_d || q.d || ''),
         ],
-        correct_answer: typeof q.correct_answer === 'number' ? q.correct_answer : 
+        correct_answer: typeof q.correct_answer === 'number' ? q.correct_answer :
           ['a', '0'].includes(String(q.correct_answer).toLowerCase()) ? 0 :
           ['b', '1'].includes(String(q.correct_answer).toLowerCase()) ? 1 :
           ['c', '2'].includes(String(q.correct_answer).toLowerCase()) ? 2 :
           ['d', '3'].includes(String(q.correct_answer).toLowerCase()) ? 3 : 0,
-        subelement: q.subelement || '',
-        question_group: q.question_group || q.group || '',
-        explanation: q.explanation || undefined,
-        links: q.links || undefined,
+        subelement: String(q.subelement || ''),
+        question_group: String(q.question_group || q.group || ''),
+        explanation: q.explanation ? String(q.explanation) : undefined,
+        links: Array.isArray(q.links) ? q.links : undefined,
       }));
     } catch {
       return [];
@@ -229,7 +229,7 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
             subelement: existing.subelement,
             question_group: existing.question_group,
             explanation: existing.explanation || undefined,
-            links: existing.links as any[] || [],
+            links: (existing.links as unknown[]) || [],
           },
           incoming: q,
           resolution: 'keep', // default to keep existing
@@ -288,8 +288,8 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
           toast.success(`${result.valid.length} questions ready to import`);
         }
       }
-    } catch (error: any) {
-      toast.error('Failed to parse file: ' + error.message);
+    } catch (error: unknown) {
+      toast.error('Failed to parse file: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsProcessing(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

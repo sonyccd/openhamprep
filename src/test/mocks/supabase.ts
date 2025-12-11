@@ -2,7 +2,7 @@ import { vi } from 'vitest';
 
 // Create a chainable mock that returns itself for most methods
 const createChainableMock = () => {
-  const mock: any = {
+  const mock: Record<string, ReturnType<typeof vi.fn>> = {
     select: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),

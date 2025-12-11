@@ -141,8 +141,8 @@ export default function Auth() {
       if (error) throw error;
       
       setForgotPasswordSent(true);
-    } catch (error: any) {
-      setFormError(error.message || 'Failed to send password reset email');
+    } catch (error: unknown) {
+      setFormError(error instanceof Error ? error.message : 'Failed to send password reset email');
     } finally {
       setIsSubmitting(false);
     }
@@ -161,8 +161,8 @@ export default function Auth() {
       });
       
       if (error) throw error;
-    } catch (error: any) {
-      setFormError(error.message || 'Failed to sign in with Google');
+    } catch (error: unknown) {
+      setFormError(error instanceof Error ? error.message : 'Failed to sign in with Google');
       setIsSubmitting(false);
     }
   };

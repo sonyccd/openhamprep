@@ -27,7 +27,7 @@ interface ImportTerm {
 interface ExistingTerm extends ImportTerm {
   id: string;
   created_at?: string;
-  edit_history?: any[];
+  edit_history?: unknown[];
 }
 
 interface ValidationResult {
@@ -101,9 +101,9 @@ export function BulkImportGlossary() {
       const data = JSON.parse(content);
       const terms = Array.isArray(data) ? data : data.terms || data.glossary || [];
       
-      return terms.map((t: any) => ({
-        term: t.term || '',
-        definition: t.definition || '',
+      return terms.map((t: Record<string, unknown>) => ({
+        term: String(t.term || ''),
+        definition: String(t.definition || ''),
       }));
     } catch {
       return [];
@@ -215,8 +215,8 @@ export function BulkImportGlossary() {
           toast.success(`${result.valid.length} terms ready to import`);
         }
       }
-    } catch (error: any) {
-      toast.error('Failed to parse file: ' + error.message);
+    } catch (error: unknown) {
+      toast.error('Failed to parse file: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsProcessing(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

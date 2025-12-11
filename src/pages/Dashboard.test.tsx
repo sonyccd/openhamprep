@@ -60,18 +60,18 @@ vi.mock('@/hooks/useAppNavigation', () => ({
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    p: ({ children, ...props }: any) => <p {...props}>{children}</p>,
-    button: ({ children, onClick, ...props }: any) => (
+    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
+    p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement> & { children?: React.ReactNode }) => <p {...props}>{children}</p>,
+    button: ({ children, onClick, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
       <button onClick={onClick} {...props}>{children}</button>
     ),
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
 // Mock components that render in different views
 vi.mock('@/components/PracticeTest', () => ({
-  PracticeTest: ({ onBack }: any) => (
+  PracticeTest: ({ onBack }: { onBack: () => void }) => (
     <div data-testid="practice-test">
       Practice Test View
       <button onClick={onBack}>Back</button>
@@ -80,7 +80,7 @@ vi.mock('@/components/PracticeTest', () => ({
 }));
 
 vi.mock('@/components/RandomPractice', () => ({
-  RandomPractice: ({ onBack }: any) => (
+  RandomPractice: ({ onBack }: { onBack: () => void }) => (
     <div data-testid="random-practice">
       Random Practice View
       <button onClick={onBack}>Back</button>
@@ -89,7 +89,7 @@ vi.mock('@/components/RandomPractice', () => ({
 }));
 
 vi.mock('@/components/WeakQuestionsReview', () => ({
-  WeakQuestionsReview: ({ onBack }: any) => (
+  WeakQuestionsReview: ({ onBack }: { onBack: () => void }) => (
     <div data-testid="weak-questions">
       Weak Questions View
       <button onClick={onBack}>Back</button>
@@ -98,7 +98,7 @@ vi.mock('@/components/WeakQuestionsReview', () => ({
 }));
 
 vi.mock('@/components/BookmarkedQuestions', () => ({
-  BookmarkedQuestions: ({ onBack }: any) => (
+  BookmarkedQuestions: ({ onBack }: { onBack: () => void }) => (
     <div data-testid="bookmarked-questions">
       Bookmarked Questions View
       <button onClick={onBack}>Back</button>
@@ -107,7 +107,7 @@ vi.mock('@/components/BookmarkedQuestions', () => ({
 }));
 
 vi.mock('@/components/SubelementPractice', () => ({
-  SubelementPractice: ({ onBack }: any) => (
+  SubelementPractice: ({ onBack }: { onBack: () => void }) => (
     <div data-testid="subelement-practice">
       Subelement Practice View
       <button onClick={onBack}>Back</button>
@@ -116,7 +116,7 @@ vi.mock('@/components/SubelementPractice', () => ({
 }));
 
 vi.mock('@/components/Glossary', () => ({
-  Glossary: ({ onStartFlashcards }: any) => (
+  Glossary: ({ onStartFlashcards }: { onStartFlashcards: () => void }) => (
     <div data-testid="glossary">
       Glossary View
       <button onClick={onStartFlashcards}>Start Flashcards</button>
@@ -125,7 +125,7 @@ vi.mock('@/components/Glossary', () => ({
 }));
 
 vi.mock('@/components/GlossaryFlashcards', () => ({
-  GlossaryFlashcards: ({ onBack }: any) => (
+  GlossaryFlashcards: ({ onBack }: { onBack: () => void }) => (
     <div data-testid="glossary-flashcards">
       Glossary Flashcards View
       <button onClick={onBack}>Back</button>
@@ -134,7 +134,7 @@ vi.mock('@/components/GlossaryFlashcards', () => ({
 }));
 
 vi.mock('@/components/TestResultReview', () => ({
-  TestResultReview: ({ onBack }: any) => (
+  TestResultReview: ({ onBack }: { onBack: () => void }) => (
     <div data-testid="test-result-review">
       Test Result Review View
       <button onClick={onBack}>Back</button>
@@ -143,7 +143,7 @@ vi.mock('@/components/TestResultReview', () => ({
 }));
 
 vi.mock('@/components/AppLayout', () => ({
-  AppLayout: ({ children, currentView }: any) => (
+  AppLayout: ({ children, currentView }: { children?: React.ReactNode; currentView: string }) => (
     <div data-testid="app-layout" data-current-view={currentView}>
       {children}
     </div>
