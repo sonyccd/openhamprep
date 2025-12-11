@@ -114,17 +114,18 @@ export function ProfileModal({
     }
     setIsDeleting(true);
     try {
-      // Call edge function to delete the user from auth.users
+      // Call RPC function to delete the user from auth.users
       // This will cascade delete to profiles and all related data
-      const { data, error } = await supabase.functions.invoke('delete-user');
+      // Security: The function uses auth.uid() to ensure users can only delete themselves
+      const { data, error } = await supabase.rpc('delete_own_account');
 
       if (error) {
         console.error('Delete user error:', error);
         throw new Error(error.message || 'Failed to delete account');
       }
 
-      if (data?.error) {
-        throw new Error(data.error);
+      if (data && !data.success) {
+        throw new Error(data.error || 'Failed to delete account');
       }
 
       // Sign out and redirect
