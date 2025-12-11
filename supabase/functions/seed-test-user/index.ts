@@ -82,6 +82,8 @@ Deno.serve(async (req) => {
 
       if (updateError) {
         console.error('Failed to update test user password:', updateError.message)
+      } else {
+        console.log('Test user password updated | Password:', testPassword)
       }
 
       return new Response(
@@ -112,7 +114,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log('Test user created:', data.user?.email)
+    console.log('Test user created:', data.user?.email, '| Password:', testPassword)
 
     return new Response(
       JSON.stringify({
