@@ -11,9 +11,11 @@ import { motion } from "framer-motion";
 
 interface BookmarkedQuestionsProps {
   onBack: () => void;
+  onStartPractice: () => void;
 }
 export function BookmarkedQuestions({
-  onBack
+  onBack,
+  onStartPractice
 }: BookmarkedQuestionsProps) {
   const {
     data: allQuestions,
@@ -130,7 +132,7 @@ export function BookmarkedQuestions({
             <p className="text-muted-foreground mb-4">
               Bookmark questions during practice to review them later
             </p>
-            <Button onClick={onBack}>Start Practicing</Button>
+            <Button onClick={onStartPractice}>Start Practicing</Button>
           </motion.div> : <motion.div initial={{
         opacity: 0,
         y: 20

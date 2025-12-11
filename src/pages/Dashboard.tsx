@@ -23,7 +23,7 @@ import { Glossary } from '@/components/Glossary';
 import { GlossaryFlashcards } from '@/components/GlossaryFlashcards';
 import { WeeklyGoalsModal } from '@/components/WeeklyGoalsModal';
 import { ExamSessionSearch } from '@/components/ExamSessionSearch';
-import { TestType, testTypes } from '@/types/navigation';
+import { TestType, testTypes, View } from '@/types/navigation';
 export default function Dashboard() {
   const {
     user,
@@ -40,20 +40,32 @@ export default function Dashboard() {
     reviewingTestId,
     setReviewingTestId
   } = useAppNavigation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedTest, setSelectedTest] = useState<TestType>('technician');
   const [testInProgress, setTestInProgress] = useState(false);
   const [pendingView, setPendingView] = useState<typeof currentView | null>(null);
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
   const [showGoalsModal, setShowGoalsModal] = useState(false);
 
-  // Handle view from URL query parameter
+  // Handle view from URL query parameter (only on initial load)
   useEffect(() => {
     const viewParam = searchParams.get('view');
     if (viewParam && viewParam !== currentView) {
       setCurrentView(viewParam as typeof currentView);
     }
-  }, [searchParams, setCurrentView, currentView]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
+
+  // Helper to change view and update URL
+  const changeView = (view: View) => {
+    setCurrentView(view);
+    if (view === 'dashboard') {
+      // Clear the view param when going to dashboard
+      setSearchParams({}, { replace: true });
+    } else {
+      setSearchParams({ view }, { replace: true });
+    }
+  };
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/');
@@ -153,13 +165,13 @@ export default function Dashboard() {
       setPendingView(view);
       setShowNavigationWarning(true);
     } else {
-      setCurrentView(view);
+      changeView(view);
     }
   };
   const handleConfirmNavigation = () => {
     if (pendingView) {
       setTestInProgress(false);
-      setCurrentView(pendingView);
+      changeView(pendingView);
       setPendingView(null);
     }
     setShowNavigationWarning(false);
@@ -172,31 +184,31 @@ export default function Dashboard() {
   // Render content based on view
   const renderContent = () => {
     if (currentView === 'practice-test') {
-      return <PracticeTest onBack={() => setCurrentView('dashboard')} onTestStateChange={setTestInProgress} />;
+      return <PracticeTest onBack={() => changeView('dashboard')} onTestStateChange={setTestInProgress} />;
     }
     if (currentView === 'random-practice') {
-      return <RandomPractice onBack={() => setCurrentView('dashboard')} />;
+      return <RandomPractice onBack={() => changeView('dashboard')} />;
     }
     if (currentView === 'weak-questions') {
-      return <WeakQuestionsReview weakQuestionIds={weakQuestionIds} onBack={() => setCurrentView('dashboard')} />;
+      return <WeakQuestionsReview weakQuestionIds={weakQuestionIds} onBack={() => changeView('dashboard')} />;
     }
     if (currentView === 'bookmarks') {
-      return <BookmarkedQuestions onBack={() => setCurrentView('dashboard')} />;
+      return <BookmarkedQuestions onBack={() => changeView('dashboard')} onStartPractice={() => changeView('random-practice')} />;
     }
     if (currentView === 'subelement-practice') {
-      return <SubelementPractice onBack={() => setCurrentView('dashboard')} />;
+      return <SubelementPractice onBack={() => changeView('dashboard')} />;
     }
     if (currentView === 'review-test' && reviewingTestId) {
       return <TestResultReview testResultId={reviewingTestId} onBack={() => {
         setReviewingTestId(null);
-        setCurrentView('dashboard');
+        changeView('dashboard');
       }} />;
     }
     if (currentView === 'glossary') {
-      return <Glossary onStartFlashcards={() => setCurrentView('glossary-flashcards')} />;
+      return <Glossary onStartFlashcards={() => changeView('glossary-flashcards')} />;
     }
     if (currentView === 'glossary-flashcards') {
-      return <GlossaryFlashcards onBack={() => setCurrentView('glossary')} />;
+      return <GlossaryFlashcards onBack={() => changeView('glossary')} />;
     }
     if (currentView === 'find-test-site') {
       return <ExamSessionSearch />;
@@ -278,7 +290,7 @@ export default function Dashboard() {
         return {
           title: "Take Your First Practice Test",
           description: "See where you stand by taking a full practice exam. This will help identify your weak areas.",
-          action: () => setCurrentView('practice-test'),
+          action: () => changeView('practice-test'),
           actionLabel: "Start Practice Test",
           icon: Target,
           priority: 'start'
@@ -290,7 +302,7 @@ export default function Dashboard() {
         return {
           title: "Review Your Weak Areas",
           description: `You have ${weakQuestionIds.length} questions you've missed. Focus on these to boost your score.`,
-          action: () => setCurrentView('weak-questions'),
+          action: () => changeView('weak-questions'),
           actionLabel: "Practice Weak Questions",
           icon: Zap,
           priority: 'weak'
@@ -302,7 +314,7 @@ export default function Dashboard() {
         return {
           title: "Keep Testing - You're Almost There!",
           description: "You're close to being exam-ready. Take a few more practice tests to build confidence.",
-          action: () => setCurrentView('practice-test'),
+          action: () => changeView('practice-test'),
           actionLabel: "Take Practice Test",
           icon: TrendingUp,
           priority: 'practice'
@@ -314,7 +326,7 @@ export default function Dashboard() {
         return {
           title: "You're Ready for the Real Exam!",
           description: "Your scores show you're prepared. Schedule your exam or take one more practice test.",
-          action: () => setCurrentView('practice-test'),
+          action: () => changeView('practice-test'),
           actionLabel: "One More Practice Test",
           icon: CheckCircle,
           priority: 'ready'
@@ -325,7 +337,7 @@ export default function Dashboard() {
       return {
         title: "Continue Your Study Session",
         description: "Practice makes perfect. Jump into random questions or focus on specific topics.",
-        action: () => setCurrentView('random-practice'),
+        action: () => changeView('random-practice'),
         actionLabel: "Random Practice",
         icon: Brain,
         priority: 'default'
@@ -463,7 +475,7 @@ export default function Dashboard() {
                 {thisWeekQuestions >= questionsGoal ? <div className="flex items-center gap-1 text-xs text-success">
                     <CheckCircle className="w-3 h-3" />
                     <span>Goal reached!</span>
-                  </div> : <Button variant="outline" size="sm" className="w-full text-xs h-7 gap-1" onClick={() => setCurrentView('random-practice')}>
+                  </div> : <Button variant="outline" size="sm" className="w-full text-xs h-7 gap-1" onClick={() => changeView('random-practice')}>
                     <Brain className="w-3 h-3" />
                     Practice Questions
                   </Button>}
@@ -483,7 +495,7 @@ export default function Dashboard() {
                 {thisWeekTests >= testsGoal ? <div className="flex items-center gap-1 text-xs text-success">
                     <CheckCircle className="w-3 h-3" />
                     <span>Goal reached!</span>
-                  </div> : <Button variant="outline" size="sm" className="w-full text-xs h-7 gap-1" onClick={() => setCurrentView('practice-test')}>
+                  </div> : <Button variant="outline" size="sm" className="w-full text-xs h-7 gap-1" onClick={() => changeView('practice-test')}>
                     <Target className="w-3 h-3" />
                     Take a Test
                   </Button>}
@@ -522,7 +534,7 @@ export default function Dashboard() {
                     })} • {userTarget.exam_session.city}, {userTarget.exam_session.state}
                   </p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setCurrentView('find-test-site')}>
+                <Button variant="ghost" size="sm" onClick={() => changeView('find-test-site')}>
                   Change
                 </Button>
               </div>
@@ -535,7 +547,7 @@ export default function Dashboard() {
                   <p className="text-sm font-medium text-foreground">No exam date selected</p>
                   <p className="text-sm text-muted-foreground">Find a test session near you</p>
                 </div>
-                <Button size="sm" onClick={() => setCurrentView('find-test-site')}>
+                <Button size="sm" onClick={() => changeView('find-test-site')}>
                   Find Test Site
                 </Button>
               </div>
@@ -591,7 +603,7 @@ export default function Dashboard() {
                 </p> : <div className="space-y-2">
                   {recentTests.slice(0, 3).map((test, index) => <button key={test.id} onClick={() => {
                 setReviewingTestId(test.id);
-                setCurrentView('review-test');
+                changeView('review-test');
               }} className={cn("w-full flex items-center justify-between p-2 rounded-lg transition-colors", "hover:bg-secondary/50")}>
                       <div className="flex items-center gap-2">
                         <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold", test.passed ? "bg-success text-success-foreground" : "bg-destructive text-destructive-foreground")}>
@@ -629,7 +641,7 @@ export default function Dashboard() {
                     <span className="text-sm text-muted-foreground">Questions to review</span>
                     <span className="text-lg font-mono font-bold text-orange-500">{weakQuestionIds.length}</span>
                   </div>
-                  <Button variant="outline" className="w-full gap-2 border-orange-500/30 text-orange-500 hover:bg-orange-500/10" onClick={() => setCurrentView('weak-questions')}>
+                  <Button variant="outline" className="w-full gap-2 border-orange-500/30 text-orange-500 hover:bg-orange-500/10" onClick={() => changeView('weak-questions')}>
                     <Zap className="w-4 h-4" />
                     Review Weak Questions
                   </Button>
