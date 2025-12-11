@@ -100,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, displayName?: string) => {
     // Always redirect to the auth page on production domain for email verification
-    const redirectUrl = 'https://openhamprep.app/auth';
+    const redirectUrl = 'https://app.openhamprep.com/auth';
     
     const { error } = await supabase.auth.signUp({
       email,
