@@ -86,11 +86,11 @@ INSERT INTO public.questions (id, question, options, correct_answer, subelement,
    0, 'T2', 'T2A'),
 
   ('T2A04', 'What is an appropriate way to call another station on a repeater if you know the other station''s call sign?',
-   '["Say "break, break," then say the station''s call sign", "Say the station''s call sign, then identify with your call sign", "Say "CQ" three times, then the other station''s call sign", "Wait for the other station to call CQ"]'::jsonb,
+   '["Say break, break, then say the station''s call sign", "Say the station''s call sign, then identify with your call sign", "Say CQ three times, then the other station''s call sign", "Wait for the other station to call CQ"]'::jsonb,
    1, 'T2', 'T2A'),
 
   ('T2A05', 'How should you respond to a station calling CQ?',
-   '["Transmit "CQ" followed by the other station''s call sign", "Transmit your call sign followed by the other station''s call sign", "Transmit the other station''s call sign followed by your call sign", "Transmit a signal report followed by your call sign"]'::jsonb,
+   '["Transmit CQ followed by the other station''s call sign", "Transmit your call sign followed by the other station''s call sign", "Transmit the other station''s call sign followed by your call sign", "Transmit a signal report followed by your call sign"]'::jsonb,
    2, 'T2', 'T2A'),
 
   ('T2B01', 'What is the term used to describe an amateur station that is transmitting and receiving on the same frequency?',
