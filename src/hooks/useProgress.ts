@@ -62,7 +62,8 @@ export function useProgress() {
 
   const saveRandomAttempt = async (
     question: Question,
-    selectedAnswer: 'A' | 'B' | 'C' | 'D'
+    selectedAnswer: 'A' | 'B' | 'C' | 'D',
+    attemptType: 'random_practice' | 'weak_questions' | 'subelement_practice' = 'random_practice'
   ) => {
     if (!user) return;
 
@@ -75,11 +76,11 @@ export function useProgress() {
         question_id: question.id,
         selected_answer: answerToIndex[selectedAnswer],
         is_correct: selectedAnswer === question.correctAnswer,
-        attempt_type: 'random_practice'
+        attempt_type: attemptType
       });
 
     if (error) {
-      console.error('Error saving random attempt:', error);
+      console.error('Error saving attempt:', error);
     }
   };
 

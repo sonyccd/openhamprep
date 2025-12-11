@@ -318,5 +318,65 @@ describe('useProgress', () => {
         expect.objectContaining({ selected_answer: 3 })
       );
     });
+
+    it('uses random_practice as default attempt type', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockInsert = vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
+
+      const { result } = renderHook(() => useProgress());
+
+      await result.current.saveRandomAttempt(mockQuestion, 'A');
+
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({ attempt_type: 'random_practice' })
+      );
+    });
+
+    it('saves weak_questions attempt type when specified', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockInsert = vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
+
+      const { result } = renderHook(() => useProgress());
+
+      await result.current.saveRandomAttempt(mockQuestion, 'A', 'weak_questions');
+
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({ attempt_type: 'weak_questions' })
+      );
+    });
+
+    it('saves subelement_practice attempt type when specified', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockInsert = vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
+
+      const { result } = renderHook(() => useProgress());
+
+      await result.current.saveRandomAttempt(mockQuestion, 'B', 'subelement_practice');
+
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          attempt_type: 'subelement_practice',
+          is_correct: false, // B is wrong, A is correct
+        })
+      );
+    });
   });
 });

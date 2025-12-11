@@ -6,6 +6,7 @@ import { useBookmarks } from '@/hooks/useBookmarks';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { useUserTargetExam } from '@/hooks/useExamSessions';
 import { supabase } from '@/integrations/supabase/client';
+import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Target, Zap, TrendingUp, CheckCircle, Loader2, AlertTriangle, Flame, Brain, CalendarDays, Settings2, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -141,13 +142,8 @@ export default function Dashboard() {
   const thisWeekTests = testResults?.filter(t => new Date(t.completed_at) >= weekStart).length || 0;
   const thisWeekQuestions = questionAttempts?.filter(a => new Date(a.attempted_at) >= weekStart).length || 0;
 
-  // Calculate weak questions (questions answered incorrectly more than once)
-  const weakQuestionIds = questionAttempts ? Object.entries(questionAttempts.reduce((acc, attempt) => {
-    if (!attempt.is_correct) {
-      acc[attempt.question_id] = (acc[attempt.question_id] || 0) + 1;
-    }
-    return acc;
-  }, {} as Record<string, number>)).filter(([_, count]) => count >= 1).map(([id]) => id) : [];
+  // Calculate weak questions (questions where incorrect answers > correct answers)
+  const weakQuestionIds = questionAttempts ? calculateWeakQuestionIds(questionAttempts) : [];
   const currentTest = testTypes.find(t => t.id === selectedTest);
   const isTestAvailable = currentTest?.available ?? false;
 

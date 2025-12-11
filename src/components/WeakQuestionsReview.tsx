@@ -1,8 +1,10 @@
 import { useState, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
+import { useAuth } from "@/hooks/useAuth";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { AlertTriangle, SkipForward, RotateCcw, Loader2, CheckCircle } from "lucide-react";
@@ -15,6 +17,8 @@ export function WeakQuestionsReview({
   weakQuestionIds,
   onBack
 }: WeakQuestionsReviewProps) {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const {
     data: allQuestions,
     isLoading,
@@ -43,8 +47,12 @@ export function WeakQuestionsReview({
       correct: prev.correct + (isCorrect ? 1 : 0),
       total: prev.total + 1
     }));
-    await saveRandomAttempt(currentQuestion, answer);
-  }, [showResult, currentQuestion, saveRandomAttempt]);
+    await saveRandomAttempt(currentQuestion, answer, 'weak_questions');
+    // Invalidate cache so weak questions list updates
+    if (user) {
+      queryClient.invalidateQueries({ queryKey: ['question-attempts', user.id] });
+    }
+  }, [showResult, currentQuestion, saveRandomAttempt, queryClient, user]);
 
   const handleNext = useCallback(() => {
     if (currentIndex < weakQuestions.length - 1) {
