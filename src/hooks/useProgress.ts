@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Question } from '@/hooks/useQuestions';
-import { TestType } from '@/types/navigation';
+import { TestType, testConfig } from '@/types/navigation';
 
 export function useProgress() {
   const { user } = useAuth();
@@ -18,7 +18,8 @@ export function useProgress() {
     ).length;
     const totalQuestions = questions.length;
     const percentage = Math.round((correctCount / totalQuestions) * 100);
-    const passed = correctCount >= 26;
+    const { passingScore } = testConfig[testType];
+    const passed = correctCount >= passingScore;
 
     // Save test result
     const { data: testResult, error: testError } = await supabase

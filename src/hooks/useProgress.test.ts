@@ -519,4 +519,236 @@ describe('useProgress', () => {
       );
     });
   });
+
+  describe('dynamic pass threshold by test type', () => {
+    beforeEach(async () => {
+      const { useAuth } = await import('./useAuth');
+      vi.mocked(useAuth).mockReturnValue({ user: { id: 'test-user-id' } } as ReturnType<typeof useAuth>);
+    });
+
+    it('uses 26 as passing score for technician (35 questions)', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'test-result-id' },
+            error: null,
+          }),
+        }),
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === 'practice_test_results') {
+          return { insert: mockInsert } as ReturnType<typeof supabase.from>;
+        }
+        if (table === 'question_attempts') {
+          return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) } as ReturnType<typeof supabase.from>;
+        }
+        return {} as ReturnType<typeof supabase.from>;
+      });
+
+      const { result } = renderHook(() => useProgress());
+
+      // 25 correct = fail, 26 correct = pass for technician
+      const questions = Array.from({ length: 35 }, (_, i) => ({
+        ...mockQuestion,
+        id: `T${i}`,
+      }));
+
+      // Test 25 correct (should fail)
+      const answersFor25 = questions.reduce((acc, q, i) => {
+        acc[q.id] = i < 25 ? 'A' : 'B';
+        return acc;
+      }, {} as Record<string, 'A' | 'B' | 'C' | 'D'>);
+
+      await result.current.saveTestResult(questions, answersFor25, 'technician');
+
+      expect(mockInsert).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          score: 25,
+          passed: false,
+        })
+      );
+
+      // Test 26 correct (should pass)
+      const answersFor26 = questions.reduce((acc, q, i) => {
+        acc[q.id] = i < 26 ? 'A' : 'B';
+        return acc;
+      }, {} as Record<string, 'A' | 'B' | 'C' | 'D'>);
+
+      await result.current.saveTestResult(questions, answersFor26, 'technician');
+
+      expect(mockInsert).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          score: 26,
+          passed: true,
+        })
+      );
+    });
+
+    it('uses 26 as passing score for general (35 questions)', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'test-result-id' },
+            error: null,
+          }),
+        }),
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === 'practice_test_results') {
+          return { insert: mockInsert } as ReturnType<typeof supabase.from>;
+        }
+        if (table === 'question_attempts') {
+          return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) } as ReturnType<typeof supabase.from>;
+        }
+        return {} as ReturnType<typeof supabase.from>;
+      });
+
+      const { result } = renderHook(() => useProgress());
+
+      const questions = Array.from({ length: 35 }, (_, i) => ({
+        ...mockQuestion,
+        id: `G${i}`,
+      }));
+
+      // Test 26 correct (should pass for general)
+      const answers = questions.reduce((acc, q, i) => {
+        acc[q.id] = i < 26 ? 'A' : 'B';
+        return acc;
+      }, {} as Record<string, 'A' | 'B' | 'C' | 'D'>);
+
+      await result.current.saveTestResult(questions, answers, 'general');
+
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          score: 26,
+          passed: true,
+          test_type: 'general',
+        })
+      );
+    });
+
+    it('uses 37 as passing score for extra (50 questions)', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'test-result-id' },
+            error: null,
+          }),
+        }),
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === 'practice_test_results') {
+          return { insert: mockInsert } as ReturnType<typeof supabase.from>;
+        }
+        if (table === 'question_attempts') {
+          return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) } as ReturnType<typeof supabase.from>;
+        }
+        return {} as ReturnType<typeof supabase.from>;
+      });
+
+      const { result } = renderHook(() => useProgress());
+
+      // Create 50 questions for extra exam
+      const questions = Array.from({ length: 50 }, (_, i) => ({
+        ...mockQuestion,
+        id: `E${i}`,
+      }));
+
+      // Test 36 correct (should fail for extra - needs 37)
+      const answersFor36 = questions.reduce((acc, q, i) => {
+        acc[q.id] = i < 36 ? 'A' : 'B';
+        return acc;
+      }, {} as Record<string, 'A' | 'B' | 'C' | 'D'>);
+
+      await result.current.saveTestResult(questions, answersFor36, 'extra');
+
+      expect(mockInsert).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          score: 36,
+          passed: false,
+          test_type: 'extra',
+        })
+      );
+
+      // Test 37 correct (should pass for extra)
+      const answersFor37 = questions.reduce((acc, q, i) => {
+        acc[q.id] = i < 37 ? 'A' : 'B';
+        return acc;
+      }, {} as Record<string, 'A' | 'B' | 'C' | 'D'>);
+
+      await result.current.saveTestResult(questions, answersFor37, 'extra');
+
+      expect(mockInsert).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          score: 37,
+          passed: true,
+          test_type: 'extra',
+        })
+      );
+    });
+
+    it('extra exam requires higher score to pass than technician/general', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'test-result-id' },
+            error: null,
+          }),
+        }),
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === 'practice_test_results') {
+          return { insert: mockInsert } as ReturnType<typeof supabase.from>;
+        }
+        if (table === 'question_attempts') {
+          return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) } as ReturnType<typeof supabase.from>;
+        }
+        return {} as ReturnType<typeof supabase.from>;
+      });
+
+      const { result } = renderHook(() => useProgress());
+
+      // 26 correct passes technician
+      const techQuestions = Array.from({ length: 35 }, (_, i) => ({
+        ...mockQuestion,
+        id: `T${i}`,
+      }));
+      const techAnswers = techQuestions.reduce((acc, q, i) => {
+        acc[q.id] = i < 26 ? 'A' : 'B';
+        return acc;
+      }, {} as Record<string, 'A' | 'B' | 'C' | 'D'>);
+
+      await result.current.saveTestResult(techQuestions, techAnswers, 'technician');
+      expect(mockInsert).toHaveBeenLastCalledWith(
+        expect.objectContaining({ passed: true })
+      );
+
+      // 26 correct does NOT pass extra (needs 37)
+      const extraQuestions = Array.from({ length: 50 }, (_, i) => ({
+        ...mockQuestion,
+        id: `E${i}`,
+      }));
+      const extraAnswers = extraQuestions.reduce((acc, q, i) => {
+        acc[q.id] = i < 26 ? 'A' : 'B';
+        return acc;
+      }, {} as Record<string, 'A' | 'B' | 'C' | 'D'>);
+
+      await result.current.saveTestResult(extraQuestions, extraAnswers, 'extra');
+      expect(mockInsert).toHaveBeenLastCalledWith(
+        expect.objectContaining({ passed: false })
+      );
+    });
+  });
 });

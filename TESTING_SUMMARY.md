@@ -30,7 +30,6 @@
 
 1. **`src/hooks/useQuestions.test.ts`** (268 lines)
    - Tests for `useQuestions()` hook
-   - Tests for `usePracticeQuestions()` hook
    - Tests for `useRandomQuestion()` hook
    - Data transformation tests
    - Error handling tests
