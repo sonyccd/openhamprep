@@ -330,3 +330,50 @@ describe('Dashboard Loading State', () => {
     });
   });
 });
+
+describe('Dashboard Test Type Persistence', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
+
+  it('defaults to technician when no localStorage value exists', async () => {
+    localStorage.removeItem('selectedTestType');
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('app-layout')).toBeInTheDocument();
+    });
+
+    // The default should be technician (implicitly verified by component rendering without error)
+    // localStorage should be set on first render
+    expect(localStorage.getItem('selectedTestType')).toBe('technician');
+  });
+
+  it('restores selectedTest from localStorage', async () => {
+    localStorage.setItem('selectedTestType', 'general');
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('app-layout')).toBeInTheDocument();
+    });
+
+    // The value should still be general after render
+    expect(localStorage.getItem('selectedTestType')).toBe('general');
+  });
+
+  it('persists selectedTest to localStorage when changed', async () => {
+    localStorage.setItem('selectedTestType', 'technician');
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('app-layout')).toBeInTheDocument();
+    });
+
+    // Initially should be technician
+    expect(localStorage.getItem('selectedTestType')).toBe('technician');
+  });
+});

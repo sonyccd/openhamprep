@@ -379,4 +379,144 @@ describe('useProgress', () => {
       );
     });
   });
+
+  describe('saveTestResult with testType parameter', () => {
+    beforeEach(async () => {
+      // Reset useAuth mock for these tests
+      const { useAuth } = await import('./useAuth');
+      vi.mocked(useAuth).mockReturnValue({ user: { id: 'test-user-id' } } as ReturnType<typeof useAuth>);
+    });
+
+    it('saves test result with general test type', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'test-result-id' },
+            error: null,
+          }),
+        }),
+      });
+
+      const mockAttemptsInsert = vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === 'practice_test_results') {
+          return { insert: mockInsert } as ReturnType<typeof supabase.from>;
+        }
+        if (table === 'question_attempts') {
+          return { insert: mockAttemptsInsert } as ReturnType<typeof supabase.from>;
+        }
+        return {} as ReturnType<typeof supabase.from>;
+      });
+
+      const { result } = renderHook(() => useProgress());
+
+      const generalQuestion = {
+        ...mockQuestion,
+        id: 'G1A01',
+      };
+      const questions = [generalQuestion];
+      const answers = { 'G1A01': 'A' as const };
+
+      await result.current.saveTestResult(questions, answers, 'general');
+
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          test_type: 'general',
+        })
+      );
+    });
+
+    it('saves test result with extra test type', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'test-result-id' },
+            error: null,
+          }),
+        }),
+      });
+
+      const mockAttemptsInsert = vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === 'practice_test_results') {
+          return { insert: mockInsert } as ReturnType<typeof supabase.from>;
+        }
+        if (table === 'question_attempts') {
+          return { insert: mockAttemptsInsert } as ReturnType<typeof supabase.from>;
+        }
+        return {} as ReturnType<typeof supabase.from>;
+      });
+
+      const { result } = renderHook(() => useProgress());
+
+      const extraQuestion = {
+        ...mockQuestion,
+        id: 'E1A01',
+      };
+      const questions = [extraQuestion];
+      const answers = { 'E1A01': 'A' as const };
+
+      await result.current.saveTestResult(questions, answers, 'extra');
+
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          test_type: 'extra',
+        })
+      );
+    });
+
+    it('defaults to technician when testType is not specified', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'test-result-id' },
+            error: null,
+          }),
+        }),
+      });
+
+      const mockAttemptsInsert = vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === 'practice_test_results') {
+          return { insert: mockInsert } as ReturnType<typeof supabase.from>;
+        }
+        if (table === 'question_attempts') {
+          return { insert: mockAttemptsInsert } as ReturnType<typeof supabase.from>;
+        }
+        return {} as ReturnType<typeof supabase.from>;
+      });
+
+      const { result } = renderHook(() => useProgress());
+
+      const questions = [mockQuestion];
+      const answers = { 'T1A01': 'A' as const };
+
+      // Call without testType parameter
+      await result.current.saveTestResult(questions, answers);
+
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          test_type: 'technician',
+        })
+      );
+    });
+  });
 });
