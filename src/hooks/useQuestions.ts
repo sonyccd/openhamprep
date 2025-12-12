@@ -96,16 +96,6 @@ export function useQuestions(testType?: TestType) {
   });
 }
 
-export function usePracticeQuestions(count: number = 35) {
-  const { data: allQuestions, isLoading, error } = useQuestions();
-  
-  const questions = allQuestions 
-    ? shuffleArray([...allQuestions]).slice(0, count)
-    : [];
-  
-  return { questions, isLoading, error };
-}
-
 export function useRandomQuestion(excludeIds: string[] = []) {
   const { data: allQuestions, isLoading, error } = useQuestions();
   
@@ -121,13 +111,4 @@ export function useRandomQuestion(excludeIds: string[] = []) {
   };
   
   return { getRandomQuestion, isLoading, error, allQuestions };
-}
-
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
 }

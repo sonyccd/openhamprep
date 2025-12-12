@@ -5,23 +5,26 @@ import { QuestionCard } from "@/components/QuestionCard";
 import { ArrowLeft, ArrowRight, RotateCcw, Home, Trophy, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { TestType, testConfig } from "@/types/navigation";
 
 interface TestResultsProps {
   questions: Question[];
   answers: Record<string, 'A' | 'B' | 'C' | 'D'>;
   onRetake: () => void;
   onBack: () => void;
+  testType?: TestType;
 }
 
-export function TestResults({ questions, answers, onRetake, onBack }: TestResultsProps) {
+export function TestResults({ questions, answers, onRetake, onBack, testType = 'technician' }: TestResultsProps) {
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
 
+  const { questionCount, passingScore } = testConfig[testType];
   const correctCount = questions.filter(
     (q) => answers[q.id] === q.correctAnswer
   ).length;
   const totalQuestions = questions.length;
   const percentage = Math.round((correctCount / totalQuestions) * 100);
-  const passed = correctCount >= 26;
+  const passed = correctCount >= passingScore;
 
   const incorrectQuestions = questions.filter(
     (q) => answers[q.id] !== q.correctAnswer
@@ -137,7 +140,7 @@ export function TestResults({ questions, answers, onRetake, onBack }: TestResult
           </div>
 
           <p className="text-sm text-muted-foreground mt-4">
-            Passing score: 26 out of 35 (74%)
+            Passing score: {passingScore} out of {questionCount} (74%)
           </p>
         </motion.div>
 

@@ -133,14 +133,36 @@ describe('PracticeTest', () => {
       expect(screen.getByText(/This practice test simulates/)).toBeInTheDocument();
     });
 
-    it('shows test info with 35 questions, 74% to pass, 26 correct needed', () => {
-      renderPracticeTest();
-      
+    it('shows test info with 35 questions, 74% to pass, 26 correct needed for technician', () => {
+      renderPracticeTest({ testType: 'technician' });
+
       expect(screen.getByText('35')).toBeInTheDocument();
       expect(screen.getByText('Questions')).toBeInTheDocument();
       expect(screen.getByText('74%')).toBeInTheDocument();
       expect(screen.getByText('To Pass')).toBeInTheDocument();
       expect(screen.getByText('26')).toBeInTheDocument();
+      expect(screen.getByText('Correct Needed')).toBeInTheDocument();
+    });
+
+    it('shows test info with 35 questions, 74% to pass, 26 correct needed for general', () => {
+      renderPracticeTest({ testType: 'general' });
+
+      expect(screen.getByText('35')).toBeInTheDocument();
+      expect(screen.getByText('Questions')).toBeInTheDocument();
+      expect(screen.getByText('74%')).toBeInTheDocument();
+      expect(screen.getByText('To Pass')).toBeInTheDocument();
+      expect(screen.getByText('26')).toBeInTheDocument();
+      expect(screen.getByText('Correct Needed')).toBeInTheDocument();
+    });
+
+    it('shows test info with 50 questions, 74% to pass, 37 correct needed for extra', () => {
+      renderPracticeTest({ testType: 'extra' });
+
+      expect(screen.getByText('50')).toBeInTheDocument();
+      expect(screen.getByText('Questions')).toBeInTheDocument();
+      expect(screen.getByText('74%')).toBeInTheDocument();
+      expect(screen.getByText('To Pass')).toBeInTheDocument();
+      expect(screen.getByText('37')).toBeInTheDocument();
       expect(screen.getByText('Correct Needed')).toBeInTheDocument();
     });
 

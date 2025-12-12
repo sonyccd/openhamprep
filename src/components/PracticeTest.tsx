@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { TestType } from "@/types/navigation";
+import { TestType, testConfig } from "@/types/navigation";
 interface PracticeTestProps {
   onBack: () => void;
   onTestStateChange?: (inProgress: boolean) => void;
@@ -131,12 +131,14 @@ export function PracticeTest({
 
   useKeyboardShortcuts(practiceShortcuts, { enabled: hasStarted && !isFinished });
 
+  const { questionCount, passingScore } = testConfig[testType];
+
   const handleStartTest = () => {
     if (!allQuestions) return;
-    const shuffledQuestions = shuffleArray([...allQuestions]).slice(0, 35);
+    const shuffledQuestions = shuffleArray([...allQuestions]).slice(0, questionCount);
     setQuestions(shuffledQuestions);
     setHasStarted(true);
-    capture(ANALYTICS_EVENTS.PRACTICE_TEST_STARTED, { question_count: 35 });
+    capture(ANALYTICS_EVENTS.PRACTICE_TEST_STARTED, { question_count: questionCount });
   };
 
   if (isLoading) {
@@ -183,7 +185,7 @@ export function PracticeTest({
             </h1>
             
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              This practice test simulates the real Amateur Radio exam with 35 randomly selected questions.
+              This practice test simulates the real Amateur Radio exam with {questionCount} randomly selected questions.
             </p>
 
             {/* Warning Box */}
@@ -204,7 +206,7 @@ export function PracticeTest({
             {/* Test Info */}
             <div className="grid grid-cols-3 gap-4 mb-8">
               <div className="text-center">
-                <p className="text-2xl font-mono font-bold text-foreground">35</p>
+                <p className="text-2xl font-mono font-bold text-foreground">{questionCount}</p>
                 <p className="text-xs text-muted-foreground">Questions</p>
               </div>
               <div className="text-center">
@@ -212,7 +214,7 @@ export function PracticeTest({
                 <p className="text-xs text-muted-foreground">To Pass</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-mono font-bold text-foreground">26</p>
+                <p className="text-2xl font-mono font-bold text-foreground">{passingScore}</p>
                 <p className="text-xs text-muted-foreground">Correct Needed</p>
               </div>
             </div>
@@ -279,7 +281,7 @@ export function PracticeTest({
     }
   };
   if (isFinished) {
-    return <TestResults questions={questions} answers={answers} onRetake={handleRetake} onBack={onBack} />;
+    return <TestResults questions={questions} answers={answers} onRetake={handleRetake} onBack={onBack} testType={testType} />;
   }
 
   return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
