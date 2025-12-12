@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { format, addMonths } from 'date-fns';
-import { MapPin, Calendar, List, Map, Clock, Phone, Mail, Users, Target, Loader2, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { MapPin, Calendar, List, Map, Clock, Phone, Mail, Users, Target, Loader2, ChevronLeft, ChevronRight, X, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -111,6 +111,7 @@ export const ExamSessionSearch = () => {
   const [studyIntensity, setStudyIntensity] = useState<'light' | 'moderate' | 'intensive'>('moderate');
   const [page, setPage] = useState(1);
   const [walkInsOnly, setWalkInsOnly] = useState(false);
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
   const pageSize = 20;
   const {
     data,
@@ -207,18 +208,46 @@ export const ExamSessionSearch = () => {
           </CardContent>
         </Card>}
 
-      {/* Search Filters */}
+      {/* Search Filters - Collapsible on mobile */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Find Exam Sessions
-          </CardTitle>
-          <CardDescription>
-            Search for amateur radio exam sessions near you
-          </CardDescription>
+        <CardHeader
+          className="cursor-pointer md:cursor-default"
+          onClick={() => setFiltersExpanded(!filtersExpanded)}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Find Exam Sessions
+              </CardTitle>
+              <CardDescription className="hidden md:block">
+                Search for amateur radio exam sessions near you
+              </CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFiltersExpanded(!filtersExpanded);
+              }}
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Filters
+              {filtersExpanded ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+            </Button>
+          </div>
+          {/* Mobile summary of active filters when collapsed */}
+          {!filtersExpanded && (state || zipCode || walkInsOnly) && (
+            <div className="flex flex-wrap gap-2 mt-2 md:hidden">
+              {zipCode && <Badge variant="secondary" className="text-xs">ZIP: {zipCode}</Badge>}
+              {state && <Badge variant="secondary" className="text-xs">{state}</Badge>}
+              {walkInsOnly && <Badge variant="secondary" className="text-xs">Walk-ins only</Badge>}
+            </div>
+          )}
         </CardHeader>
-        <CardContent>
+        <CardContent className={`${filtersExpanded ? 'block' : 'hidden'} md:block`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="zip">ZIP Code</Label>

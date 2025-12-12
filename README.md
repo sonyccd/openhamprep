@@ -1,5 +1,7 @@
 # Open Ham Prep
 
+[![codecov](https://codecov.io/gh/sonyccd/openhamprep/graph/badge.svg?token=SGUGokGdG1)](https://codecov.io/gh/sonyccd/openhamprep)
+
 A modern web application for studying FCC Amateur Radio license exams. Open source, community-driven, born in North Carolina.
 
 **Live App:** [openhamprep.app](https://openhamprep.app)

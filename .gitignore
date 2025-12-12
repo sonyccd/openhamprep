@@ -25,6 +25,10 @@ supabase/.temp/
 # Data directory (may contain PII from exports)
 data/
 
+# Test reports
+test-report.junit.xml
+coverage/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

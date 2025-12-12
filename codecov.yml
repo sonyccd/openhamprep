@@ -1,0 +1,28 @@
+# Codecov configuration
+# https://docs.codecov.com/docs/codecovyml-reference
+
+coverage:
+  status:
+    project:
+      default:
+        # Allow coverage to drop by 1% before failing
+        threshold: 1%
+    patch:
+      default:
+        # New code must have at least 50% coverage
+        target: 50%
+
+comment:
+  # Show coverage comment on PRs
+  layout: "reach,diff,flags,files"
+  behavior: default
+  require_changes: false
+
+# Ignore generated files and config files from coverage
+ignore:
+  - "dist/**/*"
+  - "node_modules/**/*"
+  - "*.config.js"
+  - "*.config.ts"
+  - "scripts/**/*"
+  - "src/integrations/supabase/**/*"  # Auto-generated Supabase types
