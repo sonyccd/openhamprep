@@ -1,232 +1,68 @@
 # Open Ham Prep
 
-A modern web application for studying and preparing for FCC Amateur Radio license exams—a community-driven open-source project born in North Carolina.
+A modern web application for studying FCC Amateur Radio license exams. Open source, community-driven, born in North Carolina.
 
-## Overview
+**Live App:** [openhamprep.app](https://openhamprep.app)
 
-This application helps users prepare for their Technician, General, and Extra class ham radio license exams through:
+## Features
 
 - **Practice Tests** - Simulated exam experience with optional timer
-- **Random Practice** - Study questions in random order with instant feedback
-- **Study by Topics** - Focus on specific subelements with topic overviews and learning resources
-- **Weak Questions Review** - Target questions you've previously answered incorrectly
+- **Random Practice** - Study questions with instant feedback
+- **Study by Topics** - Focus on specific subelements with learning resources
+- **Weak Questions** - Review questions you've missed
 - **Glossary & Flashcards** - Learn key terms with spaced repetition
-- **Progress Tracking** - Dashboard with test readiness metrics, streaks, and weekly goals
-- **Bookmarks** - Save questions for later review with personal notes
+- **Progress Tracking** - Dashboard with test readiness, streaks, and goals
+- **Bookmarks** - Save questions with personal notes
 
-## Tech Stack
+Supports all three license classes: Technician, General, and Extra.
 
-### Frontend
-- **React 18** with TypeScript
-- **Vite** for fast development and optimized builds
-- **Tailwind CSS** for styling with a custom design system
-- **shadcn/ui** components built on Radix UI primitives
-- **React Router** for client-side routing
-- **TanStack Query** for server state management
-- **Framer Motion** for animations
+## Quick Start
 
-### Backend (Lovable Cloud / Supabase)
-- **PostgreSQL** database with Row Level Security (RLS)
-- **Supabase Auth** for user authentication
-- **Edge Functions** for serverless backend logic
-- **PostHog** for analytics (authenticated users only)
-
-## Project Structure
-
-```
-├── src/
-│   ├── components/
-│   │   ├── ui/              # shadcn/ui base components
-│   │   ├── admin/           # Admin dashboard components
-│   │   └── *.tsx            # Feature components
-│   ├── hooks/               # Custom React hooks
-│   │   ├── useAuth.tsx      # Authentication context
-│   │   ├── useQuestions.ts  # Question data fetching
-│   │   ├── useProgress.ts   # User progress tracking
-│   │   └── ...
-│   ├── pages/               # Route page components
-│   ├── integrations/
-│   │   └── supabase/        # Supabase client & types (auto-generated)
-│   ├── lib/                 # Utility functions
-│   └── index.css            # Design system tokens
-├── supabase/
-│   ├── functions/           # Edge functions
-│   └── migrations/          # Database migrations (read-only)
-└── public/                  # Static assets
-```
-
-## Architecture
-
-### Data Flow
-1. **Questions** are stored in the database with subelement/group categorization
-2. **User attempts** are tracked per question for progress analytics
-3. **Practice test results** are saved for historical review
-4. **Glossary progress** tracks term mastery with spaced repetition
-
-### Key Patterns
-- **Global License Filter** - The test type selector (Technician/General/Extra) filters all content app-wide
-- **Lazy Loading** - Pages are code-split for faster initial load
-- **Optimistic Updates** - UI updates immediately while syncing with backend
-- **RLS Policies** - All user data is protected at the database level
-
-### Design System
-The app uses semantic design tokens defined in `src/index.css` and `tailwind.config.ts`:
-- Never use direct colors in components (e.g., `text-white`)
-- Always use semantic tokens (e.g., `text-foreground`, `bg-muted`)
-- HSL color format throughout for theme consistency
-
-## Local Development
-
-### Prerequisites
-- Node.js 18+ (recommend using [nvm](https://github.com/nvm-sh/nvm))
-- Docker Desktop (for local Supabase)
-- npm or bun
-
-### Quick Start (Local Supabase)
-
-**Recommended for contributors** - run the full stack locally without needing hosted Supabase access:
+**Prerequisites:** Node.js 20+, Docker Desktop
 
 ```bash
-# Clone the repository
 git clone https://github.com/sonyccd/openhamprep.git
 cd openhamprep
-
-# Install dependencies
 npm install
-
-# Start local Supabase (first run downloads Docker images)
-npm run supabase:start
-
-# Start the development server (in another terminal)
-npm run dev
-
-# Or start both at once:
 npm run dev:full
 ```
 
-The app will be available at `http://localhost:8080`.
-Supabase Studio (database GUI) at `http://localhost:54323`.
+- App: http://localhost:8080
+- Database GUI: http://localhost:54323
 
-See [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) for detailed instructions.
+See [LOCAL_SETUP_QUICKSTART.md](LOCAL_SETUP_QUICKSTART.md) for details.
 
-### Alternative: Hosted Supabase
-
-If you have access to a hosted Supabase project:
+## Commands
 
 ```bash
-# Copy example env file
-cp .env.example .env
-
-# Edit .env with your Supabase credentials
-# Then start dev server
-npm run dev
+npm run dev              # Start dev server
+npm run dev:full         # Start Supabase + dev server
+npm run supabase:stop    # Stop Supabase
+npm run supabase:reset   # Reset database
+npm test                 # Run tests
+npm run build            # Production build
 ```
 
-### Environment Variables
+## Tech Stack
 
-**Local Supabase (auto-configured):**
-- `.env.local` is created automatically by `npm run supabase:start`
+React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Supabase (PostgreSQL, Auth, Edge Functions)
 
-**Hosted Supabase (manual):**
-Create a `.env` file with:
-- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anon key
+## Documentation
 
-## Testing
-
-This project has comprehensive test coverage using Vitest and React Testing Library.
-
-```bash
-# Run tests
-npm test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run tests in UI mode
-npm run test:ui
-```
-
-See [TESTING.md](TESTING.md) for detailed testing guidelines.
+- [Local Development Guide](LOCAL_DEVELOPMENT.md)
+- [Testing Guide](TESTING.md)
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [Deployment Guide](DEPLOYMENT_STEPS.md)
+- [Claude Code Instructions](CLAUDE.md)
 
 ## Contributing
 
-### Guidelines
+1. Fork the repo
+2. Run locally with `npm install && npm run dev:full`
+3. Make your changes
+4. Submit a pull request
 
-1. **Keep changes focused** - One feature or fix per PR
-2. **Follow the design system** - Use semantic tokens, not direct colors
-3. **Create small components** - Avoid monolithic files; extract reusable pieces
-4. **Maintain type safety** - TypeScript strict mode is enabled
-5. **Test on mobile** - The app is responsive; verify mobile layouts
-6. **Write tests** - Add tests for new features (see [TESTING.md](TESTING.md))
-
-### Code Style
-
-- Use functional components with hooks
-- Prefer `const` arrow functions for component definitions
-- Keep business logic in hooks, UI logic in components
-- Use TanStack Query for all data fetching
-- Follow existing patterns in the codebase
-
-### Admin Features
-
-Admin access is granted via database role assignment (no UI for role management). Admins can:
-- Manage questions and glossary terms
-- Bulk import/export content via CSV/JSON
-- View usage statistics and identify content gaps
-- Track edit history for accountability
-
-### Bulk Content Import
-
-Questions and glossary terms can be bulk imported via CSV:
-
-**Questions CSV format:**
-```csv
-id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
-T1A01,What is...?,Answer A,Answer B,Answer C,Answer D,0,T1,T1A
-```
-
-**Glossary CSV format:**
-```csv
-term,definition
-Antenna,A device for transmitting or receiving radio waves
-```
-
-## Deployment
-
-This project uses a **dual-deployment architecture**:
-
-### Marketing Site (`openhamprep.com`)
-- **Location:** `/marketing` directory
-- **Technology:** Static HTML, CSS, JavaScript
-- **Hosting:** GitHub Pages (free)
-- **Deployment:** Automatic on push to main via GitHub Actions
-- **Purpose:** Public-facing landing pages (home, about, FAQ, features)
-
-See [marketing/README.md](marketing/README.md) for details.
-
-### Application (`app.openhamprep.com`)
-- **Location:** Repository root
-- **Technology:** React SPA with Vite
-- **Hosting:** Vercel (free tier)
-- **Backend:** Supabase (PostgreSQL, Auth, Edge Functions)
-- **Purpose:** Authenticated user application
-
-See [DEPLOYMENT_STEPS.md](DEPLOYMENT_STEPS.md) for deployment instructions.
-
-### Why Separate Deployments?
-
-1. **Cost Efficiency:** Static marketing on free GitHub Pages
-2. **Performance:** CDN-distributed static content loads instantly
-3. **Simplicity:** Marketing updates don't require React rebuilds
-4. **SEO:** Static HTML is better for search engines
-
-### Migrating to Supabase
-
-If you're migrating from Lovable Cloud to a standalone Supabase project:
-1. Run `./migrate-to-supabase.sh` for automated migration
-2. See `MIGRATION_QUICKSTART.md` for quick steps
-3. See `docs/SUPABASE_MIGRATION.md` for detailed instructions
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
@@ -234,5 +70,5 @@ If you're migrating from Lovable Cloud to a standalone Supabase project:
 
 ## Support
 
-- File issues via the in-app help button (Bug Report / Feature Request)
-- Visit [ARRL.org](https://www.arrl.org/) for general ham radio learning resources
+- File issues on [GitHub](https://github.com/sonyccd/openhamprep/issues)
+- Visit [ARRL.org](https://www.arrl.org/) for ham radio learning resources

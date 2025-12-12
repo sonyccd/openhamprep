@@ -4,9 +4,8 @@ This guide shows you how to run the entire Open Ham Prep stack locally, includin
 
 ## Prerequisites
 
-- Node.js 18+
-- Docker Desktop (for local Supabase)
-- Supabase CLI (already installed: v2.65.5)
+- **Node.js 20+** (Supabase CLI requires Node 20)
+- **Docker Desktop** (for local Supabase)
 
 ### Install Docker Desktop
 
@@ -31,7 +30,7 @@ Download from: https://www.docker.com/products/docker-desktop
 ```bash
 git clone https://github.com/sonyccd/openhamprep.git
 cd openhamprep
-npm install
+npm install  # Includes Supabase CLI as a dev dependency
 ```
 
 ### 2. Start Local Supabase
@@ -141,11 +140,11 @@ npm run test:local
 
 ```bash
 # Create a new migration
-supabase migration new migration_name
+npx supabase migration new migration_name
 
 # Edit the file in supabase/migrations/
 # Then apply it:
-supabase db reset  # Resets and applies all migrations
+npm run supabase:reset  # Resets and applies all migrations
 ```
 
 ### Applying Migrations
@@ -154,7 +153,7 @@ Migrations in `supabase/migrations/` are automatically applied when you start lo
 
 To manually apply:
 ```bash
-supabase db reset
+npm run supabase:reset
 ```
 
 ## Seeding Data
@@ -215,10 +214,10 @@ Local Supabase includes Inbucket for email testing:
 
 ```bash
 # Serve functions locally (hot reload)
-supabase functions serve
+npx supabase functions serve
 
 # Deploy to local Supabase
-supabase functions deploy function-name --local
+npx supabase functions deploy function-name --local
 
 # Test a function
 curl -i --location --request POST 'http://localhost:54321/functions/v1/function-name' \
@@ -276,7 +275,7 @@ npm run supabase:start
 ```bash
 # Wait 30 seconds for services to initialize
 # Or check logs:
-supabase logs
+npx supabase logs
 ```
 
 ### Migrations fail to apply
@@ -296,10 +295,10 @@ npm run supabase:reset
 
 ```bash
 # Serve functions separately:
-supabase functions serve
+npx supabase functions serve
 
 # Check function logs:
-supabase functions logs function-name
+npx supabase functions logs function-name
 ```
 
 ### Can't connect to database
@@ -341,12 +340,12 @@ npm run supabase:reset
 
 **To export data:**
 ```bash
-supabase db dump -f backup.sql
+npx supabase db dump -f backup.sql
 ```
 
 **To import data:**
 ```bash
-supabase db reset
+npm run supabase:reset
 psql -h localhost -p 54322 -U postgres -d postgres -f backup.sql
 ```
 
