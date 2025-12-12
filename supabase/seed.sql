@@ -395,7 +395,7 @@ INSERT INTO public.questions (id, question, options, correct_answer, subelement,
    '[]'::jsonb),
 
   -- =========================================================================
-  -- EXTRA QUESTIONS (E prefix) - 40 questions
+  -- EXTRA QUESTIONS (E prefix) - 50 questions for full practice exams
   -- =========================================================================
 
   ('E1A01', 'When using a transceiver that displays the carrier frequency of phone signals, which of the following displayed frequencies represents the highest frequency at which a properly adjusted USB emission will be totally within the band?',
@@ -576,6 +576,77 @@ INSERT INTO public.questions (id, question, options, correct_answer, subelement,
   ('E0A03', 'What is the minimum safe distance from a power line to an antenna?',
    '["Equal to the height of the power line", "Enough that the antenna cannot contact the power line if it falls", "Half the height of the power line", "There is no minimum distance if the antenna is properly insulated"]'::jsonb,
    1, 'E0', 'E0A', 'Antennas must be positioned so they cannot contact power lines even if the antenna or support structure falls. Power line contact is one of the leading causes of amateur radio fatalities.',
+   '[]'::jsonb),
+
+  -- Additional Extra questions to reach 50 total for practice exams
+  ('E1B01', 'What is the permitted mean power of any spurious emission relative to the mean power of the fundamental emission from a station transmitter?',
+   '["At least 30 dB below", "At least 40 dB below", "At least 43 dB below", "At least 50 dB below"]'::jsonb,
+   2, 'E1', 'E1B', 'FCC regulations require spurious emissions to be at least 43 dB below the mean power of the fundamental emission for most amateur stations.',
+   '[]'::jsonb),
+
+  ('E1B02', 'What is the amateur service definition of telemetry?',
+   '["One-way transmission of measurements at a distance", "Two-way transmission of measurements", "One-way transmission to initiate or modify functions", "Any digital transmission"]'::jsonb,
+   0, 'E1', 'E1B', 'Telemetry is defined as one-way transmission of measurements at a distance from the measuring instrument, commonly used in satellite and balloon operations.',
+   '[]'::jsonb),
+
+  ('E2A01', 'What is the direction of an ascending pass for an amateur satellite?',
+   '["From west to east", "From east to west", "From south to north", "From north to south"]'::jsonb,
+   2, 'E2', 'E2A', 'An ascending pass occurs when a satellite is moving from south to north relative to the observer. The satellite rises in the south and sets in the north.',
+   '[]'::jsonb),
+
+  ('E2A02', 'What is the most common technique for estimating signal strength during satellite communications?',
+   '["Automatic link establishment", "Use of RST signal reports", "Comparison with a reference signal", "S-meter readings"]'::jsonb,
+   1, 'E2', 'E2A', 'RST signal reports (Readability, Strength, Tone) are the standard method for reporting signal quality during satellite and other amateur communications.',
+   '[]'::jsonb),
+
+  ('E3A01', 'What is the approximate maximum distance along the Earth''s surface covered by one hop using the F2 region?',
+   '["180 miles", "1,200 miles", "2,500 miles", "12,000 miles"]'::jsonb,
+   2, 'E3', 'E3A', 'The F2 region allows single-hop distances of approximately 2,500 miles. Multiple hops can extend this range around the world.',
+   '[]'::jsonb),
+
+  ('E3A02', 'What is the approximate maximum range for signals using transequatorial propagation?',
+   '["1,000 miles", "2,500 miles", "5,000 miles", "7,500 miles"]'::jsonb,
+   2, 'E3', 'E3A', 'Transequatorial propagation (TE) can provide communication over distances of approximately 5,000 miles between stations at similar distances north and south of the equator.',
+   '[]'::jsonb),
+
+  ('E4A01', 'What is the purpose of a preamp in a receiver?',
+   '["To increase selectivity", "To improve weak signal reception", "To reduce power consumption", "To filter out harmonics"]'::jsonb,
+   1, 'E4', 'E4A', 'A preamplifier boosts weak signals before they reach the main receiver, improving the ability to hear weak stations while maintaining good signal-to-noise ratio.',
+   '[]'::jsonb),
+
+  ('E4A02', 'What is the primary purpose of an automatic notch filter?',
+   '["To reduce impulse noise", "To remove interfering carriers", "To improve SSB reception", "To reduce receiver bandwidth"]'::jsonb,
+   1, 'E4', 'E4A', 'An automatic notch filter detects and removes interfering carriers (heterodynes) that appear as annoying tones in the received audio.',
+   '[]'::jsonb),
+
+  ('E5A01', 'What is the result of skin effect?',
+   '["RF current flows in a thin layer of the conductor close to the surface", "RF resistance increases as frequency decreases", "Conductor resistance decreases", "Conductor heating decreases"]'::jsonb,
+   0, 'E5', 'E5A', 'Skin effect causes RF current to flow primarily near the surface of a conductor. This increases effective resistance at higher frequencies.',
+   '[]'::jsonb),
+
+  ('E5A02', 'What is the unit of electrical charge?',
+   '["Volt", "Coulomb", "Watt", "Farad"]'::jsonb,
+   1, 'E5', 'E5A', 'The coulomb is the SI unit of electrical charge. One coulomb equals approximately 6.24 x 10^18 electrons.',
+   '[]'::jsonb),
+
+  ('E6A01', 'What is the primary function of a mixer in a superheterodyne receiver?',
+   '["To filter out unwanted signals", "To combine two signals to produce sum and difference frequencies", "To amplify weak signals", "To demodulate the signal"]'::jsonb,
+   1, 'E6', 'E6A', 'A mixer combines the incoming RF signal with the local oscillator signal to produce intermediate frequencies (IF) that are easier to process.',
+   '[]'::jsonb),
+
+  ('E6A02', 'What is a characteristic of a Class A amplifier?',
+   '["It operates with collector current cutoff during part of the cycle", "It has the highest efficiency", "It operates with collector current flowing during the entire cycle", "It requires a tuned output circuit"]'::jsonb,
+   2, 'E6', 'E6A', 'Class A amplifiers conduct during the entire input cycle, providing the best linearity but lowest efficiency (typically 25-50%).',
+   '[]'::jsonb),
+
+  ('E7A01', 'What type of filter is used to pass signals above a certain frequency and reject signals below?',
+   '["Low-pass filter", "High-pass filter", "Band-pass filter", "Notch filter"]'::jsonb,
+   1, 'E7', 'E7A', 'A high-pass filter allows frequencies above its cutoff frequency to pass while attenuating lower frequencies. Used to block low-frequency interference.',
+   '[]'::jsonb),
+
+  ('E8A01', 'What is the approximate bandwidth of a properly modulated Single Sideband phone signal?',
+   '["1 kHz", "3 kHz", "6 kHz", "15 kHz"]'::jsonb,
+   1, 'E8', 'E8A', 'A properly adjusted SSB phone signal occupies approximately 3 kHz of bandwidth, making it twice as spectrum-efficient as AM.',
    '[]'::jsonb)
 
 ON CONFLICT (id) DO NOTHING;
