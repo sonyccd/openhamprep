@@ -5,29 +5,35 @@
  * Run automatically after `supabase start`
  */
 
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 console.log('Setting up local environment variables...\n');
 
 try {
   // Get Supabase status
-  const status = execSync('supabase status --output json', { encoding: 'utf-8' });
-  const services = JSON.parse(status);
+  const statusOutput = execSync('supabase status --output json', { encoding: 'utf-8' });
+  // Extract just the JSON object (ignore any warning lines after)
+  const jsonMatch = statusOutput.match(/^\{[\s\S]*?\n\}/m);
+  if (!jsonMatch) {
+    throw new Error('Could not parse Supabase status output');
+  }
+  const status = JSON.parse(jsonMatch[0]);
 
-  // Find the API URL and anon key
-  const apiService = services.find(s => s.name === 'API URL');
-  const anonKeyService = services.find(s => s.name === 'anon key');
+  // Get the API URL and anon key from the object
+  const apiUrl = status.API_URL;
+  const anonKey = status.ANON_KEY;
 
-  if (!apiService || !anonKeyService) {
+  if (!apiUrl || !anonKey) {
     console.error('❌ Could not find Supabase API URL or anon key');
     console.log('Make sure Supabase is running: supabase status');
     process.exit(1);
   }
-
-  const apiUrl = apiService.value;
-  const anonKey = anonKeyService.value;
 
   // Create .env.local file
   const envContent = `# Local Supabase Configuration
