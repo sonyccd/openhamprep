@@ -86,18 +86,21 @@ export function AdminQuestions({
   const [editExplanation, setEditExplanation] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [isAddingLink, setIsAddingLink] = useState(false);
+  const prefix = TEST_TYPE_PREFIXES[testType];
+
   const {
     data: questions = [],
     isLoading
   } = useQuery({
-    queryKey: ['admin-questions-full'],
+    queryKey: ['admin-questions', testType],
     queryFn: async () => {
       const {
         data,
         error
-      } = await supabase.from('questions').select('id, question, options, correct_answer, subelement, question_group, links, explanation, edit_history').order('id', {
-        ascending: true
-      });
+      } = await supabase.from('questions')
+        .select('id, question, options, correct_answer, subelement, question_group, links, explanation, edit_history')
+        .like('id', `${prefix}%`)
+        .order('id', { ascending: true });
       if (error) throw error;
       return data.map(q => ({
         ...q,
@@ -335,18 +338,15 @@ export function AdminQuestions({
     setNewLinks([]);
     setNewLinkUrlForAdd("");
   };
-  const prefix = TEST_TYPE_PREFIXES[testType];
-  const testTypeQuestions = questions.filter(q => q.id.startsWith(prefix));
-  
   // Get unique subelements and groups for filter dropdowns
-  const subelements = [...new Set(testTypeQuestions.map(q => q.subelement))].sort();
+  const subelements = [...new Set(questions.map(q => q.subelement))].sort();
   const groups = [...new Set(
-    testTypeQuestions
+    questions
       .filter(q => subelementFilter === "all" || q.subelement === subelementFilter)
       .map(q => q.question_group)
   )].sort();
-  
-  const filteredQuestions = testTypeQuestions.filter(q => {
+
+  const filteredQuestions = questions.filter(q => {
     const matchesSearch = q.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           q.question.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSubelement = subelementFilter === "all" || q.subelement === subelementFilter;
@@ -619,12 +619,12 @@ export function AdminQuestions({
         <CardHeader className="shrink-0">
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
-              
-              {testType.charAt(0).toUpperCase() + testType.slice(1)} Questions ({testTypeQuestions.length})
+
+              {testType.charAt(0).toUpperCase() + testType.slice(1)} Questions ({questions.length})
             </span>
             <div className="flex items-center gap-2">
               <BulkExport
-                data={testTypeQuestions}
+                data={questions}
                 filename={`${testType}_questions`}
                 itemLabel="questions"
                 formatCSV={(items) => {
