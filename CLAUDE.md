@@ -203,16 +203,15 @@ When saving question attempts, use these `attempt_type` values:
 
 ## Local Development Setup
 
-### For Contributors (Recommended)
+### Prerequisites
+- Node.js 20+
+- Docker Desktop (running)
 
-Contributors can run the entire stack locally without needing hosted Supabase access:
+### Quick Start
 
 ```bash
-# One-time setup
-./scripts/local-dev-setup.sh
-
-# Daily workflow
-npm run dev:full
+npm install        # Installs dependencies including Supabase CLI
+npm run dev:full   # Starts Supabase + dev server
 ```
 
 This starts:
@@ -227,9 +226,9 @@ See `LOCAL_SETUP_QUICKSTART.md` and `LOCAL_DEVELOPMENT.md` for details.
 ### Sample Data
 
 Local Supabase automatically seeds:
-- 7 sample questions (T, G, E license types)
-- 10 glossary terms
-- 2 exam sessions
+- 40 Technician questions, 35 General, 35 Extra
+- 30 glossary terms
+- 5 exam sessions
 - See `supabase/seed.sql` to customize
 
 ### Creating Admin User (Local)
