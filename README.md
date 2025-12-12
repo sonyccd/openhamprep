@@ -1,6 +1,13 @@
 # Open Ham Prep
 
+![Website](https://img.shields.io/website?url=https%3A%2F%2Fopenhamprep.com)
+![GitHub branch status](https://img.shields.io/github/checks-status/sonyccd/openhamprep/main)
 [![codecov](https://codecov.io/gh/sonyccd/openhamprep/graph/badge.svg?token=SGUGokGdG1)](https://codecov.io/gh/sonyccd/openhamprep)
+![GitHub last commit (branch)](https://img.shields.io/github/last-commit/sonyccd/openhamprep/main)
+
+
+![GitHub License](https://img.shields.io/github/license/sonyccd/openhamprep)
+
 
 A modern web application for studying FCC Amateur Radio license exams. Open source, community-driven, born in North Carolina.
 
