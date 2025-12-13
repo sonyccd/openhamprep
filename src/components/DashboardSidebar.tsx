@@ -1,4 +1,4 @@
-import { Play, Zap, BookOpen, AlertTriangle, Bookmark, LogOut, Radio, PanelLeftClose, PanelLeft, BarChart3, Menu, Lock, ChevronDown, BookText, Shield, MapPin } from "lucide-react";
+import { Play, Zap, BookOpen, AlertTriangle, Bookmark, LogOut, Radio, PanelLeftClose, PanelLeft, BarChart3, Menu, Lock, ChevronDown, BookText, Shield, MapPin, Users, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -219,6 +219,47 @@ export function DashboardSidebar({
         }
         return <div key={item.id}>{buttonContent}</div>;
       })}
+
+        {/* Community Link - External */}
+        {(() => {
+          const showExpanded = isMobile || !isCollapsed;
+          const communityLink = (
+            <a
+              href="https://forum.openhamprep.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                "text-muted-foreground hover:text-foreground hover:bg-secondary",
+                !showExpanded && "justify-center px-2"
+              )}
+            >
+              <div className="relative shrink-0">
+                <Users className="w-5 h-5" />
+              </div>
+              {showExpanded && (
+                <span className="text-sm font-medium truncate flex items-center gap-1">
+                  Forum
+                  <ExternalLink className="w-3 h-3" />
+                </span>
+              )}
+            </a>
+          );
+
+          if (!showExpanded) {
+            return (
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  {communityLink}
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-popover border-border">
+                  <p>Forum</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
+          return communityLink;
+        })()}
       </nav>
 
       {/* Footer with User Profile */}

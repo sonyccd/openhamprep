@@ -17,11 +17,22 @@ export default defineConfig({
     exclude: ['node_modules/**', 'dist/**'],
     coverage: {
       reporter: ['text', 'json', 'html'],
+      include: [
+        'src/components/**/*.{ts,tsx}',
+        'src/hooks/**/*.{ts,tsx}',
+        'src/lib/**/*.{ts,tsx}',
+        'src/pages/**/*.{ts,tsx}',
+        'src/types/**/*.{ts,tsx}',
+      ],
       exclude: [
         'node_modules/',
         'src/test/',
         '**/*.d.ts',
+        '**/*.test.{ts,tsx}',
+        '**/*.spec.{ts,tsx}',
         'src/integrations/supabase/types.ts',
+        'src/components/admin/**', // Admin components are less critical
+        'src/components/ui/**', // UI primitives from shadcn
       ],
     },
   },
