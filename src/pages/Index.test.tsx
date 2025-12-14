@@ -93,47 +93,4 @@ describe('Index Page', () => {
     });
   });
 
-  describe('Console Logging', () => {
-    it('logs redirect message for authenticated user', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      mockUseAuth.mockReturnValue({
-        user: { id: 'test-user' },
-        loading: false,
-      });
-
-      render(
-        <BrowserRouter>
-          <Index />
-        </BrowserRouter>
-      );
-
-      await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('Redirecting authenticated user to dashboard');
-      });
-
-      consoleSpy.mockRestore();
-    });
-
-    it('logs redirect message for non-authenticated user', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      mockUseAuth.mockReturnValue({
-        user: null,
-        loading: false,
-      });
-
-      render(
-        <BrowserRouter>
-          <Index />
-        </BrowserRouter>
-      );
-
-      await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('Redirecting non-authenticated user to auth');
-      });
-
-      consoleSpy.mockRestore();
-    });
-  });
 });

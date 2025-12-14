@@ -26,8 +26,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state changed:', event, 'hasSession:', !!session);
-        
         // Only update state from listener if not handling auth callback
         // This prevents race condition where INITIAL_SESSION sets loading=false too early
         if (!hasAuthCallback || event === 'SIGNED_IN') {
@@ -51,7 +49,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handleAuthCallback = async () => {
       if (hasAuthCallback) {
         const isEmailVerification = hashParams.includes('type=signup');
-        console.log('Processing auth callback, isEmailVerification:', isEmailVerification);
         
         // Parse the hash to get tokens
         const params = new URLSearchParams(hashParams.substring(1));
@@ -65,12 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             refresh_token: refreshToken,
           });
           
-          if (error) {
-            console.error('Auth callback error:', error);
-          }
-          
           if (session) {
-            console.log('Session set successfully, user:', session.user?.email);
             setSession(session);
             setUser(session.user);
             

@@ -27,11 +27,6 @@ export function useAppTour({ onComplete, onCancel }: UseAppTourOptions = {}) {
       text: 'This is your home base. Here you can see your test readiness, weekly goals, key stats, and track your progress towards passing the exam.',
       buttons: [
         {
-          text: 'Skip Tour',
-          classes: 'shepherd-button-secondary',
-          action: tourInstance.cancel,
-        },
-        {
           text: 'Next',
           classes: 'shepherd-button-primary',
           action: tourInstance.next,

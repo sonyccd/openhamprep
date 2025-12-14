@@ -212,11 +212,7 @@
   border: none !important;
 }
 
-/* Re-enable the cancel icon */
-.shepherd-element.shepherd-theme-custom .shepherd-cancel-icon::before {
-  display: inline !important;
-  content: '×' !important;
-}
+/* Cancel icon is handled by Shepherd - no custom content needed */
 
 /* Hide any progress indicators */
 .shepherd-progress,

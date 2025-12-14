@@ -134,16 +134,16 @@ describe('useAppTour', () => {
       expect(completeCall.title).toBe("You're All Set! 🎉");
     });
 
-    it('should include Skip Tour button on first step', async () => {
+    it('should include only Next button on first step (cancel via X icon)', async () => {
       const Shepherd = await import('shepherd.js');
       const mockTour = new Shepherd.default.Tour();
 
       renderHook(() => useAppTour());
 
       const dashboardCall = mockTour.addStep.mock.calls[0][0];
-      const skipButton = dashboardCall.buttons.find(b => b.text === 'Skip Tour');
-      expect(skipButton).toBeDefined();
-      expect(skipButton.classes).toBe('shepherd-button-secondary');
+      // First step should only have Next button, cancel is via the X icon
+      expect(dashboardCall.buttons.length).toBe(1);
+      expect(dashboardCall.buttons[0].text).toBe('Next');
     });
 
     it('should include Back and Next buttons on middle steps', async () => {

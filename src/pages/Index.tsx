@@ -17,10 +17,8 @@ const Index = () => {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        console.log('Redirecting authenticated user to dashboard');
         navigate('/dashboard', { replace: true });
       } else {
-        console.log('Redirecting non-authenticated user to auth');
         navigate('/auth', { replace: true });
       }
     }
