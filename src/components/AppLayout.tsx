@@ -16,9 +16,12 @@ interface AppLayoutProps {
   onViewChange: (view: View) => void;
   selectedTest: TestType;
   onTestChange: (test: TestType) => void;
+  mobileMenuOpen?: boolean;
+  onMobileMenuChange?: (open: boolean) => void;
+  isTourActive?: boolean;
 }
 
-export function AppLayout({ children, currentView, onViewChange, selectedTest, onTestChange }: AppLayoutProps) {
+export function AppLayout({ children, currentView, onViewChange, selectedTest, onTestChange, mobileMenuOpen, onMobileMenuChange, isTourActive }: AppLayoutProps) {
   const { user, loading: authLoading, signOut } = useAuth();
   const { bookmarks } = useBookmarks();
   const navigate = useNavigate();
@@ -114,6 +117,9 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
           onProfileUpdate={handleProfileUpdate}
           selectedTest={selectedTest}
           onTestChange={onTestChange}
+          mobileMenuOpen={mobileMenuOpen}
+          onMobileMenuChange={onMobileMenuChange}
+          isTourActive={isTourActive}
         />
         <div className="flex-1 overflow-y-auto pt-16 md:pt-0 flex flex-col">
           {children}

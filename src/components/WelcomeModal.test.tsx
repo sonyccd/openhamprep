@@ -22,7 +22,7 @@ describe('WelcomeModal', () => {
       );
 
       expect(screen.getByText('Welcome to Open Ham Prep!')).toBeInTheDocument();
-      expect(screen.getByText("Let's get you set up. Which license are you studying for?")).toBeInTheDocument();
+      expect(screen.getByText('Which license are you studying for?')).toBeInTheDocument();
     });
 
     it('should not render when open is false', () => {
@@ -49,20 +49,6 @@ describe('WelcomeModal', () => {
       expect(screen.getByText('Technician')).toBeInTheDocument();
       expect(screen.getByText('General')).toBeInTheDocument();
       expect(screen.getByText('Amateur Extra')).toBeInTheDocument();
-    });
-
-    it('should display license descriptions', () => {
-      render(
-        <WelcomeModal
-          open={true}
-          onComplete={mockOnComplete}
-          onSkip={mockOnSkip}
-        />
-      );
-
-      expect(screen.getByText('Perfect for beginners. Start your ham radio journey here!')).toBeInTheDocument();
-      expect(screen.getByText('Expanded HF privileges for experienced operators.')).toBeInTheDocument();
-      expect(screen.getByText('Full amateur privileges. The ultimate license.')).toBeInTheDocument();
     });
 
     it('should display question counts and passing scores', () => {

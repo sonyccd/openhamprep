@@ -59,6 +59,10 @@ export default function Dashboard() {
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
   const [showGoalsModal, setShowGoalsModal] = useState(false);
 
+  // Mobile menu state for sidebar (controlled by tour)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isTourActive, setIsTourActive] = useState(false);
+
   // Onboarding
   const {
     showOnboarding,
@@ -69,8 +73,18 @@ export default function Dashboard() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   const { startTour } = useAppTour({
-    onComplete: completeOnboarding,
-    onCancel: skipOnboarding,
+    onComplete: () => {
+      setIsTourActive(false);
+      setMobileMenuOpen(false);
+      completeOnboarding();
+    },
+    onCancel: () => {
+      setIsTourActive(false);
+      setMobileMenuOpen(false);
+      skipOnboarding();
+    },
+    onOpenMobileMenu: () => setMobileMenuOpen(true),
+    onCloseMobileMenu: () => setMobileMenuOpen(false),
   });
 
   // Show welcome modal when onboarding should start
@@ -90,6 +104,7 @@ export default function Dashboard() {
     setShowOnboarding(false);
     // Start the tour after a short delay to let the modal close
     setTimeout(() => {
+      setIsTourActive(true);
       startTour();
     }, 300);
   };
@@ -766,7 +781,7 @@ export default function Dashboard() {
         onSkip={handleWelcomeSkip}
       />
 
-      <AppLayout currentView={currentView} onViewChange={handleViewChange} selectedTest={selectedTest} onTestChange={setSelectedTest}>
+      <AppLayout currentView={currentView} onViewChange={handleViewChange} selectedTest={selectedTest} onTestChange={setSelectedTest} mobileMenuOpen={mobileMenuOpen} onMobileMenuChange={setMobileMenuOpen} isTourActive={isTourActive}>
         {renderContent()}
       </AppLayout>
     </>;

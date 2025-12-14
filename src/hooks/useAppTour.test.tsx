@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useAppTour } from './useAppTour';
 
@@ -25,14 +25,29 @@ vi.mock('shepherd.js', () => {
 // Mock the CSS import
 vi.mock('shepherd.js/dist/css/shepherd.css', () => ({}));
 
+// Store original window.innerWidth
+const originalInnerWidth = window.innerWidth;
+
 describe('useAppTour', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+    // Default to desktop viewport
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1024,
+    });
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    // Restore original innerWidth
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: originalInnerWidth,
+    });
   });
 
   describe('Initialization', () => {
@@ -68,15 +83,38 @@ describe('useAppTour', () => {
       );
     });
 
-    it('should add all tour steps', async () => {
+    it('should add all tour steps on desktop', async () => {
       const Shepherd = await import('shepherd.js');
       const mockTour = new Shepherd.default.Tour();
 
       renderHook(() => useAppTour());
 
-      // Should add 10 steps (dashboard, license-selector, practice-test, random-practice,
+      // Should add 10 steps on desktop (dashboard, license-selector, practice-test, random-practice,
       // study-by-topic, weak-areas, glossary, find-test-site, forum, complete)
       expect(mockTour.addStep).toHaveBeenCalledTimes(10);
+    });
+
+    it('should add all tour steps on mobile without attachment (centered modals)', async () => {
+      // Set mobile viewport
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 500,
+      });
+
+      const Shepherd = await import('shepherd.js');
+      const mockTour = new Shepherd.default.Tour();
+      mockTour.addStep.mockClear();
+
+      renderHook(() => useAppTour());
+
+      // Should add all 10 steps on mobile
+      expect(mockTour.addStep).toHaveBeenCalledTimes(10);
+
+      // On mobile, steps should NOT have attachTo (centered modals instead)
+      const licenseCall = mockTour.addStep.mock.calls[1][0];
+      expect(licenseCall.id).toBe('license-selector');
+      expect(licenseCall.attachTo).toBeUndefined();
     });
   });
 
@@ -90,7 +128,7 @@ describe('useAppTour', () => {
       // First step should be dashboard
       const dashboardCall = mockTour.addStep.mock.calls[0][0];
       expect(dashboardCall.id).toBe('dashboard');
-      expect(dashboardCall.title).toBe('Your Dashboard');
+      expect(dashboardCall.title).toBe('Welcome to Open Ham Prep!');
       expect(dashboardCall.attachTo).toBeUndefined(); // Centered, no attachment
     });
 
@@ -131,7 +169,7 @@ describe('useAppTour', () => {
 
       const completeCall = mockTour.addStep.mock.calls[9][0];
       expect(completeCall.id).toBe('complete');
-      expect(completeCall.title).toBe("You're All Set! 🎉");
+      expect(completeCall.title).toBe("You're All Set!");
     });
 
     it('should include only Next button on first step (cancel via X icon)', async () => {
@@ -258,6 +296,55 @@ describe('useAppTour', () => {
       rerender();
 
       expect(result.current.tour).toBe(firstTour);
+    });
+  });
+
+  describe('Mobile Menu Integration', () => {
+    it('should call onOpenMobileMenu callback on mobile when advancing from first step', async () => {
+      // Set mobile viewport
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 500,
+      });
+
+      const Shepherd = await import('shepherd.js');
+      const mockTour = new Shepherd.default.Tour();
+      mockTour.addStep.mockClear();
+
+      const onOpenMobileMenu = vi.fn();
+      renderHook(() => useAppTour({ onOpenMobileMenu }));
+
+      // Get the first step (dashboard) and simulate clicking Next
+      const dashboardCall = mockTour.addStep.mock.calls[0][0];
+      expect(dashboardCall.id).toBe('dashboard');
+
+      // The action function should call onOpenMobileMenu on mobile
+      dashboardCall.buttons[0].action();
+
+      expect(onOpenMobileMenu).toHaveBeenCalled();
+    });
+
+    it('should NOT call onOpenMobileMenu callback on desktop when advancing from first step', async () => {
+      // Ensure desktop viewport
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 1024,
+      });
+
+      const Shepherd = await import('shepherd.js');
+      const mockTour = new Shepherd.default.Tour();
+      mockTour.addStep.mockClear();
+
+      const onOpenMobileMenu = vi.fn();
+      renderHook(() => useAppTour({ onOpenMobileMenu }));
+
+      // Get the first step (dashboard) and simulate clicking Next
+      const dashboardCall = mockTour.addStep.mock.calls[0][0];
+      dashboardCall.buttons[0].action();
+
+      expect(onOpenMobileMenu).not.toHaveBeenCalled();
     });
   });
 });
