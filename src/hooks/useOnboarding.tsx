@@ -55,17 +55,24 @@ export function useOnboarding() {
   }, [user]);
 
   const updateOnboardingStatus = useCallback(async (completed: boolean) => {
-    if (!user) return;
+    if (!user) {
+      console.warn('Cannot update onboarding status: no user logged in');
+      return;
+    }
+
+    console.log(`Updating onboarding_completed to ${completed} for user ${user.id}`);
 
     try {
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from('profiles')
         .update({ onboarding_completed: completed })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select();
 
       if (error) {
         console.error('Error updating onboarding status:', error);
       } else {
+        console.log('Successfully updated onboarding status:', data);
         // Invalidate profile query to refresh any cached data
         queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
       }
@@ -82,6 +89,7 @@ export function useOnboarding() {
 
   const skipOnboarding = useCallback(async () => {
     // Same as completing - user chose to skip, don't show again
+    console.log('skipOnboarding called - marking onboarding as completed');
     setHasCompletedOnboarding(true);
     setShowOnboarding(false);
     await updateOnboardingStatus(true);
