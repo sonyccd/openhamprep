@@ -1,11 +1,11 @@
-name: Deploy Marketing Site to GitHub Pages
+name: Deploy Website to GitHub Pages
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'marketing/**'
+      - 'website/**'
   workflow_dispatch:
 
 permissions:
@@ -27,13 +27,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Inject analytics config
+        run: |
+          cat > ./website/js/config.js << 'EOF'
+          // Website Analytics Configuration (auto-generated during deployment)
+          window.ANALYTICS_CONFIG = {
+            GA_MEASUREMENT_ID: '${{ secrets.GA_MEASUREMENT_ID }}',
+            CLARITY_PROJECT_ID: '${{ secrets.CLARITY_PROJECT_ID }}',
+          };
+          EOF
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './marketing'
+          path: './website'
 
       - name: Deploy to GitHub Pages
         id: deployment
