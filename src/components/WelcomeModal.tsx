@@ -40,21 +40,21 @@ export function WelcomeModal({ open, onComplete, onSkip }: WelcomeModalProps) {
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent
-        className="sm:max-w-lg"
+        className="w-[90vw] max-w-md p-4 sm:p-6"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
-        <DialogHeader className="text-center pb-2">
-          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-            <Sparkles className="w-8 h-8 text-primary" />
+        <DialogHeader className="text-center pb-1 sm:pb-2">
+          <div className="mx-auto mb-2 sm:mb-4 w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-primary/10 flex items-center justify-center">
+            <Sparkles className="w-5 h-5 sm:w-7 sm:h-7 text-primary" />
           </div>
-          <DialogTitle className="text-2xl">Welcome to Open Ham Prep!</DialogTitle>
-          <DialogDescription className="text-base">
-            Let's get you set up. Which license are you studying for?
+          <DialogTitle className="text-lg sm:text-xl">Welcome to Open Ham Prep!</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">
+            Which license are you studying for?
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-3 py-4">
+        <div className="grid gap-2 py-2 sm:py-4">
           {testTypes.map((test) => {
             const Icon = licenseIcons[test.id];
             const config = testConfig[test.id];
@@ -66,7 +66,7 @@ export function WelcomeModal({ open, onComplete, onSkip }: WelcomeModalProps) {
                 onClick={() => test.available && setSelectedLicense(test.id)}
                 disabled={!test.available}
                 className={cn(
-                  "relative flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left",
+                  "relative flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left",
                   isSelected
                     ? "border-primary bg-primary/5"
                     : "border-border hover:border-muted-foreground/50 hover:bg-secondary/50",
@@ -76,24 +76,21 @@ export function WelcomeModal({ open, onComplete, onSkip }: WelcomeModalProps) {
                 {/* Icon */}
                 <div
                   className={cn(
-                    "flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center",
+                    "flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center",
                     isSelected
                       ? "bg-primary text-primary-foreground"
                       : "bg-secondary text-muted-foreground"
                   )}
                 >
-                  <Icon className="w-6 h-6" />
+                  <Icon className="w-5 h-5" />
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-foreground">
+                  <h3 className="font-semibold text-foreground text-sm sm:text-base">
                     {test.name}
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {licenseDescriptions[test.id]}
-                  </p>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span>{config.questionCount} questions</span>
                     <span>{config.passingScore} to pass</span>
                   </div>
@@ -101,7 +98,7 @@ export function WelcomeModal({ open, onComplete, onSkip }: WelcomeModalProps) {
 
                 {/* Selection indicator */}
                 {isSelected && (
-                  <div className="absolute top-4 right-4">
+                  <div className="flex-shrink-0">
                     <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
                       <div className="w-2 h-2 rounded-full bg-primary-foreground" />
                     </div>
@@ -112,15 +109,16 @@ export function WelcomeModal({ open, onComplete, onSkip }: WelcomeModalProps) {
           })}
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
           <Button
             variant="ghost"
             onClick={onSkip}
-            className="text-muted-foreground"
+            className="text-muted-foreground text-sm"
+            size="sm"
           >
             Skip tour
           </Button>
-          <Button onClick={handleContinue} className="gap-2">
+          <Button onClick={handleContinue} className="gap-2" size="sm">
             Continue
             <Sparkles className="w-4 h-4" />
           </Button>

@@ -36,6 +36,9 @@ interface DashboardSidebarProps {
   onProfileUpdate?: () => void;
   selectedTest: TestType;
   onTestChange: (test: TestType) => void;
+  mobileMenuOpen?: boolean;
+  onMobileMenuChange?: (open: boolean) => void;
+  isTourActive?: boolean;
 }
 export function DashboardSidebar({
   currentView,
@@ -50,9 +53,21 @@ export function DashboardSidebar({
   userId,
   onProfileUpdate,
   selectedTest,
-  onTestChange
+  onTestChange,
+  mobileMenuOpen,
+  onMobileMenuChange,
+  isTourActive,
 }: DashboardSidebarProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  // Use controlled state if provided, otherwise use local state
+  const [localMobileOpen, setLocalMobileOpen] = useState(false);
+  const mobileOpen = mobileMenuOpen !== undefined ? mobileMenuOpen : localMobileOpen;
+  const setMobileOpen = (open: boolean) => {
+    if (onMobileMenuChange) {
+      onMobileMenuChange(open);
+    } else {
+      setLocalMobileOpen(open);
+    }
+  };
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
   const [licenseModalOpen, setLicenseModalOpen] = useState(false);
@@ -372,7 +387,11 @@ export function DashboardSidebar({
 
       {/* Mobile Hamburger Button */}
       <div className="md:hidden fixed top-4 left-4 z-50">
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <Sheet open={mobileOpen} onOpenChange={(open) => {
+          // Prevent closing when tour is active
+          if (!open && isTourActive) return;
+          setMobileOpen(open);
+        }}>
           <Tooltip>
             <TooltipTrigger asChild>
               <SheetTrigger asChild>

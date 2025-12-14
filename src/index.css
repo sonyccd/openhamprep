@@ -168,11 +168,26 @@
 
 /* Shepherd.js Custom Theme */
 .shepherd-element {
-  z-index: 9999;
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+  isolation: isolate;
 }
 
 .shepherd-modal-overlay-container {
-  z-index: 9998;
+  z-index: 99998 !important;
+}
+
+/* Ensure all Shepherd content and buttons are clickable */
+.shepherd-element .shepherd-content,
+.shepherd-element .shepherd-footer,
+.shepherd-element .shepherd-button {
+  pointer-events: auto !important;
+}
+
+.shepherd-element .shepherd-button {
+  position: relative;
+  z-index: 1;
+  cursor: pointer !important;
 }
 
 /* Reset all Shepherd default styles */
@@ -295,3 +310,52 @@
 .shepherd-modal-overlay-container.shepherd-modal-is-visible {
   opacity: 0.6;
 }
+
+/* Mobile-specific Shepherd styles */
+@media (max-width: 767px) {
+  .shepherd-element.shepherd-theme-custom {
+    max-width: calc(100vw - 3rem);
+    width: calc(100vw - 3rem);
+    margin: 0 auto;
+    /* Add stronger shadow on mobile since there's no overlay */
+    box-shadow: 0 -4px 30px -5px rgba(0, 0, 0, 0.4), 0 10px 40px -10px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  .shepherd-element.shepherd-theme-custom .shepherd-header {
+    padding: 0.625rem 0.625rem 0.375rem 0.625rem;
+  }
+
+  .shepherd-element.shepherd-theme-custom .shepherd-title {
+    font-size: 0.9375rem;
+  }
+
+  .shepherd-element.shepherd-theme-custom .shepherd-text {
+    padding: 0.25rem 0.625rem 0.625rem 0.625rem;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .shepherd-element.shepherd-theme-custom .shepherd-footer {
+    padding: 0 0.625rem 0.625rem 0.625rem;
+  }
+
+  .shepherd-element.shepherd-theme-custom .shepherd-button {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.625rem;
+  }
+
+  .shepherd-element.shepherd-theme-custom .shepherd-cancel-icon {
+    font-size: 1.25rem;
+  }
+
+  /* Mobile: center the modal at the bottom of the screen */
+  .shepherd-element.shepherd-theme-custom {
+    position: fixed !important;
+    bottom: 1rem !important;
+    left: 50% !important;
+    right: auto !important;
+    top: auto !important;
+    transform: translateX(-50%) !important;
+  }
+}
+
