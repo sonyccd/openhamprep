@@ -47,8 +47,8 @@ function loadPendoScript(apiKey: string): Promise<void> {
       const v = ['initialize', 'identify', 'updateOptions', 'pageLoad', 'track'];
       for (let w = 0, x = v.length; w < x; ++w) {
         (function(m) {
-          (o as Record<string, unknown>)[m] = (o as Record<string, unknown>)[m] || function() {
-            ((o as { _q: unknown[] })._q)[m === v[0] ? 'unshift' : 'push']([m].concat([].slice.call(arguments, 0)));
+          (o as Record<string, unknown>)[m] = (o as Record<string, unknown>)[m] || function(...args: unknown[]) {
+            ((o as { _q: unknown[] })._q)[m === v[0] ? 'unshift' : 'push']([m].concat(args));
           };
         })(v[w]);
       }
