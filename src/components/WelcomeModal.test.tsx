@@ -207,6 +207,23 @@ describe('WelcomeModal', () => {
       expect(mockOnSkip).toHaveBeenCalled();
       expect(mockOnComplete).not.toHaveBeenCalled();
     });
+
+    it('should call onSkip when X button is clicked', () => {
+      render(
+        <WelcomeModal
+          open={true}
+          onComplete={mockOnComplete}
+          onSkip={mockOnSkip}
+        />
+      );
+
+      // Find the close button (X icon)
+      const closeButton = screen.getByRole('button', { name: /close/i });
+      fireEvent.click(closeButton);
+
+      expect(mockOnSkip).toHaveBeenCalled();
+      expect(mockOnComplete).not.toHaveBeenCalled();
+    });
   });
 
   describe('Modal Behavior', () => {
