@@ -239,24 +239,56 @@ describe('useAppTour', () => {
   });
 
   describe('Event Callbacks', () => {
-    it('should register onComplete callback', async () => {
+    it('should register complete event handler', async () => {
       const Shepherd = await import('shepherd.js');
       const mockTour = new Shepherd.default.Tour();
       const onComplete = vi.fn();
 
       renderHook(() => useAppTour({ onComplete }));
 
-      expect(mockTour.on).toHaveBeenCalledWith('complete', onComplete);
+      // Verify complete handler is registered
+      expect(mockTour.on).toHaveBeenCalledWith('complete', expect.any(Function));
     });
 
-    it('should register onCancel callback', async () => {
+    it('should call onComplete when tour complete event fires', async () => {
+      const Shepherd = await import('shepherd.js');
+      const mockTour = new Shepherd.default.Tour();
+      const onComplete = vi.fn();
+
+      renderHook(() => useAppTour({ onComplete }));
+
+      // Find the registered complete handler and call it
+      const completeCall = mockTour.on.mock.calls.find(call => call[0] === 'complete');
+      expect(completeCall).toBeDefined();
+      completeCall![1](); // Trigger the handler
+
+      expect(onComplete).toHaveBeenCalled();
+    });
+
+    it('should register cancel event handler', async () => {
       const Shepherd = await import('shepherd.js');
       const mockTour = new Shepherd.default.Tour();
       const onCancel = vi.fn();
 
       renderHook(() => useAppTour({ onCancel }));
 
-      expect(mockTour.on).toHaveBeenCalledWith('cancel', onCancel);
+      // Verify cancel handler is registered
+      expect(mockTour.on).toHaveBeenCalledWith('cancel', expect.any(Function));
+    });
+
+    it('should call onCancel when tour cancel event fires', async () => {
+      const Shepherd = await import('shepherd.js');
+      const mockTour = new Shepherd.default.Tour();
+      const onCancel = vi.fn();
+
+      renderHook(() => useAppTour({ onCancel }));
+
+      // Find the registered cancel handler and call it
+      const cancelCall = mockTour.on.mock.calls.find(call => call[0] === 'cancel');
+      expect(cancelCall).toBeDefined();
+      cancelCall![1](); // Trigger the handler
+
+      expect(onCancel).toHaveBeenCalled();
     });
 
     it('should unregister callbacks on unmount', async () => {
@@ -269,21 +301,43 @@ describe('useAppTour', () => {
 
       unmount();
 
-      expect(mockTour.off).toHaveBeenCalledWith('complete', onComplete);
-      expect(mockTour.off).toHaveBeenCalledWith('cancel', onCancel);
+      // Should unregister both handlers
+      expect(mockTour.off).toHaveBeenCalledWith('complete', expect.any(Function));
+      expect(mockTour.off).toHaveBeenCalledWith('cancel', expect.any(Function));
     });
 
-    it('should not register callbacks if not provided', async () => {
+    it('should always register event handlers (they safely handle undefined callbacks)', async () => {
       const Shepherd = await import('shepherd.js');
       const mockTour = new Shepherd.default.Tour();
 
       renderHook(() => useAppTour());
 
-      // on should not be called with undefined callbacks
-      const onCalls = mockTour.on.mock.calls;
-      onCalls.forEach(call => {
-        expect(call[1]).not.toBeUndefined();
-      });
+      // Event handlers are always registered (they use refs internally)
+      expect(mockTour.on).toHaveBeenCalledWith('complete', expect.any(Function));
+      expect(mockTour.on).toHaveBeenCalledWith('cancel', expect.any(Function));
+    });
+
+    it('should call updated callback when callback changes', async () => {
+      const Shepherd = await import('shepherd.js');
+      const mockTour = new Shepherd.default.Tour();
+      const onCancel1 = vi.fn();
+      const onCancel2 = vi.fn();
+
+      const { rerender } = renderHook(
+        ({ onCancel }) => useAppTour({ onCancel }),
+        { initialProps: { onCancel: onCancel1 } }
+      );
+
+      // Rerender with new callback
+      rerender({ onCancel: onCancel2 });
+
+      // Find and trigger the cancel handler
+      const cancelCall = mockTour.on.mock.calls.find(call => call[0] === 'cancel');
+      cancelCall![1](); // Trigger the handler
+
+      // Should call the NEW callback (onCancel2), not the old one
+      expect(onCancel1).not.toHaveBeenCalled();
+      expect(onCancel2).toHaveBeenCalled();
     });
   });
 
@@ -296,6 +350,31 @@ describe('useAppTour', () => {
       rerender();
 
       expect(result.current.tour).toBe(firstTour);
+    });
+
+    it('should NOT recreate tour when callbacks change', async () => {
+      const Shepherd = await import('shepherd.js');
+
+      const onCancel1 = vi.fn();
+      const onCancel2 = vi.fn();
+      const onComplete1 = vi.fn();
+      const onComplete2 = vi.fn();
+
+      const { result, rerender } = renderHook(
+        ({ onCancel, onComplete }) => useAppTour({ onCancel, onComplete }),
+        { initialProps: { onCancel: onCancel1, onComplete: onComplete1 } }
+      );
+
+      const firstTour = result.current.tour;
+
+      // Rerender with different callbacks
+      rerender({ onCancel: onCancel2, onComplete: onComplete2 });
+
+      // Tour instance should be the same (not recreated)
+      expect(result.current.tour).toBe(firstTour);
+
+      // Tour constructor should only have been called once
+      expect(Shepherd.default.Tour).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -345,6 +424,38 @@ describe('useAppTour', () => {
       dashboardCall.buttons[0].action();
 
       expect(onOpenMobileMenu).not.toHaveBeenCalled();
+    });
+
+    it('should call updated onOpenMobileMenu when callback changes', async () => {
+      // Set mobile viewport
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 500,
+      });
+
+      const Shepherd = await import('shepherd.js');
+      const mockTour = new Shepherd.default.Tour();
+      mockTour.addStep.mockClear();
+
+      const onOpenMobileMenu1 = vi.fn();
+      const onOpenMobileMenu2 = vi.fn();
+
+      const { rerender } = renderHook(
+        ({ onOpenMobileMenu }) => useAppTour({ onOpenMobileMenu }),
+        { initialProps: { onOpenMobileMenu: onOpenMobileMenu1 } }
+      );
+
+      // Rerender with new callback
+      rerender({ onOpenMobileMenu: onOpenMobileMenu2 });
+
+      // Get the first step (dashboard) and simulate clicking Next
+      const dashboardCall = mockTour.addStep.mock.calls[0][0];
+      dashboardCall.buttons[0].action();
+
+      // Should call the NEW callback, not the old one
+      expect(onOpenMobileMenu1).not.toHaveBeenCalled();
+      expect(onOpenMobileMenu2).toHaveBeenCalled();
     });
   });
 });

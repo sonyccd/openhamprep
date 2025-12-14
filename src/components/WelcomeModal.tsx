@@ -38,7 +38,12 @@ export function WelcomeModal({ open, onComplete, onSkip }: WelcomeModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // When the dialog closes (X button clicked), treat as skip
+      if (!isOpen) {
+        onSkip();
+      }
+    }}>
       <DialogContent
         className="w-[90vw] max-w-md p-4 sm:p-6"
         onPointerDownOutside={(e) => e.preventDefault()}

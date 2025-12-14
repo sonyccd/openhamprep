@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from 'react';
+import { useEffect, useMemo, useCallback, useRef } from 'react';
 import Shepherd from 'shepherd.js';
 import 'shepherd.js/dist/css/shepherd.css';
 
@@ -13,6 +13,30 @@ interface UseAppTourOptions {
 const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 768;
 
 export function useAppTour({ onComplete, onCancel, onOpenMobileMenu, onCloseMobileMenu }: UseAppTourOptions = {}) {
+  // Use refs to always have access to the latest callback functions
+  // This prevents stale closure issues when the tour emits events
+  const onCompleteRef = useRef(onComplete);
+  const onCancelRef = useRef(onCancel);
+  const onOpenMobileMenuRef = useRef(onOpenMobileMenu);
+  const onCloseMobileMenuRef = useRef(onCloseMobileMenu);
+
+  // Keep refs up to date
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
+  useEffect(() => {
+    onCancelRef.current = onCancel;
+  }, [onCancel]);
+
+  useEffect(() => {
+    onOpenMobileMenuRef.current = onOpenMobileMenu;
+  }, [onOpenMobileMenu]);
+
+  useEffect(() => {
+    onCloseMobileMenuRef.current = onCloseMobileMenu;
+  }, [onCloseMobileMenu]);
+
   const tour = useMemo(() => {
     const mobile = isMobile();
 
@@ -105,8 +129,8 @@ export function useAppTour({ onComplete, onCancel, onOpenMobileMenu, onCloseMobi
           classes: 'shepherd-button-primary',
           action: () => {
             // On mobile, open the sidebar menu before showing sidebar steps
-            if (isMobile() && onOpenMobileMenu) {
-              onOpenMobileMenu();
+            if (isMobile() && onOpenMobileMenuRef.current) {
+              onOpenMobileMenuRef.current();
               // Give the sheet time to open and render
               setTimeout(() => {
                 tourInstance.next();
@@ -204,8 +228,8 @@ export function useAppTour({ onComplete, onCancel, onOpenMobileMenu, onCloseMobi
       beforeShowPromise: () => {
         return new Promise<void>((resolve) => {
           // Close mobile menu before showing final step
-          if (isMobile() && onCloseMobileMenu) {
-            onCloseMobileMenu();
+          if (isMobile() && onCloseMobileMenuRef.current) {
+            onCloseMobileMenuRef.current();
             setTimeout(resolve, 300);
           } else {
             resolve();
@@ -222,26 +246,27 @@ export function useAppTour({ onComplete, onCancel, onOpenMobileMenu, onCloseMobi
     });
 
     return tourInstance;
-  }, [onOpenMobileMenu, onCloseMobileMenu]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - we use refs for callbacks to avoid recreating the tour
 
-  // Set up event handlers
+  // Set up event handlers using refs to avoid stale closure issues
   useEffect(() => {
-    if (onComplete) {
-      tour.on('complete', onComplete);
-    }
-    if (onCancel) {
-      tour.on('cancel', onCancel);
-    }
+    const handleComplete = () => {
+      onCompleteRef.current?.();
+    };
+
+    const handleCancel = () => {
+      onCancelRef.current?.();
+    };
+
+    tour.on('complete', handleComplete);
+    tour.on('cancel', handleCancel);
 
     return () => {
-      if (onComplete) {
-        tour.off('complete', onComplete);
-      }
-      if (onCancel) {
-        tour.off('cancel', onCancel);
-      }
+      tour.off('complete', handleComplete);
+      tour.off('cancel', handleCancel);
     };
-  }, [tour, onComplete, onCancel]);
+  }, [tour]);
 
   const startTour = useCallback(() => {
     // Small delay to ensure elements are rendered

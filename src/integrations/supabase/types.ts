@@ -324,6 +324,7 @@ export type Database = {
           glossary_current_streak: number
           glossary_last_study_date: string | null
           id: string
+          onboarding_completed: boolean
           updated_at: string
         }
         Insert: {
@@ -334,6 +335,7 @@ export type Database = {
           glossary_current_streak?: number
           glossary_last_study_date?: string | null
           id: string
+          onboarding_completed?: boolean
           updated_at?: string
         }
         Update: {
@@ -344,6 +346,7 @@ export type Database = {
           glossary_current_streak?: number
           glossary_last_study_date?: string | null
           id?: string
+          onboarding_completed?: boolean
           updated_at?: string
         }
         Relationships: []

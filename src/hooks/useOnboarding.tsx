@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-
-const ONBOARDING_COMPLETED_KEY = 'onboarding_completed';
+import { useAuth } from './useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Global function to reset onboarding - exposed for console access
 declare global {
@@ -10,47 +11,115 @@ declare global {
 }
 
 export function useOnboarding() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Check localStorage on mount
+  // Fetch onboarding status from database
   useEffect(() => {
-    const completed = localStorage.getItem(ONBOARDING_COMPLETED_KEY);
-    const isCompleted = completed === 'true';
-    setHasCompletedOnboarding(isCompleted);
+    async function fetchOnboardingStatus() {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
-    // Show onboarding if not completed
-    if (!isCompleted) {
-      setShowOnboarding(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching onboarding status:', error);
+          // Default to not showing onboarding on error
+          setHasCompletedOnboarding(true);
+          setShowOnboarding(false);
+        } else {
+          const isCompleted = data?.onboarding_completed ?? false;
+          setHasCompletedOnboarding(isCompleted);
+          setShowOnboarding(!isCompleted);
+        }
+      } catch (err) {
+        console.error('Error fetching onboarding status:', err);
+        setHasCompletedOnboarding(true);
+        setShowOnboarding(false);
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }, []);
 
-  const completeOnboarding = useCallback(() => {
-    localStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
+    fetchOnboardingStatus();
+  }, [user]);
+
+  const updateOnboardingStatus = useCallback(async (completed: boolean) => {
+    if (!user) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ onboarding_completed: completed })
+        .eq('id', user.id)
+        .select();
+
+      if (error) {
+        console.error('Error updating onboarding status:', error);
+      } else {
+        // Invalidate profile query to refresh any cached data
+        queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+      }
+    } catch (err) {
+      console.error('Error updating onboarding status:', err);
+    }
+  }, [user, queryClient]);
+
+  const completeOnboarding = useCallback(async () => {
     setHasCompletedOnboarding(true);
     setShowOnboarding(false);
-  }, []);
+    await updateOnboardingStatus(true);
+  }, [updateOnboardingStatus]);
 
-  const skipOnboarding = useCallback(() => {
+  const skipOnboarding = useCallback(async () => {
     // Same as completing - user chose to skip, don't show again
-    localStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
     setHasCompletedOnboarding(true);
     setShowOnboarding(false);
-  }, []);
+    await updateOnboardingStatus(true);
+  }, [updateOnboardingStatus]);
 
-  const resetOnboarding = useCallback(() => {
+  const resetOnboarding = useCallback(async () => {
     // For testing/debugging - allows re-showing onboarding
-    localStorage.removeItem(ONBOARDING_COMPLETED_KEY);
     setHasCompletedOnboarding(false);
     setShowOnboarding(true);
-  }, []);
+    await updateOnboardingStatus(false);
+  }, [updateOnboardingStatus]);
 
   // Register global console command for testing
   useEffect(() => {
-    window.resetOnboarding = () => {
-      localStorage.removeItem(ONBOARDING_COMPLETED_KEY);
-      console.log('🎉 Onboarding reset! Refreshing page...');
-      window.location.reload();
+    window.resetOnboarding = async () => {
+      if (!user) {
+        console.log('❌ No user logged in. Please log in first.');
+        return;
+      }
+
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ onboarding_completed: false })
+          .eq('id', user.id);
+
+        if (error) {
+          console.error('Error resetting onboarding:', error);
+        } else {
+          console.log('🎉 Onboarding reset! Refreshing page...');
+          window.location.reload();
+        }
+      } catch (err) {
+        console.error('Error resetting onboarding:', err);
+      }
     };
 
     // Log availability in development
@@ -61,7 +130,7 @@ export function useOnboarding() {
     return () => {
       delete window.resetOnboarding;
     };
-  }, []);
+  }, [user]);
 
   return {
     hasCompletedOnboarding,
@@ -70,5 +139,6 @@ export function useOnboarding() {
     completeOnboarding,
     skipOnboarding,
     resetOnboarding,
+    isLoading,
   };
 }
