@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useEffect, ReactNode, useCallback, useRef } from 'react';
 import posthog from 'posthog-js';
 import { useAuth } from './useAuth';
 
@@ -13,10 +13,12 @@ interface PostHogContextType {
 
 const PostHogContext = createContext<PostHogContextType | undefined>(undefined);
 
-let isInitialized = false;
+// Track if PostHog SDK has been initialized (persists across component remounts)
+let posthogSdkInitialized = false;
 
 export function PostHogProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const isIdentifiedRef = useRef(false);
 
   useEffect(() => {
     // Skip if PostHog key is not configured
@@ -26,7 +28,7 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
 
     // Only initialize and track when user is authenticated
     if (user?.email) {
-      if (!isInitialized) {
+      if (!posthogSdkInitialized) {
         posthog.init(POSTHOG_KEY, {
           api_host: POSTHOG_HOST,
           person_profiles: 'identified_only',
@@ -35,7 +37,7 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
           autocapture: true,
           capture_exceptions: true,
         });
-        isInitialized = true;
+        posthogSdkInitialized = true;
       }
 
       // Identify user by email
@@ -43,20 +45,22 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
         email: user.email,
         name: user.user_metadata?.display_name || user.email,
       });
-    } else if (isInitialized) {
+      isIdentifiedRef.current = true;
+    } else if (isIdentifiedRef.current) {
       // Reset when user logs out
       posthog.reset();
+      isIdentifiedRef.current = false;
     }
   }, [user]);
 
   const capture = useCallback((event: string, properties?: Record<string, unknown>) => {
-    if (POSTHOG_KEY && user && isInitialized) {
+    if (POSTHOG_KEY && user && posthogSdkInitialized) {
       posthog.capture(event, properties);
     }
   }, [user]);
 
   return (
-    <PostHogContext.Provider value={{ capture, isReady: !!user && isInitialized }}>
+    <PostHogContext.Provider value={{ capture, isReady: !!user && posthogSdkInitialized }}>
       {children}
     </PostHogContext.Provider>
   );
