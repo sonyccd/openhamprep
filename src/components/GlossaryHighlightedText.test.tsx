@@ -19,12 +19,12 @@ import { useGlossaryTerms } from '@/hooks/useGlossaryTerms';
 describe('GlossaryHighlightedText', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useGlossaryTerms).mockReturnValue({ data: mockTerms } as any);
+    vi.mocked(useGlossaryTerms).mockReturnValue({ data: mockTerms } as ReturnType<typeof useGlossaryTerms>);
   });
 
   describe('Empty Terms', () => {
     it('renders plain text when no terms are available', () => {
-      vi.mocked(useGlossaryTerms).mockReturnValue({ data: [] } as any);
+      vi.mocked(useGlossaryTerms).mockReturnValue({ data: [] } as ReturnType<typeof useGlossaryTerms>);
 
       render(<GlossaryHighlightedText text="This is some text about Antenna and Band." />);
 
@@ -32,7 +32,7 @@ describe('GlossaryHighlightedText', () => {
     });
 
     it('renders plain text when terms is undefined', () => {
-      vi.mocked(useGlossaryTerms).mockReturnValue({ data: undefined } as any);
+      vi.mocked(useGlossaryTerms).mockReturnValue({ data: undefined } as ReturnType<typeof useGlossaryTerms>);
 
       render(<GlossaryHighlightedText text="Some radio text." />);
 
@@ -123,7 +123,7 @@ describe('GlossaryHighlightedText', () => {
     it('handles text with regex special characters', () => {
       vi.mocked(useGlossaryTerms).mockReturnValue({
         data: [{ id: '1', term: 'Q*R', definition: 'Test term with special char' }],
-      } as any);
+      } as ReturnType<typeof useGlossaryTerms>);
 
       // Should not throw and should render the text
       render(<GlossaryHighlightedText text="Testing Q*R here" />);
@@ -134,7 +134,7 @@ describe('GlossaryHighlightedText', () => {
     it('handles term with parentheses', () => {
       vi.mocked(useGlossaryTerms).mockReturnValue({
         data: [{ id: '1', term: 'Test (item)', definition: 'A test item' }],
-      } as any);
+      } as ReturnType<typeof useGlossaryTerms>);
 
       render(<GlossaryHighlightedText text="This is a Test (item) example." />);
 
@@ -163,7 +163,7 @@ describe('GlossaryHighlightedText', () => {
           { id: '1', term: 'Radio', definition: 'Communication device' },
           { id: '2', term: 'Amateur Radio', definition: 'Non-commercial radio communication' },
         ],
-      } as any);
+      } as ReturnType<typeof useGlossaryTerms>);
 
       render(<GlossaryHighlightedText text="I use Amateur Radio daily." />);
 

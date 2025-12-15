@@ -40,7 +40,14 @@ vi.mock('@/components/KeyboardShortcutsHelp', () => ({
 
 // Mock QuestionCard
 vi.mock('@/components/QuestionCard', () => ({
-  QuestionCard: ({ question, selectedAnswer, onSelectAnswer, showResult, questionNumber, totalQuestions }: any) => (
+  QuestionCard: ({ question, selectedAnswer, onSelectAnswer, showResult, questionNumber, totalQuestions }: {
+    question: { id: string; question: string };
+    selectedAnswer: string | null;
+    onSelectAnswer: (answer: string) => void;
+    showResult: boolean;
+    questionNumber: number;
+    totalQuestions: number;
+  }) => (
     <div data-testid="question-card">
       <div data-testid="question-id">{question?.id}</div>
       <div data-testid="question-text">{question?.question}</div>
@@ -77,12 +84,12 @@ describe('WeakQuestionsReview', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useQuestions).mockReturnValue({ data: mockQuestions, isLoading: false, error: null } as any);
+    vi.mocked(useQuestions).mockReturnValue({ data: mockQuestions, isLoading: false, error: null } as ReturnType<typeof useQuestions>);
   });
 
   describe('Loading State', () => {
     it('shows loading spinner while fetching questions', () => {
-      vi.mocked(useQuestions).mockReturnValue({ data: undefined, isLoading: true, error: null } as any);
+      vi.mocked(useQuestions).mockReturnValue({ data: undefined, isLoading: true, error: null } as ReturnType<typeof useQuestions>);
 
       render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
 

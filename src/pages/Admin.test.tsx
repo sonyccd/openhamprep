@@ -36,13 +36,13 @@ vi.mock('@/components/admin/AdminGlossary', () => ({
 }));
 
 vi.mock('@/components/admin/AdminQuestions', () => ({
-  AdminQuestions: ({ testType }: any) => (
+  AdminQuestions: ({ testType }: { testType: string }) => (
     <div data-testid="admin-questions">Admin Questions - {testType}</div>
   ),
 }));
 
 vi.mock('@/components/admin/AdminStats', () => ({
-  AdminStats: ({ testType }: any) => (
+  AdminStats: ({ testType }: { testType: string }) => (
     <div data-testid="admin-stats">Admin Stats - {testType}</div>
   ),
 }));
@@ -53,7 +53,7 @@ vi.mock('@/components/admin/AdminExamSessions', () => ({
 
 // Mock AppLayout
 vi.mock('@/components/AppLayout', () => ({
-  AppLayout: ({ children }: any) => <div data-testid="app-layout">{children}</div>,
+  AppLayout: ({ children }: { children: React.ReactNode }) => <div data-testid="app-layout">{children}</div>,
 }));
 
 import { useAuth } from '@/hooks/useAuth';
@@ -65,7 +65,7 @@ describe('Admin', () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { id: 'user-123' },
       loading: false,
-    } as any);
+    } as ReturnType<typeof useAuth>);
     vi.mocked(useAdmin).mockReturnValue({
       isAdmin: true,
       isLoading: false,
@@ -85,7 +85,7 @@ describe('Admin', () => {
       vi.mocked(useAuth).mockReturnValue({
         user: null,
         loading: true,
-      } as any);
+      } as ReturnType<typeof useAuth>);
 
       renderAdmin();
 
@@ -125,7 +125,7 @@ describe('Admin', () => {
       vi.mocked(useAuth).mockReturnValue({
         user: null,
         loading: false,
-      } as any);
+      } as ReturnType<typeof useAuth>);
 
       renderAdmin();
 

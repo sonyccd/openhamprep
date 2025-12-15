@@ -284,7 +284,7 @@ describe('useBookmarks', () => {
       vi.mocked(useAuth).mockReturnValue({
         user: null,
         loading: false,
-      } as any);
+      } as ReturnType<typeof useAuth>);
 
       const { result } = renderHook(() => useBookmarks(), {
         wrapper: createWrapper(),

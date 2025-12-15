@@ -46,7 +46,7 @@ describe('useExplanationFeedback', () => {
     vi.clearAllMocks();
 
     // Reset the useAuth mock to return a user by default
-    vi.mocked(useAuth).mockReturnValue({ user: mockUser } as any);
+    vi.mocked(useAuth).mockReturnValue({ user: mockUser } as ReturnType<typeof useAuth>);
 
     // Default mock chain for select query
     mockMaybeSingle.mockResolvedValue({ data: null, error: null });
@@ -72,7 +72,7 @@ describe('useExplanationFeedback', () => {
     });
 
     it('returns null when user is not logged in', async () => {
-      vi.mocked(useAuth).mockReturnValueOnce({ user: null } as any);
+      vi.mocked(useAuth).mockReturnValueOnce({ user: null } as ReturnType<typeof useAuth>);
 
       const { result } = renderHook(() => useExplanationFeedback('question-1'), {
         wrapper: createWrapper()
@@ -133,7 +133,7 @@ describe('useExplanationFeedback', () => {
     });
 
     it('throws error when user is not logged in', async () => {
-      vi.mocked(useAuth).mockReturnValue({ user: null } as any);
+      vi.mocked(useAuth).mockReturnValue({ user: null } as ReturnType<typeof useAuth>);
 
       const { result } = renderHook(() => useExplanationFeedback('question-1'), {
         wrapper: createWrapper()
@@ -173,7 +173,7 @@ describe('useExplanationFeedback', () => {
     });
 
     it('throws error when user is not logged in', async () => {
-      vi.mocked(useAuth).mockReturnValue({ user: null } as any);
+      vi.mocked(useAuth).mockReturnValue({ user: null } as ReturnType<typeof useAuth>);
 
       const { result } = renderHook(() => useExplanationFeedback('question-1'), {
         wrapper: createWrapper()
