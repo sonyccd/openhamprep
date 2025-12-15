@@ -21,6 +21,7 @@ dist-ssr
 # Supabase local
 .supabase/
 supabase/.temp/
+supabase/functions/.env
 
 # Data directory (may contain PII from exports)
 data/

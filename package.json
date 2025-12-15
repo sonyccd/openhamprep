@@ -29,6 +29,8 @@
     "dev:local": "cp .env.local .env && npm run dev",
     "dev:hosted": "cp .env.production .env && npm run dev",
     "dev:full": "npm run supabase:start && npm run dev",
+    "supabase:functions": "npx supabase functions serve --no-verify-jwt --env-file supabase/functions/.env",
+    "supabase:functions:debug": "npx supabase functions serve --no-verify-jwt --env-file supabase/functions/.env --debug",
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
