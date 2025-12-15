@@ -1,6 +1,26 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+/**
+ * Constant-time string comparison to prevent timing attacks.
+ * Pads strings to equal length and compares all characters regardless of mismatch position.
+ */
+function constantTimeCompare(a: string, b: string): boolean {
+  const maxLen = Math.max(a.length, b.length);
+
+  // Pad shorter string with null characters for constant-time comparison
+  const aPadded = a.padEnd(maxLen, '\0');
+  const bPadded = b.padEnd(maxLen, '\0');
+
+  let result = 0;
+  for (let i = 0; i < maxLen; i++) {
+    result |= aPadded.charCodeAt(i) ^ bPadded.charCodeAt(i);
+  }
+
+  // Both XOR result must be 0 AND original lengths must match
+  return result === 0 && a.length === b.length;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -226,7 +246,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Require authentication
+    // Require authentication - supports both service role key and user JWT
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -236,28 +256,37 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: Invalid token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Check if this is a service role key using constant-time comparison to prevent timing attacks
+    // WARNING: Service role key bypasses Row Level Security - only use for trusted automation
+    const isServiceRole = constantTimeCompare(token, supabaseKey);
+
+    if (!isServiceRole) {
+      // Try to authenticate as a user
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+      if (authError || !user) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: Invalid token' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Verify user has admin role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (roleError || roleData?.role !== 'admin') {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden: Admin access required' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
-
-    // Verify user has admin role
-    const { data: roleData, error: roleError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
-
-    if (roleError || roleData?.role !== 'admin') {
-      return new Response(
-        JSON.stringify({ error: 'Forbidden: Admin access required' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Service role key is implicitly trusted as admin
 
     // Parse and validate request body
     const body = await req.json().catch(() => ({}));
@@ -276,7 +305,9 @@ serve(async (req) => {
     // Validate batch size (max 100 to stay well within timeout limits)
     const effectiveBatchSize = Math.min(Math.max(1, rawBatchSize), MAX_BATCH_SIZE);
 
-    console.log(`Starting Discourse sync with action: ${action}, license: ${license || 'all'}, batchSize: ${effectiveBatchSize}`);
+    // Audit logging for security monitoring
+    const authMethod = isServiceRole ? 'service_role' : 'user_jwt';
+    console.log(`Starting Discourse sync - auth: ${authMethod}, action: ${action}, license: ${license || 'all'}, batchSize: ${effectiveBatchSize}`);
 
     // Fetch category IDs from Discourse
     console.log('Fetching Discourse categories...');
