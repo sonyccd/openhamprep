@@ -18,9 +18,10 @@ export default defineConfig({
       openMode: 0,
     },
     env: {
-      // Test user credentials for local Supabase
-      TEST_USER_EMAIL: 'test@example.com',
-      TEST_USER_PASSWORD: 'testpassword123',
+      // Test user credentials - set via CYPRESS_TEST_USER_EMAIL and CYPRESS_TEST_USER_PASSWORD env vars
+      // or use defaults for local development
+      TEST_USER_EMAIL: process.env.CYPRESS_TEST_USER_EMAIL || 'test@example.com',
+      TEST_USER_PASSWORD: process.env.CYPRESS_TEST_USER_PASSWORD || 'testpassword123',
     },
   },
 });

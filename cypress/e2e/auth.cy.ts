@@ -107,15 +107,17 @@ describe('Authentication', () => {
 
     it('should successfully sign in with valid credentials', () => {
       // This test requires a valid user in the local Supabase
-      // Users should be created via seed.sql or manually
-      cy.fixture('user').then((userData) => {
-        cy.get('input#email').type(userData.validUser.email);
-        cy.get('input#password').type(userData.validUser.password);
-        cy.get('button[type="submit"]').click();
+      // Credentials are configured via CYPRESS_TEST_USER_EMAIL and CYPRESS_TEST_USER_PASSWORD env vars
+      // or use defaults for local development (test@example.com / testpassword123)
+      const email = Cypress.env('TEST_USER_EMAIL');
+      const password = Cypress.env('TEST_USER_PASSWORD');
 
-        // Should redirect to dashboard on success
-        cy.url({ timeout: 10000 }).should('include', '/dashboard');
-      });
+      cy.get('input#email').type(email);
+      cy.get('input#password').type(password);
+      cy.get('button[type="submit"]').click();
+
+      // Should redirect to dashboard on success
+      cy.url({ timeout: 10000 }).should('include', '/dashboard');
     });
   });
 

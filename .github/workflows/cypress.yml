@@ -1,9 +1,22 @@
+# Cypress E2E Tests
+#
+# IMPORTANT: This workflow requires:
+# 1. CYPRESS_RECORD_KEY secret (for Cypress Cloud recording)
+# 2. Supabase backend (tests connect to the hosted Supabase instance via Vercel preview)
+# 3. A test user to exist in the database (test@example.com / testpassword123)
+#
+# Tests are configured as non-blocking (continue-on-error: true) so they won't
+# prevent PRs from merging while the test infrastructure is being stabilized.
+#
+# For local development, use: npm run e2e:open
+# This will start the dev server and open Cypress interactively.
+
 name: Cypress Tests
 on: [push]
 jobs:
   cypress-run:
     runs-on: ubuntu-latest
-    # Don't block PRs if tests fail
+    # Don't block PRs if tests fail - tests are informational while being stabilized
     continue-on-error: true
     # Runs tests in parallel with matrix strategy https://docs.cypress.io/guides/guides/parallelization
     # https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
@@ -15,21 +28,29 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Cypress run
         # Uses the official Cypress GitHub action https://github.com/cypress-io/github-action
         uses: cypress-io/github-action@v6
         with:
-          # Starts web server for E2E tests - replace with your own server invocation
+          # Starts web server for E2E tests
           # https://docs.cypress.io/guides/continuous-integration/introduction#Boot-your-server
           start: npm run dev
-          wait-on: 'http://localhost:8080' # Waits for above
+          wait-on: 'http://localhost:8080'
+          wait-on-timeout: 120
           # Records to Cypress Cloud
           # https://docs.cypress.io/guides/cloud/projects#Set-up-a-project-to-record
           record: true
-          parallel: true # Runs test in parallel using settings above
+          parallel: true # Runs tests in parallel using settings above
         env:
           # For recording and parallelization to work you must set your CYPRESS_RECORD_KEY
           # in GitHub repo → Settings → Secrets → Actions
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
           # Creating a token https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Supabase connection (uses Vercel preview environment variables)
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          # Test user credentials (optional - defaults to test@example.com)
+          CYPRESS_TEST_USER_EMAIL: ${{ secrets.CYPRESS_TEST_USER_EMAIL }}
+          CYPRESS_TEST_USER_PASSWORD: ${{ secrets.CYPRESS_TEST_USER_PASSWORD }}

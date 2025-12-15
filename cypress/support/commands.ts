@@ -58,9 +58,13 @@ Cypress.Commands.add('login', (email: string, password: string) => {
 
 // Logout command
 Cypress.Commands.add('logout', () => {
-  // Click user menu and logout button
-  cy.get('[data-testid="user-menu"]').click();
-  cy.get('[data-testid="logout-button"]').click();
+  // Click the Sign Out button in the sidebar
+  cy.contains('button', 'Sign Out').click();
+
+  // Confirm sign out in the dialog
+  cy.get('[role="alertdialog"]').within(() => {
+    cy.contains('button', 'Sign Out').click();
+  });
 
   // Verify redirect to auth page
   cy.url().should('include', '/auth');
@@ -68,21 +72,25 @@ Cypress.Commands.add('logout', () => {
 
 // Select license command
 Cypress.Commands.add('selectLicense', (license: 'Technician' | 'General' | 'Extra') => {
-  // Click the license selector
-  cy.get('[data-testid="license-selector"]').click();
+  // Click the license selector (uses data-tour attribute)
+  cy.get('[data-tour="license-selector"]').click();
 
-  // Select the license option
-  cy.contains(license).click();
+  // Wait for modal and select the license option
+  cy.contains('Select License Class').should('be.visible');
 
-  // Wait for UI to update
-  cy.get('[data-testid="license-selector"]').should('contain', license);
+  // Map display names to internal names if needed
+  const displayName = license === 'Extra' ? 'Amateur Extra' : license;
+  cy.contains(displayName).click();
+
+  // Confirm selection
+  cy.contains('button', /Change License|No Change/).click();
 });
 
 // Wait for dashboard to load
 Cypress.Commands.add('waitForDashboard', () => {
   cy.url().should('include', '/dashboard');
-  // Wait for main content to load
-  cy.get('[data-testid="dashboard-content"]', { timeout: 10000 }).should('be.visible');
+  // Wait for the readiness card to load (indicates dashboard content is ready)
+  cy.get('[data-tour="dashboard-readiness"]', { timeout: 10000 }).should('be.visible');
 });
 
 // Get by data-testid helper

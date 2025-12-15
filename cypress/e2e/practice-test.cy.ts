@@ -2,14 +2,11 @@
 
 describe('Practice Test Flow', () => {
   beforeEach(() => {
-    // Login before each test
-    cy.fixture('user').then((userData) => {
-      cy.visit('/auth');
-      cy.get('input#email').type(userData.validUser.email);
-      cy.get('input#password').type(userData.validUser.password);
-      cy.get('button[type="submit"]').click();
-      cy.url({ timeout: 10000 }).should('include', '/dashboard');
-    });
+    // Login before each test using custom command
+    // Credentials configured via CYPRESS_TEST_USER_EMAIL and CYPRESS_TEST_USER_PASSWORD env vars
+    const email = Cypress.env('TEST_USER_EMAIL');
+    const password = Cypress.env('TEST_USER_PASSWORD');
+    cy.login(email, password);
   });
 
   describe('Practice Test Start Screen', () => {
