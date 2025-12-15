@@ -37,6 +37,26 @@ function getCategorySlug(categoryName: string): string {
   return categoryName.toLowerCase().replace(/\s+/g, '-');
 }
 
+/**
+ * Constant-time string comparison to prevent timing attacks.
+ * Pads strings to equal length and compares all characters regardless of mismatch position.
+ */
+function constantTimeCompare(a: string, b: string): boolean {
+  const maxLen = Math.max(a.length, b.length);
+
+  // Pad shorter string with null characters for constant-time comparison
+  const aPadded = a.padEnd(maxLen, '\0');
+  const bPadded = b.padEnd(maxLen, '\0');
+
+  let result = 0;
+  for (let i = 0; i < maxLen; i++) {
+    result |= aPadded.charCodeAt(i) ^ bPadded.charCodeAt(i);
+  }
+
+  // Both XOR result must be 0 AND original lengths must match
+  return result === 0 && a.length === b.length;
+}
+
 function formatTopicBody(question: Question): string {
   const letters = ['A', 'B', 'C', 'D'];
   const correctLetter = letters[question.correct_answer];
@@ -210,6 +230,56 @@ describe('sync-discourse-topics edge function', () => {
 
     it('handles single word', () => {
       expect(getCategorySlug('Questions')).toBe('questions');
+    });
+  });
+
+  describe('constantTimeCompare', () => {
+    it('returns true for identical strings', () => {
+      expect(constantTimeCompare('abc', 'abc')).toBe(true);
+      expect(constantTimeCompare('test-key-123', 'test-key-123')).toBe(true);
+      expect(constantTimeCompare('', '')).toBe(true);
+    });
+
+    it('returns false for different strings of same length', () => {
+      expect(constantTimeCompare('abc', 'abd')).toBe(false);
+      expect(constantTimeCompare('abc', 'xyz')).toBe(false);
+      expect(constantTimeCompare('aaa', 'aab')).toBe(false);
+    });
+
+    it('returns false for different length strings', () => {
+      expect(constantTimeCompare('abc', 'abcd')).toBe(false);
+      expect(constantTimeCompare('abcd', 'abc')).toBe(false);
+      expect(constantTimeCompare('a', 'aa')).toBe(false);
+      expect(constantTimeCompare('', 'a')).toBe(false);
+    });
+
+    it('handles special characters', () => {
+      expect(constantTimeCompare('key-with-dashes', 'key-with-dashes')).toBe(true);
+      expect(constantTimeCompare('key_with_underscores', 'key_with_underscores')).toBe(true);
+      expect(constantTimeCompare('key.with.dots', 'key.with.dots')).toBe(true);
+    });
+
+    it('handles unicode characters', () => {
+      expect(constantTimeCompare('héllo', 'héllo')).toBe(true);
+      expect(constantTimeCompare('héllo', 'hello')).toBe(false);
+    });
+
+    it('is case sensitive', () => {
+      expect(constantTimeCompare('ABC', 'abc')).toBe(false);
+      expect(constantTimeCompare('Test', 'test')).toBe(false);
+    });
+
+    it('handles long strings (like API keys)', () => {
+      const key1 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2RlZmdoaWprbG1ub3BxcnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY0MjAwMDAwMCwiZXhwIjoxOTU3NTc2MDAwfQ.abc123def456';
+      const key2 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2RlZmdoaWprbG1ub3BxcnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY0MjAwMDAwMCwiZXhwIjoxOTU3NTc2MDAwfQ.abc123def456';
+      const key3 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2RlZmdoaWprbG1ub3BxcnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY0MjAwMDAwMCwiZXhwIjoxOTU3NTc2MDAwfQ.xyz789abc123';
+      expect(constantTimeCompare(key1, key2)).toBe(true);
+      expect(constantTimeCompare(key1, key3)).toBe(false);
+    });
+
+    it('compares strings with null characters correctly', () => {
+      expect(constantTimeCompare('a\0b', 'a\0b')).toBe(true);
+      expect(constantTimeCompare('a\0b', 'a\0c')).toBe(false);
     });
   });
 

@@ -3,25 +3,22 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /**
  * Constant-time string comparison to prevent timing attacks.
- * Always compares all characters regardless of where a mismatch occurs.
+ * Pads strings to equal length and compares all characters regardless of mismatch position.
  */
 function constantTimeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    // Still do a comparison to maintain constant time for same-length strings
-    // but we know the result will be false
-    const dummy = a.length > 0 ? a : 'x';
-    let result = 0;
-    for (let i = 0; i < dummy.length; i++) {
-      result |= dummy.charCodeAt(i) ^ dummy.charCodeAt(i);
-    }
-    return false;
-  }
+  const maxLen = Math.max(a.length, b.length);
+
+  // Pad shorter string with null characters for constant-time comparison
+  const aPadded = a.padEnd(maxLen, '\0');
+  const bPadded = b.padEnd(maxLen, '\0');
 
   let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  for (let i = 0; i < maxLen; i++) {
+    result |= aPadded.charCodeAt(i) ^ bPadded.charCodeAt(i);
   }
-  return result === 0;
+
+  // Both XOR result must be 0 AND original lengths must match
+  return result === 0 && a.length === b.length;
 }
 
 const corsHeaders = {
@@ -264,10 +261,6 @@ serve(async (req) => {
     // WARNING: Service role key bypasses Row Level Security - only use for trusted automation
     const isServiceRole = constantTimeCompare(token, supabaseKey);
 
-    if (isServiceRole) {
-      console.log('Service role authentication used for sync operation');
-    }
-
     if (!isServiceRole) {
       // Try to authenticate as a user
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
@@ -312,7 +305,9 @@ serve(async (req) => {
     // Validate batch size (max 100 to stay well within timeout limits)
     const effectiveBatchSize = Math.min(Math.max(1, rawBatchSize), MAX_BATCH_SIZE);
 
-    console.log(`Starting Discourse sync with action: ${action}, license: ${license || 'all'}, batchSize: ${effectiveBatchSize}`);
+    // Audit logging for security monitoring
+    const authMethod = isServiceRole ? 'service_role' : 'user_jwt';
+    console.log(`Starting Discourse sync - auth: ${authMethod}, action: ${action}, license: ${license || 'all'}, batchSize: ${effectiveBatchSize}`);
 
     // Fetch category IDs from Discourse
     console.log('Fetching Discourse categories...');
