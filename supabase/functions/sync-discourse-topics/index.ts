@@ -38,7 +38,7 @@ interface DiscourseCategory {
 
 interface SyncResult {
   questionId: string;
-  status: 'created' | 'skipped' | 'error';
+  status: 'created' | 'skipped' | 'error' | 'partial';
   topicId?: number;
   topicUrl?: string;
   reason?: string;
@@ -456,6 +456,7 @@ serve(async (req) => {
 
       if (result.success) {
         // Save the forum URL to the database
+        let dbUpdateSuccess = true;
         if (result.topicUrl) {
           const { error: updateError } = await supabase
             .from('questions')
@@ -464,13 +465,26 @@ serve(async (req) => {
 
           if (updateError) {
             console.error(`Failed to save forum_url for ${question.id}: ${updateError.message}`);
+            dbUpdateSuccess = false;
           } else {
             console.log(`Saved forum_url for ${question.id}: ${result.topicUrl}`);
           }
         }
 
-        results.push({ questionId: question.id, status: 'created', topicId: result.topicId, topicUrl: result.topicUrl });
-        created++;
+        if (dbUpdateSuccess) {
+          results.push({ questionId: question.id, status: 'created', topicId: result.topicId, topicUrl: result.topicUrl });
+          created++;
+        } else {
+          // Topic was created but DB update failed - report as partial success
+          results.push({
+            questionId: question.id,
+            status: 'partial',
+            topicId: result.topicId,
+            topicUrl: result.topicUrl,
+            reason: 'Topic created in Discourse but failed to save forum_url to database'
+          });
+          errors++;
+        }
       } else {
         results.push({ questionId: question.id, status: 'error', reason: result.error });
         errors++;

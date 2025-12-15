@@ -27,7 +27,7 @@ interface Question {
 
 interface SyncResult {
   questionId: string;
-  status: 'created' | 'skipped' | 'error';
+  status: 'created' | 'skipped' | 'error' | 'partial';
   topicId?: number;
   topicUrl?: string;
   reason?: string;
@@ -567,6 +567,32 @@ describe('sync-discourse-topics edge function', () => {
       };
       expect(result.status).toBe('error');
       expect(result.reason).toBe('API rate limited');
+    });
+
+    it('allows partial status when topic created but DB update failed', () => {
+      const result: SyncResult = {
+        questionId: 'T1A01',
+        status: 'partial',
+        topicId: 12345,
+        topicUrl: 'https://forum.openhamprep.com/t/t1a01-question-text/12345',
+        reason: 'Topic created in Discourse but failed to save forum_url to database',
+      };
+      expect(result.status).toBe('partial');
+      expect(result.topicId).toBe(12345);
+      expect(result.topicUrl).toBeDefined();
+      expect(result.reason).toContain('failed to save forum_url');
+    });
+
+    it('partial status includes topicId and topicUrl', () => {
+      const result: SyncResult = {
+        questionId: 'G2B03',
+        status: 'partial',
+        topicId: 67890,
+        topicUrl: 'https://forum.openhamprep.com/t/g2b03-general-question/67890',
+        reason: 'Topic created in Discourse but failed to save forum_url to database',
+      };
+      expect(result.topicId).toBe(67890);
+      expect(result.topicUrl).toBe('https://forum.openhamprep.com/t/g2b03-general-question/67890');
     });
   });
 
@@ -1470,6 +1496,66 @@ describe('Batch response structure', () => {
       expect(detail.status).toBe('error');
       expect(detail.reason).toBeDefined();
       expect(detail.topicId).toBeUndefined();
+    });
+
+    it('validates detail entry for partial status (DB update failure)', () => {
+      const detail: SyncResult = {
+        questionId: 'T1A01',
+        status: 'partial',
+        topicId: 12345,
+        topicUrl: 'https://forum.openhamprep.com/t/t1a01-question-text/12345',
+        reason: 'Topic created in Discourse but failed to save forum_url to database',
+      };
+
+      expect(detail.status).toBe('partial');
+      expect(detail.topicId).toBeDefined();
+      expect(detail.topicUrl).toBeDefined();
+      expect(detail.reason).toBeDefined();
+      expect(detail.reason).toContain('failed to save forum_url');
+    });
+
+    it('partial status counts as error in batch statistics', () => {
+      // When a topic is created but DB update fails, it should be counted as an error
+      const batchResults: SyncResult[] = [
+        { questionId: 'T1A01', status: 'created', topicId: 100, topicUrl: 'https://forum.openhamprep.com/t/t1a01/100' },
+        { questionId: 'T1A02', status: 'partial', topicId: 101, topicUrl: 'https://forum.openhamprep.com/t/t1a02/101', reason: 'DB update failed' },
+        { questionId: 'T1A03', status: 'error', reason: 'API error' },
+      ];
+
+      const created = batchResults.filter(r => r.status === 'created').length;
+      const errors = batchResults.filter(r => r.status === 'error' || r.status === 'partial').length;
+
+      expect(created).toBe(1);
+      expect(errors).toBe(2); // Both 'error' and 'partial' count as errors
+    });
+
+    it('distinguishes between full success and partial success', () => {
+      const fullSuccess: SyncResult = {
+        questionId: 'T1A01',
+        status: 'created',
+        topicId: 100,
+        topicUrl: 'https://forum.openhamprep.com/t/t1a01/100',
+      };
+
+      const partialSuccess: SyncResult = {
+        questionId: 'T1A02',
+        status: 'partial',
+        topicId: 101,
+        topicUrl: 'https://forum.openhamprep.com/t/t1a02/101',
+        reason: 'Topic created in Discourse but failed to save forum_url to database',
+      };
+
+      // Full success has no reason
+      expect(fullSuccess.reason).toBeUndefined();
+
+      // Partial success has reason explaining the issue
+      expect(partialSuccess.reason).toBeDefined();
+
+      // Both have topicId and topicUrl (topic was created)
+      expect(fullSuccess.topicId).toBeDefined();
+      expect(fullSuccess.topicUrl).toBeDefined();
+      expect(partialSuccess.topicId).toBeDefined();
+      expect(partialSuccess.topicUrl).toBeDefined();
     });
   });
 
