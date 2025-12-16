@@ -49,23 +49,27 @@ supabase db push
 2. Select your project
 3. Navigate to **Authentication** > **URL Configuration**
 4. Add the following to **Redirect URLs**:
-   - `https://openhamprep.com/**` (production)
+   - `https://app.openhamprep.com/**` (production app)
    - `https://forum.openhamprep.com/auth/oauth2_basic/callback` (Discourse OAuth callback)
    - `http://localhost:8080/**` (local development)
 
 ### Step 3: Configure Supabase OAuth 2.1 Server (Dashboard)
 
-1. Navigate to **Authentication** > **OAuth Server**
-2. Click **Enable OAuth 2.1 Server**
-3. Configure JWT signing:
-   - If using OIDC (recommended), switch to RS256 asymmetric signing
-4. Set **Authorization Path** to: `/oauth/consent`
-5. Register Discourse as an OAuth client:
-   - Click **Add Client**
+1. Navigate to **Authentication** > **OAuth Server** (or **OAuth 2.1 Server**)
+2. Click **Enable OAuth 2.1 Server** if not already enabled
+3. Configure the following settings:
+   - **Site URL**: `app.openhamprep.com` (where your React app is hosted)
+   - **Authorization Path**: `/oauth/consent`
+   - The Preview Authorization URL should show: `app.openhamprep.com/oauth/consent`
+   - **JWT signing**: If using OIDC (recommended), switch to RS256 asymmetric signing
+4. Register Discourse as an OAuth client:
+   - Click **Add Client** (or **New Client**)
    - **Name**: `Open Ham Prep Forum`
    - **Type**: `Confidential` (server-side application)
    - **Redirect URI**: `https://forum.openhamprep.com/auth/oauth2_basic/callback`
-6. **Save the Client ID and Client Secret** - you'll need these for Discourse
+5. **Save the Client ID and Client Secret** - you'll need these for Discourse
+
+**IMPORTANT**: The Site URL in Supabase URL Configuration must match where your app is hosted (`app.openhamprep.com`). The OAuth Server uses this Site URL + Authorization Path to construct the full consent URL.
 
 ### Step 4: Configure Discourse
 
@@ -93,12 +97,18 @@ The URLs above use the custom domain `api.openhamprep.com`. If you're self-hosti
 
 1. Go to https://forum.openhamprep.com
 2. Click "Log In" or "Sign Up"
-3. You should see "Login with Open Ham Prep" option
+3. You should see "Login with Open Ham Prep" (or "with OAuth2") option
 4. Click it and verify:
-   - You're redirected to Open Ham Prep
+   - You're redirected to `https://app.openhamprep.com/oauth/consent?authorization_id=...`
    - If not logged in, you're prompted to log in first
    - You see the consent screen with forum username input
    - After approving, you're redirected back to Discourse logged in
+
+**Troubleshooting**: If you get "Sorry, there was an error while trying to authorize your account with oauth2_basic":
+1. Check Supabase Dashboard → Authentication → OAuth Apps - ensure the client is registered
+2. Verify the Client ID in Discourse matches exactly what's in Supabase
+3. Verify the Redirect URI in Supabase matches exactly: `https://forum.openhamprep.com/auth/oauth2_basic/callback`
+4. Check browser Network tab for the actual error response from Supabase
 
 ### Step 6: (Optional) Custom Access Token Hook
 

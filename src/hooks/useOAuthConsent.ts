@@ -119,13 +119,27 @@ export function useOAuthConsent(): UseOAuthConsentReturn {
         throw new Error('Failed to fetch authorization details');
       }
 
-      const clientId = authDetails.client_id;
+      // Log the full response to debug field names
+      console.log(LOG_PREFIX, 'Authorization details received:', JSON.stringify(authDetails, null, 2));
+
+      // Supabase OAuth 2.1 may use 'application' object or different field names
+      const clientId = authDetails.client_id || authDetails.application?.id || authDetails.application_id;
+
+      // Handle different possible field names from Supabase OAuth API
+      const clientName = authDetails.client_name || authDetails.application?.name || authDetails.name || 'Unknown Application';
+      const redirectUri = authDetails.redirect_uri || authDetails.redirect_url;
+      const scopes = authDetails.scopes || authDetails.scope?.split(' ') || [];
+
+      if (!clientId) {
+        console.error(LOG_PREFIX, 'No client_id found in authorization details');
+        throw new Error('Invalid authorization details: missing client_id');
+      }
 
       setAuthorizationDetails({
         client_id: clientId,
-        client_name: authDetails.client_name || 'Unknown Application',
-        redirect_uri: authDetails.redirect_uri,
-        scopes: authDetails.scopes || [],
+        client_name: clientName,
+        redirect_uri: redirectUri,
+        scopes: scopes,
         state: authDetails.state,
       });
 
