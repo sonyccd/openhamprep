@@ -95,6 +95,7 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
   const userInfo = {
     displayName: profile?.display_name || null,
     email: user.email || null,
+    forumUsername: profile?.forum_username || null,
   };
 
   const currentTest = testTypes.find(t => t.id === selectedTest);
