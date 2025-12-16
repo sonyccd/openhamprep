@@ -464,6 +464,79 @@ describe('useOAuthConsent', () => {
     });
   });
 
+  describe('Pre-approved Consent (Redirect URL with Code)', () => {
+    it('should redirect immediately when response contains redirect_url with code', async () => {
+      // Mock window.location.href
+      const originalLocation = window.location;
+      // @ts-expect-error - mocking window.location
+      delete window.location;
+      window.location = { ...originalLocation, href: '' };
+
+      mockGetAuthorizationDetails.mockResolvedValue({
+        data: {
+          redirect_url: 'https://example.com/callback?code=abc123&state=xyz',
+        },
+        error: null,
+      });
+
+      const { result } = renderHook(() => useOAuthConsent(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isAutoApproving).toBe(true);
+      });
+
+      expect(window.location.href).toBe('https://example.com/callback?code=abc123&state=xyz');
+
+      // Restore window.location
+      window.location = originalLocation;
+    });
+
+    it('should redirect when redirect_uri contains code (alternative field name)', async () => {
+      const originalLocation = window.location;
+      // @ts-expect-error - mocking window.location
+      delete window.location;
+      window.location = { ...originalLocation, href: '' };
+
+      mockGetAuthorizationDetails.mockResolvedValue({
+        data: {
+          redirect_uri: 'https://example.com/callback?code=def456&state=abc',
+        },
+        error: null,
+      });
+
+      const { result } = renderHook(() => useOAuthConsent(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isAutoApproving).toBe(true);
+      });
+
+      expect(window.location.href).toBe('https://example.com/callback?code=def456&state=abc');
+
+      window.location = originalLocation;
+    });
+
+    it('should not auto-redirect when redirect_url has no code parameter', async () => {
+      mockGetAuthorizationDetails.mockResolvedValue({
+        data: {
+          client_id: 'test-client',
+          client_name: 'Test App',
+          redirect_uri: 'https://example.com/callback',
+          scopes: ['openid', 'email'],
+        },
+        error: null,
+      });
+
+      const { result } = renderHook(() => useOAuthConsent(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.authorizationDetails).not.toBe(null);
+      });
+
+      expect(result.current.isAutoApproving).toBe(false);
+      expect(result.current.authorizationDetails?.client_id).toBe('test-client');
+    });
+  });
+
   describe('Consent Storage', () => {
     it('should save consent when rememberDecision is true', async () => {
       const mockUpsert = vi.fn(() => Promise.resolve({ error: null }));
