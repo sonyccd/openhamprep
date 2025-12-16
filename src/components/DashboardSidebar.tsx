@@ -21,6 +21,7 @@ interface NavItem {
 interface UserInfo {
   displayName: string | null;
   email: string | null;
+  forumUsername: string | null;
 }
 interface DashboardSidebarProps {
   currentView: View;
@@ -374,7 +375,8 @@ export function DashboardSidebar({
       {/* Profile Modal */}
       {userId && userInfo && onProfileUpdate && <ProfileModal open={profileModalOpen} onOpenChange={setProfileModalOpen} userInfo={{
       displayName: userInfo.displayName,
-      email: userInfo.email
+      email: userInfo.email,
+      forumUsername: userInfo.forumUsername
     }} userId={userId} onProfileUpdate={onProfileUpdate} />}
 
       {/* License Select Modal */}

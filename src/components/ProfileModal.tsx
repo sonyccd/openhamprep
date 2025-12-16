@@ -8,13 +8,15 @@ import { Separator } from "@/components/ui/separator";
 import { ThemeSelector } from "@/components/ThemeSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, KeyRound, Palette, Trash2, AlertTriangle, Mail } from "lucide-react";
+import { User, KeyRound, Palette, Trash2, AlertTriangle, Mail, MessageSquare } from "lucide-react";
+import { validateForumUsername } from "@/lib/validation";
 interface ProfileModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userInfo: {
     displayName: string | null;
     email: string | null;
+    forumUsername: string | null;
   };
   userId: string;
   onProfileUpdate: () => void;
@@ -36,6 +38,9 @@ export function ProfileModal({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [forumUsername, setForumUsername] = useState(userInfo.forumUsername || "");
+  const [isEditingForumUsername, setIsEditingForumUsername] = useState(false);
+  const [isUpdatingForumUsername, setIsUpdatingForumUsername] = useState(false);
   const handleUpdateDisplayName = async () => {
     if (!displayName.trim()) {
       toast.error("Display name cannot be empty");
@@ -55,6 +60,34 @@ export function ProfileModal({
       toast.error(error instanceof Error ? error.message : "Failed to update display name");
     } finally {
       setIsUpdatingName(false);
+    }
+  };
+  const handleUpdateForumUsername = async () => {
+    const validation = validateForumUsername(forumUsername);
+    if (!validation.valid) {
+      toast.error(validation.error || "Invalid forum username");
+      return;
+    }
+    const trimmed = forumUsername.trim();
+    setIsUpdatingForumUsername(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ forum_username: trimmed })
+        .eq("id", userId);
+      if (error) {
+        // Check for unique constraint violation
+        if (error.code === '23505') {
+          throw new Error("This username is already taken");
+        }
+        throw error;
+      }
+      toast.success("Forum username updated successfully");
+      onProfileUpdate();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to update forum username");
+    } finally {
+      setIsUpdatingForumUsername(false);
     }
   };
   const handleUpdateEmail = async () => {
@@ -180,6 +213,39 @@ export function ProfileModal({
                 </Button>
               </div>}
             
+          </div>
+
+          <Separator />
+
+          {/* Forum Username Section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <MessageSquare className="w-4 h-4 text-muted-foreground" />
+              Forum Username
+            </div>
+            {isEditingForumUsername ? <div className="flex gap-2">
+                <Input value={forumUsername} onChange={e => setForumUsername(e.target.value)} placeholder="Enter your forum username" className="flex-1" autoFocus />
+                <Button onClick={async () => {
+              await handleUpdateForumUsername();
+              setIsEditingForumUsername(false);
+            }} disabled={isUpdatingForumUsername || forumUsername === userInfo.forumUsername} size="sm">
+                  {isUpdatingForumUsername ? "Saving..." : "Save"}
+                </Button>
+                <Button variant="outline" onClick={() => {
+              setForumUsername(userInfo.forumUsername || "");
+              setIsEditingForumUsername(false);
+            }} size="sm">
+                  Cancel
+                </Button>
+              </div> : <div className="flex items-center justify-between">
+                <span className="text-sm">{userInfo.forumUsername || "Not set"}</span>
+                <Button variant="outline" onClick={() => setIsEditingForumUsername(true)} size="sm">
+                  Edit
+                </Button>
+              </div>}
+            <p className="text-xs text-muted-foreground">
+              This username will be visible on the Open Ham Prep forum
+            </p>
           </div>
 
           <Separator />

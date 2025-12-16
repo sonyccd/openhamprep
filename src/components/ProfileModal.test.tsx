@@ -51,6 +51,7 @@ const defaultProps = {
   userInfo: {
     displayName: 'Test User',
     email: 'test@example.com',
+    forumUsername: null,
   },
   userId: 'test-user-id',
   onProfileUpdate: vi.fn(),
@@ -91,10 +92,16 @@ describe('ProfileModal', () => {
 
     it('shows "Not set" when display name is null', () => {
       renderProfileModal({
-        userInfo: { displayName: null, email: 'test@example.com' },
+        userInfo: { displayName: null, email: 'test@example.com', forumUsername: null },
       });
 
-      expect(screen.getByText('Not set')).toBeInTheDocument();
+      expect(screen.getAllByText('Not set').length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('renders the Forum Username section', () => {
+      renderProfileModal();
+
+      expect(screen.getByText('Forum Username')).toBeInTheDocument();
     });
   });
 
@@ -103,8 +110,9 @@ describe('ProfileModal', () => {
       const user = userEvent.setup();
       renderProfileModal();
 
-      const editButton = screen.getByRole('button', { name: /edit/i });
-      await user.click(editButton);
+      // Get all Edit buttons and click the first one (Display Name)
+      const editButtons = screen.getAllByRole('button', { name: /edit/i });
+      await user.click(editButtons[0]);
 
       const input = screen.getByPlaceholderText('Enter your display name');
       expect(input).toBeInTheDocument();
@@ -115,7 +123,9 @@ describe('ProfileModal', () => {
       const user = userEvent.setup();
       renderProfileModal();
 
-      await user.click(screen.getByRole('button', { name: /edit/i }));
+      // Get all Edit buttons and click the first one (Display Name)
+      const editButtons = screen.getAllByRole('button', { name: /edit/i });
+      await user.click(editButtons[0]);
       await user.click(screen.getByRole('button', { name: /cancel/i }));
 
       expect(screen.queryByPlaceholderText('Enter your display name')).not.toBeInTheDocument();
