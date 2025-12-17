@@ -135,7 +135,7 @@ export default function Dashboard() {
   };
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/');
+      navigate('/auth');
     }
   }, [user, authLoading, navigate]);
   const {

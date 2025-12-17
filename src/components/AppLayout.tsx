@@ -72,8 +72,9 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
     : [];
 
   const handleSignOut = async () => {
-    await signOut();
+    // Navigate first to ensure we redirect before state changes trigger re-renders
     navigate('/auth');
+    await signOut();
   };
 
   const handleProfileUpdate = () => {

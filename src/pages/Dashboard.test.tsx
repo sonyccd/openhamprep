@@ -227,7 +227,7 @@ describe('Dashboard', () => {
   });
 
   describe('Authentication Redirect', () => {
-    it('redirects to home when user is not authenticated', async () => {
+    it('redirects to auth page when user is not authenticated', async () => {
       // Override useAuth mock for this test
       mockAuthHook.mockReturnValueOnce({
         user: null,
@@ -237,7 +237,7 @@ describe('Dashboard', () => {
       renderDashboard();
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/');
+        expect(mockNavigate).toHaveBeenCalledWith('/auth');
       });
     });
   });

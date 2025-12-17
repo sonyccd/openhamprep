@@ -1,9 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { AppLayout } from './AppLayout';
+
+// Mock useNavigate
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 // Mock hooks
 const mockUseAuth = vi.fn();
@@ -213,6 +223,51 @@ describe('AppLayout', () => {
       });
 
       // Note: The actual click handling is in DashboardSidebar which is already tested
+    });
+  });
+
+  describe('Sign Out', () => {
+    it('navigates to auth page and calls signOut when signing out', async () => {
+      const mockSignOut = vi.fn().mockResolvedValue(undefined);
+      mockUseAuth.mockReturnValue({
+        user: { id: 'test-user', email: 'test@example.com' },
+        loading: false,
+        signOut: mockSignOut,
+      });
+
+      render(
+        <AppLayout {...defaultProps}>
+          <div>Content</div>
+        </AppLayout>,
+        { wrapper: createWrapper() }
+      );
+
+      // Wait for sidebar to render
+      await waitFor(() => {
+        expect(screen.getByText('Sign Out')).toBeInTheDocument();
+      });
+
+      // Click sign out button
+      fireEvent.click(screen.getByText('Sign Out'));
+
+      // Confirm sign out dialog should appear
+      await waitFor(() => {
+        expect(screen.getByText('Sign out?')).toBeInTheDocument();
+      });
+
+      // Click confirm button in dialog
+      const confirmButton = screen.getByRole('button', { name: 'Sign Out' });
+      fireEvent.click(confirmButton);
+
+      // Verify navigation to auth page happens first
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/auth');
+      });
+
+      // Verify signOut was called
+      await waitFor(() => {
+        expect(mockSignOut).toHaveBeenCalled();
+      });
     });
   });
 });
