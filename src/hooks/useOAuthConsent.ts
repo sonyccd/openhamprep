@@ -134,23 +134,16 @@ export function useOAuthConsent(): UseOAuthConsentReturn {
         return;
       }
 
-      // Supabase OAuth 2.1 may use 'application' object or different field names
-      const clientId = authDetails.client_id || authDetails.application?.id || authDetails.application_id;
+      // Supabase OAuth 2.1 may use 'client' object, 'application' object, or different field names
+      // The actual API returns: { client: { id, name }, redirect_uri, scope, ... }
+      const clientId = authDetails.client_id || authDetails.client?.id || authDetails.application?.id || authDetails.application_id;
 
       // Handle different possible field names from Supabase OAuth API
-      const clientName = authDetails.client_name || authDetails.application?.name || authDetails.name || 'Unknown Application';
-      const redirectUri = preApprovedRedirectUrl || '';
+      const clientName = authDetails.client_name || authDetails.client?.name || authDetails.application?.name || authDetails.name || 'Unknown Application';
+      const redirectUri = authDetails.redirect_uri || '';
       const scopes = authDetails.scopes || authDetails.scope?.split(' ') || [];
 
       if (!clientId) {
-        // If we don't have client_id but have a redirect_url, just redirect
-        // This can happen when Supabase auto-approved the consent
-        if (preApprovedRedirectUrl) {
-          console.log(LOG_PREFIX, 'No client_id but have redirect URL, redirecting');
-          setIsAutoApproving(true);
-          window.location.href = preApprovedRedirectUrl;
-          return;
-        }
         console.error(LOG_PREFIX, 'No client_id found in authorization details');
         throw new Error('Invalid authorization details: missing client_id');
       }

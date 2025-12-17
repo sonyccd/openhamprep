@@ -50,7 +50,7 @@ supabase db push
 3. Navigate to **Authentication** > **URL Configuration**
 4. Add the following to **Redirect URLs**:
    - `https://app.openhamprep.com/**` (production app)
-   - `https://forum.openhamprep.com/auth/oauth2_basic/callback` (Discourse OAuth callback)
+   - `https://forum.openhamprep.com/auth/oidc/callback` (Discourse OIDC callback)
    - `http://localhost:8080/**` (local development)
 
 ### Step 3: Configure Supabase OAuth 2.1 Server (Dashboard)
@@ -66,30 +66,41 @@ supabase db push
    - Click **Add Client** (or **New Client**)
    - **Name**: `Open Ham Prep Forum`
    - **Type**: `Confidential` (server-side application)
-   - **Redirect URI**: `https://forum.openhamprep.com/auth/oauth2_basic/callback`
+   - **Redirect URI**: `https://forum.openhamprep.com/auth/oidc/callback`
 5. **Save the Client ID and Client Secret** - you'll need these for Discourse
 
 **IMPORTANT**: The Site URL in Supabase URL Configuration must match where your app is hosted (`app.openhamprep.com`). The OAuth Server uses this Site URL + Authorization Path to construct the full consent URL.
 
-### Step 4: Configure Discourse
+### Step 4: Configure Discourse (OIDC Plugin - Recommended)
+
+We recommend using the **discourse-openid-connect** plugin instead of oauth2-basic because it:
+- Has native PKCE support (required by OAuth 2.1)
+- Handles OpenID Connect flows properly
+- Works better with Supabase's OAuth 2.1 server
 
 1. Log into your Discourse admin panel: https://forum.openhamprep.com/admin
 2. Go to **Admin** > **Settings** > **Login**
-3. Search for "oauth2" and configure:
+3. Search for "openid" and configure:
 
 | Setting | Value |
 |---------|-------|
-| `oauth2_enabled` | ✓ (checked) |
-| `oauth2_client_id` | `<Client ID from Supabase>` |
-| `oauth2_client_secret` | `<Client Secret from Supabase>` |
-| `oauth2_authorize_url` | `https://api.openhamprep.com/auth/v1/oauth/authorize` |
-| `oauth2_token_url` | `https://api.openhamprep.com/auth/v1/oauth/token` |
-| `oauth2_user_json_url` | `https://api.openhamprep.com/auth/v1/userinfo` |
-| `oauth2_json_user_id_path` | `sub` |
-| `oauth2_json_email_path` | `email` |
-| `oauth2_json_username_path` | `preferred_username` |
-| `oauth2_scope` | `openid email profile` |
-| `oauth2_email_verified` | ✓ (checked) |
+| `openid_connect_enabled` | ✓ (checked) |
+| `openid_connect_discovery_document` | (leave empty - we'll configure manually) |
+| `openid_connect_client_id` | `<Client ID from Supabase>` |
+| `openid_connect_client_secret` | `<Client Secret from Supabase>` |
+| `openid_connect_authorize_url` | `https://api.openhamprep.com/auth/v1/oauth/authorize` |
+| `openid_connect_token_url` | `https://api.openhamprep.com/auth/v1/oauth/token` |
+| `openid_connect_userinfo_url` | `https://api.openhamprep.com/auth/v1/userinfo` |
+| `openid_connect_authorize_scope` | `openid email profile` |
+| `openid_connect_claims_email` | `email` |
+| `openid_connect_claims_email_verified` | `email_verified` |
+| `openid_connect_claims_name` | `name` |
+| `openid_connect_claims_preferred_username` | `preferred_username` |
+| `openid_connect_button_title` | `Login with Open Ham Prep` |
+| `openid_connect_allow_association_change` | ✓ (checked) |
+
+**IMPORTANT - Redirect URI**: Make sure the redirect URI registered in Supabase OAuth Server matches:
+`https://forum.openhamprep.com/auth/oidc/callback`
 
 The URLs above use the custom domain `api.openhamprep.com`. If you're self-hosting with a different Supabase project, replace with your project URL (e.g., `https://<project-ref>.supabase.co`).
 
@@ -104,11 +115,31 @@ The URLs above use the custom domain `api.openhamprep.com`. If you're self-hosti
    - You see the consent screen with forum username input
    - After approving, you're redirected back to Discourse logged in
 
-**Troubleshooting**: If you get "Sorry, there was an error while trying to authorize your account with oauth2_basic":
-1. Check Supabase Dashboard → Authentication → OAuth Apps - ensure the client is registered
-2. Verify the Client ID in Discourse matches exactly what's in Supabase
-3. Verify the Redirect URI in Supabase matches exactly: `https://forum.openhamprep.com/auth/oauth2_basic/callback`
-4. Check browser Network tab for the actual error response from Supabase
+**Troubleshooting**: If you get an "invalid_credentials" error or OAuth fails:
+
+1. **Verify Redirect URI matches exactly**: In Supabase OAuth Server, the redirect URI must be:
+   `https://forum.openhamprep.com/auth/oidc/callback`
+
+2. **Check Client ID and Secret**: Verify they match exactly between Supabase and Discourse
+
+3. **Verify Token Endpoint**: Discourse must be able to POST to `https://api.openhamprep.com/auth/v1/oauth/token`
+   - Test with curl: `curl -X POST https://api.openhamprep.com/auth/v1/oauth/token`
+   - Should return a JSON error (not HTML or 404)
+
+4. **Check PKCE is working**: The OIDC plugin handles PKCE automatically, but verify:
+   - Discourse is sending `code_verifier` in the token request
+   - The `code_challenge` from the authorize request matches
+
+5. **Check Discourse logs**: In Discourse admin, go to /logs to see detailed OAuth errors
+
+6. **Verify userinfo endpoint**: After token exchange, Discourse fetches user info from:
+   `https://api.openhamprep.com/auth/v1/userinfo`
+   - Test: `curl -H "Authorization: Bearer <token>" https://api.openhamprep.com/auth/v1/userinfo`
+
+7. **Network tab debugging**: Check browser Network tab during the OAuth flow to see:
+   - The authorize request (should redirect to consent page)
+   - The callback with authorization code
+   - Any failed requests to token/userinfo endpoints
 
 ### Step 6: (Optional) Custom Access Token Hook
 
@@ -172,4 +203,5 @@ CREATE TABLE oauth_consents (
 ## References
 - [Supabase OAuth Server Docs](https://supabase.com/docs/guides/auth/oauth-server)
 - [Supabase OAuth Getting Started](https://supabase.com/docs/guides/auth/oauth-server/getting-started)
-- [Discourse OAuth2 Basic Plugin](https://github.com/discourse/discourse-oauth2-basic)
+- [Discourse OpenID Connect Plugin](https://meta.discourse.org/t/openid-connect-authentication-plugin/103632)
+- [Discourse OIDC Plugin Source](https://github.com/discourse/discourse-openid-connect)
