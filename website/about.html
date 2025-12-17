@@ -25,24 +25,24 @@
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans antialiased">
 
-  <!-- Navigation (same as index.html) -->
+  <!-- Navigation -->
   <nav class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
     <div class="max-w-6xl mx-auto px-4">
       <div class="flex items-center justify-between h-16">
         <a href="/" class="flex items-center gap-2 group">
-          <i data-lucide="radio" class="w-7 h-7 text-amber-600 dark:text-amber-400"></i>
+          <i data-lucide="radio" class="w-7 h-7 text-amber-600 dark:text-amber-400 group-hover:animate-pulse-slow"></i>
           <span class="font-mono font-bold text-lg">Open Ham Prep</span>
         </a>
 
         <div class="hidden md:flex items-center gap-6">
-          <a href="/features.html" class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Features</a>
-          <a href="/faq.html" class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">FAQ</a>
-          <a href="/about.html" class="text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors">About</a>
+          <a href="/features.html" class="nav-link text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Features</a>
+          <a href="/faq.html" class="nav-link text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">FAQ</a>
+          <a href="/about.html" class="nav-link active text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors">About</a>
           <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             <i data-lucide="sun" class="w-5 h-5 dark:hidden"></i>
             <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
           </button>
-          <a href="https://app.openhamprep.com/auth" class="px-4 py-2 bg-amber-600 dark:bg-amber-500 text-white rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors text-sm font-medium">
+          <a href="https://app.openhamprep.com/auth" class="btn-primary px-4 py-2 bg-amber-600 dark:bg-amber-500 text-white rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors text-sm font-medium">
             Sign Up / Sign In
           </a>
         </div>
@@ -74,15 +74,15 @@
 
   <main class="flex-1">
     <!-- Hero Section -->
-    <section class="py-20 md:py-28 px-4 bg-gradient-to-b from-amber-50/50 to-transparent dark:from-amber-900/10">
+    <section class="py-24 md:py-32 px-4 gradient-hero">
       <div class="max-w-4xl mx-auto text-center">
-        <div class="flex items-center justify-center gap-3 mb-8">
-          <i data-lucide="radio" class="w-16 h-16 text-amber-600 dark:text-amber-400"></i>
+        <div class="flex items-center justify-center gap-3 mb-8 animate-fade-in-down">
+          <i data-lucide="radio" class="w-16 h-16 text-amber-600 dark:text-amber-400 animate-float"></i>
         </div>
-        <h1 class="text-4xl md:text-6xl font-mono font-bold mb-6">
-          By Hams. <span class="text-amber-600 dark:text-amber-400">For Hams.</span>
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-mono font-bold mb-6 animate-fade-in-up delay-100">
+          By Hams. <span class="gradient-text">For Hams.</span>
         </h1>
-        <p class="text-xl md:text-2xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+        <p class="text-xl md:text-2xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto animate-fade-in-up delay-200">
           We believe everyone deserves access to amateur radio. That's why we built a
           free, open-source study platform—to open the door for the next generation of operators.
         </p>
@@ -90,11 +90,14 @@
     </section>
 
     <!-- Mission Statement -->
-    <section class="py-16 md:py-20 px-4">
+    <section class="py-20 md:py-24 px-4">
       <div class="max-w-4xl mx-auto">
-        <div class="border-l-4 border-amber-600 dark:border-amber-400 pl-8">
-          <h2 class="text-3xl md:text-4xl font-mono font-bold mb-6">
+        <div class="reveal border-l-4 border-amber-600 dark:border-amber-400 pl-8">
+          <span class="inline-block px-4 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-sm font-medium rounded-full mb-6">
             Our Mission
+          </span>
+          <h2 class="text-3xl md:text-4xl font-mono font-bold mb-6">
+            Opening Doors to Amateur Radio
           </h2>
           <div class="space-y-6 text-lg text-gray-600 dark:text-gray-400">
             <p>
@@ -105,7 +108,7 @@
               to become a ham, nothing should stand in your way.</strong>
             </p>
             <p>
-              This isn't just about passing an exam. It's about preparing you to{" "}
+              This isn't just about passing an exam. It's about preparing you to
               <strong class="text-gray-900 dark:text-gray-100">love this hobby</strong>—to feel the thrill of your first
               contact, to understand why radio propagation is magical, and to join a global community of
               makers, experimenters, and communicators.
@@ -116,65 +119,68 @@
     </section>
 
     <!-- Values Grid -->
-    <section class="py-16 md:py-20 px-4 bg-gray-100 dark:bg-gray-800/30">
+    <section class="py-20 md:py-24 px-4 bg-gray-100 dark:bg-gray-800/30">
       <div class="max-w-6xl mx-auto">
-        <div class="text-center mb-12">
-          <h2 class="text-3xl md:text-4xl font-mono font-bold mb-4">
+        <div class="text-center mb-16 reveal">
+          <span class="inline-block px-4 py-1.5 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 text-sm font-medium rounded-full mb-4">
+            Our Values
+          </span>
+          <h2 class="text-3xl md:text-5xl font-mono font-bold mb-4">
             What We Stand For
           </h2>
-          <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-lg">
             These aren't just words—they're the principles that guide every decision we make.
           </p>
         </div>
 
         <div class="grid md:grid-cols-2 gap-6">
           <!-- Open Access -->
-          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-amber-500/30 transition-colors">
-            <div class="flex items-start gap-4">
-              <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
-                <i data-lucide="unlock" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i>
+          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8" style="transition-delay: 0.1s;">
+            <div class="flex items-start gap-5">
+              <div class="icon-glow w-14 h-14 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="unlock" class="w-7 h-7 text-amber-600 dark:text-amber-400"></i>
               </div>
               <div>
-                <h3 class="text-lg font-bold mb-2">Open Access</h3>
-                <p class="text-gray-600 dark:text-gray-400">No paywalls, no premium tiers, no hidden costs. Quality education should be available to everyone.</p>
+                <h3 class="text-xl font-bold mb-3">Open Access</h3>
+                <p class="text-gray-600 dark:text-gray-400">No paywalls, no premium tiers, no hidden costs. Quality education should be available to everyone who wants to learn.</p>
               </div>
             </div>
           </div>
 
           <!-- Built With Passion -->
-          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-amber-500/30 transition-colors">
-            <div class="flex items-start gap-4">
-              <div class="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
-                <i data-lucide="heart" class="w-6 h-6 text-red-600 dark:text-red-400"></i>
+          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8" style="transition-delay: 0.2s;">
+            <div class="flex items-start gap-5">
+              <div class="icon-glow w-14 h-14 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="heart" class="w-7 h-7 text-red-600 dark:text-red-400"></i>
               </div>
               <div>
-                <h3 class="text-lg font-bold mb-2">Built With Passion</h3>
-                <p class="text-gray-600 dark:text-gray-400">Created by amateur radio enthusiasts who remember the excitement of their first QSO.</p>
+                <h3 class="text-xl font-bold mb-3">Built With Passion</h3>
+                <p class="text-gray-600 dark:text-gray-400">Created by amateur radio enthusiasts who remember the excitement of their first QSO and want to share that with others.</p>
               </div>
             </div>
           </div>
 
           <!-- Community First -->
-          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-amber-500/30 transition-colors">
-            <div class="flex items-start gap-4">
-              <div class="w-12 h-12 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
-                <i data-lucide="users" class="w-6 h-6 text-teal-600 dark:text-teal-400"></i>
+          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8" style="transition-delay: 0.3s;">
+            <div class="flex items-start gap-5">
+              <div class="icon-glow w-14 h-14 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="users" class="w-7 h-7 text-teal-600 dark:text-teal-400"></i>
               </div>
               <div>
-                <h3 class="text-lg font-bold mb-2">Community First</h3>
-                <p class="text-gray-600 dark:text-gray-400">We're not building a product—we're growing a community of operators who help each other.</p>
+                <h3 class="text-xl font-bold mb-3">Community First</h3>
+                <p class="text-gray-600 dark:text-gray-400">We're not building a product—we're growing a community of operators who help each other succeed.</p>
               </div>
             </div>
           </div>
 
           <!-- Open Source -->
-          <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-amber-500/30 transition-colors">
-            <div class="flex items-start gap-4">
-              <div class="w-12 h-12 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
-                <i data-lucide="git-branch" class="w-6 h-6 text-teal-600 dark:text-teal-400"></i>
+          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8" style="transition-delay: 0.4s;">
+            <div class="flex items-start gap-5">
+              <div class="icon-glow w-14 h-14 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="git-branch" class="w-7 h-7 text-purple-600 dark:text-purple-400"></i>
               </div>
               <div>
-                <h3 class="text-lg font-bold mb-2">Open Source</h3>
+                <h3 class="text-xl font-bold mb-3">Open Source</h3>
                 <p class="text-gray-600 dark:text-gray-400">Transparent, auditable, and community-driven. Contribute, fork, or learn from the code.</p>
               </div>
             </div>
@@ -184,14 +190,17 @@
     </section>
 
     <!-- Open Source Section -->
-    <section class="py-16 md:py-20 px-4">
+    <section class="py-20 md:py-24 px-4">
       <div class="max-w-4xl mx-auto">
-        <div class="bg-white dark:bg-gray-800 border-2 border-amber-500/20 rounded-2xl p-8 md:p-10">
-          <div class="flex flex-col md:flex-row items-start gap-6">
-            <div class="w-16 h-16 rounded-2xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
-              <i data-lucide="code" class="w-8 h-8 text-teal-600 dark:text-teal-400"></i>
+        <div class="reveal-scale cta-card bg-white dark:bg-gray-800 border-2 border-teal-200 dark:border-teal-700 rounded-3xl p-10 md:p-12 shadow-2xl">
+          <div class="flex flex-col md:flex-row items-start gap-8">
+            <div class="w-20 h-20 rounded-2xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="code" class="w-10 h-10 text-teal-600 dark:text-teal-400"></i>
             </div>
             <div class="flex-1">
+              <span class="inline-block px-3 py-1 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 text-sm font-medium rounded-full mb-4">
+                Open Source
+              </span>
               <h2 class="text-2xl md:text-3xl font-mono font-bold mb-4">
                 Open Source, Open Future
               </h2>
@@ -203,19 +212,19 @@
                 </p>
                 <p>When you use open-source software, you know exactly what you're getting. No surprise monetization, no rug pulls. Just honest tools built by people who care about the same things you do.</p>
                 <p class="text-gray-900 dark:text-gray-100 font-medium">
-                  Want to contribute? Found a bug? Have an idea?{" "}
-                  <a href="https://github.com/sonyccd/openhamprep" target="_blank" rel="noopener noreferrer" class="text-amber-600 dark:text-amber-400 hover:underline inline-flex items-center gap-1">
+                  Want to contribute? Found a bug? Have an idea?
+                  <a href="https://github.com/sonyccd/openhamprep" target="_blank" rel="noopener noreferrer" class="text-teal-600 dark:text-teal-400 hover:underline inline-flex items-center gap-1">
                     Check out our GitHub repo
                     <i data-lucide="external-link" class="w-4 h-4"></i>
                   </a>
                 </p>
               </div>
               <div class="flex flex-wrap gap-3 mt-6">
-                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-700 text-sm">
+                <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-sm font-medium">
                   <i data-lucide="globe" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>
                   Free Forever
                 </div>
-                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-700 text-sm">
+                <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-sm font-medium">
                   <i data-lucide="git-branch" class="w-4 h-4 text-teal-600 dark:text-teal-400"></i>
                   Community Driven
                 </div>
@@ -227,34 +236,36 @@
     </section>
 
     <!-- Born in North Carolina Section -->
-    <section class="py-16 md:py-20 px-4 bg-gray-100 dark:bg-gray-800/30">
-      <div class="max-w-4xl mx-auto">
-        <div class="grid md:grid-cols-2 gap-8 items-center">
-          <div>
-            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-sm font-medium mb-4">
+    <section class="py-20 md:py-24 px-4 bg-gray-100 dark:bg-gray-800/30">
+      <div class="max-w-5xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div class="reveal-left">
+            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-sm font-medium mb-6">
               <i data-lucide="map-pin" class="w-4 h-4"></i>
               Our Story
-            </div>
-            <h2 class="text-3xl md:text-4xl font-mono font-bold mb-4">
+            </span>
+            <h2 class="text-3xl md:text-4xl font-mono font-bold mb-6">
               Born in North Carolina
             </h2>
-            <div class="space-y-4 text-gray-600 dark:text-gray-400">
-              <p>This project started when a group of ham radio enthusiasts in North Carolina realized that quality test prep resources were either outdated, locked behind paywalls, or just frustrating to use. We believed that if amateur radio is about open communication, then the path to getting licensed should be just as open.</p>
+            <div class="space-y-4 text-gray-600 dark:text-gray-400 text-lg">
+              <p>This project started when a group of ham radio enthusiasts in North Carolina realized that quality test prep resources were either outdated, locked behind paywalls, or just frustrating to use.</p>
+              <p>We believed that if amateur radio is about open communication, then the path to getting licensed should be just as open.</p>
               <p>
                 What began as a local effort to help friends and neighbors get their licenses has grown
-                into an open-source project serving aspiring hams around the world. We're not a company
-                selling a product—we're radio operators who remember what it was like to study for our
-                first exam, and we want to make that journey easier for everyone who comes after us.
+                into an open-source project serving aspiring hams around the world.
               </p>
             </div>
           </div>
-          <div>
-            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center">
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                Born in <span class="text-amber-600 dark:text-amber-400 font-medium">North Carolina</span>
+          <div class="reveal-right">
+            <div class="feature-card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl p-8 text-center">
+              <div class="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="radio" class="w-10 h-10 text-amber-600 dark:text-amber-400"></i>
+              </div>
+              <p class="text-lg text-gray-600 dark:text-gray-400 mb-2">
+                Born in <span class="text-amber-600 dark:text-amber-400 font-semibold">North Carolina</span>
               </p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                Serving hams worldwide
+              <p class="text-lg text-gray-600 dark:text-gray-400">
+                Serving hams <span class="text-teal-600 dark:text-teal-400 font-semibold">worldwide</span>
               </p>
             </div>
           </div>
@@ -263,15 +274,15 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="py-16 md:py-20 px-4">
+    <section class="py-20 md:py-24 px-4 gradient-hero">
       <div class="max-w-2xl mx-auto text-center">
-        <div class="bg-white dark:bg-gray-800 border-2 border-amber-500/30 rounded-2xl p-8 md:p-12">
-          <i data-lucide="radio" class="w-14 h-14 text-amber-600 dark:text-amber-400 mx-auto mb-6"></i>
-          <h2 class="text-2xl md:text-3xl font-mono font-bold mb-4">
+        <div class="cta-card reveal-scale bg-white dark:bg-gray-800 border-2 border-amber-200 dark:border-amber-700 rounded-3xl p-10 md:p-14 shadow-2xl shadow-amber-600/10">
+          <i data-lucide="radio" class="w-16 h-16 text-amber-600 dark:text-amber-400 mx-auto mb-6 animate-float"></i>
+          <h2 class="text-3xl md:text-4xl font-mono font-bold mb-4">
             Your Journey Starts Here
           </h2>
           <p class="text-gray-600 dark:text-gray-400 mb-8 text-lg">Join other aspiring hams who've used Open Ham Prep to earn their licenses. The airwaves are waiting for you.</p>
-          <a href="https://app.openhamprep.com/auth" class="inline-flex items-center gap-2 px-10 py-4 bg-amber-600 dark:bg-amber-500 text-white text-lg rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors group">
+          <a href="https://app.openhamprep.com/auth" class="btn-primary inline-flex items-center gap-3 px-10 py-5 bg-amber-600 dark:bg-amber-500 text-white text-lg font-medium rounded-xl hover:bg-amber-700 dark:hover:bg-amber-600 transition-all group shadow-lg shadow-amber-600/20">
             Start Studying Free
             <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
           </a>
@@ -281,11 +292,24 @@
   </main>
 
   <!-- Footer -->
-  <footer class="py-8 px-4 border-t border-gray-200 dark:border-gray-800">
-    <div class="max-w-6xl mx-auto text-center text-gray-600 dark:text-gray-400 space-y-3">
-      <p class="text-sm">Official FCC question pools • Free to use • Open Source</p>
-      <p class="text-sm">Made with ❤️ in North Carolina</p>
-      <p class="text-xs mt-4">© 2025 Brad Bazemore. All rights reserved.</p>
+  <footer class="py-10 px-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div class="flex items-center gap-2">
+          <i data-lucide="radio" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i>
+          <span class="font-mono font-bold">Open Ham Prep</span>
+        </div>
+        <div class="flex flex-wrap gap-6 text-sm text-gray-600 dark:text-gray-400">
+          <a href="/features.html" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Features</a>
+          <a href="/faq.html" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">FAQ</a>
+          <a href="/about.html" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">About</a>
+        </div>
+      </div>
+      <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800 text-center text-gray-600 dark:text-gray-400 space-y-2">
+        <p class="text-sm">Official FCC question pools • Free to use • Open Source</p>
+        <p class="text-sm">Made with love in North Carolina</p>
+        <p class="text-xs mt-4">© 2025 Brad Bazemore. All rights reserved.</p>
+      </div>
     </div>
   </footer>
 
@@ -303,6 +327,21 @@
       menuIcon.classList.toggle('hidden');
       closeIcon.classList.toggle('hidden');
     });
+
+    // Scroll reveal animation
+    function reveal() {
+      const reveals = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+      reveals.forEach(element => {
+        const windowHeight = window.innerHeight;
+        const elementTop = element.getBoundingClientRect().top;
+        const elementVisible = 100;
+        if (elementTop < windowHeight - elementVisible) {
+          element.classList.add('active');
+        }
+      });
+    }
+    window.addEventListener('load', reveal);
+    window.addEventListener('scroll', reveal);
   </script>
   <script src="https://openhamprep.statuspage.io/embed/script.js"></script>
 </body>
