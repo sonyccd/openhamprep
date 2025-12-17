@@ -229,7 +229,7 @@ describe('QuestionCard', () => {
       expect(screen.queryByText('Discuss with Other Hams')).not.toBeInTheDocument();
     });
 
-    it('forum button links to the correct URL', () => {
+    it('forum button links through OIDC auth with origin parameter', () => {
       renderQuestionCard({
         question: questionWithForumUrl,
         selectedAnswer: 'A',
@@ -238,7 +238,8 @@ describe('QuestionCard', () => {
       });
 
       const link = screen.getByRole('link', { name: /Discuss with Other Hams/i });
-      expect(link).toHaveAttribute('href', 'https://forum.openhamprep.com/t/t1a01-question/123');
+      // Should route through OIDC auth with the topic path as the origin parameter
+      expect(link).toHaveAttribute('href', 'https://forum.openhamprep.com/auth/oidc?origin=%2Ft%2Ft1a01-question%2F123');
     });
 
     it('forum button opens in new tab', () => {

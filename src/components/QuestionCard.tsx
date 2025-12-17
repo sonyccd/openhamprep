@@ -20,6 +20,25 @@ import { GlossaryHighlightedText } from "@/components/GlossaryHighlightedText";
 import { MarkdownText } from "@/components/MarkdownText";
 import type { LinkData } from "@/hooks/useQuestions";
 
+/**
+ * Constructs a Discourse auth URL that logs the user in via OIDC
+ * and redirects them to the specified forum topic after authentication.
+ *
+ * @param forumUrl - The full forum topic URL (e.g., https://forum.openhamprep.com/t/topic/123)
+ * @returns The OIDC auth URL with origin parameter for post-auth redirect
+ */
+function getForumAuthUrl(forumUrl: string): string {
+  try {
+    const url = new URL(forumUrl);
+    // Extract the path (e.g., /t/topic-slug/123) to use as the origin parameter
+    const origin = url.pathname + url.search + url.hash;
+    return `https://forum.openhamprep.com/auth/oidc?origin=${encodeURIComponent(origin)}`;
+  } catch {
+    // Fallback to direct URL if parsing fails
+    return forumUrl;
+  }
+}
+
 interface QuestionCardProps {
   question: Question;
   selectedAnswer: string | null;
@@ -354,7 +373,7 @@ export function QuestionCard({
                   asChild
                 >
                   <a
-                    href={question.forumUrl}
+                    href={getForumAuthUrl(question.forumUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
