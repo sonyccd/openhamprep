@@ -11,7 +11,7 @@
 
 A modern web application for studying FCC Amateur Radio license exams. Open source, community-driven, born in North Carolina.
 
-**Live App:** [openhamprep.app](https://openhamprep.app)
+**Live App:** [openhamprep.app](https://openhamprep.com)
 
 ## Features
 
