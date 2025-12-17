@@ -3,8 +3,9 @@
  */
 
 // Forum username must be 3-20 characters, alphanumeric with underscores and hyphens
-export const FORUM_USERNAME_REGEX = /^[a-zA-Z0-9_-]{3,20}$/;
-export const FORUM_USERNAME_ERROR = 'Username must be 3-20 characters and contain only letters, numbers, underscores, or hyphens';
+// Must contain at least one alphanumeric character (prevents usernames like "---" or "___")
+export const FORUM_USERNAME_REGEX = /^(?=.*[a-zA-Z0-9])[a-zA-Z0-9_-]{3,20}$/;
+export const FORUM_USERNAME_ERROR = 'Username must be 3-20 characters, contain at least one letter or number, and use only letters, numbers, underscores, or hyphens';
 
 export interface ValidationResult {
   valid: boolean;

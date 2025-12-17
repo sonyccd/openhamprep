@@ -92,6 +92,24 @@ describe('validateForumUsername', () => {
       expect(result.valid).toBe(false);
       expect(result.error).toBe(FORUM_USERNAME_ERROR);
     });
+
+    it('rejects usernames with only underscores', () => {
+      const result = validateForumUsername('___');
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe(FORUM_USERNAME_ERROR);
+    });
+
+    it('rejects usernames with only hyphens', () => {
+      const result = validateForumUsername('---');
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe(FORUM_USERNAME_ERROR);
+    });
+
+    it('rejects usernames with only underscores and hyphens', () => {
+      const result = validateForumUsername('_-_-_');
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe(FORUM_USERNAME_ERROR);
+    });
   });
 });
 

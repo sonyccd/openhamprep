@@ -375,6 +375,37 @@ describe('useOAuthConsent', () => {
 
       expect(mockToastError).toHaveBeenCalledWith('This username is already taken');
     });
+
+    it('should show generic error for non-unique constraint database errors', async () => {
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'profiles') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                single: vi.fn(() => Promise.resolve({ data: { forum_username: null }, error: null })),
+              })),
+            })),
+            update: vi.fn(() => ({
+              eq: vi.fn(() => Promise.resolve({ error: { code: 'PGRST001', message: 'Network error' } })),
+            })),
+          };
+        }
+        return {};
+      });
+
+      const { result } = renderHook(() => useOAuthConsent(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.authorizationDetails).not.toBe(null);
+      });
+
+      await act(async () => {
+        await result.current.handleApprove('testuser');
+      });
+
+      expect(mockToastError).toHaveBeenCalledWith('Failed to save forum username');
+      expect(mockApproveAuthorization).not.toHaveBeenCalled();
+    });
   });
 
   describe('handleCancel', () => {

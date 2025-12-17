@@ -6,7 +6,7 @@ This guide explains how to set up Open Ham Prep as an OAuth 2.1 identity provide
 
 **Key Features:**
 - Users set their own "forum username" (privacy - they may not want real identity public)
-- "Remember this decision" option to skip consent on subsequent logins
+- Auto-approval when user already has a forum username (seamless SSO)
 - **Optional integration** - self-hosters who don't use Discourse can ignore this
 
 ## Architecture
@@ -23,8 +23,8 @@ This guide explains how to set up Open Ham Prep as an OAuth 2.1 identity provide
 1. User clicks "Login with Open Ham Prep" on Discourse
 2. Discourse redirects to Open Ham Prep authorization endpoint
 3. User authenticates (if not already logged in)
-4. **First time**: User sees consent screen, sets forum username, approves
-5. **Subsequent**: If "remember" checked, auto-approve (skip consent UI)
+4. **First time**: User creates forum username, then auto-approved
+5. **Subsequent**: Auto-approved immediately (user already has forum username)
 6. Open Ham Prep returns authorization code to Discourse
 7. Discourse exchanges code for access token
 8. Discourse fetches user info (including forum username) and logs user in
@@ -124,8 +124,9 @@ The URLs above use the custom domain `api.openhamprep.com`. If you're self-hosti
 4. Click it and verify:
    - You're redirected to `https://app.openhamprep.com/oauth/consent?authorization_id=...`
    - If not logged in, you're prompted to log in first
-   - You see the consent screen with forum username input
-   - After approving, you're redirected back to Discourse logged in
+   - **First time**: You see the "Create Your Forum Username" screen
+   - **Subsequent**: You're auto-redirected (user already has forum username)
+   - After setting username, you're redirected back to Discourse logged in
 
 **Troubleshooting**: If you get an "invalid_credentials" error or OAuth fails:
 
@@ -165,11 +166,12 @@ To include `forum_username` in the userinfo response, you may need to create a S
 ## Files Involved
 
 ### New Files (created for this feature)
-- `supabase/migrations/20251217000000_add_oauth_support.sql` - Database migration
-- `src/pages/OAuthConsent.tsx` - OAuth consent page
-- `src/hooks/useOAuthConsent.ts` - OAuth consent hook
+- `supabase/migrations/20251217000000_add_oauth_support.sql` - Database migration (adds forum_username)
+- `src/pages/OAuthConsent.tsx` - Forum username creation page
+- `src/hooks/useOAuthConsent.ts` - OAuth flow hook (auto-approval logic)
 - `src/hooks/useOAuthConsent.test.tsx` - Hook tests
 - `src/pages/OAuthConsent.test.tsx` - Page tests
+- `src/lib/validation.ts` - Username validation utilities
 
 ### Modified Files
 - `src/App.tsx` - Added `/oauth/consent` route
@@ -185,16 +187,6 @@ The migration adds:
 ```sql
 -- User's forum-specific username (separate from display_name for privacy)
 ALTER TABLE profiles ADD COLUMN forum_username TEXT UNIQUE;
-
--- Track OAuth consent decisions for "remember this" functionality
-CREATE TABLE oauth_consents (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  client_id TEXT NOT NULL,
-  scopes TEXT[] NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(user_id, client_id)
-);
 ```
 
 ## Important Notes
@@ -202,20 +194,19 @@ CREATE TABLE oauth_consents (
 ### Forum Username vs Display Name
 - `display_name` = shown within Open Ham Prep (can be real name)
 - `forum_username` = shown on Discourse (can be pseudonym for privacy)
-- Users set `forum_username` on first OAuth consent
+- Users set `forum_username` on first OAuth flow (simplified username creation screen)
 - Users can edit it anytime in Profile Settings
 
 ### This is Optional
-- The consent page only activates when accessed via OAuth flow
+- The username creation page only appears when accessed via OAuth flow
 - No UI changes to the main app
 - Self-hosters who don't use Discourse simply won't configure the OAuth client
-- The database tables exist but remain empty if unused
 
 ### Security
 - OAuth 2.1 requires PKCE (handled by Supabase)
 - Asymmetric JWT signing (RS256) for third-party token validation
-- RLS protects consent records
 - Forum username uniqueness enforced at DB level
+- Username validation: 3-20 characters, must contain at least one alphanumeric
 
 ## References
 - [Supabase OAuth Server Docs](https://supabase.com/docs/guides/auth/oauth-server)

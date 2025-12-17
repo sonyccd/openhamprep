@@ -121,9 +121,8 @@ export function useOAuthConsent(): UseOAuthConsentReturn {
       console.log(LOG_PREFIX, 'Authorization details received:', JSON.stringify(authDetails, null, 2));
 
       // Check if Supabase returned a redirect_url with authorization code already included
-      // This happens when consent was already granted (either via our oauth_consents table
-      // or Supabase's internal consent management). Per Supabase docs:
-      // "If the response includes a redirect_uri, it means consent was already given"
+      // This happens when consent was already granted via Supabase's internal consent management.
+      // Per Supabase docs: "If the response includes a redirect_uri, it means consent was already given"
       const preApprovedRedirectUrl = authDetails.redirect_url || authDetails.redirect_uri;
       if (preApprovedRedirectUrl && preApprovedRedirectUrl.includes('code=')) {
         console.log(LOG_PREFIX, 'Consent already granted, redirecting to:', preApprovedRedirectUrl);
