@@ -167,6 +167,8 @@ To include `forum_username` in the userinfo response, you may need to create a S
 
 ### New Files (created for this feature)
 - `supabase/migrations/20251217000000_add_oauth_support.sql` - Database migration (adds forum_username)
+- `supabase/functions/sync-discourse-topics/index.ts` - Edge function to sync question topics to Discourse
+- `supabase/functions/delete-discourse-user/index.ts` - Edge function to delete user from Discourse on account deletion
 - `src/pages/OAuthConsent.tsx` - Forum username creation page
 - `src/hooks/useOAuthConsent.ts` - OAuth flow hook (auto-approval logic)
 - `src/hooks/useOAuthConsent.test.tsx` - Hook tests
@@ -207,6 +209,15 @@ ALTER TABLE profiles ADD COLUMN forum_username TEXT UNIQUE;
 - Asymmetric JWT signing (RS256) for third-party token validation
 - Forum username uniqueness enforced at DB level
 - Username validation: 3-20 characters, must contain at least one alphanumeric
+
+### Account Deletion
+When a user deletes their Open Ham Prep account:
+1. Their Discourse forum account is deleted first (if one exists)
+2. Then their local account and all data is deleted
+3. The Discourse deletion uses the `delete-discourse-user` edge function
+4. Discourse deletion is best-effort - if it fails, local deletion still proceeds
+
+The edge function looks up the user by their `external_id` (Supabase user ID) in Discourse.
 
 ## References
 - [Supabase OAuth Server Docs](https://supabase.com/docs/guides/auth/oauth-server)
