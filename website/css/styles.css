@@ -457,6 +457,7 @@ html {
   height: 200%;
   background: radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, transparent 60%);
   animation: pulse 4s ease-in-out infinite;
+  pointer-events: none;
 }
 
 /* ==========================================
@@ -479,6 +480,21 @@ html {
     opacity: 1;
     transform: none;
   }
+}
+
+/* ==========================================
+   NC STATE OUTLINE
+   ========================================== */
+
+.nc-outline {
+  /* CSS filter to make black SVG amber-colored */
+  filter: invert(47%) sepia(98%) saturate(456%) hue-rotate(2deg) brightness(98%) contrast(90%);
+  transition: filter 0.3s ease;
+}
+
+.dark .nc-outline {
+  /* Lighter amber for dark mode */
+  filter: invert(73%) sepia(31%) saturate(1060%) hue-rotate(355deg) brightness(103%) contrast(101%);
 }
 
 /* ==========================================
