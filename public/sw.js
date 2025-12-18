@@ -16,12 +16,16 @@ const STATIC_ASSETS = [
 ];
 
 // API URL patterns that should never be cached (always fetch from network)
-// Using specific Supabase domains rather than broad string matching
-const API_PATTERNS = ['/rest/', '/auth/', '.supabase.co', '.supabase.in'];
+// Note: Storage URLs are excluded to allow figure image caching
+const API_PATTERNS = ['/rest/v1/', '/auth/v1/', '/realtime/', '/functions/'];
 const shouldSkipCaching = (url) => API_PATTERNS.some(pattern => url.includes(pattern));
 
+// Check if URL is a figure image from Supabase storage
+const isFigureUrl = (url) => url.includes('/storage/v1/object/public/question-figures/');
+
 // Maximum number of dynamic cache entries to prevent unbounded growth
-const MAX_CACHE_SIZE = 50;
+// Increased to 100 to accommodate figure images
+const MAX_CACHE_SIZE = 100;
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
@@ -67,12 +71,46 @@ self.addEventListener('fetch', (event) => {
   // (bare return allows request to proceed via browser's default fetch)
   if (event.request.method !== 'GET') return;
 
-  // Skip cross-origin requests - let browser handle them normally
-  if (!event.request.url.startsWith(self.location.origin)) return;
+  const requestUrl = event.request.url;
+
+  // Handle figure images from Supabase storage with cache-first strategy
+  // This improves offline support for question figures
+  if (isFigureUrl(requestUrl)) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          // Return cached version immediately, update cache in background
+          fetch(event.request).then((response) => {
+            if (response.status === 200) {
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(event.request, response);
+              });
+            }
+          }).catch(() => {}); // Ignore network errors for background update
+          return cachedResponse;
+        }
+
+        // Not cached, fetch and cache
+        return fetch(event.request).then((response) => {
+          if (response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
+
+  // Skip other cross-origin requests - let browser handle them normally
+  if (!requestUrl.startsWith(self.location.origin)) return;
 
   // Skip API requests (Supabase) - never cache to prevent stale data
   // Browser will handle these requests normally without service worker intervention
-  if (shouldSkipCaching(event.request.url)) {
+  if (shouldSkipCaching(requestUrl)) {
     return;
   }
 

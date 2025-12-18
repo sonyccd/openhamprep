@@ -18,6 +18,7 @@ import { Calculator } from "@/components/Calculator";
 import { LinkPreview } from "@/components/LinkPreview";
 import { GlossaryHighlightedText } from "@/components/GlossaryHighlightedText";
 import { MarkdownText } from "@/components/MarkdownText";
+import { FigureImage } from "@/components/FigureImage";
 import type { LinkData } from "@/hooks/useQuestions";
 
 /**
@@ -227,6 +228,12 @@ export function QuestionCard({
             )}
           </h2>
         </div>
+
+        {/* Question Figure */}
+        <FigureImage
+          figureUrl={question.figureUrl}
+          questionId={question.id}
+        />
 
         {/* Options */}
         <div className="space-y-3">

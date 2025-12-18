@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink, ThumbsUp, ThumbsDown, FileText, Filter, X } from "lucide-react";
+import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink, ThumbsUp, ThumbsDown, FileText, Filter, X, Image } from "lucide-react";
 import { BulkImportQuestions } from "./BulkImportQuestions";
 import { BulkExport, escapeCSVField } from "./BulkExport";
 import { EditHistoryViewer, EditHistoryEntry } from "./EditHistoryViewer";
@@ -19,6 +19,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { FigureUpload } from "./FigureUpload";
 interface LinkData {
   url: string;
   title: string;
@@ -38,6 +39,7 @@ interface Question {
   links?: LinkData[];
   explanation?: string | null;
   edit_history?: EditHistoryEntry[];
+  figure_url?: string | null;
 }
 interface AdminQuestionsProps {
   testType: 'technician' | 'general' | 'extra';
@@ -74,6 +76,7 @@ export function AdminQuestions({
   const [newLinks, setNewLinks] = useState<LinkData[]>([]);
   const [newLinkUrlForAdd, setNewLinkUrlForAdd] = useState("");
   const [isAddingLinkForNew, setIsAddingLinkForNew] = useState(false);
+  const [newFigureUrl, setNewFigureUrl] = useState<string | null>(null);
 
   // Edit state
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
@@ -84,6 +87,7 @@ export function AdminQuestions({
   const [editQuestionGroup, setEditQuestionGroup] = useState("");
   const [editLinks, setEditLinks] = useState<LinkData[]>([]);
   const [editExplanation, setEditExplanation] = useState("");
+  const [editFigureUrl, setEditFigureUrl] = useState<string | null>(null);
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [isAddingLink, setIsAddingLink] = useState(false);
   const prefix = TEST_TYPE_PREFIXES[testType];
@@ -98,7 +102,7 @@ export function AdminQuestions({
         data,
         error
       } = await supabase.from('questions')
-        .select('id, question, options, correct_answer, subelement, question_group, links, explanation, edit_history')
+        .select('id, question, options, correct_answer, subelement, question_group, links, explanation, edit_history, figure_url')
         .like('id', `${prefix}%`)
         .order('id', { ascending: true });
       if (error) throw error;
@@ -107,7 +111,8 @@ export function AdminQuestions({
         options: q.options as string[],
         links: (Array.isArray(q.links) ? q.links : []) as unknown as LinkData[],
         explanation: q.explanation,
-        edit_history: (Array.isArray(q.edit_history) ? q.edit_history : []) as unknown as EditHistoryEntry[]
+        edit_history: (Array.isArray(q.edit_history) ? q.edit_history : []) as unknown as EditHistoryEntry[],
+        figure_url: q.figure_url
       })) as Question[];
     }
   });
@@ -122,7 +127,7 @@ export function AdminQuestions({
     }
   }, [highlightQuestionId, questions]);
   const addQuestion = useMutation({
-    mutationFn: async (question: Omit<Question, 'edit_history'> & { links: LinkData[]; explanation?: string }) => {
+    mutationFn: async (question: Omit<Question, 'edit_history'> & { links: LinkData[]; explanation?: string; figure_url?: string | null }) => {
       const historyEntry: EditHistoryEntry = {
         user_id: user?.id || '',
         user_email: user?.email || 'Unknown',
@@ -142,7 +147,8 @@ export function AdminQuestions({
         question_group: question.question_group.trim(),
         explanation: question.explanation?.trim() || null,
         links: JSON.parse(JSON.stringify(question.links)),
-        edit_history: JSON.parse(JSON.stringify([historyEntry]))
+        edit_history: JSON.parse(JSON.stringify([historyEntry])),
+        figure_url: question.figure_url || null
       });
       if (error) throw error;
     },
@@ -165,9 +171,9 @@ export function AdminQuestions({
     }
   });
   const updateQuestion = useMutation({
-    mutationFn: async (params: { question: Question & { explanation?: string | null }; originalQuestion: Question }) => {
+    mutationFn: async (params: { question: Question & { explanation?: string | null; figure_url?: string | null }; originalQuestion: Question }) => {
       const { question, originalQuestion } = params;
-      
+
       // Build changes object
       const changes: Record<string, { from: unknown; to: unknown }> = {};
       if (originalQuestion.question !== question.question.trim()) {
@@ -187,6 +193,9 @@ export function AdminQuestions({
       }
       if ((originalQuestion.explanation || '') !== (question.explanation?.trim() || '')) {
         changes.explanation = { from: originalQuestion.explanation || '', to: question.explanation?.trim() || '' };
+      }
+      if ((originalQuestion.figure_url || '') !== (question.figure_url || '')) {
+        changes.figure_url = { from: originalQuestion.figure_url || '', to: question.figure_url || '' };
       }
 
       const historyEntry: EditHistoryEntry = {
@@ -208,6 +217,7 @@ export function AdminQuestions({
         subelement: question.subelement.trim(),
         question_group: question.question_group.trim(),
         explanation: question.explanation?.trim() || null,
+        figure_url: question.figure_url || null,
         edit_history: JSON.parse(JSON.stringify([...existingHistory, historyEntry]))
       }).eq('id', question.id);
       if (error) throw error;
@@ -337,6 +347,7 @@ export function AdminQuestions({
     setNewExplanation("");
     setNewLinks([]);
     setNewLinkUrlForAdd("");
+    setNewFigureUrl(null);
   };
   // Get unique subelements and groups for filter dropdowns
   const subelements = [...new Set(questions.map(q => q.subelement))].sort();
@@ -375,7 +386,8 @@ export function AdminQuestions({
       subelement: newSubelement,
       question_group: newQuestionGroup,
       explanation: newExplanation,
-      links: newLinks
+      links: newLinks,
+      figure_url: newFigureUrl
     });
   };
 
@@ -423,6 +435,7 @@ export function AdminQuestions({
     setEditQuestionGroup(q.question_group);
     setEditLinks(q.links || []);
     setEditExplanation(q.explanation || "");
+    setEditFigureUrl(q.figure_url || null);
     setNewLinkUrl("");
   };
   const updateEditOption = (index: number, value: string) => {
@@ -443,7 +456,8 @@ export function AdminQuestions({
         correct_answer: parseInt(editCorrectAnswer),
         subelement: editSubelement,
         question_group: editQuestionGroup,
-        explanation: editExplanation
+        explanation: editExplanation,
+        figure_url: editFigureUrl
       },
       originalQuestion: editingQuestion
     });
@@ -509,6 +523,22 @@ export function AdminQuestions({
               <p className="text-xs text-muted-foreground mt-1">
                 This explanation will be shown to users after they answer the question.
               </p>
+            </div>
+
+            <Separator />
+
+            {/* Figure Section */}
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Image className="w-4 h-4" />
+                Question Figure (Optional)
+              </Label>
+              <FigureUpload
+                questionId={editingQuestion?.id || ''}
+                currentFigureUrl={editFigureUrl}
+                onUpload={(url) => setEditFigureUrl(url)}
+                onRemove={() => setEditFigureUrl(null)}
+              />
             </div>
 
             <Separator />
@@ -715,16 +745,32 @@ export function AdminQuestions({
                   {/* Explanation Section */}
                   <div>
                     <Label>Explanation (shown after answering)</Label>
-                    <Textarea 
-                      placeholder="Explain why this is the correct answer..." 
-                      value={newExplanation} 
-                      onChange={e => setNewExplanation(e.target.value)} 
-                      rows={3} 
+                    <Textarea
+                      placeholder="Explain why this is the correct answer..."
+                      value={newExplanation}
+                      onChange={e => setNewExplanation(e.target.value)}
+                      rows={3}
                       className="mt-1"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       This explanation will be shown to users after they answer the question.
                     </p>
+                  </div>
+
+                  <Separator />
+
+                  {/* Figure Section */}
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2">
+                      <Image className="w-4 h-4" />
+                      Question Figure (Optional)
+                    </Label>
+                    <FigureUpload
+                      questionId={newId || 'new-question'}
+                      currentFigureUrl={newFigureUrl}
+                      onUpload={(url) => setNewFigureUrl(url)}
+                      onRemove={() => setNewFigureUrl(null)}
+                    />
                   </div>
 
                   <Separator />

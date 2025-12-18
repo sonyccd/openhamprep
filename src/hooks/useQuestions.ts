@@ -34,6 +34,7 @@ export interface Question {
   links: LinkData[];
   explanation?: string | null;
   forumUrl?: string | null;
+  figureUrl?: string | null;
 }
 
 interface DbQuestion {
@@ -46,6 +47,7 @@ interface DbQuestion {
   links: unknown;
   explanation: string | null;
   forum_url: string | null;
+  figure_url: string | null;
 }
 
 const answerMap: Record<number, 'A' | 'B' | 'C' | 'D'> = {
@@ -73,6 +75,7 @@ function transformQuestion(dbQuestion: DbQuestion): Question {
     links,
     explanation: dbQuestion.explanation,
     forumUrl: dbQuestion.forum_url,
+    figureUrl: dbQuestion.figure_url,
   };
 }
 
