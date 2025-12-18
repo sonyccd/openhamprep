@@ -16,7 +16,8 @@ const STATIC_ASSETS = [
 ];
 
 // API URL patterns that should never be cached (always fetch from network)
-const API_PATTERNS = ['/rest/', '/auth/', 'supabase'];
+// Using specific Supabase domains rather than broad string matching
+const API_PATTERNS = ['/rest/', '/auth/', '.supabase.co', '.supabase.in'];
 const shouldSkipCaching = (url) => API_PATTERNS.some(pattern => url.includes(pattern));
 
 // Maximum number of dynamic cache entries to prevent unbounded growth
@@ -88,15 +89,16 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
             // Enforce cache size limit to prevent unbounded storage growth
-            cache.keys().then((keys) => {
+            cache.keys().then(async (keys) => {
               if (keys.length > MAX_CACHE_SIZE) {
                 // Remove oldest entries (FIFO) until under limit
                 const deleteCount = keys.length - MAX_CACHE_SIZE;
-                for (let i = 0; i < deleteCount; i++) {
-                  cache.delete(keys[i]);
-                }
+                const deletePromises = keys.slice(0, deleteCount).map(key => cache.delete(key));
+                await Promise.all(deletePromises).catch(err =>
+                  console.warn('Cache eviction failed:', err)
+                );
               }
-            });
+            }).catch(err => console.warn('Cache size check failed:', err));
           });
         }
 

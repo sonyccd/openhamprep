@@ -187,6 +187,19 @@ describe('PWA Configuration', () => {
       expect(swContent).toContain('keys.length > MAX_CACHE_SIZE');
     });
 
+    it('should await cache eviction with proper error handling', () => {
+      expect(swContent).toContain('Promise.all(deletePromises)');
+      expect(swContent).toContain('Cache eviction failed');
+      expect(swContent).toContain('Cache size check failed');
+    });
+
+    it('should use precise Supabase domain patterns', () => {
+      expect(swContent).toContain('.supabase.co');
+      expect(swContent).toContain('.supabase.in');
+      // Should not contain broad 'supabase' string match
+      expect(swContent).not.toMatch(/API_PATTERNS.*'supabase'[^.]/);
+    });
+
     it('should only cache basic response types', () => {
       expect(swContent).toContain("response.type === 'basic'");
     });
@@ -213,9 +226,9 @@ describe('PWA Configuration', () => {
       expect(mainContent).toContain('registration.update()');
     });
 
-    it('should prompt user before applying update', () => {
-      expect(mainContent).toContain('window.confirm');
-      expect(mainContent).toContain('new version');
+    it('should show non-blocking toast for updates', () => {
+      expect(mainContent).toContain("toast('Update Available'");
+      expect(mainContent).toContain('duration: Infinity');
     });
 
     it('should send SKIP_WAITING message on user confirmation', () => {
@@ -224,6 +237,19 @@ describe('PWA Configuration', () => {
 
     it('should reload page after user confirms update', () => {
       expect(mainContent).toContain('window.location.reload()');
+    });
+
+    it('should store interval ID for cleanup', () => {
+      expect(mainContent).toContain('updateIntervalId');
+      expect(mainContent).toContain('clearInterval(updateIntervalId)');
+    });
+
+    it('should clear interval when service worker becomes redundant', () => {
+      expect(mainContent).toContain("state === 'redundant'");
+    });
+
+    it('should import toast from sonner', () => {
+      expect(mainContent).toContain("import { toast } from \"sonner\"");
     });
   });
 });

@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { injectSpeedInsights } from "@vercel/speed-insights";
 import { inject } from "@vercel/analytics";
+import { toast } from "sonner";
 import App from "./App.tsx";
 import "./index.css";
 
@@ -16,20 +17,30 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
         // Check for updates periodically (every hour)
-        setInterval(() => registration.update(), 60 * 60 * 1000);
+        // Store interval ID for potential cleanup (though main.tsx runs once per page load)
+        const updateIntervalId = setInterval(() => registration.update(), 60 * 60 * 1000);
 
-        // Listen for new service worker versions
+        // Clear interval if service worker becomes redundant
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New version available - prompt user to update
-                // Using confirm() for simplicity; could be replaced with a toast UI
-                if (window.confirm('A new version of Ham Prep is available. Reload to update?')) {
-                  newWorker.postMessage({ type: 'SKIP_WAITING' });
-                  window.location.reload();
-                }
+                // New version available - show non-blocking toast notification
+                toast('Update Available', {
+                  description: 'A new version of Ham Prep is ready.',
+                  action: {
+                    label: 'Update Now',
+                    onClick: () => {
+                      newWorker.postMessage({ type: 'SKIP_WAITING' });
+                      window.location.reload();
+                    },
+                  },
+                  duration: Infinity, // Don't auto-dismiss - let user decide
+                });
+              } else if (newWorker.state === 'redundant') {
+                // Service worker installation failed, clear the interval
+                clearInterval(updateIntervalId);
               }
             });
           }
