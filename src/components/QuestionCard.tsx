@@ -139,22 +139,6 @@ export function QuestionCard({
             {question.id}
           </span>
           <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={handleCopyLink}
-                  aria-label="Copy shareable link"
-                >
-                  <Link className="w-4 h-4" aria-hidden="true" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Copy shareable link</p>
-              </TooltipContent>
-            </Tooltip>
             <Calculator />
             {questionNumber && totalQuestions && (
               <span className="font-mono text-sm text-primary">
@@ -238,6 +222,22 @@ export function QuestionCard({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>{bookmarked ? "Remove bookmark" : "Bookmark this question"}</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={handleCopyLink}
+                      aria-label="Copy shareable link"
+                    >
+                      <Link className="w-4 h-4" aria-hidden="true" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Copy shareable link</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
