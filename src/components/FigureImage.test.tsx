@@ -23,37 +23,24 @@ describe('FigureImage', () => {
   });
 
   describe('Rendering', () => {
-    it('should render nothing when no figureUrl and no figure reference in question', () => {
+    it('should render nothing when figureUrl is null', () => {
       const { container } = render(
         <FigureImage
           figureUrl={null}
           questionId="T1A01"
-          questionText="What is the minimum age required to obtain an amateur radio license?"
         />
       );
       expect(container.firstChild).toBeNull();
     });
 
-    it('should render nothing when figureUrl is undefined and no figure reference', () => {
+    it('should render nothing when figureUrl is undefined', () => {
       const { container } = render(
         <FigureImage
           figureUrl={undefined}
           questionId="T1A01"
-          questionText="What frequency band is available for Technician licensees?"
         />
       );
       expect(container.firstChild).toBeNull();
-    });
-
-    it('should render placeholder when question references a figure but no URL provided', () => {
-      render(
-        <FigureImage
-          figureUrl={null}
-          questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
-        />
-      );
-      expect(screen.getByText('Figure not available')).toBeInTheDocument();
     });
 
     it('should render figure image when figureUrl is provided', () => {
@@ -61,7 +48,6 @@ describe('FigureImage', () => {
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
       const img = screen.getByAltText('Figure for question E9B05');
@@ -69,80 +55,23 @@ describe('FigureImage', () => {
       expect(img).toHaveAttribute('src', 'https://storage.example.com/figures/E9B05.png');
     });
 
-    it('should render expand button', () => {
+    it('should render expand button when figureUrl is provided', () => {
       render(
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
       expect(screen.getByLabelText('Expand figure')).toBeInTheDocument();
     });
-  });
 
-  describe('Figure Reference Detection', () => {
-    it('should detect "Figure E9-2" pattern', () => {
-      render(
-        <FigureImage
-          figureUrl={null}
-          questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
-        />
-      );
-      expect(screen.getByText('Figure not available')).toBeInTheDocument();
-    });
-
-    it('should detect "Figure T1" pattern', () => {
-      render(
-        <FigureImage
-          figureUrl={null}
-          questionId="T1A01"
-          questionText="Refer to Figure T1 for the schematic diagram."
-        />
-      );
-      expect(screen.getByText('Figure not available')).toBeInTheDocument();
-    });
-
-    it('should detect "Figure 1" pattern (numeric only)', () => {
-      render(
-        <FigureImage
-          figureUrl={null}
-          questionId="G1A01"
-          questionText="See Figure 1 for details."
-        />
-      );
-      expect(screen.getByText('Figure not available')).toBeInTheDocument();
-    });
-
-    it('should detect case-insensitive "FIGURE" pattern', () => {
-      render(
-        <FigureImage
-          figureUrl={null}
-          questionId="G1A01"
-          questionText="What is shown in FIGURE G2-1?"
-        />
-      );
-      expect(screen.getByText('Figure not available')).toBeInTheDocument();
-    });
-
-    it('should detect "figure" lowercase pattern', () => {
-      render(
-        <FigureImage
-          figureUrl={null}
-          questionId="G1A01"
-          questionText="The circuit in figure 5 shows..."
-        />
-      );
-      expect(screen.getByText('Figure not available')).toBeInTheDocument();
-    });
-
-    it('should not show placeholder for non-figure text', () => {
+    it('should not render for questions that mention "figure" in text but have no URL', () => {
+      // The component should NOT try to detect figure references in question text
+      // It only renders if figureUrl is explicitly provided
       const { container } = render(
         <FigureImage
           figureUrl={null}
-          questionId="T1A01"
-          questionText="What is the proper way to configure your radio?"
+          questionId="E9B05"
         />
       );
       expect(container.firstChild).toBeNull();
@@ -155,7 +84,6 @@ describe('FigureImage', () => {
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
 
@@ -172,7 +100,6 @@ describe('FigureImage', () => {
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
 
@@ -189,7 +116,6 @@ describe('FigureImage', () => {
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
 
@@ -214,7 +140,6 @@ describe('FigureImage', () => {
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
 
@@ -231,7 +156,6 @@ describe('FigureImage', () => {
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
 
@@ -250,7 +174,6 @@ describe('FigureImage', () => {
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
 
@@ -264,7 +187,6 @@ describe('FigureImage', () => {
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
 
@@ -277,12 +199,11 @@ describe('FigureImage', () => {
       });
     });
 
-    it('should show placeholder on image error when figure is referenced', async () => {
+    it('should show error state on image load failure', async () => {
       render(
         <FigureImage
           figureUrl="https://storage.example.com/figures/invalid.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
 
@@ -290,7 +211,7 @@ describe('FigureImage', () => {
       fireEvent.error(img);
 
       await waitFor(() => {
-        expect(screen.getByText('Figure not available')).toBeInTheDocument();
+        expect(screen.getByText('Figure failed to load')).toBeInTheDocument();
       });
     });
   });
@@ -301,7 +222,6 @@ describe('FigureImage', () => {
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
 
@@ -314,7 +234,6 @@ describe('FigureImage', () => {
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
 
@@ -326,7 +245,6 @@ describe('FigureImage', () => {
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
 
@@ -341,7 +259,6 @@ describe('FigureImage', () => {
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
 
@@ -354,7 +271,6 @@ describe('FigureImage', () => {
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
-          questionText="What type of antenna pattern is shown in Figure E9-2?"
         />
       );
 
@@ -362,6 +278,38 @@ describe('FigureImage', () => {
       // Check that the image has the responsive max-height classes
       expect(img.className).toContain('max-h-[200px]');
       expect(img.className).toContain('md:max-h-[300px]');
+    });
+  });
+
+  describe('Different Question IDs', () => {
+    it('should work with Technician question IDs', () => {
+      render(
+        <FigureImage
+          figureUrl="https://storage.example.com/figures/T7D01.png"
+          questionId="T7D01"
+        />
+      );
+      expect(screen.getByAltText('Figure for question T7D01')).toBeInTheDocument();
+    });
+
+    it('should work with General question IDs', () => {
+      render(
+        <FigureImage
+          figureUrl="https://storage.example.com/figures/G7B03.png"
+          questionId="G7B03"
+        />
+      );
+      expect(screen.getByAltText('Figure for question G7B03')).toBeInTheDocument();
+    });
+
+    it('should work with Extra question IDs', () => {
+      render(
+        <FigureImage
+          figureUrl="https://storage.example.com/figures/E4C05.png"
+          questionId="E4C05"
+        />
+      );
+      expect(screen.getByAltText('Figure for question E4C05')).toBeInTheDocument();
     });
   });
 });

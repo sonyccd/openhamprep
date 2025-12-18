@@ -233,7 +233,6 @@ export function QuestionCard({
         <FigureImage
           figureUrl={question.figureUrl}
           questionId={question.id}
-          questionText={question.question}
         />
 
         {/* Options */}

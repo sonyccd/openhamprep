@@ -6,37 +6,26 @@ import { FigureLightbox } from "@/components/FigureLightbox";
 interface FigureImageProps {
   figureUrl: string | null | undefined;
   questionId: string;
-  questionText: string;
 }
 
-// Regex to detect figure references in question text
-// Matches patterns like: "Figure E9-2", "Figure T1", "Figure 1", "Figure G2-1"
-const FIGURE_REFERENCE_REGEX = /\bFigure\s+[A-Z]?\d+[-.]?\d*\b/i;
-
-export function FigureImage({ figureUrl, questionId, questionText }: FigureImageProps) {
+export function FigureImage({ figureUrl, questionId }: FigureImageProps) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check if the question references a figure
-  const hasFigureReference = FIGURE_REFERENCE_REGEX.test(questionText);
-
-  // If no figure URL and no reference, don't render anything
-  if (!figureUrl && !hasFigureReference) {
+  // Only render if figureUrl is provided
+  if (!figureUrl) {
     return null;
   }
 
-  // If figure is referenced but no URL is provided, show placeholder
-  if (!figureUrl || imageError) {
-    if (hasFigureReference) {
-      return (
-        <div className="mb-6 p-4 rounded-lg border border-dashed border-border bg-muted/30 flex items-center justify-center gap-2 text-muted-foreground">
-          <ImageOff className="w-5 h-5" aria-hidden="true" />
-          <span className="text-sm">Figure not available</span>
-        </div>
-      );
-    }
-    return null;
+  // Show error state if image failed to load
+  if (imageError) {
+    return (
+      <div className="mb-6 p-4 rounded-lg border border-dashed border-border bg-muted/30 flex items-center justify-center gap-2 text-muted-foreground">
+        <ImageOff className="w-5 h-5" aria-hidden="true" />
+        <span className="text-sm">Figure failed to load</span>
+      </div>
+    );
   }
 
   return (

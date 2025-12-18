@@ -40,13 +40,12 @@ vi.mock('framer-motion', () => ({
 
 // Mock FigureImage component to verify it receives correct props
 vi.mock('./FigureImage', () => ({
-  FigureImage: ({ figureUrl, questionId, questionText }: {
+  FigureImage: ({ figureUrl, questionId }: {
     figureUrl: string | null | undefined;
     questionId: string;
-    questionText: string;
-  }) => figureUrl || questionText.toLowerCase().includes('figure') ? (
+  }) => figureUrl ? (
     <div data-testid="figure-image" data-figure-url={figureUrl} data-question-id={questionId}>
-      {figureUrl ? 'Figure Image' : 'Figure Placeholder'}
+      Figure Image
     </div>
   ) : null
 }));
@@ -311,13 +310,6 @@ describe('QuestionCard', () => {
       figureUrl: 'https://storage.example.com/question-figures/E9B05.png',
     };
 
-    const questionWithFigureReference: Question = {
-      ...mockQuestion,
-      id: 'E9B05',
-      question: 'What type of antenna pattern is shown in Figure E9-2?',
-      figureUrl: null,
-    };
-
     const questionWithoutFigure: Question = {
       ...mockQuestion,
       figureUrl: null,
@@ -332,16 +324,22 @@ describe('QuestionCard', () => {
       expect(figureImage).toHaveAttribute('data-question-id', 'E9B05');
     });
 
-    it('renders Figure placeholder when question references figure but has no URL', () => {
-      renderQuestionCard({ question: questionWithFigureReference });
+    it('does not render FigureImage when question has no figureUrl', () => {
+      renderQuestionCard({ question: questionWithoutFigure });
 
-      const figureImage = screen.getByTestId('figure-image');
-      expect(figureImage).toBeInTheDocument();
-      expect(screen.getByText('Figure Placeholder')).toBeInTheDocument();
+      expect(screen.queryByTestId('figure-image')).not.toBeInTheDocument();
     });
 
-    it('does not render FigureImage when question has no figure reference', () => {
-      renderQuestionCard({ question: questionWithoutFigure });
+    it('does not render FigureImage when figureUrl is null even if question mentions figure', () => {
+      // The component should NOT guess if a figure is needed based on question text
+      const questionMentionsFigure: Question = {
+        ...mockQuestion,
+        id: 'E9B05',
+        question: 'What type of antenna pattern is shown in Figure E9-2?',
+        figureUrl: null, // Admin hasn't added a figure
+      };
+
+      renderQuestionCard({ question: questionMentionsFigure });
 
       expect(screen.queryByTestId('figure-image')).not.toBeInTheDocument();
     });
@@ -354,42 +352,6 @@ describe('QuestionCard', () => {
       expect(figureImage).toHaveAttribute('data-question-id', questionWithFigure.id);
     });
 
-    it('renders figure between question text and answer options', () => {
-      renderQuestionCard({ question: questionWithFigure });
-
-      // Get the figure element
-      const figure = screen.getByTestId('figure-image');
-
-      // Get the question text
-      const questionText = screen.getByText(questionWithFigure.question);
-
-      // Get an option button
-      const optionA = screen.getByText('To provide emergency communications');
-
-      // Verify the DOM order: question text -> figure -> options
-      const container = figure.parentElement;
-      const allElements = container?.querySelectorAll('*') || [];
-
-      let questionTextIndex = -1;
-      let figureIndex = -1;
-      let optionIndex = -1;
-
-      allElements.forEach((el, index) => {
-        if (el.textContent?.includes(questionWithFigure.question)) {
-          questionTextIndex = index;
-        }
-        if (el.getAttribute('data-testid') === 'figure-image') {
-          figureIndex = index;
-        }
-        if (el.textContent?.includes('To provide emergency communications') && el.tagName === 'SPAN') {
-          optionIndex = index;
-        }
-      });
-
-      // Figure should appear after question text and before options
-      expect(figureIndex).toBeGreaterThan(-1);
-    });
-
     it('handles question with figureUrl undefined', () => {
       const questionWithUndefinedFigure: Question = {
         ...mockQuestion,
@@ -398,11 +360,10 @@ describe('QuestionCard', () => {
 
       renderQuestionCard({ question: questionWithUndefinedFigure });
 
-      // Should not show figure since no URL and no figure reference in text
       expect(screen.queryByTestId('figure-image')).not.toBeInTheDocument();
     });
 
-    it('renders figure for Technician question with figure reference', () => {
+    it('renders figure for Technician question with figureUrl', () => {
       const techQuestion: Question = {
         ...mockQuestion,
         id: 'T1A05',
@@ -417,7 +378,7 @@ describe('QuestionCard', () => {
       expect(figureImage).toHaveAttribute('data-question-id', 'T1A05');
     });
 
-    it('renders figure for General question with figure reference', () => {
+    it('renders figure for General question with figureUrl', () => {
       const generalQuestion: Question = {
         ...mockQuestion,
         id: 'G2B03',
