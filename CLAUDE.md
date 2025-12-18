@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Open Ham Prep is a React-based web application for studying FCC Amateur Radio license exams (Technician, General, Extra). Built with React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, and Supabase.
+Open Ham Prep is a React-based web application for studying US Amateur Radio license exams (Technician, General, Extra). Built with React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, and Supabase.
 
 ## Essential Commands
 
