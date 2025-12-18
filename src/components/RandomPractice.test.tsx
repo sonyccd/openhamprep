@@ -250,16 +250,91 @@ describe('RandomPractice', () => {
   describe('Reset Functionality', () => {
     it('calls reset when reset button is clicked', async () => {
       renderRandomPractice();
-      
+
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /reset/i })).toBeInTheDocument();
       });
-      
+
       fireEvent.click(screen.getByRole('button', { name: /reset/i }));
-      
+
       // Stats should be reset (still showing zero)
       await waitFor(() => {
         expect(screen.getByText('Correct')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Question Wraparound', () => {
+    it('resets progress when all questions have been seen and user skips', async () => {
+      renderRandomPractice();
+
+      // Wait for first question to load
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /skip/i })).toBeInTheDocument();
+      });
+
+      // Skip first question - should show "Question 2 of 2"
+      fireEvent.click(screen.getByRole('button', { name: /skip/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Question 2 of 2/)).toBeInTheDocument();
+      });
+
+      // Skip second question - this should wrap around and reset
+      fireEvent.click(screen.getByRole('button', { name: /skip/i }));
+
+      await waitFor(() => {
+        // After wraparound, history resets so "Question X of Y" indicator disappears
+        // (only shows when questionHistory.length > 1)
+        expect(screen.queryByText(/Question 2 of/)).not.toBeInTheDocument();
+        // Previous button should also be gone since we're at the start of fresh history
+        expect(screen.queryByRole('button', { name: /previous/i })).not.toBeInTheDocument();
+      });
+    });
+
+    it('resets progress when all questions have been answered and user continues', async () => {
+      renderRandomPractice();
+
+      // Wait for first question to load
+      await waitFor(() => {
+        const buttons = screen.getAllByRole('button');
+        const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
+        expect(optionA).toBeDefined();
+      });
+
+      // Answer first question
+      const buttons1 = screen.getAllByRole('button');
+      const optionA1 = buttons1.find(btn => btn.textContent?.startsWith('A'));
+      if (optionA1) fireEvent.click(optionA1);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+      });
+
+      // Go to next question
+      fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Question 2 of 2/)).toBeInTheDocument();
+      });
+
+      // Answer second question
+      const buttons2 = screen.getAllByRole('button');
+      const optionA2 = buttons2.find(btn => btn.textContent?.startsWith('A'));
+      if (optionA2) fireEvent.click(optionA2);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+      });
+
+      // Go to next question - should wrap around
+      fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+      await waitFor(() => {
+        // After wraparound, history resets so "Question X of Y" indicator disappears
+        expect(screen.queryByText(/Question 2 of/)).not.toBeInTheDocument();
+        // Should be back to showing skip button (fresh question, not answered)
+        expect(screen.getByRole('button', { name: /skip/i })).toBeInTheDocument();
       });
     });
   });

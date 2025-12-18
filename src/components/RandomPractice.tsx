@@ -111,22 +111,29 @@ export function RandomPractice({
       best_streak: newBestStreak
     }).eq('id', user.id);
   };
-  const getRandomQuestion = useCallback((excludeIds: string[] = []): Question | null => {
+  const getRandomQuestion = useCallback((excludeIds: string[] = []): { question: Question; shouldResetAskedIds: boolean } | null => {
     if (!allQuestions || allQuestions.length === 0) return null;
     const available = allQuestions.filter(q => !excludeIds.includes(q.id));
     if (available.length === 0) {
-      return allQuestions[Math.floor(Math.random() * allQuestions.length)];
+      // All questions have been asked, wrap around
+      return {
+        question: allQuestions[Math.floor(Math.random() * allQuestions.length)],
+        shouldResetAskedIds: true
+      };
     }
-    return available[Math.floor(Math.random() * available.length)];
+    return {
+      question: available[Math.floor(Math.random() * available.length)],
+      shouldResetAskedIds: false
+    };
   }, [allQuestions]);
 
   // Initialize first question
   useEffect(() => {
     if (allQuestions && allQuestions.length > 0 && questionHistory.length === 0) {
-      const firstQuestion = getRandomQuestion();
-      if (firstQuestion) {
+      const result = getRandomQuestion();
+      if (result) {
         setQuestionHistory([{
-          question: firstQuestion,
+          question: result.question,
           selectedAnswer: null,
           showResult: false
         }]);
@@ -228,29 +235,50 @@ export function RandomPractice({
 
     // Otherwise, get a new question
     const newAskedIds = [...askedIds, question.id];
-    setAskedIds(newAskedIds);
-    const nextQuestion = getRandomQuestion(newAskedIds);
-    if (nextQuestion) {
-      setQuestionHistory(prev => [...prev, {
-        question: nextQuestion,
-        selectedAnswer: null,
-        showResult: false
-      }]);
-      setHistoryIndex(prev => prev + 1);
+    const result = getRandomQuestion(newAskedIds);
+    if (result) {
+      // If we've gone through all questions, reset the asked IDs to start fresh
+      if (result.shouldResetAskedIds) {
+        setAskedIds([result.question.id]);
+        setQuestionHistory([{
+          question: result.question,
+          selectedAnswer: null,
+          showResult: false
+        }]);
+        setHistoryIndex(0);
+      } else {
+        setAskedIds(newAskedIds);
+        setQuestionHistory(prev => [...prev, {
+          question: result.question,
+          selectedAnswer: null,
+          showResult: false
+        }]);
+        setHistoryIndex(prev => prev + 1);
+      }
     }
   };
   const handleSkip = () => {
     const newAskedIds = [...askedIds, question.id];
-    setAskedIds(newAskedIds);
-    const nextQuestion = getRandomQuestion(newAskedIds);
-    if (nextQuestion) {
-      // Mark current as skipped (no answer selected)
-      setQuestionHistory(prev => [...prev, {
-        question: nextQuestion,
-        selectedAnswer: null,
-        showResult: false
-      }]);
-      setHistoryIndex(prev => prev + 1);
+    const result = getRandomQuestion(newAskedIds);
+    if (result) {
+      // If we've gone through all questions, reset the asked IDs to start fresh
+      if (result.shouldResetAskedIds) {
+        setAskedIds([result.question.id]);
+        setQuestionHistory([{
+          question: result.question,
+          selectedAnswer: null,
+          showResult: false
+        }]);
+        setHistoryIndex(0);
+      } else {
+        setAskedIds(newAskedIds);
+        setQuestionHistory(prev => [...prev, {
+          question: result.question,
+          selectedAnswer: null,
+          showResult: false
+        }]);
+        setHistoryIndex(prev => prev + 1);
+      }
     }
   };
   const handlePreviousQuestion = () => {
@@ -260,10 +288,10 @@ export function RandomPractice({
   };
   const handleReset = () => {
     setAskedIds([]);
-    const firstQuestion = getRandomQuestion();
-    if (firstQuestion) {
+    const result = getRandomQuestion();
+    if (result) {
       setQuestionHistory([{
-        question: firstQuestion,
+        question: result.question,
         selectedAnswer: null,
         showResult: false
       }]);
