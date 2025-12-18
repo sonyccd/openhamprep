@@ -40,7 +40,7 @@ export function AdminStats({ testType, onAddLinkToQuestion }: AdminStatsProps) {
       const { data, error } = await supabase
         .from('questions')
         .select('id, question, subelement, question_group, links, explanation')
-        .like('id', `${prefix}%`)
+        .ilike('id', `${prefix}*`)
         .order('id');
       
       if (error) throw error;
@@ -59,7 +59,7 @@ export function AdminStats({ testType, onAddLinkToQuestion }: AdminStatsProps) {
       const { data, error } = await supabase
         .from('question_attempts')
         .select('question_id, is_correct, user_id, attempted_at')
-        .like('question_id', `${prefix}%`)
+        .ilike('question_id', `${prefix}*`)
         .order('attempted_at', { ascending: true });
       
       if (error) throw error;
