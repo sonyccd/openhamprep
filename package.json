@@ -1,6 +1,6 @@
 {
   "name": "openhamprep",
-  "description": "Open-source web application for FCC Amateur Radio license exam preparation",
+  "description": "Open-source web application for US Amateur Radio license exam preparation",
   "version": "1.0.0",
   "private": true,
   "type": "module",
