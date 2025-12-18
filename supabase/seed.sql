@@ -115,6 +115,7 @@ INSERT INTO public.questions (id, question, options, correct_answer, subelement,
    '["Under no circumstances", "When transmitting code practice, information bulletins, or transmissions necessary to provide emergency communications", "At any time, as long as no music is transmitted", "At any time, as long as the transmissions are less than 15 minutes"]'::jsonb,
    1, 'T1', 'T1D', 'While amateur radio is primarily for two-way communications, one-way transmissions are permitted for specific purposes: code practice, information bulletins, and emergency communications.',
    '[{"url": "https://www.arrl.org/w1aw", "title": "W1AW Code Practice", "description": "ARRL headquarters station code practice schedule", "type": "article", "siteName": "ARRL"}]'::jsonb,
+   NULL,
    NULL),
 
   -- T2 - Operating Procedures
@@ -171,6 +172,7 @@ INSERT INTO public.questions (id, question, options, correct_answer, subelement,
    '["A network of repeaters where signals received by one are repeated by all", "A repeater with more than one receiver", "Multiple repeaters at one location", "A repeater with a backup power source"]'::jsonb,
    0, 'T2', 'T2B', 'A linked repeater network connects multiple repeaters so that a signal received by any one repeater is retransmitted by all linked repeaters, greatly extending coverage area.',
    '[{"url": "https://www.irlp.net/", "title": "IRLP - Internet Radio Linking Project", "description": "One of the largest repeater linking systems", "type": "website", "siteName": "IRLP"}]'::jsonb,
+   NULL,
    NULL),
 
   -- T3 - Radio Wave Propagation
@@ -206,6 +208,7 @@ INSERT INTO public.questions (id, question, options, correct_answer, subelement,
    '["The orientation of the electric field", "The orientation of the magnetic field", "The ratio of the energy in the wave to its frequency", "The ratio of the velocity to wavelength"]'::jsonb,
    0, 'T3', 'T3B', 'Polarization is defined by the orientation of the electric field. A vertically polarized wave has its electric field oriented vertically, while a horizontally polarized wave has it oriented horizontally.',
    '[]'::jsonb,
+   NULL,
    NULL),
 
   -- T4 - Amateur Radio Practices
@@ -234,6 +237,7 @@ INSERT INTO public.questions (id, question, options, correct_answer, subelement,
    '["Voice frequency recognition", "A DTMF keypad", "Carrier frequency pulses", "All of these choices are correct"]'::jsonb,
    1, 'T4', 'T4B', 'Many transceivers with DTMF microphones allow frequency entry via the DTMF keypad. DTMF (Dual-Tone Multi-Frequency) is the same tone system used by telephones.',
    '[]'::jsonb,
+   NULL,
    NULL),
 
   -- T5 - Electrical Principles
@@ -283,6 +287,7 @@ INSERT INTO public.questions (id, question, options, correct_answer, subelement,
    '["The farad", "The ohm", "The volt", "The henry"]'::jsonb,
    0, 'T5', 'T5C', 'Capacitance is measured in Farads. One farad is a very large unit, so you''ll typically see microfarads (µF), nanofarads (nF), or picofarads (pF). Named after Michael Faraday.',
    '[]'::jsonb,
+   NULL,
    NULL),
 
   -- =========================================================================
@@ -531,6 +536,7 @@ INSERT INTO public.questions (id, question, options, correct_answer, subelement,
    '["Duty cycle of the transmitter", "Frequency and power level", "Distance from antenna", "All of these choices are correct"]'::jsonb,
    3, 'G0', 'G0A', 'RF exposure evaluation must consider all factors: duty cycle (how often you transmit), frequency and power level (determines field strength), and distance from antenna (determines exposure level).',
    '[]'::jsonb,
+   NULL,
    NULL),
 
   -- =========================================================================
@@ -786,6 +792,7 @@ INSERT INTO public.questions (id, question, options, correct_answer, subelement,
    '["Equal to the height of the power line", "Enough that the antenna cannot contact the power line if it falls", "Half the height of the power line", "There is no minimum distance if the antenna is properly insulated"]'::jsonb,
    1, 'E0', 'E0A', 'Antennas must be positioned so they cannot contact power lines even if the antenna or support structure falls. Power line contact is one of the leading causes of amateur radio fatalities.',
    '[]'::jsonb,
+   NULL,
    NULL),
 
   -- Additional Extra questions to reach 50 total for practice exams

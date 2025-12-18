@@ -267,19 +267,27 @@ CREATE POLICY "Users can delete their own target exam"
 
 -- ============================================
 -- OAUTH_CONSENTS TABLE
+-- Note: This table may not exist if it was already removed by a later migration.
+-- Using DO block to conditionally update policies only if the table exists.
 -- ============================================
-DROP POLICY IF EXISTS "Users can view own consents" ON public.oauth_consents;
-DROP POLICY IF EXISTS "Users can insert own consents" ON public.oauth_consents;
-DROP POLICY IF EXISTS "Users can delete own consents" ON public.oauth_consents;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'oauth_consents') THEN
+    DROP POLICY IF EXISTS "Users can view own consents" ON public.oauth_consents;
+    DROP POLICY IF EXISTS "Users can insert own consents" ON public.oauth_consents;
+    DROP POLICY IF EXISTS "Users can delete own consents" ON public.oauth_consents;
 
-CREATE POLICY "Users can view own consents"
-  ON public.oauth_consents FOR SELECT
-  USING (user_id = (select auth.uid()));
+    -- Direct DDL works in DO blocks - no EXECUTE needed
+    CREATE POLICY "Users can view own consents"
+      ON public.oauth_consents FOR SELECT
+      USING (user_id = (select auth.uid()));
 
-CREATE POLICY "Users can insert own consents"
-  ON public.oauth_consents FOR INSERT
-  WITH CHECK (user_id = (select auth.uid()));
+    CREATE POLICY "Users can insert own consents"
+      ON public.oauth_consents FOR INSERT
+      WITH CHECK (user_id = (select auth.uid()));
 
-CREATE POLICY "Users can delete own consents"
-  ON public.oauth_consents FOR DELETE
-  USING (user_id = (select auth.uid()));
+    CREATE POLICY "Users can delete own consents"
+      ON public.oauth_consents FOR DELETE
+      USING (user_id = (select auth.uid()));
+  END IF;
+END $$;
