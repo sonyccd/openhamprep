@@ -5,7 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useExplanationFeedback } from "@/hooks/useExplanationFeedback";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Bookmark, BookmarkCheck, MessageSquare, ThumbsUp, ThumbsDown, ExternalLink, Users } from "lucide-react";
+import { Bookmark, BookmarkCheck, MessageSquare, ThumbsUp, ThumbsDown, ExternalLink, Users, Link } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -97,6 +98,16 @@ export function QuestionCard({
     setIsNoteOpen(false);
   };
 
+  const handleCopyLink = async () => {
+    const url = `${window.location.origin}/questions/${question.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard");
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  };
+
   const getOptionStyles = (option: typeof options[number]) => {
     if (!showResult) {
       return selectedAnswer === option
@@ -128,6 +139,22 @@ export function QuestionCard({
             {question.id}
           </span>
           <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleCopyLink}
+                  aria-label="Copy shareable link"
+                >
+                  <Link className="w-4 h-4" aria-hidden="true" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Copy shareable link</p>
+              </TooltipContent>
+            </Tooltip>
             <Calculator />
             {questionNumber && totalQuestions && (
               <span className="font-mono text-sm text-primary">
