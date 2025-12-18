@@ -31,6 +31,16 @@ vi.mock('@/hooks/useGlossaryTerms', () => ({
   useGlossaryTerms: () => ({ data: [] }),
 }));
 
+// Mock sonner toast
+const mockToastSuccess = vi.fn();
+const mockToastError = vi.fn();
+vi.mock('sonner', () => ({
+  toast: {
+    success: (...args) => mockToastSuccess(...args),
+    error: (...args) => mockToastError(...args),
+  },
+}));
+
 vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
@@ -391,6 +401,17 @@ describe('QuestionCard', () => {
       const figureImage = screen.getByTestId('figure-image');
       expect(figureImage).toBeInTheDocument();
       expect(figureImage).toHaveAttribute('data-question-id', 'G2B03');
+    });
+  });
+
+  describe('Shareable Link Button', () => {
+    // The shareable link button is only visible to logged-in users
+    it('does not render shareable link button when user is not logged in', () => {
+      // The default mock has user: null
+      renderQuestionCard();
+
+      const linkButton = screen.queryByRole('button', { name: /copy shareable link/i });
+      expect(linkButton).not.toBeInTheDocument();
     });
   });
 });
