@@ -28,11 +28,30 @@ const mockQuestions = [
     explanation: null,
     links: [],
   },
+  {
+    id: 'T1A03',
+    question: 'Third question for navigation testing?',
+    options: { A: 'Option A', B: 'Option B', C: 'Option C', D: 'Option D' },
+    correctAnswer: 'C',
+    subelement: 'T1',
+    group: 'T1A',
+    explanation: 'Third explanation',
+    links: [],
+  },
 ];
 
-const mockBookmarks = [
+const mockSingleBookmark = [
   { id: 'bookmark-1', question_id: 'T1A01', note: 'Remember this one!', created_at: '2024-01-01' },
 ];
+
+const mockMultipleBookmarks = [
+  { id: 'bookmark-1', question_id: 'T1A01', note: 'Remember this one!', created_at: '2024-01-01' },
+  { id: 'bookmark-2', question_id: 'T1A02', note: null, created_at: '2024-01-02' },
+  { id: 'bookmark-3', question_id: 'T1A03', note: 'Third note', created_at: '2024-01-03' },
+];
+
+// Default to single bookmark for backward compatibility
+let mockBookmarks = mockSingleBookmark;
 
 vi.mock('@/hooks/useQuestions', () => ({
   useQuestions: () => ({
@@ -105,16 +124,45 @@ const renderBookmarkedQuestions = (props = {}) => {
   return { ...result, onBack, onStartPractice };
 };
 
+// Helper to set up multiple bookmarks for navigation tests
+const setMultipleBookmarks = () => {
+  mockBookmarks = mockMultipleBookmarks;
+  mockBookmarksHook.mockReturnValue({
+    bookmarks: mockMultipleBookmarks,
+    isLoading: false,
+    isBookmarked: vi.fn((id: string) => mockMultipleBookmarks.some(b => b.question_id === id)),
+    addBookmark: { mutate: vi.fn() },
+    removeBookmark: mockRemoveBookmark,
+    getBookmarkNote: vi.fn((id: string) => mockMultipleBookmarks.find(b => b.question_id === id)?.note || null),
+    updateNote: { mutate: vi.fn() },
+  });
+};
+
+// Helper to reset to single bookmark
+const resetToSingleBookmark = () => {
+  mockBookmarks = mockSingleBookmark;
+  mockBookmarksHook.mockReturnValue({
+    bookmarks: mockSingleBookmark,
+    isLoading: false,
+    isBookmarked: vi.fn((id: string) => mockSingleBookmark.some(b => b.question_id === id)),
+    addBookmark: { mutate: vi.fn() },
+    removeBookmark: mockRemoveBookmark,
+    getBookmarkNote: vi.fn((id: string) => mockSingleBookmark.find(b => b.question_id === id)?.note || null),
+    updateNote: { mutate: vi.fn() },
+  });
+};
+
 describe('BookmarkedQuestions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetToSingleBookmark();
   });
 
   describe('List View', () => {
     it('displays bookmarked questions count', () => {
       renderBookmarkedQuestions();
-      
-      expect(screen.getByText('1 bookmarked question')).toBeInTheDocument();
+
+      expect(screen.getByText('1 question')).toBeInTheDocument();
     });
 
     it('shows question ID for bookmarked questions', () => {
@@ -148,7 +196,7 @@ describe('BookmarkedQuestions', () => {
 
   describe('Empty State', () => {
     it('shows empty state when no bookmarks exist', () => {
-      // Override the mock to return empty bookmarks (use mockReturnValue to persist across re-renders)
+      // Override the mock to return empty bookmarks
       mockBookmarksHook.mockReturnValue({
         bookmarks: [],
         isLoading: false,
@@ -164,17 +212,6 @@ describe('BookmarkedQuestions', () => {
       expect(screen.getByText('No bookmarks yet')).toBeInTheDocument();
       expect(screen.getByText('Bookmark questions during practice to review them later')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /start practicing/i })).toBeInTheDocument();
-
-      // Reset to default mock
-      mockBookmarksHook.mockReturnValue({
-        bookmarks: mockBookmarks,
-        isLoading: false,
-        isBookmarked: vi.fn((id: string) => mockBookmarks.some(b => b.question_id === id)),
-        addBookmark: { mutate: vi.fn() },
-        removeBookmark: mockRemoveBookmark,
-        getBookmarkNote: vi.fn((id: string) => mockBookmarks.find(b => b.question_id === id)?.note || null),
-        updateNote: { mutate: vi.fn() },
-      });
     });
   });
 
@@ -257,7 +294,7 @@ describe('BookmarkedQuestions', () => {
       
       await waitFor(() => {
         // Should be back on list view
-        expect(screen.getByText('1 bookmarked question')).toBeInTheDocument();
+        expect(screen.getByText('1 question')).toBeInTheDocument();
       });
     });
   });
@@ -283,7 +320,7 @@ describe('BookmarkedQuestions', () => {
 
   describe('Loading State', () => {
     it('shows loading state when bookmarks are loading', () => {
-      // Override the mock to return loading state (use mockReturnValue to persist across re-renders)
+      // Override the mock to return loading state
       mockBookmarksHook.mockReturnValue({
         bookmarks: undefined,
         isLoading: true,
@@ -297,17 +334,302 @@ describe('BookmarkedQuestions', () => {
       renderBookmarkedQuestions();
 
       expect(screen.getByText(/loading bookmarks/i)).toBeInTheDocument();
+    });
+  });
 
-      // Reset to default mock
-      mockBookmarksHook.mockReturnValue({
-        bookmarks: mockBookmarks,
-        isLoading: false,
-        isBookmarked: vi.fn((id: string) => mockBookmarks.some(b => b.question_id === id)),
-        addBookmark: { mutate: vi.fn() },
-        removeBookmark: mockRemoveBookmark,
-        getBookmarkNote: vi.fn((id: string) => mockBookmarks.find(b => b.question_id === id)?.note || null),
-        updateNote: { mutate: vi.fn() },
+  describe('Navigation', () => {
+    it('shows Previous and Next buttons in question view', async () => {
+      setMultipleBookmarks();
+      renderBookmarkedQuestions();
+
+      // Click on first bookmark
+      fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
       });
+    });
+
+    it('disables Previous button on first question', async () => {
+      setMultipleBookmarks();
+      renderBookmarkedQuestions();
+
+      // Click on first bookmark
+      fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
+
+      await waitFor(() => {
+        const prevButton = screen.getByRole('button', { name: /previous/i });
+        expect(prevButton).toBeDisabled();
+      });
+    });
+
+    it('enables Next button when there are more questions', async () => {
+      setMultipleBookmarks();
+      renderBookmarkedQuestions();
+
+      // Click on first bookmark
+      fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
+
+      await waitFor(() => {
+        const nextButton = screen.getByRole('button', { name: /next/i });
+        expect(nextButton).not.toBeDisabled();
+      });
+    });
+
+    it('navigates to next question when Next is clicked', async () => {
+      setMultipleBookmarks();
+      renderBookmarkedQuestions();
+
+      // Click on first bookmark
+      fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
+
+      await waitFor(() => {
+        expect(screen.getByText('What is the purpose of the Amateur Radio Service?')).toBeInTheDocument();
+      });
+
+      // Click Next
+      fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+      await waitFor(() => {
+        // Should show second question
+        expect(screen.getByText('Second question?')).toBeInTheDocument();
+      });
+    });
+
+    it('navigates to previous question when Previous is clicked', async () => {
+      setMultipleBookmarks();
+      renderBookmarkedQuestions();
+
+      // Click on second bookmark
+      fireEvent.click(screen.getByText('Second question?'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Second question?')).toBeInTheDocument();
+      });
+
+      // Click Previous
+      fireEvent.click(screen.getByRole('button', { name: /previous/i }));
+
+      await waitFor(() => {
+        // Should show first question
+        expect(screen.getByText('What is the purpose of the Amateur Radio Service?')).toBeInTheDocument();
+      });
+    });
+
+    it('disables Next button on last question', async () => {
+      setMultipleBookmarks();
+      renderBookmarkedQuestions();
+
+      // Click on last bookmark (third one)
+      fireEvent.click(screen.getByText('Third question for navigation testing?'));
+
+      await waitFor(() => {
+        const nextButton = screen.getByRole('button', { name: /next/i });
+        expect(nextButton).toBeDisabled();
+      });
+    });
+
+    it('enables Previous button when not on first question', async () => {
+      setMultipleBookmarks();
+      renderBookmarkedQuestions();
+
+      // Click on second bookmark
+      fireEvent.click(screen.getByText('Second question?'));
+
+      await waitFor(() => {
+        const prevButton = screen.getByRole('button', { name: /previous/i });
+        expect(prevButton).not.toBeDisabled();
+      });
+    });
+
+    it('shows question counter with multiple bookmarks', async () => {
+      setMultipleBookmarks();
+      renderBookmarkedQuestions();
+
+      // Click on first bookmark
+      fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Question 1 of 3')).toBeInTheDocument();
+      });
+    });
+
+    it('updates question counter when navigating', async () => {
+      setMultipleBookmarks();
+      renderBookmarkedQuestions();
+
+      // Click on first bookmark
+      fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Question 1 of 3')).toBeInTheDocument();
+      });
+
+      // Click Next
+      fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Question 2 of 3')).toBeInTheDocument();
+      });
+    });
+
+    it('does not show question counter with single bookmark', async () => {
+      // Uses default single bookmark from beforeEach
+      renderBookmarkedQuestions();
+
+      // Click on the bookmark
+      fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /back to bookmarks/i })).toBeInTheDocument();
+      });
+
+      // Question counter should not be present
+      expect(screen.queryByText(/Question \d+ of \d+/)).not.toBeInTheDocument();
+    });
+
+    it('resets answer state when navigating to next question', async () => {
+      setMultipleBookmarks();
+      renderBookmarkedQuestions();
+
+      // Click on first bookmark
+      fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Emergency')).toBeInTheDocument();
+      });
+
+      // Answer the question
+      const buttons = screen.getAllByRole('button');
+      const optionA = buttons.find(btn => btn.textContent?.includes('Emergency'));
+      if (optionA) {
+        fireEvent.click(optionA);
+      }
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+      });
+
+      // Click Next
+      fireEvent.click(screen.getByRole('button', { name: /next/i }));
+
+      await waitFor(() => {
+        // Should show second question
+        expect(screen.getByText('Second question?')).toBeInTheDocument();
+        // Try Again should not be visible (answer state reset)
+        expect(screen.queryByRole('button', { name: /try again/i })).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Keyboard Navigation', () => {
+    it('navigates with arrow keys', async () => {
+      setMultipleBookmarks();
+      renderBookmarkedQuestions();
+
+      // Click on first bookmark to enter question view
+      fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Question 1 of 3')).toBeInTheDocument();
+      });
+
+      // Press right arrow to go to next question
+      fireEvent.keyDown(document, { key: 'ArrowRight' });
+
+      await waitFor(() => {
+        expect(screen.getByText('Question 2 of 3')).toBeInTheDocument();
+      });
+
+      // Press left arrow to go back
+      fireEvent.keyDown(document, { key: 'ArrowLeft' });
+
+      await waitFor(() => {
+        expect(screen.getByText('Question 1 of 3')).toBeInTheDocument();
+      });
+    });
+
+    it('returns to list with Escape key', async () => {
+      renderBookmarkedQuestions();
+
+      // Click on bookmark to enter question view
+      fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /back to bookmarks/i })).toBeInTheDocument();
+      });
+
+      // Press Escape
+      fireEvent.keyDown(document, { key: 'Escape' });
+
+      await waitFor(() => {
+        // Should be back on list view
+        expect(screen.getByText('1 question')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Randomize Button', () => {
+    it('shows randomize button in question view', async () => {
+      setMultipleBookmarks();
+      renderBookmarkedQuestions();
+
+      fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
+
+      await waitFor(() => {
+        const randomButton = screen.getByTitle('Random question');
+        expect(randomButton).toBeInTheDocument();
+      });
+    });
+
+    it('disables randomize button when only one bookmark', async () => {
+      renderBookmarkedQuestions();
+
+      fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
+
+      await waitFor(() => {
+        const randomButton = screen.getByTitle('Random question');
+        expect(randomButton).toBeDisabled();
+      });
+    });
+
+    it('enables randomize button when multiple bookmarks', async () => {
+      setMultipleBookmarks();
+      renderBookmarkedQuestions();
+
+      fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
+
+      await waitFor(() => {
+        const randomButton = screen.getByTitle('Random question');
+        expect(randomButton).not.toBeDisabled();
+      });
+    });
+
+    it('changes to different question when randomize is clicked', async () => {
+      // Seed Math.random for predictable test
+      const originalRandom = Math.random;
+      Math.random = () => 0.5; // Will result in index 1 (second question)
+
+      setMultipleBookmarks();
+      renderBookmarkedQuestions();
+
+      fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Question 1 of 3')).toBeInTheDocument();
+      });
+
+      const randomButton = screen.getByTitle('Random question');
+      fireEvent.click(randomButton);
+
+      await waitFor(() => {
+        // Should be on a different question now (index 1 = second question)
+        expect(screen.getByText('Second question?')).toBeInTheDocument();
+      });
+
+      // Restore Math.random
+      Math.random = originalRandom;
     });
   });
 });

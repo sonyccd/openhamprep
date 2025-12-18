@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
-import { Bookmark, Loader2, Trash2, MessageSquare, ArrowLeft } from "lucide-react";
+import { Bookmark, Loader2, Trash2, MessageSquare, ArrowLeft, ChevronLeft, ChevronRight, Dices } from "lucide-react";
 import { motion } from "framer-motion";
 import { TestType } from "@/types/navigation";
 
@@ -29,17 +30,52 @@ export function BookmarkedQuestions({
     isLoading: bookmarksLoading,
     removeBookmark
   } = useBookmarks();
-  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
+  const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
   const [showResult, setShowResult] = useState(false);
   const isLoading = questionsLoading || bookmarksLoading;
   const bookmarkedQuestions = allQuestions?.filter(q => bookmarks?.some(b => b.question_id === q.id)) || [];
-  const selectedQuestion = bookmarkedQuestions.find(q => q.id === selectedQuestionId);
-  const selectedBookmark = bookmarks?.find(b => b.question_id === selectedQuestionId);
+  const selectedQuestion = currentIndex !== null ? bookmarkedQuestions[currentIndex] : null;
+  const selectedBookmark = selectedQuestion ? bookmarks?.find(b => b.question_id === selectedQuestion.id) : null;
+
+  // Navigation helpers
+  const canGoPrev = currentIndex !== null && currentIndex > 0;
+  const canGoNext = currentIndex !== null && currentIndex < bookmarkedQuestions.length - 1;
+
+  const handlePrevQuestion = () => {
+    if (canGoPrev) {
+      setCurrentIndex(currentIndex - 1);
+      setSelectedAnswer(null);
+      setShowResult(false);
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if (canGoNext) {
+      setCurrentIndex(currentIndex + 1);
+      setSelectedAnswer(null);
+      setShowResult(false);
+    }
+  };
+
+  const handleRandomize = () => {
+    if (bookmarkedQuestions.length <= 1) return;
+    // Pick a random index different from current with max iteration guard
+    let newIndex: number;
+    let attempts = 0;
+    const maxAttempts = 10;
+    do {
+      newIndex = Math.floor(Math.random() * bookmarkedQuestions.length);
+      attempts++;
+    } while (newIndex === currentIndex && attempts < maxAttempts);
+    setCurrentIndex(newIndex);
+    setSelectedAnswer(null);
+    setShowResult(false);
+  };
 
   // Reset state when test type changes
   useEffect(() => {
-    setSelectedQuestionId(null);
+    setCurrentIndex(null);
     setSelectedAnswer(null);
     setShowResult(false);
   }, [testType]);
@@ -57,7 +93,9 @@ export function BookmarkedQuestions({
     { key: 'b', description: 'Select B', action: () => handleAnswerSelect('B'), disabled: showResult },
     { key: 'c', description: 'Select C', action: () => handleAnswerSelect('C'), disabled: showResult },
     { key: 'd', description: 'Select D', action: () => handleAnswerSelect('D'), disabled: showResult },
-    { key: 'Escape', description: 'Go back', action: () => { setSelectedQuestionId(null); setSelectedAnswer(null); setShowResult(false); } },
+    { key: 'ArrowLeft', description: 'Previous', action: handlePrevQuestion, disabled: !canGoPrev },
+    { key: 'ArrowRight', description: 'Next', action: handleNextQuestion, disabled: !canGoNext },
+    { key: 'Escape', description: 'Go back', action: () => { setCurrentIndex(null); setSelectedAnswer(null); setShowResult(false); } },
   ];
 
   useKeyboardShortcuts(shortcuts, { enabled: !!selectedQuestion });
@@ -76,7 +114,7 @@ export function BookmarkedQuestions({
         <div className="max-w-3xl mx-auto mb-8">
           <div className="flex items-center justify-between mb-6">
             <Button variant="ghost" onClick={() => {
-            setSelectedQuestionId(null);
+            setCurrentIndex(null);
             setSelectedAnswer(null);
             setShowResult(false);
           }} className="gap-2">
@@ -115,69 +153,106 @@ export function BookmarkedQuestions({
         setShowResult(true);
       }} showResult={showResult} enableGlossaryHighlight />
 
-        {showResult && <div className="max-w-3xl mx-auto mt-8 flex justify-center">
-            <Button onClick={() => {
-          setSelectedAnswer(null);
-          setShowResult(false);
-        }} variant="outline">
-              Try Again
-            </Button>
-          </div>}
+        {/* Navigation Actions */}
+        <div className="max-w-3xl mx-auto mt-8 flex justify-center gap-4">
+          <Button variant="outline" onClick={handlePrevQuestion} disabled={!canGoPrev} className="gap-2">
+            <ChevronLeft className="w-4 h-4" />
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleRandomize}
+            disabled={bookmarkedQuestions.length <= 1}
+            className="gap-2"
+            title="Random question"
+            aria-label="Jump to random question"
+          >
+            <Dices className="w-4 h-4" />
+          </Button>
+          {showResult && <Button onClick={() => {
+            setSelectedAnswer(null);
+            setShowResult(false);
+          }} variant="outline">
+            Try Again
+          </Button>}
+          <Button variant={showResult ? "default" : "outline"} onClick={handleNextQuestion} disabled={!canGoNext} className="gap-2">
+            Next
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Question counter */}
+        {bookmarkedQuestions.length > 1 && <motion.p initial={{
+          opacity: 0
+        }} animate={{
+          opacity: 1
+        }} className="text-center text-muted-foreground text-sm mt-4">
+            Question {currentIndex + 1} of {bookmarkedQuestions.length}
+          </motion.p>}
       </div>;
   }
   return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
       <div className="max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-end mb-8">
-          
-        </div>
-
-        {bookmarkedQuestions.length === 0 ? <motion.div initial={{
-        opacity: 0
-      }} animate={{
-        opacity: 1
-      }} className="text-center py-12">
-            <Bookmark className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-foreground font-medium mb-2">No bookmarks yet</p>
-            <p className="text-muted-foreground mb-4">
-              Bookmark questions during practice to review them later
-            </p>
-            <Button onClick={onStartPractice}>Start Practicing</Button>
-          </motion.div> : <motion.div initial={{
-        opacity: 0,
-        y: 20
-      }} animate={{
-        opacity: 1,
-        y: 0
-      }} className="space-y-3">
-            <p className="text-sm text-muted-foreground mb-4">
-              {bookmarkedQuestions.length} bookmarked question{bookmarkedQuestions.length !== 1 ? 's' : ''}
-            </p>
-            {bookmarkedQuestions.map(question => {
-          const bookmark = bookmarks?.find(b => b.question_id === question.id);
-          return <div key={question.id} className="bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
-                  <div className="flex items-start gap-4">
-                    <button onClick={() => setSelectedQuestionId(question.id)} className="flex-1 text-left">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-mono text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                          {question.id}
-                        </span>
-                        {bookmark?.note && <span className="flex items-center gap-1 text-xs text-accent">
-                            <MessageSquare className="w-3 h-3" />
-                            Has note
-                          </span>}
-                      </div>
-                      <p className="text-sm text-foreground line-clamp-2">
-                        {question.question}
-                      </p>
-                    </button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => removeBookmark.mutate(question.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>;
-        })}
-          </motion.div>}
+        {bookmarkedQuestions.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <motion.div initial={{
+                opacity: 0
+              }} animate={{
+                opacity: 1
+              }} className="text-center py-8">
+                <Bookmark className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-foreground font-medium mb-2">No bookmarks yet</p>
+                <p className="text-muted-foreground mb-4">
+                  Bookmark questions during practice to review them later
+                </p>
+                <Button onClick={onStartPractice}>Start Practicing</Button>
+              </motion.div>
+            </CardContent>
+          </Card>
+        ) : (
+          <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} className="space-y-3">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Bookmark className="w-5 h-5" />
+                Bookmarked Questions
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {bookmarkedQuestions.length} question{bookmarkedQuestions.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            {bookmarkedQuestions.map((question, index) => {
+              const bookmark = bookmarks?.find(b => b.question_id === question.id);
+              return <div key={question.id} className="bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
+                <div className="flex items-start gap-4">
+                  <button onClick={() => setCurrentIndex(index)} className="flex-1 text-left">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-mono text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">
+                        {question.id}
+                      </span>
+                      {bookmark?.note && <span className="flex items-center gap-1 text-xs text-accent">
+                        <MessageSquare className="w-3 h-3" />
+                        Has note
+                      </span>}
+                    </div>
+                    <p className="text-sm text-foreground line-clamp-2">
+                      {question.question}
+                    </p>
+                  </button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => removeBookmark.mutate(question.id)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>;
+            })}
+          </motion.div>
+        )}
       </div>
     </div>;
 }
