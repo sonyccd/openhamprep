@@ -172,7 +172,8 @@ describe('PWA Configuration', () => {
     it('should skip API requests from caching', () => {
       expect(swContent).toContain('API_PATTERNS');
       expect(swContent).toContain('shouldSkipCaching');
-      expect(swContent).toContain('supabase');
+      // Check that Supabase API paths are properly handled
+      expect(swContent).toContain('Supabase');
     });
 
     it('should pre-cache 384px icon', () => {
@@ -202,11 +203,18 @@ describe('PWA Configuration', () => {
       expect(swContent).toContain('Cache size check failed');
     });
 
-    it('should use precise Supabase domain patterns', () => {
-      expect(swContent).toContain('.supabase.co');
-      expect(swContent).toContain('.supabase.in');
-      // Should not contain broad 'supabase' string match
-      expect(swContent).not.toMatch(/API_PATTERNS.*'supabase'[^.]/);
+    it('should use precise Supabase API path patterns', () => {
+      // API patterns should target specific Supabase API endpoints, not storage
+      expect(swContent).toContain('/rest/v1/');
+      expect(swContent).toContain('/auth/v1/');
+      expect(swContent).toContain('/realtime/');
+      expect(swContent).toContain('/functions/');
+    });
+
+    it('should have special handling for figure images from Supabase storage', () => {
+      // Figure images should use cache-first strategy for offline support
+      expect(swContent).toContain('isFigureUrl');
+      expect(swContent).toContain('/storage/v1/object/public/question-figures/');
     });
 
     it('should only cache basic response types', () => {

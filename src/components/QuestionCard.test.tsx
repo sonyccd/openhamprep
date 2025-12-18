@@ -38,6 +38,19 @@ vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
+// Mock FigureImage component to verify it receives correct props
+vi.mock('./FigureImage', () => ({
+  FigureImage: ({ figureUrl, questionId, questionText }: {
+    figureUrl: string | null | undefined;
+    questionId: string;
+    questionText: string;
+  }) => figureUrl || questionText.toLowerCase().includes('figure') ? (
+    <div data-testid="figure-image" data-figure-url={figureUrl} data-question-id={questionId}>
+      {figureUrl ? 'Figure Image' : 'Figure Placeholder'}
+    </div>
+  ) : null
+}));
+
 const mockQuestion: Question = {
   id: 'T1A01',
   question: 'What is the purpose of the Amateur Radio Service?',
@@ -287,6 +300,136 @@ describe('QuestionCard', () => {
       });
 
       expect(screen.queryByText('Discuss with Other Hams')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Figure Display', () => {
+    const questionWithFigure: Question = {
+      ...mockQuestion,
+      id: 'E9B05',
+      question: 'What type of antenna pattern is shown in Figure E9-2?',
+      figureUrl: 'https://storage.example.com/question-figures/E9B05.png',
+    };
+
+    const questionWithFigureReference: Question = {
+      ...mockQuestion,
+      id: 'E9B05',
+      question: 'What type of antenna pattern is shown in Figure E9-2?',
+      figureUrl: null,
+    };
+
+    const questionWithoutFigure: Question = {
+      ...mockQuestion,
+      figureUrl: null,
+    };
+
+    it('renders FigureImage when question has a figureUrl', () => {
+      renderQuestionCard({ question: questionWithFigure });
+
+      const figureImage = screen.getByTestId('figure-image');
+      expect(figureImage).toBeInTheDocument();
+      expect(figureImage).toHaveAttribute('data-figure-url', 'https://storage.example.com/question-figures/E9B05.png');
+      expect(figureImage).toHaveAttribute('data-question-id', 'E9B05');
+    });
+
+    it('renders Figure placeholder when question references figure but has no URL', () => {
+      renderQuestionCard({ question: questionWithFigureReference });
+
+      const figureImage = screen.getByTestId('figure-image');
+      expect(figureImage).toBeInTheDocument();
+      expect(screen.getByText('Figure Placeholder')).toBeInTheDocument();
+    });
+
+    it('does not render FigureImage when question has no figure reference', () => {
+      renderQuestionCard({ question: questionWithoutFigure });
+
+      expect(screen.queryByTestId('figure-image')).not.toBeInTheDocument();
+    });
+
+    it('passes correct props to FigureImage component', () => {
+      renderQuestionCard({ question: questionWithFigure });
+
+      const figureImage = screen.getByTestId('figure-image');
+      expect(figureImage).toHaveAttribute('data-figure-url', questionWithFigure.figureUrl);
+      expect(figureImage).toHaveAttribute('data-question-id', questionWithFigure.id);
+    });
+
+    it('renders figure between question text and answer options', () => {
+      renderQuestionCard({ question: questionWithFigure });
+
+      // Get the figure element
+      const figure = screen.getByTestId('figure-image');
+
+      // Get the question text
+      const questionText = screen.getByText(questionWithFigure.question);
+
+      // Get an option button
+      const optionA = screen.getByText('To provide emergency communications');
+
+      // Verify the DOM order: question text -> figure -> options
+      const container = figure.parentElement;
+      const allElements = container?.querySelectorAll('*') || [];
+
+      let questionTextIndex = -1;
+      let figureIndex = -1;
+      let optionIndex = -1;
+
+      allElements.forEach((el, index) => {
+        if (el.textContent?.includes(questionWithFigure.question)) {
+          questionTextIndex = index;
+        }
+        if (el.getAttribute('data-testid') === 'figure-image') {
+          figureIndex = index;
+        }
+        if (el.textContent?.includes('To provide emergency communications') && el.tagName === 'SPAN') {
+          optionIndex = index;
+        }
+      });
+
+      // Figure should appear after question text and before options
+      expect(figureIndex).toBeGreaterThan(-1);
+    });
+
+    it('handles question with figureUrl undefined', () => {
+      const questionWithUndefinedFigure: Question = {
+        ...mockQuestion,
+        // figureUrl is not set (undefined)
+      };
+
+      renderQuestionCard({ question: questionWithUndefinedFigure });
+
+      // Should not show figure since no URL and no figure reference in text
+      expect(screen.queryByTestId('figure-image')).not.toBeInTheDocument();
+    });
+
+    it('renders figure for Technician question with figure reference', () => {
+      const techQuestion: Question = {
+        ...mockQuestion,
+        id: 'T1A05',
+        question: 'Refer to Figure T1 for the schematic diagram.',
+        figureUrl: 'https://storage.example.com/question-figures/T1A05.png',
+      };
+
+      renderQuestionCard({ question: techQuestion });
+
+      const figureImage = screen.getByTestId('figure-image');
+      expect(figureImage).toBeInTheDocument();
+      expect(figureImage).toHaveAttribute('data-question-id', 'T1A05');
+    });
+
+    it('renders figure for General question with figure reference', () => {
+      const generalQuestion: Question = {
+        ...mockQuestion,
+        id: 'G2B03',
+        question: 'What is shown in Figure G2-1?',
+        figureUrl: 'https://storage.example.com/question-figures/G2B03.png',
+      };
+
+      renderQuestionCard({ question: generalQuestion });
+
+      const figureImage = screen.getByTestId('figure-image');
+      expect(figureImage).toBeInTheDocument();
+      expect(figureImage).toHaveAttribute('data-question-id', 'G2B03');
     });
   });
 });

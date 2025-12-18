@@ -17,16 +17,16 @@ vi.mock('@/integrations/supabase/client', () => ({
 // Mock question data for all test types
 const mockDbQuestions = [
   // Technician questions (T prefix)
-  { id: 'T1A01', question: 'Tech Q1?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: 'https://forum.openhamprep.com/t/t1a01-tech-q1/123' },
-  { id: 'T1A02', question: 'Tech Q2?', options: ['A', 'B', 'C', 'D'], correct_answer: 1, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null },
-  { id: 'T2A01', question: 'Tech Q3?', options: ['A', 'B', 'C', 'D'], correct_answer: 2, subelement: 'T2', question_group: 'T2A', links: [], explanation: null, forum_url: 'https://forum.openhamprep.com/t/t2a01-tech-q3/125' },
+  { id: 'T1A01', question: 'Tech Q1?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: 'https://forum.openhamprep.com/t/t1a01-tech-q1/123', figure_url: null },
+  { id: 'T1A02', question: 'Tech Q2?', options: ['A', 'B', 'C', 'D'], correct_answer: 1, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null, figure_url: 'https://storage.example.com/question-figures/T1A02.png' },
+  { id: 'T2A01', question: 'Tech Q3?', options: ['A', 'B', 'C', 'D'], correct_answer: 2, subelement: 'T2', question_group: 'T2A', links: [], explanation: null, forum_url: 'https://forum.openhamprep.com/t/t2a01-tech-q3/125', figure_url: null },
   // General questions (G prefix)
-  { id: 'G1A01', question: 'General Q1?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'G1', question_group: 'G1A', links: [], explanation: null, forum_url: null },
-  { id: 'G1A02', question: 'General Q2?', options: ['A', 'B', 'C', 'D'], correct_answer: 1, subelement: 'G1', question_group: 'G1A', links: [], explanation: null, forum_url: 'https://forum.openhamprep.com/t/g1a02-general-q2/200' },
-  { id: 'G2A01', question: 'General Q3?', options: ['A', 'B', 'C', 'D'], correct_answer: 3, subelement: 'G2', question_group: 'G2A', links: [], explanation: null, forum_url: null },
+  { id: 'G1A01', question: 'General Q1?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'G1', question_group: 'G1A', links: [], explanation: null, forum_url: null, figure_url: null },
+  { id: 'G1A02', question: 'General Q2?', options: ['A', 'B', 'C', 'D'], correct_answer: 1, subelement: 'G1', question_group: 'G1A', links: [], explanation: null, forum_url: 'https://forum.openhamprep.com/t/g1a02-general-q2/200', figure_url: 'https://storage.example.com/question-figures/G1A02.png' },
+  { id: 'G2A01', question: 'General Q3?', options: ['A', 'B', 'C', 'D'], correct_answer: 3, subelement: 'G2', question_group: 'G2A', links: [], explanation: null, forum_url: null, figure_url: null },
   // Extra questions (E prefix)
-  { id: 'E1A01', question: 'Extra Q1?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E1', question_group: 'E1A', links: [], explanation: null, forum_url: 'https://forum.openhamprep.com/t/e1a01-extra-q1/300' },
-  { id: 'E1A02', question: 'Extra Q2?', options: ['A', 'B', 'C', 'D'], correct_answer: 2, subelement: 'E1', question_group: 'E1A', links: [], explanation: null, forum_url: null },
+  { id: 'E1A01', question: 'Extra Q1?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E1', question_group: 'E1A', links: [], explanation: null, forum_url: 'https://forum.openhamprep.com/t/e1a01-extra-q1/300', figure_url: null },
+  { id: 'E1A02', question: 'What is shown in Figure E1-1?', options: ['A', 'B', 'C', 'D'], correct_answer: 2, subelement: 'E1', question_group: 'E1A', links: [], explanation: null, forum_url: null, figure_url: 'https://storage.example.com/question-figures/E1A02.png' },
 ];
 
 function createWrapper() {
@@ -80,6 +80,7 @@ describe('useQuestions', () => {
         links: [],
         explanation: null,
         forumUrl: 'https://forum.openhamprep.com/t/t1a01-tech-q1/123',
+        figureUrl: null,
       });
     });
   });
@@ -278,7 +279,7 @@ describe('useQuestions', () => {
     it('includes forumUrl in Question interface', async () => {
       mockSelect.mockResolvedValueOnce({
         data: [
-          { id: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: 'Test explanation', forum_url: 'https://forum.openhamprep.com/t/test/456' },
+          { id: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: 'Test explanation', forum_url: 'https://forum.openhamprep.com/t/test/456', figure_url: null },
         ],
         error: null,
       });
@@ -297,6 +298,130 @@ describe('useQuestions', () => {
       expect(question).toHaveProperty('links');
       expect(question).toHaveProperty('explanation');
       expect(question).toHaveProperty('forumUrl');
+      expect(question).toHaveProperty('figureUrl');
+    });
+  });
+
+  describe('figure_url handling', () => {
+    it('transforms figure_url to figureUrl in camelCase', async () => {
+      mockSelect.mockResolvedValueOnce({
+        data: [
+          { id: 'E9B05', question: 'What is shown in Figure E9-2?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: null, forum_url: null, figure_url: 'https://storage.example.com/question-figures/E9B05.png' },
+        ],
+        error: null,
+      });
+
+      const { result } = renderHook(() => useQuestions('extra'), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data?.[0]?.figureUrl).toBe('https://storage.example.com/question-figures/E9B05.png');
+    });
+
+    it('handles null figure_url', async () => {
+      mockSelect.mockResolvedValueOnce({
+        data: [
+          { id: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null, figure_url: null },
+        ],
+        error: null,
+      });
+
+      const { result } = renderHook(() => useQuestions('technician'), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data?.[0]?.figureUrl).toBeNull();
+    });
+
+    it('preserves figure_url across different license types', async () => {
+      const { result } = renderHook(() => useQuestions(), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      // T1A01 has no figure, T1A02 has figure
+      const t1a01 = result.current.data?.find(q => q.id === 'T1A01');
+      const t1a02 = result.current.data?.find(q => q.id === 'T1A02');
+      const g1a02 = result.current.data?.find(q => q.id === 'G1A02');
+      const e1a02 = result.current.data?.find(q => q.id === 'E1A02');
+
+      expect(t1a01?.figureUrl).toBeNull();
+      expect(t1a02?.figureUrl).toBe('https://storage.example.com/question-figures/T1A02.png');
+      expect(g1a02?.figureUrl).toBe('https://storage.example.com/question-figures/G1A02.png');
+      expect(e1a02?.figureUrl).toBe('https://storage.example.com/question-figures/E1A02.png');
+    });
+
+    it('includes figureUrl in Question interface', async () => {
+      mockSelect.mockResolvedValueOnce({
+        data: [
+          { id: 'E9B05', question: 'What is shown in Figure E9-2?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: 'Antenna pattern explanation', forum_url: null, figure_url: 'https://storage.example.com/question-figures/E9B05.png' },
+        ],
+        error: null,
+      });
+
+      const { result } = renderHook(() => useQuestions('extra'), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      const question = result.current.data?.[0];
+      // Verify figureUrl is included with other properties
+      expect(question).toMatchObject({
+        id: 'E9B05',
+        question: 'What is shown in Figure E9-2?',
+        figureUrl: 'https://storage.example.com/question-figures/E9B05.png',
+      });
+    });
+
+    it('handles question with both forumUrl and figureUrl', async () => {
+      mockSelect.mockResolvedValueOnce({
+        data: [
+          {
+            id: 'E9B05',
+            question: 'What is shown in Figure E9-2?',
+            options: ['A', 'B', 'C', 'D'],
+            correct_answer: 0,
+            subelement: 'E9',
+            question_group: 'E9B',
+            links: [],
+            explanation: 'Test explanation',
+            forum_url: 'https://forum.openhamprep.com/t/e9b05/123',
+            figure_url: 'https://storage.example.com/question-figures/E9B05.png',
+          },
+        ],
+        error: null,
+      });
+
+      const { result } = renderHook(() => useQuestions('extra'), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      const question = result.current.data?.[0];
+      expect(question?.forumUrl).toBe('https://forum.openhamprep.com/t/e9b05/123');
+      expect(question?.figureUrl).toBe('https://storage.example.com/question-figures/E9B05.png');
+    });
+
+    it('handles Supabase storage URLs correctly', async () => {
+      const storageUrl = 'https://xyz.supabase.co/storage/v1/object/public/question-figures/E9B05.png';
+      mockSelect.mockResolvedValueOnce({
+        data: [
+          { id: 'E9B05', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: null, forum_url: null, figure_url: storageUrl },
+        ],
+        error: null,
+      });
+
+      const { result } = renderHook(() => useQuestions('extra'), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data?.[0]?.figureUrl).toBe(storageUrl);
+    });
+
+    it('handles figure URLs with cache-busting query parameters', async () => {
+      const urlWithParams = 'https://storage.example.com/question-figures/E9B05.png?t=1234567890';
+      mockSelect.mockResolvedValueOnce({
+        data: [
+          { id: 'E9B05', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: null, forum_url: null, figure_url: urlWithParams },
+        ],
+        error: null,
+      });
+
+      const { result } = renderHook(() => useQuestions('extra'), { wrapper: createWrapper() });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data?.[0]?.figureUrl).toBe(urlWithParams);
     });
   });
 });
