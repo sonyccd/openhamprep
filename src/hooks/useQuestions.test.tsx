@@ -2,10 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
-import { useQuestions } from './useQuestions';
+import { useQuestions, useQuestion } from './useQuestions';
 
 // Mock Supabase
 const mockSelect = vi.fn();
+const mockSingleQuery = vi.fn();
+
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn(() => ({
@@ -422,6 +424,123 @@ describe('useQuestions', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(result.current.data?.[0]?.figureUrl).toBe(urlWithParams);
+    });
+  });
+});
+
+describe('useQuestion', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSelect.mockResolvedValue({ data: mockDbQuestions, error: null });
+  });
+
+  // Helper to first load questions into cache, then test useQuestion
+  const renderWithPreloadedCache = async (questionId: string) => {
+    const wrapper = createWrapper();
+
+    // First, load all questions into cache
+    const { result: questionsResult } = renderHook(() => useQuestions(), { wrapper });
+    await waitFor(() => expect(questionsResult.current.isSuccess).toBe(true));
+
+    // Now test useQuestion with the cache populated
+    const { result } = renderHook(() => useQuestion(questionId), { wrapper });
+    await waitFor(() => expect(result.current.data).toBeDefined());
+
+    return result;
+  };
+
+  describe('fetching question by ID', () => {
+    it('returns the correct question when ID is found in cache', async () => {
+      const result = await renderWithPreloadedCache('T1A01');
+
+      expect(result.current.data?.id).toBe('T1A01');
+      expect(result.current.data?.question).toBe('Tech Q1?');
+    });
+
+    it('handles case-insensitive question IDs', async () => {
+      const result = await renderWithPreloadedCache('t1a01');
+
+      expect(result.current.data?.id).toBe('T1A01');
+    });
+
+    it('returns General question when ID starts with G', async () => {
+      const result = await renderWithPreloadedCache('G1A01');
+
+      expect(result.current.data?.id).toBe('G1A01');
+      expect(result.current.data?.question).toBe('General Q1?');
+    });
+
+    it('returns Extra question when ID starts with E', async () => {
+      const result = await renderWithPreloadedCache('E1A01');
+
+      expect(result.current.data?.id).toBe('E1A01');
+      expect(result.current.data?.question).toBe('Extra Q1?');
+    });
+  });
+
+  describe('disabled query', () => {
+    it('does not fetch when questionId is undefined', async () => {
+      const { result } = renderHook(() => useQuestion(undefined), {
+        wrapper: createWrapper(),
+      });
+
+      // Query should not be enabled
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.data).toBeUndefined();
+    });
+
+    it('does not fetch when questionId is empty string', async () => {
+      const { result } = renderHook(() => useQuestion(''), {
+        wrapper: createWrapper(),
+      });
+
+      // Query should not be enabled when ID is empty
+      expect(result.current.data).toBeUndefined();
+    });
+  });
+
+  describe('question transformation', () => {
+    it('transforms question data correctly', async () => {
+      const result = await renderWithPreloadedCache('T1A01');
+
+      expect(result.current.data).toEqual({
+        id: 'T1A01',
+        question: 'Tech Q1?',
+        options: { A: 'A', B: 'B', C: 'C', D: 'D' },
+        correctAnswer: 'A',
+        subelement: 'T1',
+        group: 'T1A',
+        links: [],
+        explanation: null,
+        forumUrl: 'https://forum.openhamprep.com/t/t1a01-tech-q1/123',
+        figureUrl: null,
+      });
+    });
+
+    it('includes figureUrl when present', async () => {
+      const result = await renderWithPreloadedCache('T1A02');
+
+      expect(result.current.data?.figureUrl).toBe('https://storage.example.com/question-figures/T1A02.png');
+    });
+  });
+
+  describe('query key', () => {
+    it('uses unique query key per question ID', async () => {
+      const wrapper = createWrapper();
+
+      // Preload the cache
+      const { result: questionsResult } = renderHook(() => useQuestions(), { wrapper });
+      await waitFor(() => expect(questionsResult.current.isSuccess).toBe(true));
+
+      const { result: result1 } = renderHook(() => useQuestion('T1A01'), { wrapper });
+      await waitFor(() => expect(result1.current.data).toBeDefined());
+
+      const { result: result2 } = renderHook(() => useQuestion('G1A01'), { wrapper });
+      await waitFor(() => expect(result2.current.data).toBeDefined());
+
+      // Both queries should succeed with different data
+      expect(result1.current.data?.id).toBe('T1A01');
+      expect(result2.current.data?.id).toBe('G1A01');
     });
   });
 });
