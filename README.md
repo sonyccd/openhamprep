@@ -9,7 +9,7 @@
 ![GitHub License](https://img.shields.io/github/license/sonyccd/openhamprep)
 
 
-A modern web application for studying FCC Amateur Radio license exams. Open source, community-driven, born in North Carolina.
+A modern web application for studying US Amateur Radio license exams. Open source, community-driven, born in North Carolina.
 
 **Live App:** [openhamprep.app](https://openhamprep.com)
 
