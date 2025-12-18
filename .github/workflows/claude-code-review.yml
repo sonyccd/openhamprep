@@ -12,11 +12,9 @@ on:
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    # Non-blocking: This job is informational only and won't fail the PR
+    # Not all contributors have access to Claude Code
+    continue-on-error: true
 
     runs-on: ubuntu-latest
     permissions:
