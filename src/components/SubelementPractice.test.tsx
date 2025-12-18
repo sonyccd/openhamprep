@@ -248,18 +248,71 @@ describe('SubelementPractice Stats', () => {
     // Select a topic (T1 = Commission's Rules)
     const t1Button = screen.getByText("Commission's Rules").closest('button');
     if (t1Button) fireEvent.click(t1Button);
-    
+
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /start practice/i })).toBeInTheDocument();
     });
-    
+
     // Start practice
     fireEvent.click(screen.getByRole('button', { name: /start practice/i }));
-    
+
     await waitFor(() => {
       expect(screen.getByText('Correct')).toBeInTheDocument();
       expect(screen.getByText('Incorrect')).toBeInTheDocument();
       expect(screen.getByText('Score')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('SubelementPractice Question Wraparound', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('resets progress when all questions have been seen and user continues', async () => {
+    const queryClient = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <SubelementPractice onBack={vi.fn()} testType="technician" />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+
+    // Select T1 topic which has 2 questions
+    const t1Button = screen.getByText("Commission's Rules").closest('button');
+    if (t1Button) fireEvent.click(t1Button);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /start practice/i })).toBeInTheDocument();
+    });
+
+    // Start practice
+    fireEvent.click(screen.getByRole('button', { name: /start practice/i }));
+
+    // Wait for first question
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /skip/i })).toBeInTheDocument();
+    });
+
+    // Skip through all questions (T1 has 2 questions)
+    fireEvent.click(screen.getByRole('button', { name: /skip/i }));
+
+    await waitFor(() => {
+      // After skipping first, we should be on question 2
+      expect(screen.getByText(/Question 2 of 2/)).toBeInTheDocument();
+    });
+
+    // Skip again - this should wrap around
+    fireEvent.click(screen.getByRole('button', { name: /skip/i }));
+
+    await waitFor(() => {
+      // After wraparound, history resets so "Question X of Y" indicator disappears
+      // (only shows when questionHistory.length > 1)
+      expect(screen.queryByText(/Question 2 of/)).not.toBeInTheDocument();
+      // Previous button should also be gone since we're at the start of fresh history
+      expect(screen.queryByRole('button', { name: /previous/i })).not.toBeInTheDocument();
     });
   });
 });

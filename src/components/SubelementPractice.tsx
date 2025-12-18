@@ -128,13 +128,20 @@ export function SubelementPractice({
     return selectedSubelement ? questionsBySubelement[selectedSubelement] || [] : [];
   }, [selectedSubelement, questionsBySubelement]);
 
-  const getRandomQuestion = useCallback((excludeIds: string[] = []): Question | null => {
+  const getRandomQuestion = useCallback((excludeIds: string[] = []): { question: Question; shouldResetAskedIds: boolean } | null => {
     if (currentQuestions.length === 0) return null;
     const available = currentQuestions.filter(q => !excludeIds.includes(q.id));
     if (available.length === 0) {
-      return currentQuestions[Math.floor(Math.random() * currentQuestions.length)];
+      // All questions have been asked, wrap around
+      return {
+        question: currentQuestions[Math.floor(Math.random() * currentQuestions.length)],
+        shouldResetAskedIds: true
+      };
     }
-    return available[Math.floor(Math.random() * available.length)];
+    return {
+      question: available[Math.floor(Math.random() * available.length)],
+      shouldResetAskedIds: false
+    };
   }, [currentQuestions]);
 
   // Update current entry in history
@@ -167,9 +174,9 @@ export function SubelementPractice({
 
   const handleStartPractice = () => {
     setTopicView('practice');
-    const firstQuestion = getRandomQuestion();
-    if (firstQuestion) {
-      setQuestionHistory([{ question: firstQuestion, selectedAnswer: null, showResult: false }]);
+    const result = getRandomQuestion();
+    if (result) {
+      setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
       setHistoryIndex(0);
     }
     capture(ANALYTICS_EVENTS.SUBELEMENT_PRACTICE_STARTED, {
@@ -219,25 +226,39 @@ export function SubelementPractice({
       setHistoryIndex(historyIndex + 1);
       return;
     }
-    
+
     // Otherwise, get a new question
     const newAskedIds = [...askedIds, question.id];
-    setAskedIds(newAskedIds);
-    const nextQuestion = getRandomQuestion(newAskedIds);
-    if (nextQuestion) {
-      setQuestionHistory(prev => [...prev, { question: nextQuestion, selectedAnswer: null, showResult: false }]);
-      setHistoryIndex(prev => prev + 1);
+    const result = getRandomQuestion(newAskedIds);
+    if (result) {
+      // If we've gone through all questions, reset the asked IDs to start fresh
+      if (result.shouldResetAskedIds) {
+        setAskedIds([result.question.id]);
+        setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
+        setHistoryIndex(0);
+      } else {
+        setAskedIds(newAskedIds);
+        setQuestionHistory(prev => [...prev, { question: result.question, selectedAnswer: null, showResult: false }]);
+        setHistoryIndex(prev => prev + 1);
+      }
     }
   };
 
   const handleSkip = () => {
     if (!question) return;
     const newAskedIds = [...askedIds, question.id];
-    setAskedIds(newAskedIds);
-    const nextQuestion = getRandomQuestion(newAskedIds);
-    if (nextQuestion) {
-      setQuestionHistory(prev => [...prev, { question: nextQuestion, selectedAnswer: null, showResult: false }]);
-      setHistoryIndex(prev => prev + 1);
+    const result = getRandomQuestion(newAskedIds);
+    if (result) {
+      // If we've gone through all questions, reset the asked IDs to start fresh
+      if (result.shouldResetAskedIds) {
+        setAskedIds([result.question.id]);
+        setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
+        setHistoryIndex(0);
+      } else {
+        setAskedIds(newAskedIds);
+        setQuestionHistory(prev => [...prev, { question: result.question, selectedAnswer: null, showResult: false }]);
+        setHistoryIndex(prev => prev + 1);
+      }
     }
   };
 
@@ -249,9 +270,9 @@ export function SubelementPractice({
 
   const handleReset = () => {
     setAskedIds([]);
-    const firstQuestion = getRandomQuestion();
-    if (firstQuestion) {
-      setQuestionHistory([{ question: firstQuestion, selectedAnswer: null, showResult: false }]);
+    const result = getRandomQuestion();
+    if (result) {
+      setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
       setHistoryIndex(0);
     }
     setStats({
