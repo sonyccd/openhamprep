@@ -104,10 +104,10 @@ export function useQuestions(testType?: TestType) {
 
 export function useRandomQuestion(excludeIds: string[] = []) {
   const { data: allQuestions, isLoading, error } = useQuestions();
-  
+
   const getRandomQuestion = (): Question | null => {
     if (!allQuestions || allQuestions.length === 0) return null;
-    
+
     const available = allQuestions.filter(q => !excludeIds.includes(q.id));
     if (available.length === 0) {
       // Reset if all questions have been asked
@@ -115,6 +115,34 @@ export function useRandomQuestion(excludeIds: string[] = []) {
     }
     return available[Math.floor(Math.random() * available.length)];
   };
-  
+
   return { getRandomQuestion, isLoading, error, allQuestions };
+}
+
+export function useQuestion(questionId: string | undefined) {
+  // Try to use the existing all-questions cache first
+  const { data: allQuestions } = useQuestions();
+
+  return useQuery({
+    queryKey: ['question', questionId],
+    queryFn: async () => {
+      // Check if we have it in the all-questions cache
+      if (allQuestions) {
+        const found = allQuestions.find(q => q.id.toUpperCase() === questionId?.toUpperCase());
+        if (found) return found;
+      }
+
+      // Fallback: fetch directly from database
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .ilike('id', questionId || '')
+        .single();
+
+      if (error) throw error;
+      return transformQuestion(data as DbQuestion);
+    },
+    enabled: !!questionId,
+    staleTime: 1000 * 60 * 60, // 1 hour cache
+  });
 }
