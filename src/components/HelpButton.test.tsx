@@ -150,6 +150,23 @@ describe('HelpButton', () => {
         expect(feedbackLink).toHaveAttribute('rel', 'noopener noreferrer');
       });
     });
+
+    it('has correct status page link', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+
+      await waitFor(() => {
+        const statusLink = screen.getByRole('link', { name: /system status/i });
+        expect(statusLink).toHaveAttribute(
+          'href',
+          'https://openhamprep.statuspage.io/'
+        );
+        expect(statusLink).toHaveAttribute('target', '_blank');
+        expect(statusLink).toHaveAttribute('rel', 'noopener noreferrer');
+      });
+    });
   });
 
   describe('Keyboard Shortcut Display', () => {
