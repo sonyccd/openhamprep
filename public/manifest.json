@@ -1,6 +1,6 @@
 {
   "name": "Open Ham Prep",
-  "short_name": "Ham Prep",
+  "short_name": "Open Ham Prep",
   "description": "Free practice tests for FCC Amateur Radio License Exams. Technician, General, and Extra class preparation.",
   "start_url": "/",
   "display": "standalone",

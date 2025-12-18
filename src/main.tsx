@@ -5,11 +5,11 @@ import { toast } from "sonner";
 import App from "./App.tsx";
 import "./index.css";
 
-// Initialize Vercel Speed Insights
-injectSpeedInsights();
-
-// Initialize Vercel Web Analytics
-inject();
+// Initialize Vercel Analytics only in production (they require Vercel's infrastructure)
+if (import.meta.env.PROD) {
+  injectSpeedInsights();
+  inject();
+}
 
 // Register service worker for PWA offline support
 if ('serviceWorker' in navigator) {

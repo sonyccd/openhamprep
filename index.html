@@ -3,6 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- Preconnect to external origins for faster resource loading -->
+    <link rel="preconnect" href="https://openhamprep.statuspage.io" />
+    <link rel="dns-prefetch" href="https://openhamprep.statuspage.io" />
+
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.json" />
     <title>Open Ham Prep | Amateur Radio License Exam Preparation</title>
@@ -65,6 +70,6 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script src="https://openhamprep.statuspage.io/embed/script.js"></script>
+    <script defer src="https://openhamprep.statuspage.io/embed/script.js"></script>
   </body>
 </html>

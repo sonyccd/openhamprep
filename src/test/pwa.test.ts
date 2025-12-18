@@ -9,7 +9,7 @@ describe('PWA Configuration', () => {
 
     it('should have required name fields', () => {
       expect(manifest.name).toBe('Open Ham Prep');
-      expect(manifest.short_name).toBe('Ham Prep');
+      expect(manifest.short_name).toBe('Open Ham Prep');
     });
 
     it('should have a description', () => {
@@ -93,6 +93,15 @@ describe('PWA Configuration', () => {
 
     it('should have viewport-fit=cover for notched devices', () => {
       expect(indexHtml).toContain('viewport-fit=cover');
+    });
+
+    it('should have preconnect hints for external origins', () => {
+      expect(indexHtml).toContain('rel="preconnect"');
+      expect(indexHtml).toContain('rel="dns-prefetch"');
+    });
+
+    it('should defer non-critical third-party scripts', () => {
+      expect(indexHtml).toContain('defer src="https://openhamprep.statuspage.io');
     });
   });
 
