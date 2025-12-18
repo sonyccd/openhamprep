@@ -277,16 +277,17 @@ BEGIN
     DROP POLICY IF EXISTS "Users can insert own consents" ON public.oauth_consents;
     DROP POLICY IF EXISTS "Users can delete own consents" ON public.oauth_consents;
 
-    EXECUTE 'CREATE POLICY "Users can view own consents"
+    -- Direct DDL works in DO blocks - no EXECUTE needed
+    CREATE POLICY "Users can view own consents"
       ON public.oauth_consents FOR SELECT
-      USING (user_id = (select auth.uid()))';
+      USING (user_id = (select auth.uid()));
 
-    EXECUTE 'CREATE POLICY "Users can insert own consents"
+    CREATE POLICY "Users can insert own consents"
       ON public.oauth_consents FOR INSERT
-      WITH CHECK (user_id = (select auth.uid()))';
+      WITH CHECK (user_id = (select auth.uid()));
 
-    EXECUTE 'CREATE POLICY "Users can delete own consents"
+    CREATE POLICY "Users can delete own consents"
       ON public.oauth_consents FOR DELETE
-      USING (user_id = (select auth.uid()))';
+      USING (user_id = (select auth.uid()));
   END IF;
 END $$;
