@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       bookmarked_questions: {
@@ -320,6 +345,7 @@ export type Database = {
           best_streak: number
           created_at: string
           display_name: string | null
+          forum_username: string | null
           glossary_best_streak: number
           glossary_current_streak: number
           glossary_last_study_date: string | null
@@ -331,6 +357,7 @@ export type Database = {
           best_streak?: number
           created_at?: string
           display_name?: string | null
+          forum_username?: string | null
           glossary_best_streak?: number
           glossary_current_streak?: number
           glossary_last_study_date?: string | null
@@ -342,6 +369,7 @@ export type Database = {
           best_streak?: number
           created_at?: string
           display_name?: string | null
+          forum_username?: string | null
           glossary_best_streak?: number
           glossary_current_streak?: number
           glossary_last_study_date?: string | null
@@ -412,6 +440,7 @@ export type Database = {
           created_at: string
           edit_history: Json
           explanation: string | null
+          figure_url: string | null
           forum_url: string | null
           id: string
           links: Json
@@ -425,6 +454,7 @@ export type Database = {
           created_at?: string
           edit_history?: Json
           explanation?: string | null
+          figure_url?: string | null
           forum_url?: string | null
           id: string
           links?: Json
@@ -438,6 +468,7 @@ export type Database = {
           created_at?: string
           edit_history?: Json
           explanation?: string | null
+          figure_url?: string | null
           forum_url?: string | null
           id?: string
           links?: Json
@@ -559,6 +590,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_own_account: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -694,6 +726,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
