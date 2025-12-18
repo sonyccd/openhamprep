@@ -274,7 +274,7 @@ id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,questi
 - Extra: `E1A01`, `E1A02`, etc.
 
 **Guidelines:**
-- Use official FCC question pool as source
+- Use official NCVEC question pool as source
 - Include accurate correct_answer (0-3 for options A-D)
 - Categorize by correct subelement and group
 
