@@ -63,7 +63,7 @@ describe('HelpButton', () => {
   });
 
   describe('Tabs', () => {
-    it('shows Shortcuts tab by default', async () => {
+    it('shows Feedback tab by default', async () => {
       const user = userEvent.setup();
       renderHelpButton();
 
@@ -72,14 +72,21 @@ describe('HelpButton', () => {
       await waitFor(() => {
         expect(screen.getByRole('tab', { name: /shortcuts/i })).toBeInTheDocument();
         expect(screen.getByRole('tab', { name: /feedback/i })).toBeInTheDocument();
+        expect(screen.getByText('Give Feedback')).toBeInTheDocument();
       });
     });
 
-    it('displays shortcut groups', async () => {
+    it('displays shortcut groups when Shortcuts tab is selected', async () => {
       const user = userEvent.setup();
       renderHelpButton();
 
       await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /shortcuts/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('tab', { name: /shortcuts/i }));
 
       await waitFor(() => {
         expect(screen.getByText('Answering Questions')).toBeInTheDocument();
@@ -88,11 +95,17 @@ describe('HelpButton', () => {
       });
     });
 
-    it('shows keyboard shortcuts', async () => {
+    it('shows keyboard shortcuts when Shortcuts tab is selected', async () => {
       const user = userEvent.setup();
       renderHelpButton();
 
       await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /shortcuts/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('tab', { name: /shortcuts/i }));
 
       await waitFor(() => {
         expect(screen.getByText('Select answer A')).toBeInTheDocument();
@@ -101,78 +114,73 @@ describe('HelpButton', () => {
       });
     });
 
-    it('switches to Feedback tab when clicked', async () => {
+    it('switches to Shortcuts tab when clicked', async () => {
       const user = userEvent.setup();
       renderHelpButton();
 
       await user.click(screen.getByRole('button', { name: /open help dialog/i }));
 
       await waitFor(() => {
-        expect(screen.getByRole('tab', { name: /feedback/i })).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: /shortcuts/i })).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole('tab', { name: /feedback/i }));
+      await user.click(screen.getByRole('tab', { name: /shortcuts/i }));
 
       await waitFor(() => {
-        expect(screen.getByText('Report a Bug')).toBeInTheDocument();
-        expect(screen.getByText('Request a Feature')).toBeInTheDocument();
+        expect(screen.getByText('Answering Questions')).toBeInTheDocument();
+        expect(screen.getByText('Navigation')).toBeInTheDocument();
       });
     });
   });
 
   describe('Feedback Links', () => {
-    it('has correct bug report link', async () => {
+    it('has correct feedback forum link', async () => {
       const user = userEvent.setup();
       renderHelpButton();
 
       await user.click(screen.getByRole('button', { name: /open help dialog/i }));
 
       await waitFor(() => {
-        expect(screen.getByRole('tab', { name: /feedback/i })).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByRole('tab', { name: /feedback/i }));
-
-      await waitFor(() => {
-        const bugLink = screen.getByRole('link', { name: /report a bug/i });
-        expect(bugLink).toHaveAttribute(
+        const feedbackLink = screen.getByRole('link', { name: /give feedback/i });
+        expect(feedbackLink).toHaveAttribute(
           'href',
-          'https://github.com/sonyccd/openhamprep/issues/new?template=bug_report.md'
+          'https://forum.openhamprep.com/c/feedback/2'
         );
-        expect(bugLink).toHaveAttribute('target', '_blank');
-        expect(bugLink).toHaveAttribute('rel', 'noopener noreferrer');
+        expect(feedbackLink).toHaveAttribute('target', '_blank');
+        expect(feedbackLink).toHaveAttribute('rel', 'noopener noreferrer');
       });
     });
 
-    it('has correct feature request link', async () => {
+    it('has correct status page link', async () => {
       const user = userEvent.setup();
       renderHelpButton();
 
       await user.click(screen.getByRole('button', { name: /open help dialog/i }));
 
       await waitFor(() => {
-        expect(screen.getByRole('tab', { name: /feedback/i })).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByRole('tab', { name: /feedback/i }));
-
-      await waitFor(() => {
-        const featureLink = screen.getByRole('link', { name: /request a feature/i });
-        expect(featureLink).toHaveAttribute(
+        const statusLink = screen.getByRole('link', { name: /system status/i });
+        expect(statusLink).toHaveAttribute(
           'href',
-          'https://github.com/sonyccd/openhamprep/issues/new?template=feature_request.md'
+          'https://openhamprep.statuspage.io/'
         );
-        expect(featureLink).toHaveAttribute('target', '_blank');
+        expect(statusLink).toHaveAttribute('target', '_blank');
+        expect(statusLink).toHaveAttribute('rel', 'noopener noreferrer');
       });
     });
   });
 
   describe('Keyboard Shortcut Display', () => {
-    it('displays keys in kbd elements', async () => {
+    it('displays keys in kbd elements when Shortcuts tab is selected', async () => {
       const user = userEvent.setup();
       renderHelpButton();
 
       await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /shortcuts/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('tab', { name: /shortcuts/i }));
 
       await waitFor(() => {
         // Check that A, B, C, D keys are displayed

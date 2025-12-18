@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { HelpCircle, Keyboard, Bug, Lightbulb, ExternalLink } from 'lucide-react';
+import { HelpCircle, Keyboard, Lightbulb, ExternalLink, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -75,7 +75,7 @@ export function HelpButton() {
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs defaultValue="shortcuts" className="mt-2">
+          <Tabs defaultValue="feedback" className="mt-2">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="shortcuts" className="flex items-center gap-2">
                 <Keyboard className="h-4 w-4" aria-hidden="true" />
@@ -109,31 +109,31 @@ export function HelpButton() {
 
               <TabsContent value="feedback" className="mt-4 space-y-4 min-h-[280px]">
                 <p className="text-sm text-muted-foreground">
-                  Found a bug or have an idea to improve the app? Let us know on GitHub!
+                  Found a bug or have an idea to improve the app? Let us know on our community forum!
                 </p>
 
                 <div className="space-y-3">
-                  <a href="https://github.com/sonyccd/openhamprep/issues/new?template=bug_report.md" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-destructive/10 text-destructive">
-                      <Bug className="h-5 w-5" aria-hidden="true" />
+                  <a href="https://forum.openhamprep.com/c/feedback/2" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 text-primary">
+                      <Lightbulb className="h-5 w-5" aria-hidden="true" />
                     </div>
                     <div className="flex-1">
-                      <div className="font-medium text-foreground">Report a Bug</div>
+                      <div className="font-medium text-foreground">Give Feedback</div>
                       <div className="text-sm text-muted-foreground">
-                        Something not working? Let us know
+                        Share ideas, report bugs, or suggest features
                       </div>
                     </div>
                     <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   </a>
 
-                  <a href="https://github.com/sonyccd/openhamprep/issues/new?template=feature_request.md" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 text-primary">
-                      <Lightbulb className="h-5 w-5" aria-hidden="true" />
+                  <a href="https://openhamprep.statuspage.io/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-success/10 text-success">
+                      <Activity className="h-5 w-5" aria-hidden="true" />
                     </div>
                     <div className="flex-1">
-                      <div className="font-medium text-foreground">Request a Feature</div>
+                      <div className="font-medium text-foreground">System Status</div>
                       <div className="text-sm text-muted-foreground">
-                        Have an idea? We'd love to hear it
+                        Check if services are running smoothly
                       </div>
                     </div>
                     <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
