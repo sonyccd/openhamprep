@@ -160,8 +160,6 @@ export function ProfileModal({
           // Don't block local deletion if Discourse deletion fails
           // The user might not have a Discourse account, or the forum might be unavailable
           console.error('Discourse deletion error:', discourseResponse.error);
-        } else if (discourseResponse.data?.discourseAccountFound) {
-          console.log('Discourse account deleted:', discourseResponse.data.discourseUsername);
         }
       } catch (discourseError) {
         // Log but don't block - Discourse deletion is best-effort

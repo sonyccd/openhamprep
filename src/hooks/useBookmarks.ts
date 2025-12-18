@@ -49,7 +49,7 @@ export function useBookmarks() {
     },
     onError: (error) => {
       toast.error('Failed to bookmark question');
-      console.error(error);
+      console.error('Failed to add bookmark:', error);
     },
   });
 
@@ -73,7 +73,7 @@ export function useBookmarks() {
     },
     onError: (error) => {
       toast.error('Failed to remove bookmark');
-      console.error(error);
+      console.error('Failed to remove bookmark:', error);
     },
   });
 
@@ -95,7 +95,7 @@ export function useBookmarks() {
     },
     onError: (error) => {
       toast.error('Failed to update note');
-      console.error(error);
+      console.error('Failed to update bookmark note:', error);
     },
   });
 

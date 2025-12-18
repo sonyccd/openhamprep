@@ -97,7 +97,7 @@ export const AdminExamSessions = () => {
       refetchLastUpdated();
     } catch (err) {
       toast.error('Geocoding failed');
-      console.error(err);
+      console.error('Geocoding exam sessions failed:', err);
     } finally {
       setGeocoding(false);
       setGeocodeProgress(null);

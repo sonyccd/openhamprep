@@ -39,10 +39,6 @@ export default function Auth() {
   const searchParams = new URLSearchParams(location.search);
   const returnTo = searchParams.get('returnTo');
 
-  // Debug logging for OAuth flow
-  console.log('[Auth] Current URL:', location.pathname + location.search + location.hash);
-  console.log('[Auth] returnTo:', returnTo);
-
   // Check for email verification success in URL
   useEffect(() => {
     const hashParams = new URLSearchParams(location.hash.substring(1));
@@ -67,7 +63,6 @@ export default function Auth() {
     if (user) {
       // If there's a returnTo URL (e.g., from OAuth consent flow), redirect there
       // Otherwise, go to home page
-      console.log('[Auth] User detected, redirecting to:', returnTo || '/');
       navigate(returnTo || '/');
     }
   }, [user, navigate, returnTo]);

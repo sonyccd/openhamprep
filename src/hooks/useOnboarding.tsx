@@ -97,11 +97,13 @@ export function useOnboarding() {
     await updateOnboardingStatus(false);
   }, [updateOnboardingStatus]);
 
-  // Register global console command for testing
+  // Register global console command for testing (dev only)
   useEffect(() => {
+    if (!import.meta.env.DEV) return;
+
     window.resetOnboarding = async () => {
       if (!user) {
-        console.log('❌ No user logged in. Please log in first.');
+        console.log('No user logged in. Please log in first.');
         return;
       }
 
@@ -114,7 +116,7 @@ export function useOnboarding() {
         if (error) {
           console.error('Error resetting onboarding:', error);
         } else {
-          console.log('🎉 Onboarding reset! Refreshing page...');
+          console.log('Onboarding reset! Refreshing page...');
           window.location.reload();
         }
       } catch (err) {
@@ -122,10 +124,7 @@ export function useOnboarding() {
       }
     };
 
-    // Log availability in development
-    if (import.meta.env.DEV) {
-      console.log('💡 Tip: Run resetOnboarding() in console to restart the onboarding tour');
-    }
+    console.log('Tip: Run resetOnboarding() in console to restart the onboarding tour');
 
     return () => {
       delete window.resetOnboarding;

@@ -501,7 +501,7 @@ describe('useOnboarding', () => {
         await window.resetOnboarding();
       }
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('❌ No user logged in. Please log in first.');
+      expect(consoleLogSpy).toHaveBeenCalledWith('No user logged in. Please log in first.');
 
       consoleLogSpy.mockRestore();
 
@@ -612,7 +612,7 @@ describe('useOnboarding', () => {
       // Call the global function
       await window.resetOnboarding();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('🎉 Onboarding reset! Refreshing page...');
+      expect(consoleLogSpy).toHaveBeenCalledWith('Onboarding reset! Refreshing page...');
       expect(reloadMock).toHaveBeenCalled();
 
       consoleLogSpy.mockRestore();
