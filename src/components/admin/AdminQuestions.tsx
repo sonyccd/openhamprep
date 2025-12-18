@@ -103,7 +103,7 @@ export function AdminQuestions({
         error
       } = await supabase.from('questions')
         .select('id, question, options, correct_answer, subelement, question_group, links, explanation, edit_history, figure_url')
-        .like('id', `${prefix}%`)
+        .ilike('id', `${prefix}*`)
         .order('id', { ascending: true });
       if (error) throw error;
       return data.map(q => ({

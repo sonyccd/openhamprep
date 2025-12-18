@@ -72,7 +72,7 @@ export const useExamSessions = (filters?: {
       // Filter by zip code prefix (first 3 digits) on server
       if (filters?.zip && filters.zip.length >= 3) {
         const zipPrefix = filters.zip.substring(0, 3);
-        query = query.like('zip', `${zipPrefix}%`);
+        query = query.ilike('zip', `${zipPrefix}*`);
       }
       // Filter by walk-ins allowed
       if (filters?.walkInsOnly) {
