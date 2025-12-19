@@ -127,15 +127,17 @@ serve(async (req) => {
     // Build canonical URL for the question
     const canonicalUrl = `${SITE_URL}/questions/${questionId.toLowerCase()}`;
 
-    // For regular browsers, do an instant 302 redirect to the SPA
-    // This avoids any flash or delay for normal users
-    // Cache the redirect for 24 hours to reduce Edge Function invocations
+    // For regular browsers, redirect to /app/questions/:id which bypasses the rewrite
+    // The SPA will handle the route and then use history.replaceState to fix the URL
     if (!isCrawler(userAgent)) {
+      // Redirect to a path that doesn't match the rewrite pattern
+      // We use /q/:id as a short alias that the SPA can handle
+      const bypassUrl = `${SITE_URL}/q/${questionId.toLowerCase()}`;
       return new Response(null, {
         status: 302,
         headers: {
           ...corsHeaders,
-          'Location': canonicalUrl,
+          'Location': bypassUrl,
           'Cache-Control': 'public, max-age=86400, immutable',
         },
       });
