@@ -9,6 +9,25 @@ const corsHeaders = {
 const SITE_URL = 'https://openhamprep.app';
 const SITE_NAME = 'Open Ham Prep';
 const DEFAULT_IMAGE = `${SITE_URL}/icons/icon-512.png`;
+const MAX_DESCRIPTION_LENGTH = 200;
+
+/**
+ * Truncate text to a maximum length, adding ellipsis if needed.
+ * Tries to break at word boundaries.
+ */
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+
+  // Find the last space before maxLength
+  const truncated = text.slice(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(' ');
+
+  if (lastSpace > maxLength * 0.7) {
+    return truncated.slice(0, lastSpace) + '...';
+  }
+
+  return truncated.slice(0, maxLength - 3) + '...';
+}
 
 // Known crawler/bot User-Agent patterns
 const CRAWLER_PATTERNS = [
@@ -110,13 +129,14 @@ serve(async (req) => {
 
     // For regular browsers, do an instant 302 redirect to the SPA
     // This avoids any flash or delay for normal users
+    // Cache the redirect for 24 hours to reduce Edge Function invocations
     if (!isCrawler(userAgent)) {
       return new Response(null, {
         status: 302,
         headers: {
           ...corsHeaders,
           'Location': canonicalUrl,
-          'Cache-Control': 'no-cache',
+          'Cache-Control': 'public, max-age=86400, immutable',
         },
       });
     }
@@ -133,13 +153,37 @@ serve(async (req) => {
       .single();
 
     if (error || !question) {
-      // Even for crawlers, redirect to the SPA if question not found
-      // The SPA will show a proper 404 page
-      return new Response(null, {
-        status: 302,
+      // For crawlers, return a 404 with generic OG tags
+      // This prevents crawlers from indexing a redirect that leads nowhere useful
+      const notFoundHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Question Not Found | ${SITE_NAME}</title>
+  <meta name="description" content="This question could not be found. Practice for your Amateur Radio license exam at ${SITE_NAME}.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Question Not Found | ${SITE_NAME}">
+  <meta property="og:description" content="Practice for your Amateur Radio license exam with free questions and study tools.">
+  <meta property="og:url" content="${SITE_URL}">
+  <meta property="og:site_name" content="${SITE_NAME}">
+  <meta property="og:image" content="${DEFAULT_IMAGE}">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="${SITE_URL}">
+</head>
+<body>
+  <h1>Question Not Found</h1>
+  <p>The requested question could not be found.</p>
+  <p><a href="${SITE_URL}">Visit ${SITE_NAME}</a></p>
+</body>
+</html>`;
+
+      return new Response(notFoundHtml, {
+        status: 404,
         headers: {
           ...corsHeaders,
-          'Location': canonicalUrl,
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=60',
         },
       });
     }
@@ -147,7 +191,8 @@ serve(async (req) => {
     // Build metadata for crawlers
     const title = `Question ${question.id.toUpperCase()} | ${SITE_NAME}`;
     const licenseName = getLicenseName(question.id);
-    const description = question.question;
+    // Truncate description to optimal OG length (150-200 chars)
+    const description = truncateText(question.question, MAX_DESCRIPTION_LENGTH);
 
     // Generate HTML with OpenGraph meta tags for crawlers
     const html = `<!DOCTYPE html>

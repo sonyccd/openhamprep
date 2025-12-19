@@ -45,9 +45,9 @@ export default function QuestionPage() {
             <p className="text-muted-foreground mb-6">
               The question ID "{id}" is not a valid format. Question IDs should look like T1A01, G2B03, or E3C12.
             </p>
-            <Button onClick={() => navigate('/dashboard')}>
+            <Button onClick={() => navigate(user ? '/dashboard' : '/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
+              {user ? 'Back to Dashboard' : 'Back to Home'}
             </Button>
           </motion.div>
         </div>
@@ -87,9 +87,9 @@ export default function QuestionPage() {
             <p className="text-muted-foreground mb-6">
               We couldn't find question "{id?.toUpperCase()}". It may have been removed or the ID is incorrect.
             </p>
-            <Button onClick={() => navigate('/dashboard')}>
+            <Button onClick={() => navigate(user ? '/dashboard' : '/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
+              {user ? 'Back to Dashboard' : 'Back to Home'}
             </Button>
           </motion.div>
         </div>
