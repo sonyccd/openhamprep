@@ -17,6 +17,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Admin = lazy(() => import("./pages/Admin"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const QuestionPage = lazy(() => import("./pages/QuestionPage"));
+const QuestionRedirect = lazy(() => import("./pages/QuestionRedirect"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -49,6 +50,8 @@ const App = () => (
                       <Route path="/admin" element={<Admin />} />
                       <Route path="/oauth/consent" element={<OAuthConsent />} />
                       <Route path="/questions/:id" element={<QuestionPage />} />
+                      {/* Short URL alias for question links - redirects to canonical URL */}
+                      <Route path="/q/:id" element={<QuestionRedirect />} />
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>

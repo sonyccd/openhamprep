@@ -127,41 +127,20 @@ serve(async (req) => {
     // Build canonical URL for the question
     const canonicalUrl = `${SITE_URL}/questions/${questionId.toLowerCase()}`;
 
-    // For regular browsers, fetch and serve the SPA index.html
-    // This allows the React app to handle the route client-side
-    // We can't redirect because Vercel's rewrite would intercept it again (infinite loop)
+    // For regular browsers, redirect to /app/questions/:id which bypasses the rewrite
+    // The SPA will handle the route and then use history.replaceState to fix the URL
     if (!isCrawler(userAgent)) {
-      try {
-        const spaResponse = await fetch(`${SITE_URL}/index.html`);
-        const spaHtml = await spaResponse.text();
-        return new Response(spaHtml, {
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'text/html; charset=utf-8',
-            // Cache for 5 minutes - allows SPA updates to propagate
-            'Cache-Control': 'public, max-age=300',
-          },
-        });
-      } catch {
-        // Fallback: return a simple page that redirects via JavaScript
-        const fallbackHtml = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0;url=${canonicalUrl}">
-  <script>window.location.href = "${canonicalUrl}";</script>
-</head>
-<body>
-  <p>Redirecting to <a href="${canonicalUrl}">${canonicalUrl}</a>...</p>
-</body>
-</html>`;
-        return new Response(fallbackHtml, {
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'text/html; charset=utf-8',
-          },
-        });
-      }
+      // Redirect to a path that doesn't match the rewrite pattern
+      // We use /q/:id as a short alias that the SPA can handle
+      const bypassUrl = `${SITE_URL}/q/${questionId.toLowerCase()}`;
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': bypassUrl,
+          'Cache-Control': 'public, max-age=86400, immutable',
+        },
+      });
     }
 
     // For crawlers, fetch the question and return OG HTML
