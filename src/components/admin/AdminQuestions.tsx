@@ -503,6 +503,23 @@ export function AdminQuestions({
     setNewLinks(prev => prev.filter(l => l.url !== url));
   };
 
+  /**
+   * Validates a URL string and returns it only if it uses a safe protocol (http/https).
+   * Prevents XSS attacks via javascript: or other dangerous URL schemes.
+   */
+  const getSafeUrl = (urlString: string | null | undefined): string | null => {
+    if (!urlString) return null;
+    try {
+      const url = new URL(urlString);
+      if (url.protocol === 'http:' || url.protocol === 'https:') {
+        return urlString;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
   const updateOption = (index: number, value: string) => {
     const updated = [...newOptions];
     updated[index] = value;
@@ -697,16 +714,23 @@ export function AdminQuestions({
               <p className="text-xs text-muted-foreground">
                 Link to the Discourse forum topic for this question. When set, explanations will sync bidirectionally.
               </p>
-              {editForumUrl && (
-                <a
-                  href={editForumUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary hover:underline flex items-center gap-1"
-                >
-                  Open in Forum <ExternalLink className="w-3 h-3" />
-                </a>
-              )}
+              {(() => {
+                const safeForumUrl = getSafeUrl(editForumUrl);
+                return safeForumUrl ? (
+                  <a
+                    href={safeForumUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                  >
+                    Open in Forum <ExternalLink className="w-3 h-3" />
+                  </a>
+                ) : editForumUrl ? (
+                  <p className="text-xs text-destructive">
+                    Invalid URL format. Please enter a valid http:// or https:// URL.
+                  </p>
+                ) : null;
+              })()}
             </div>
 
             <Separator />
