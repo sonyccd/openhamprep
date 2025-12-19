@@ -329,13 +329,24 @@ describe('WeakQuestionsReview', () => {
       });
     });
 
-    it('disables Next button on last question', async () => {
+    it('disables Next button on last question when not cleared', async () => {
+      const user = userEvent.setup();
+
       render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
 
       // Click on last question
       fireEvent.click(screen.getByText('What is CW?'));
 
       await waitFor(() => {
+        // Answer incorrectly to not trigger clearing
+        expect(screen.getByTestId('select-a')).toBeInTheDocument();
+      });
+
+      // Answer wrong (D is wrong for the last question which has correct answer C)
+      await user.click(screen.getByTestId('select-d'));
+
+      await waitFor(() => {
+        // Next button should be disabled since we're on the last question and didn't clear it
         const nextButton = screen.getByRole('button', { name: /next/i });
         expect(nextButton).toBeDisabled();
       });
@@ -381,7 +392,9 @@ describe('WeakQuestionsReview', () => {
       });
     });
 
-    it('does not show question counter with single question', async () => {
+    it('does not show question counter with single question after answering wrong', async () => {
+      const user = userEvent.setup();
+
       render(<WeakQuestionsReview {...defaultProps} weakQuestionIds={['T1A01']} />, { wrapper: createWrapper() });
 
       fireEvent.click(screen.getByText('What is amateur radio?'));
@@ -390,6 +403,14 @@ describe('WeakQuestionsReview', () => {
         expect(screen.getByTestId('question-card')).toBeInTheDocument();
       });
 
+      // Answer incorrectly to stay on the question without clearing
+      await user.click(screen.getByTestId('select-b'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('show-result')).toHaveTextContent('true');
+      });
+
+      // With only 1 question, counter should not show
       expect(screen.queryByText(/Question \d+ of \d+/)).not.toBeInTheDocument();
     });
   });
@@ -406,8 +427,9 @@ describe('WeakQuestionsReview', () => {
         expect(screen.getByTestId('select-a')).toBeInTheDocument();
       });
 
-      // Answer the question
-      await user.click(screen.getByTestId('select-a'));
+      // Answer the question incorrectly (B is wrong for first question)
+      // We use incorrect answer to prevent clearing in simple mode
+      await user.click(screen.getByTestId('select-b'));
 
       await waitFor(() => {
         expect(screen.getByTestId('show-result')).toHaveTextContent('true');
@@ -434,8 +456,9 @@ describe('WeakQuestionsReview', () => {
         expect(screen.getByTestId('select-a')).toBeInTheDocument();
       });
 
-      // Answer the question
-      await user.click(screen.getByTestId('select-a'));
+      // Answer the question incorrectly (B is wrong for first question)
+      // We use incorrect answer to prevent clearing in simple mode
+      await user.click(screen.getByTestId('select-b'));
 
       await waitFor(() => {
         expect(screen.getByTestId('show-result')).toHaveTextContent('true');
@@ -458,9 +481,122 @@ describe('WeakQuestionsReview', () => {
     });
   });
 
-  describe('Streak Progress', () => {
-    it('shows streak progress indicator in question view', async () => {
+  describe('Simple Mode (Default)', () => {
+    it('clears question after 1 correct answer by default', async () => {
+      const user = userEvent.setup();
+
       render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
+
+      fireEvent.click(screen.getByText('What is amateur radio?'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('select-a')).toBeInTheDocument();
+      });
+
+      // Answer correctly once (A is the correct answer for first question)
+      await user.click(screen.getByTestId('select-a'));
+
+      // Go back and check count - should be cleared
+      await waitFor(() => {
+        fireEvent.click(screen.getByRole('button', { name: /back to weak questions/i }));
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('2 questions to review')).toBeInTheDocument();
+        expect(screen.getByText(/\(1 cleared\)/)).toBeInTheDocument();
+      });
+    });
+
+    it('does not show streak progress indicator in simple mode', async () => {
+      render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
+
+      fireEvent.click(screen.getByText('What is amateur radio?'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('question-card')).toBeInTheDocument();
+      });
+
+      // Streak progress should not be visible in simple mode
+      expect(screen.queryByText('Streak to clear (3 correct in a row)')).not.toBeInTheDocument();
+      expect(screen.queryByText('0/3')).not.toBeInTheDocument();
+    });
+
+    it('does not show streak indicators in list view in simple mode', async () => {
+      render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
+
+      // Get the question list items (not the toggle card)
+      const questionButtons = screen.getAllByRole('button', { name: /What is|What band/i });
+      expect(questionButtons.length).toBe(3);
+
+      // In simple mode, streak dots should not be present in question items
+      questionButtons.forEach(button => {
+        const streakDots = button.querySelectorAll('.rounded-full');
+        expect(streakDots.length).toBe(0);
+      });
+    });
+
+    it('shows all cleared message when all questions are cleared in simple mode', async () => {
+      const user = userEvent.setup();
+
+      // Use only one question for simplicity
+      render(<WeakQuestionsReview {...defaultProps} weakQuestionIds={['T1A01']} />, { wrapper: createWrapper() });
+
+      fireEvent.click(screen.getByText('What is amateur radio?'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('select-a')).toBeInTheDocument();
+      });
+
+      // Answer correctly once - should clear immediately
+      await user.click(screen.getByTestId('select-a'));
+
+      // Should show all cleared message
+      await waitFor(() => {
+        expect(screen.getByText('All weak questions cleared!')).toBeInTheDocument();
+        expect(screen.getByText('You cleared 1 question this session!')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Streak Mode Toggle', () => {
+    it('shows streak mode toggle in list view', () => {
+      render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
+
+      expect(screen.getByText('Streak mode')).toBeInTheDocument();
+      expect(screen.getByRole('switch')).toBeInTheDocument();
+    });
+
+    it('streak mode is off by default', () => {
+      render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
+
+      const toggle = screen.getByRole('switch');
+      expect(toggle).not.toBeChecked();
+      expect(screen.getByText('(1 correct to clear)')).toBeInTheDocument();
+    });
+
+    it('shows correct description when streak mode is enabled', async () => {
+      const user = userEvent.setup();
+
+      render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
+
+      const toggle = screen.getByRole('switch');
+      await user.click(toggle);
+
+      await waitFor(() => {
+        expect(screen.getByText('(3 correct in a row to clear)')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Streak Mode Enabled', () => {
+    it('shows streak progress indicator when streak mode is enabled', async () => {
+      const user = userEvent.setup();
+
+      render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
+
+      // Enable streak mode
+      const toggle = screen.getByRole('switch');
+      await user.click(toggle);
 
       fireEvent.click(screen.getByText('What is amateur radio?'));
 
@@ -470,10 +606,14 @@ describe('WeakQuestionsReview', () => {
       });
     });
 
-    it('increments streak on correct answer', async () => {
+    it('increments streak on correct answer in streak mode', async () => {
       const user = userEvent.setup();
 
       render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
+
+      // Enable streak mode
+      const toggle = screen.getByRole('switch');
+      await user.click(toggle);
 
       fireEvent.click(screen.getByText('What is amateur radio?'));
 
@@ -489,10 +629,14 @@ describe('WeakQuestionsReview', () => {
       });
     });
 
-    it('resets streak on wrong answer', async () => {
+    it('resets streak on wrong answer in streak mode', async () => {
       const user = userEvent.setup();
 
       render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
+
+      // Enable streak mode
+      const toggle = screen.getByRole('switch');
+      await user.click(toggle);
 
       fireEvent.click(screen.getByText('What is amateur radio?'));
 
@@ -525,10 +669,14 @@ describe('WeakQuestionsReview', () => {
       });
     });
 
-    it('clears question after 3 correct answers in a row', async () => {
+    it('clears question after 3 correct answers in a row in streak mode', async () => {
       const user = userEvent.setup();
 
       render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
+
+      // Enable streak mode
+      const toggle = screen.getByRole('switch');
+      await user.click(toggle);
 
       fireEvent.click(screen.getByText('What is amateur radio?'));
 
@@ -567,10 +715,14 @@ describe('WeakQuestionsReview', () => {
       });
     });
 
-    it('shows streak indicators in list view', async () => {
+    it('shows streak indicators in list view when streak mode is enabled', async () => {
       const user = userEvent.setup();
 
       render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
+
+      // Enable streak mode
+      const toggle = screen.getByRole('switch');
+      await user.click(toggle);
 
       // Answer first question correctly once
       fireEvent.click(screen.getByText('What is amateur radio?'));
@@ -588,19 +740,27 @@ describe('WeakQuestionsReview', () => {
       // Go back to list
       fireEvent.click(screen.getByRole('button', { name: /back to weak questions/i }));
 
-      // The first question should have 1 filled indicator (streak = 1)
+      // The first question should have streak indicators visible
       await waitFor(() => {
-        // Check for the streak dots in the list view
-        const listItems = document.querySelectorAll('.bg-card.border');
-        expect(listItems.length).toBe(3);
+        // Get question buttons (not the toggle card)
+        const questionButtons = screen.getAllByRole('button', { name: /What is|What band/i });
+        expect(questionButtons.length).toBe(3);
+        // In streak mode, streak dots should be present
+        const firstButton = questionButtons[0];
+        const streakDots = firstButton.querySelectorAll('.rounded-full');
+        expect(streakDots.length).toBe(3); // 3 dots for streak
       });
     });
 
-    it('shows all cleared message when all questions are cleared', async () => {
+    it('shows all cleared message when all questions are cleared in streak mode', async () => {
       const user = userEvent.setup();
 
       // Use only one question for simplicity
       render(<WeakQuestionsReview {...defaultProps} weakQuestionIds={['T1A01']} />, { wrapper: createWrapper() });
+
+      // Enable streak mode
+      const toggle = screen.getByRole('switch');
+      await user.click(toggle);
 
       // Answer correctly 3 times by going back to list and clicking again
       for (let i = 0; i < 3; i++) {
@@ -631,10 +791,14 @@ describe('WeakQuestionsReview', () => {
       });
     });
 
-    it('correctly adjusts index when clearing middle question', async () => {
+    it('correctly adjusts index when clearing middle question in streak mode', async () => {
       const user = userEvent.setup();
 
       render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
+
+      // Enable streak mode
+      const toggle = screen.getByRole('switch');
+      await user.click(toggle);
 
       // Navigate to the second question (index 1)
       fireEvent.click(screen.getByText('What band is best for beginners?'));
@@ -684,10 +848,14 @@ describe('WeakQuestionsReview', () => {
       });
     });
 
-    it('correctly adjusts index when clearing last question', async () => {
+    it('correctly adjusts index when clearing last question in streak mode', async () => {
       const user = userEvent.setup();
 
       render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
+
+      // Enable streak mode
+      const toggle = screen.getByRole('switch');
+      await user.click(toggle);
 
       // Navigate to the last question (index 2)
       fireEvent.click(screen.getByText('What is CW?'));
@@ -804,7 +972,7 @@ describe('WeakQuestionsReview', () => {
   });
 
   describe('Edge Cases', () => {
-    it('returns to list view when clearing the only remaining question', async () => {
+    it('returns to list view when clearing the only remaining question (simple mode)', async () => {
       const user = userEvent.setup();
 
       // Use only one question
@@ -813,26 +981,12 @@ describe('WeakQuestionsReview', () => {
       // Click on the only question
       fireEvent.click(screen.getByText('What is amateur radio?'));
 
-      // Answer correctly 3 times to clear it
-      for (let i = 0; i < 3; i++) {
-        await waitFor(() => {
-          expect(screen.getByTestId('select-a')).toBeInTheDocument();
-        });
+      await waitFor(() => {
+        expect(screen.getByTestId('select-a')).toBeInTheDocument();
+      });
 
-        await user.click(screen.getByTestId('select-a'));
-
-        if (i < 2) {
-          // Go back to list and re-select to reset answer state
-          await waitFor(() => {
-            expect(screen.getByTestId('show-result')).toHaveTextContent('true');
-          });
-          fireEvent.click(screen.getByRole('button', { name: /back to weak questions/i }));
-          await waitFor(() => {
-            expect(screen.getByText('What is amateur radio?')).toBeInTheDocument();
-          });
-          fireEvent.click(screen.getByText('What is amateur radio?'));
-        }
-      }
+      // Answer correctly once to clear it (simple mode is default)
+      await user.click(screen.getByTestId('select-a'));
 
       // After clearing the only question, should show all cleared message
       await waitFor(() => {
