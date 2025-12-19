@@ -8,7 +8,9 @@ import { useProgress } from "@/hooks/useProgress";
 import { useAuth } from "@/hooks/useAuth";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
-import { AlertTriangle, Loader2, CheckCircle, ArrowLeft, ChevronLeft, ChevronRight, Dices } from "lucide-react";
+import { AlertTriangle, Loader2, CheckCircle, ArrowLeft, ChevronLeft, ChevronRight, Dices, Flame } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { TestType } from "@/types/navigation";
 
@@ -41,10 +43,12 @@ export function WeakQuestionsReview({
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
   const [showResult, setShowResult] = useState(false);
-  // Track correct streaks per question - need STREAK_TO_CLEAR in a row to clear
+  // Track correct streaks per question - need STREAK_TO_CLEAR in a row to clear (when streak mode is on)
   const [streaks, setStreaks] = useState<Record<string, number>>({});
-  // Track questions cleared this session (STREAK_TO_CLEAR correct in a row)
+  // Track questions cleared this session
   const [clearedQuestions, setClearedQuestions] = useState<Set<string>>(new Set());
+  // Streak mode toggle - when OFF (default), 1 correct clears; when ON, need STREAK_TO_CLEAR in a row
+  const [streakModeEnabled, setStreakModeEnabled] = useState(false);
 
   // Filter out cleared questions from the active list (memoized for performance)
   const activeWeakQuestions = useMemo(
@@ -110,38 +114,51 @@ export function WeakQuestionsReview({
     const isCorrect = answer === currentQuestion.correctAnswer;
     const questionId = currentQuestion.id;
 
+    // Helper to clear a question and adjust navigation
+    const clearQuestion = () => {
+      setClearedQuestions(prevCleared => {
+        const newClearedSet = new Set([...prevCleared, questionId]);
+        const remainingCount = weakQuestions.filter(q => !newClearedSet.has(q.id)).length;
+
+        // Adjust current index based on new list length
+        setCurrentIndex(prevIndex => {
+          if (prevIndex === null) return null;
+          // If no questions remain, return to list view
+          if (remainingCount === 0) return null;
+          // If current index would be out of bounds, move to last valid index
+          if (prevIndex >= remainingCount) {
+            return remainingCount - 1;
+          }
+          return prevIndex;
+        });
+
+        return newClearedSet;
+      });
+    };
+
     // Update streak for this question using functional updates to avoid stale closures
     if (isCorrect) {
-      setStreaks(prevStreaks => {
-        const newStreak = (prevStreaks[questionId] || 0) + 1;
-        if (newStreak >= STREAK_TO_CLEAR) {
-          // Question cleared! Update cleared questions set
-          setClearedQuestions(prevCleared => {
-            const newClearedSet = new Set([...prevCleared, questionId]);
-            const remainingCount = weakQuestions.filter(q => !newClearedSet.has(q.id)).length;
-
-            // Adjust current index based on new list length
-            setCurrentIndex(prevIndex => {
-              if (prevIndex === null) return null;
-              // If no questions remain, return to list view
-              if (remainingCount === 0) return null;
-              // If current index would be out of bounds, move to last valid index
-              if (prevIndex >= remainingCount) {
-                return remainingCount - 1;
-              }
-              return prevIndex;
-            });
-
-            return newClearedSet;
-          });
-          // Don't include the cleared question in streaks
-          return prevStreaks;
-        }
-        return { ...prevStreaks, [questionId]: newStreak };
-      });
+      if (!streakModeEnabled) {
+        // Simple mode: 1 correct answer clears the question
+        clearQuestion();
+      } else {
+        // Streak mode: need STREAK_TO_CLEAR correct in a row
+        setStreaks(prevStreaks => {
+          const newStreak = (prevStreaks[questionId] || 0) + 1;
+          if (newStreak >= STREAK_TO_CLEAR) {
+            // Question cleared!
+            clearQuestion();
+            // Don't include the cleared question in streaks
+            return prevStreaks;
+          }
+          return { ...prevStreaks, [questionId]: newStreak };
+        });
+      }
     } else {
-      // Wrong answer - reset streak
-      setStreaks(prev => ({ ...prev, [questionId]: 0 }));
+      // Wrong answer - reset streak (only matters in streak mode)
+      if (streakModeEnabled) {
+        setStreaks(prev => ({ ...prev, [questionId]: 0 }));
+      }
     }
 
     // Save attempt with error handling
@@ -155,7 +172,7 @@ export function WeakQuestionsReview({
       console.error('Failed to save attempt:', error);
       // Continue without blocking - the user can still use the app
     }
-  }, [showResult, currentQuestion, saveRandomAttempt, queryClient, user, weakQuestions]);
+  }, [showResult, currentQuestion, saveRandomAttempt, queryClient, user, weakQuestions, streakModeEnabled]);
 
   // Keyboard shortcuts - must be called before any early returns
   const shortcuts: KeyboardShortcut[] = [
@@ -222,27 +239,32 @@ export function WeakQuestionsReview({
           </div>
         </div>
 
-        {/* Streak Progress */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-card border border-border rounded-lg p-4 mb-4"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Streak to clear ({STREAK_TO_CLEAR} correct in a row)</span>
-            <div className="flex items-center gap-2">
-              {Array.from({ length: STREAK_TO_CLEAR }, (_, i) => (
-                <div
-                  key={i}
-                  className={`w-3 h-3 rounded-full transition-colors ${
-                    i < currentStreak ? 'bg-success' : 'bg-muted'
-                  }`}
-                />
-              ))}
-              <span className="text-sm font-mono text-primary ml-2">{currentStreak}/{STREAK_TO_CLEAR}</span>
+        {/* Streak Progress - only shown when streak mode is enabled */}
+        {streakModeEnabled && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card border border-border rounded-lg p-4 mb-4"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Flame className="w-4 h-4 text-orange-500" />
+                <span className="text-sm text-muted-foreground">Streak to clear ({STREAK_TO_CLEAR} correct in a row)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {Array.from({ length: STREAK_TO_CLEAR }, (_, i) => (
+                  <div
+                    key={i}
+                    className={`w-3 h-3 rounded-full transition-colors ${
+                      i < currentStreak ? 'bg-success' : 'bg-muted'
+                    }`}
+                  />
+                ))}
+                <span className="text-sm font-mono text-primary ml-2">{currentStreak}/{STREAK_TO_CLEAR}</span>
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        )}
 
       </div>
 
@@ -284,17 +306,35 @@ export function WeakQuestionsReview({
   return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
     <div className="max-w-3xl mx-auto">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-destructive" />
-            Weak Questions
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {activeWeakQuestions.length} question{activeWeakQuestions.length !== 1 ? 's' : ''} to review
-            {clearedQuestions.size > 0 && (
-              <span className="text-success ml-1">({clearedQuestions.size} cleared)</span>
-            )}
-          </p>
+        <div className="flex flex-col gap-4 mb-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Weak Questions
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {activeWeakQuestions.length} question{activeWeakQuestions.length !== 1 ? 's' : ''} to review
+              {clearedQuestions.size > 0 && (
+                <span className="text-success ml-1">({clearedQuestions.size} cleared)</span>
+              )}
+            </p>
+          </div>
+          <div className="flex items-center justify-between bg-card border border-border rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <Flame className={`w-4 h-4 ${streakModeEnabled ? 'text-orange-500' : 'text-muted-foreground'}`} />
+              <Label htmlFor="streak-mode" className="text-sm cursor-pointer">
+                Streak mode
+              </Label>
+              <span className="text-xs text-muted-foreground">
+                ({streakModeEnabled ? `${STREAK_TO_CLEAR} correct in a row to clear` : '1 correct to clear'})
+              </span>
+            </div>
+            <Switch
+              id="streak-mode"
+              checked={streakModeEnabled}
+              onCheckedChange={setStreakModeEnabled}
+            />
+          </div>
         </div>
         {activeWeakQuestions.map((question, index) => {
           const questionStreak = streaks[question.id] || 0;
@@ -308,17 +348,19 @@ export function WeakQuestionsReview({
                     </span>
                     <span className="text-xs text-destructive">Needs practice</span>
                   </div>
-                  {/* Streak indicator */}
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: STREAK_TO_CLEAR }, (_, i) => (
-                      <div
-                        key={i}
-                        className={`w-2 h-2 rounded-full ${
-                          i < questionStreak ? 'bg-success' : 'bg-muted'
-                        }`}
-                      />
-                    ))}
-                  </div>
+                  {/* Streak indicator - only shown when streak mode is enabled */}
+                  {streakModeEnabled && (
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: STREAK_TO_CLEAR }, (_, i) => (
+                        <div
+                          key={i}
+                          className={`w-2 h-2 rounded-full ${
+                            i < questionStreak ? 'bg-success' : 'bg-muted'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <p className="text-sm text-foreground line-clamp-2">
                   {question.question}
