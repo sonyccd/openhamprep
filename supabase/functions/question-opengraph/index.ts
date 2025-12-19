@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SITE_URL = 'https://openhamprep.app';
+const SITE_URL = 'https://app.openhamprep.com';
 const SITE_NAME = 'Open Ham Prep';
 const DEFAULT_IMAGE = `${SITE_URL}/icons/icon-512.png`;
 const MAX_DESCRIPTION_LENGTH = 200;

@@ -196,8 +196,8 @@ describe('opengraph utilities', () => {
     });
 
     it('works with different site URLs', () => {
-      expect(buildQuestionUrl('G2B03', 'https://openhamprep.app')).toBe(
-        'https://openhamprep.app/questions/g2b03'
+      expect(buildQuestionUrl('G2B03', 'https://app.openhamprep.com')).toBe(
+        'https://app.openhamprep.com/questions/g2b03'
       );
     });
   });
@@ -206,9 +206,9 @@ describe('opengraph utilities', () => {
     const defaultParams = {
       questionId: 'T1A01',
       questionText: 'What is the purpose of the FCC rules?',
-      siteUrl: 'https://openhamprep.app',
+      siteUrl: 'https://app.openhamprep.com',
       siteName: 'Open Ham Prep',
-      imageUrl: 'https://openhamprep.app/icons/icon-512.png',
+      imageUrl: 'https://app.openhamprep.com/icons/icon-512.png',
     };
 
     it('generates valid HTML document', () => {
@@ -237,7 +237,7 @@ describe('opengraph utilities', () => {
       const html = buildOpenGraphHtml(defaultParams);
 
       expect(html).toContain(
-        '<meta property="og:url" content="https://openhamprep.app/questions/t1a01">'
+        '<meta property="og:url" content="https://app.openhamprep.com/questions/t1a01">'
       );
     });
 
@@ -245,7 +245,7 @@ describe('opengraph utilities', () => {
       const html = buildOpenGraphHtml(defaultParams);
 
       expect(html).toContain(
-        '<meta property="og:image" content="https://openhamprep.app/icons/icon-512.png">'
+        '<meta property="og:image" content="https://app.openhamprep.com/icons/icon-512.png">'
       );
     });
 
@@ -262,7 +262,7 @@ describe('opengraph utilities', () => {
       const html = buildOpenGraphHtml(defaultParams);
 
       expect(html).toContain(
-        '<link rel="canonical" href="https://openhamprep.app/questions/t1a01">'
+        '<link rel="canonical" href="https://app.openhamprep.com/questions/t1a01">'
       );
     });
 
