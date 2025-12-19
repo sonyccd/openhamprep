@@ -24,3 +24,6 @@ verify_jwt = false
 
 [functions.sync-discourse-topics]
 verify_jwt = false
+
+[functions.discourse-webhook]
+verify_jwt = false

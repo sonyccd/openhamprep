@@ -243,8 +243,11 @@ describe('FigureUpload', () => {
 
   describe('Upload Process', () => {
     it('should show loading state during upload', async () => {
-      // Make upload take time
-      mockUpload.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve({ error: null }), 100)));
+      // Make upload take time with controllable promise
+      let resolveUpload: (value: { error: null }) => void;
+      mockUpload.mockImplementation(() => new Promise(resolve => {
+        resolveUpload = resolve;
+      }));
 
       render(<FigureUpload {...defaultProps} />);
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -256,6 +259,14 @@ describe('FigureUpload', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Uploading...')).toBeInTheDocument();
+      });
+
+      // Resolve the mock to allow cleanup to complete properly
+      resolveUpload!({ error: null });
+
+      // Wait for the upload to complete
+      await waitFor(() => {
+        expect(mockUpload).toHaveBeenCalled();
       });
     });
 
@@ -421,7 +432,10 @@ describe('FigureUpload', () => {
 
   describe('Button States', () => {
     it('should disable upload button while uploading', async () => {
-      mockUpload.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve({ error: null }), 100)));
+      let resolveUpload: (value: { error: null }) => void;
+      mockUpload.mockImplementation(() => new Promise(resolve => {
+        resolveUpload = resolve;
+      }));
 
       render(<FigureUpload {...defaultProps} />);
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -435,10 +449,21 @@ describe('FigureUpload', () => {
         const uploadButton = screen.getByText('Uploading...').closest('button');
         expect(uploadButton).toBeDisabled();
       });
+
+      // Resolve the mock to allow cleanup to complete properly
+      resolveUpload!({ error: null });
+
+      // Wait for the upload to complete
+      await waitFor(() => {
+        expect(mockUpload).toHaveBeenCalled();
+      });
     });
 
     it('should disable delete button while removing', async () => {
-      mockRemove.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve({ error: null }), 100)));
+      let resolveRemove: (value: { error: null }) => void;
+      mockRemove.mockImplementation(() => new Promise(resolve => {
+        resolveRemove = resolve;
+      }));
 
       render(
         <FigureUpload
@@ -462,6 +487,14 @@ describe('FigureUpload', () => {
         const removeBtn = document.querySelector('[class*="text-destructive"]');
         // During remove, the button shows a loader
         expect(removeBtn?.querySelector('.animate-spin') || removeBtn?.hasAttribute('disabled')).toBeTruthy();
+      });
+
+      // Resolve the mock to allow cleanup to complete properly
+      resolveRemove!({ error: null });
+
+      // Wait for the remove operation to complete
+      await waitFor(() => {
+        expect(mockRemove).toHaveBeenCalled();
       });
     });
   });
