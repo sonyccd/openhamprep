@@ -5,7 +5,7 @@ import { useQuestion } from '@/hooks/useQuestions';
 import { QuestionCard } from '@/components/QuestionCard';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ArrowLeft, Loader2, AlertCircle, Zap } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, Zap, UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const isValidQuestionId = (id: string) => /^[TGE]\d[A-Z]\d{2}$/i.test(id);
@@ -24,27 +24,6 @@ export default function QuestionPage() {
       document.title = prevTitle;
     };
   }, [id]);
-
-  // Redirect to auth if not logged in
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate(`/auth?returnTo=/questions/${id}`, { replace: true });
-    }
-  }, [user, authLoading, navigate, id]);
-
-  // Show loading while checking auth
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // Don't render anything if not logged in (will redirect)
-  if (!user) {
-    return null;
-  }
 
   // Validate question ID format
   if (id && !isValidQuestionId(id)) {
@@ -66,9 +45,9 @@ export default function QuestionPage() {
             <p className="text-muted-foreground mb-6">
               The question ID "{id}" is not a valid format. Question IDs should look like T1A01, G2B03, or E3C12.
             </p>
-            <Button onClick={() => navigate('/dashboard')}>
+            <Button onClick={() => navigate(user ? '/dashboard' : '/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
+              {user ? 'Back to Dashboard' : 'Back to Home'}
             </Button>
           </motion.div>
         </div>
@@ -108,9 +87,9 @@ export default function QuestionPage() {
             <p className="text-muted-foreground mb-6">
               We couldn't find question "{id?.toUpperCase()}". It may have been removed or the ID is incorrect.
             </p>
-            <Button onClick={() => navigate('/dashboard')}>
+            <Button onClick={() => navigate(user ? '/dashboard' : '/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
+              {user ? 'Back to Dashboard' : 'Back to Home'}
             </Button>
           </motion.div>
         </div>
@@ -143,21 +122,56 @@ export default function QuestionPage() {
           enableGlossaryHighlight
         />
 
+        {/* Sign-up CTA for anonymous users */}
+        {!user && !authLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="max-w-3xl mx-auto mt-6"
+          >
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-center">
+              <p className="text-muted-foreground mb-3">
+                Create a free account to track your progress, bookmark questions, and access more study tools.
+              </p>
+              <Button onClick={() => navigate(`/auth?returnTo=/questions/${id}`)}>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Create Free Account
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
         {/* Navigation actions */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.3 }}
           className="max-w-3xl mx-auto mt-8 flex flex-col sm:flex-row justify-center gap-4"
         >
-          <Button variant="outline" onClick={() => navigate('/dashboard')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
-          <Button onClick={() => navigate('/dashboard?view=random-practice')}>
-            <Zap className="w-4 h-4 mr-2" />
-            Practice More Questions
-          </Button>
+          {user ? (
+            <>
+              <Button variant="outline" onClick={() => navigate('/dashboard')}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Button>
+              <Button onClick={() => navigate('/dashboard?view=random-practice')}>
+                <Zap className="w-4 h-4 mr-2" />
+                Practice More Questions
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => navigate('/')}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Home
+              </Button>
+              <Button onClick={() => navigate('/auth?returnTo=/dashboard?view=random-practice')}>
+                <Zap className="w-4 h-4 mr-2" />
+                Start Practicing
+              </Button>
+            </>
+          )}
         </motion.div>
       </div>
     </div>

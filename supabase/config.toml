@@ -27,3 +27,6 @@ verify_jwt = false
 
 [functions.discourse-webhook]
 verify_jwt = false
+
+[functions.question-opengraph]
+verify_jwt = false
