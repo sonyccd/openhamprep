@@ -248,7 +248,7 @@ The app uses Supabase as the backend:
 - **Auth**: Supabase Auth
 - **Edge Functions**: Deployed via `supabase functions deploy`
 - **Migrations**: Applied via `supabase db push`
-- **Production URL**: https://openhamprep.app
+- **Production URL**: https://app.openhamprep.com
 
 ### Migration from Lovable Cloud
 
