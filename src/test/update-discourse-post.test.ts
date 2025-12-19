@@ -544,3 +544,250 @@ describe("error scenarios", () => {
     });
   });
 });
+
+// =============================================================================
+// TESTS: FORUM URL VALIDATION
+// =============================================================================
+
+describe("forum URL validation", () => {
+  /**
+   * Validates that a forum URL is in the expected Discourse format.
+   */
+  function isValidForumUrl(url: string | null | undefined): boolean {
+    if (!url) return false;
+    try {
+      const parsed = new URL(url);
+      // Must be HTTPS (or HTTP for local dev)
+      if (!["https:", "http:"].includes(parsed.protocol)) return false;
+      // Must have /t/ path for topic
+      if (!parsed.pathname.includes("/t/")) return false;
+      // Must have a numeric topic ID
+      const topicIdMatch = parsed.pathname.match(/\/t\/(?:[^/]+\/)?(\d+)/);
+      if (!topicIdMatch) return false;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  describe("valid forum URLs", () => {
+    it("should accept full Discourse topic URL with slug", () => {
+      expect(isValidForumUrl("https://forum.openhamprep.com/t/t1a01-question/123")).toBe(true);
+    });
+
+    it("should accept topic URL without slug", () => {
+      expect(isValidForumUrl("https://forum.openhamprep.com/t/123")).toBe(true);
+    });
+
+    it("should accept HTTP URLs (for local development)", () => {
+      expect(isValidForumUrl("http://localhost:4200/t/test-topic/456")).toBe(true);
+    });
+
+    it("should accept URLs with query parameters", () => {
+      expect(isValidForumUrl("https://forum.openhamprep.com/t/topic/123?u=admin")).toBe(true);
+    });
+
+    it("should accept URLs with hash fragments", () => {
+      expect(isValidForumUrl("https://forum.openhamprep.com/t/topic/123#post_5")).toBe(true);
+    });
+  });
+
+  describe("invalid forum URLs", () => {
+    it("should reject null", () => {
+      expect(isValidForumUrl(null)).toBe(false);
+    });
+
+    it("should reject undefined", () => {
+      expect(isValidForumUrl(undefined)).toBe(false);
+    });
+
+    it("should reject empty string", () => {
+      expect(isValidForumUrl("")).toBe(false);
+    });
+
+    it("should reject non-URL strings", () => {
+      expect(isValidForumUrl("not a url")).toBe(false);
+    });
+
+    it("should reject URLs without /t/ path", () => {
+      expect(isValidForumUrl("https://forum.openhamprep.com/categories")).toBe(false);
+    });
+
+    it("should reject category URLs", () => {
+      expect(isValidForumUrl("https://forum.openhamprep.com/c/technician/5")).toBe(false);
+    });
+
+    it("should reject URLs without topic ID", () => {
+      expect(isValidForumUrl("https://forum.openhamprep.com/t/topic-slug")).toBe(false);
+    });
+
+    it("should reject FTP URLs", () => {
+      expect(isValidForumUrl("ftp://forum.openhamprep.com/t/topic/123")).toBe(false);
+    });
+  });
+});
+
+// =============================================================================
+// TESTS: FORUM URL CHANGE TRACKING
+// =============================================================================
+
+describe("forum URL change tracking", () => {
+  interface ChangeEntry {
+    from: string | null;
+    to: string | null;
+  }
+
+  /**
+   * Detects if forum_url changed between original and updated question.
+   */
+  function detectForumUrlChange(
+    originalUrl: string | null | undefined,
+    newUrl: string | null | undefined
+  ): ChangeEntry | null {
+    const normalizedOriginal = originalUrl || null;
+    const normalizedNew = newUrl?.trim() || null;
+
+    if (normalizedOriginal === normalizedNew) {
+      return null; // No change
+    }
+
+    return {
+      from: normalizedOriginal,
+      to: normalizedNew,
+    };
+  }
+
+  describe("detecting changes", () => {
+    it("should detect when forum_url is added", () => {
+      const change = detectForumUrlChange(null, "https://forum.openhamprep.com/t/topic/123");
+      expect(change).not.toBeNull();
+      expect(change!.from).toBeNull();
+      expect(change!.to).toBe("https://forum.openhamprep.com/t/topic/123");
+    });
+
+    it("should detect when forum_url is removed", () => {
+      const change = detectForumUrlChange("https://forum.openhamprep.com/t/topic/123", null);
+      expect(change).not.toBeNull();
+      expect(change!.from).toBe("https://forum.openhamprep.com/t/topic/123");
+      expect(change!.to).toBeNull();
+    });
+
+    it("should detect when forum_url is changed", () => {
+      const change = detectForumUrlChange(
+        "https://forum.openhamprep.com/t/old-topic/123",
+        "https://forum.openhamprep.com/t/new-topic/456"
+      );
+      expect(change).not.toBeNull();
+      expect(change!.from).toBe("https://forum.openhamprep.com/t/old-topic/123");
+      expect(change!.to).toBe("https://forum.openhamprep.com/t/new-topic/456");
+    });
+
+    it("should return null when forum_url is unchanged", () => {
+      const url = "https://forum.openhamprep.com/t/topic/123";
+      const change = detectForumUrlChange(url, url);
+      expect(change).toBeNull();
+    });
+
+    it("should treat empty string as null", () => {
+      const change = detectForumUrlChange(null, "");
+      expect(change).toBeNull();
+    });
+
+    it("should trim whitespace from new URL", () => {
+      const change = detectForumUrlChange(
+        "https://forum.openhamprep.com/t/topic/123",
+        "  https://forum.openhamprep.com/t/topic/123  "
+      );
+      expect(change).toBeNull();
+    });
+
+    it("should detect change when URL has whitespace differences", () => {
+      const change = detectForumUrlChange(
+        "https://forum.openhamprep.com/t/topic/123",
+        "https://forum.openhamprep.com/t/different/456"
+      );
+      expect(change).not.toBeNull();
+    });
+  });
+
+  describe("handling undefined", () => {
+    it("should treat undefined original as null", () => {
+      const change = detectForumUrlChange(undefined, "https://forum.openhamprep.com/t/topic/123");
+      expect(change).not.toBeNull();
+      expect(change!.from).toBeNull();
+    });
+
+    it("should treat undefined new as null", () => {
+      const change = detectForumUrlChange("https://forum.openhamprep.com/t/topic/123", undefined);
+      expect(change).not.toBeNull();
+      expect(change!.to).toBeNull();
+    });
+
+    it("should return null when both are undefined", () => {
+      const change = detectForumUrlChange(undefined, undefined);
+      expect(change).toBeNull();
+    });
+  });
+});
+
+// =============================================================================
+// TESTS: EFFECTIVE FORUM URL LOGIC
+// =============================================================================
+
+describe("effective forum URL for sync", () => {
+  /**
+   * Determines the effective forum URL to use for Discourse sync.
+   * Prefers the new URL if set, falls back to original.
+   */
+  function getEffectiveForumUrl(
+    originalUrl: string | null | undefined,
+    newUrl: string | null | undefined
+  ): string | null {
+    return (newUrl?.trim() || null) ?? (originalUrl || null);
+  }
+
+  it("should use new URL when provided", () => {
+    const result = getEffectiveForumUrl(
+      "https://forum.openhamprep.com/t/old/123",
+      "https://forum.openhamprep.com/t/new/456"
+    );
+    expect(result).toBe("https://forum.openhamprep.com/t/new/456");
+  });
+
+  it("should fall back to original URL when new is null", () => {
+    const result = getEffectiveForumUrl(
+      "https://forum.openhamprep.com/t/original/123",
+      null
+    );
+    expect(result).toBe("https://forum.openhamprep.com/t/original/123");
+  });
+
+  it("should fall back to original URL when new is empty", () => {
+    const result = getEffectiveForumUrl(
+      "https://forum.openhamprep.com/t/original/123",
+      ""
+    );
+    expect(result).toBe("https://forum.openhamprep.com/t/original/123");
+  });
+
+  it("should return null when both are null", () => {
+    const result = getEffectiveForumUrl(null, null);
+    expect(result).toBeNull();
+  });
+
+  it("should use new URL even when original exists", () => {
+    const result = getEffectiveForumUrl(
+      "https://forum.openhamprep.com/t/old/123",
+      "https://forum.openhamprep.com/t/new/456"
+    );
+    expect(result).toBe("https://forum.openhamprep.com/t/new/456");
+  });
+
+  it("should handle whitespace in new URL", () => {
+    const result = getEffectiveForumUrl(
+      null,
+      "  https://forum.openhamprep.com/t/topic/123  "
+    );
+    expect(result).toBe("https://forum.openhamprep.com/t/topic/123");
+  });
+});

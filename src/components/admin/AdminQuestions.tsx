@@ -94,6 +94,7 @@ export function AdminQuestions({
   const [editLinks, setEditLinks] = useState<LinkData[]>([]);
   const [editExplanation, setEditExplanation] = useState("");
   const [editFigureUrl, setEditFigureUrl] = useState<string | null>(null);
+  const [editForumUrl, setEditForumUrl] = useState<string | null>(null);
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [isAddingLink, setIsAddingLink] = useState(false);
   const prefix = TEST_TYPE_PREFIXES[testType];
@@ -181,7 +182,7 @@ export function AdminQuestions({
     }
   });
   const updateQuestion = useMutation({
-    mutationFn: async (params: { question: Question & { explanation?: string | null; figure_url?: string | null }; originalQuestion: Question }) => {
+    mutationFn: async (params: { question: Question & { explanation?: string | null; figure_url?: string | null; forum_url?: string | null }; originalQuestion: Question }) => {
       const { question, originalQuestion } = params;
 
       // Build changes object
@@ -207,6 +208,9 @@ export function AdminQuestions({
       if ((originalQuestion.figure_url || '') !== (question.figure_url || '')) {
         changes.figure_url = { from: originalQuestion.figure_url || '', to: question.figure_url || '' };
       }
+      if ((originalQuestion.forum_url || '') !== (question.forum_url || '')) {
+        changes.forum_url = { from: originalQuestion.forum_url || '', to: question.forum_url || '' };
+      }
 
       const historyEntry: EditHistoryEntry = {
         user_id: user?.id || '',
@@ -228,13 +232,15 @@ export function AdminQuestions({
         question_group: question.question_group.trim(),
         explanation: question.explanation?.trim() || null,
         figure_url: question.figure_url || null,
+        forum_url: question.forum_url || null,
         edit_history: JSON.parse(JSON.stringify([...existingHistory, historyEntry]))
       }).eq('id', question.id);
       if (error) throw error;
 
-      // If explanation changed and question has forum_url, sync to Discourse
+      // If explanation changed and question has forum_url (either original or newly set), sync to Discourse
       const explanationChanged = (originalQuestion.explanation || '') !== (question.explanation?.trim() || '');
-      if (explanationChanged && originalQuestion.forum_url) {
+      const effectiveForumUrl = question.forum_url || originalQuestion.forum_url;
+      if (explanationChanged && effectiveForumUrl) {
         try {
           // Set pending status
           await supabase.from('questions').update({
@@ -512,6 +518,7 @@ export function AdminQuestions({
     setEditLinks(q.links || []);
     setEditExplanation(q.explanation || "");
     setEditFigureUrl(q.figure_url || null);
+    setEditForumUrl(q.forum_url || null);
     setNewLinkUrl("");
   };
   const updateEditOption = (index: number, value: string) => {
@@ -533,7 +540,8 @@ export function AdminQuestions({
         subelement: editSubelement,
         question_group: editQuestionGroup,
         explanation: editExplanation,
-        figure_url: editFigureUrl
+        figure_url: editFigureUrl,
+        forum_url: editForumUrl?.trim() || null
       },
       originalQuestion: editingQuestion
     });
@@ -671,6 +679,34 @@ export function AdminQuestions({
                 </div> : <p className="text-sm text-muted-foreground italic">
                   No learning resources attached yet
                 </p>}
+            </div>
+
+            <Separator />
+
+            {/* Forum URL Section */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Discourse Forum Topic (Optional)
+              </Label>
+              <Input
+                placeholder="https://forum.openhamprep.com/t/topic-slug/123"
+                value={editForumUrl || ''}
+                onChange={e => setEditForumUrl(e.target.value || null)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Link to the Discourse forum topic for this question. When set, explanations will sync bidirectionally.
+              </p>
+              {editForumUrl && (
+                <a
+                  href={editForumUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline flex items-center gap-1"
+                >
+                  Open in Forum <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
             </div>
 
             <Separator />
