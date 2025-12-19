@@ -5,6 +5,7 @@
 
 // Known crawler/bot User-Agent patterns
 export const CRAWLER_PATTERNS = [
+  'Discourse',
   'Discoursebot',
   'facebookexternalhit',
   'Facebot',

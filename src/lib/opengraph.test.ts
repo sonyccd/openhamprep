@@ -37,6 +37,11 @@ describe('opengraph utilities', () => {
       expect(isCrawler('Mozilla/5.0 (compatible; Discoursebot/1.0)')).toBe(true);
     });
 
+    it('detects Discourse Forum Onebox', () => {
+      expect(isCrawler('Discourse Forum Onebox v2.5.0.beta4')).toBe(true);
+      expect(isCrawler('Ruby')).toBe(false); // Discourse default UA without custom host config
+    });
+
     it('detects Facebook crawler', () => {
       expect(isCrawler('facebookexternalhit/1.1')).toBe(true);
       expect(isCrawler('Facebot')).toBe(true);

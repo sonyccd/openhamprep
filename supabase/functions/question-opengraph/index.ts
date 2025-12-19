@@ -31,6 +31,7 @@ function truncateText(text: string, maxLength: number): string {
 
 // Known crawler/bot User-Agent patterns
 const CRAWLER_PATTERNS = [
+  'Discourse',
   'Discoursebot',
   'facebookexternalhit',
   'Facebot',
