@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink, ThumbsUp, ThumbsDown, FileText, Filter, X, Image } from "lucide-react";
+import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink, ThumbsUp, ThumbsDown, Filter, X, Image } from "lucide-react";
 import { BulkImportQuestions } from "./BulkImportQuestions";
 import { BulkExport, escapeCSVField } from "./BulkExport";
 import { EditHistoryViewer, EditHistoryEntry } from "./EditHistoryViewer";
@@ -20,6 +20,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { FigureUpload } from "./FigureUpload";
+import { SyncStatusBadge } from "./SyncStatusBadge";
+
 interface LinkData {
   url: string;
   title: string;
@@ -40,6 +42,10 @@ interface Question {
   explanation?: string | null;
   edit_history?: EditHistoryEntry[];
   figure_url?: string | null;
+  forum_url?: string | null;
+  discourse_sync_status?: string | null;
+  discourse_sync_at?: string | null;
+  discourse_sync_error?: string | null;
 }
 interface AdminQuestionsProps {
   testType: 'technician' | 'general' | 'extra';
@@ -102,7 +108,7 @@ export function AdminQuestions({
         data,
         error
       } = await supabase.from('questions')
-        .select('id, question, options, correct_answer, subelement, question_group, links, explanation, edit_history, figure_url')
+        .select('id, question, options, correct_answer, subelement, question_group, links, explanation, edit_history, figure_url, forum_url, discourse_sync_status, discourse_sync_at, discourse_sync_error')
         .ilike('id', `${prefix}*`)
         .order('id', { ascending: true });
       if (error) throw error;
@@ -112,7 +118,11 @@ export function AdminQuestions({
         links: (Array.isArray(q.links) ? q.links : []) as unknown as LinkData[],
         explanation: q.explanation,
         edit_history: (Array.isArray(q.edit_history) ? q.edit_history : []) as unknown as EditHistoryEntry[],
-        figure_url: q.figure_url
+        figure_url: q.figure_url,
+        forum_url: q.forum_url,
+        discourse_sync_status: q.discourse_sync_status,
+        discourse_sync_at: q.discourse_sync_at,
+        discourse_sync_error: q.discourse_sync_error
       })) as Question[];
     }
   });
@@ -221,6 +231,34 @@ export function AdminQuestions({
         edit_history: JSON.parse(JSON.stringify([...existingHistory, historyEntry]))
       }).eq('id', question.id);
       if (error) throw error;
+
+      // If explanation changed and question has forum_url, sync to Discourse
+      const explanationChanged = (originalQuestion.explanation || '') !== (question.explanation?.trim() || '');
+      if (explanationChanged && originalQuestion.forum_url) {
+        try {
+          // Set pending status
+          await supabase.from('questions').update({
+            discourse_sync_status: 'pending',
+            discourse_sync_at: new Date().toISOString()
+          }).eq('id', question.id);
+
+          // Call edge function to update Discourse
+          const response = await supabase.functions.invoke('update-discourse-post', {
+            body: {
+              questionId: question.id,
+              explanation: question.explanation?.trim() || ''
+            }
+          });
+
+          if (response.error) {
+            console.error('Discourse sync failed:', response.error);
+            // Don't throw - local save succeeded, just log the error
+          }
+        } catch (syncError) {
+          console.error('Failed to sync to Discourse:', syncError);
+          // Don't throw - local save succeeded
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -265,6 +303,44 @@ export function AdminQuestions({
   });
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Retry syncing explanation to Discourse
+  const handleRetrySync = async (questionId: string) => {
+    const question = questions.find(q => q.id === questionId);
+    if (!question?.forum_url) {
+      toast.error("Question has no Discourse topic");
+      return;
+    }
+
+    try {
+      // Set pending status first
+      await supabase.from('questions').update({
+        discourse_sync_status: 'pending',
+        discourse_sync_at: new Date().toISOString()
+      }).eq('id', questionId);
+
+      // Invalidate to show pending state
+      queryClient.invalidateQueries({ queryKey: ['admin-questions', testType] });
+
+      const response = await supabase.functions.invoke('update-discourse-post', {
+        body: {
+          questionId,
+          explanation: question.explanation || ''
+        }
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      toast.success('Synced to Discourse successfully');
+      queryClient.invalidateQueries({ queryKey: ['admin-questions', testType] });
+    } catch (error) {
+      toast.error('Sync failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      queryClient.invalidateQueries({ queryKey: ['admin-questions', testType] });
+    }
+  };
+
   const addLinkToQuestion = async () => {
     if (!editingQuestion || !newLinkUrl.trim()) {
       toast.error("Please enter a URL");
@@ -926,10 +1002,16 @@ export function AdminQuestions({
                           <LinkIcon className="w-3 h-3 mr-1" />
                           {q.links.length}
                         </Badge>}
-                      {q.explanation && <Badge variant="outline" className="text-xs text-primary border-primary/50">
-                          <FileText className="w-3 h-3 mr-1" />
-                          Explanation
-                        </Badge>}
+                      {q.forum_url && (
+                        <SyncStatusBadge
+                          status={q.discourse_sync_status}
+                          syncAt={q.discourse_sync_at}
+                          error={q.discourse_sync_error}
+                          questionId={q.id}
+                          forumUrl={q.forum_url}
+                          onRetrySync={() => handleRetrySync(q.id)}
+                        />
+                      )}
                       {feedbackStats[q.id] && <Badge variant="outline" className="text-xs gap-1">
                           <ThumbsUp className="w-3 h-3 text-success" />
                           <span className="text-success">{feedbackStats[q.id].helpful}</span>
