@@ -49,13 +49,16 @@ export function WeakQuestionsReview({
   const [clearedQuestions, setClearedQuestions] = useState<Set<string>>(new Set());
   // Streak mode toggle - when OFF (default), 1 correct clears; when ON, need STREAK_TO_CLEAR in a row
   const [streakModeEnabled, setStreakModeEnabled] = useState(false);
+  // Track the question that was just cleared (so user can still view it until they navigate away)
+  const [justClearedQuestion, setJustClearedQuestion] = useState<Question | null>(null);
 
   // Filter out cleared questions from the active list (memoized for performance)
   const activeWeakQuestions = useMemo(
     () => weakQuestions.filter(q => !clearedQuestions.has(q.id)),
     [weakQuestions, clearedQuestions]
   );
-  const currentQuestion = currentIndex !== null ? activeWeakQuestions[currentIndex] : null;
+  // Use the just-cleared question if we're viewing it, otherwise use the active list
+  const currentQuestion = justClearedQuestion || (currentIndex !== null ? activeWeakQuestions[currentIndex] : null);
 
   // Navigation helpers
   const canGoPrev = currentIndex !== null && currentIndex > 0;
@@ -66,14 +69,36 @@ export function WeakQuestionsReview({
       setCurrentIndex(currentIndex - 1);
       setSelectedAnswer(null);
       setShowResult(false);
+      setJustClearedQuestion(null);
     }
   };
 
   const handleNextQuestion = () => {
+    // If we just cleared a question
+    if (justClearedQuestion) {
+      if (activeWeakQuestions.length > 0) {
+        // There are more questions, go to the current index (which is now a different question)
+        setJustClearedQuestion(null);
+        setSelectedAnswer(null);
+        setShowResult(false);
+        // Adjust index if needed
+        if (currentIndex !== null && currentIndex >= activeWeakQuestions.length) {
+          setCurrentIndex(activeWeakQuestions.length - 1);
+        }
+      } else {
+        // No more questions, go back to list view (which will show "All cleared" message)
+        setJustClearedQuestion(null);
+        setCurrentIndex(null);
+        setSelectedAnswer(null);
+        setShowResult(false);
+      }
+      return;
+    }
     if (canGoNext) {
       setCurrentIndex(currentIndex + 1);
       setSelectedAnswer(null);
       setShowResult(false);
+      setJustClearedQuestion(null);
     }
   };
 
@@ -81,6 +106,7 @@ export function WeakQuestionsReview({
     setCurrentIndex(null);
     setSelectedAnswer(null);
     setShowResult(false);
+    setJustClearedQuestion(null);
   };
 
   const handleRandomize = () => {
@@ -96,6 +122,7 @@ export function WeakQuestionsReview({
     setCurrentIndex(newIndex);
     setSelectedAnswer(null);
     setShowResult(false);
+    setJustClearedQuestion(null);
   };
 
   // Reset state when test type changes
@@ -105,6 +132,7 @@ export function WeakQuestionsReview({
     setShowResult(false);
     setStreaks({});
     setClearedQuestions(new Set());
+    setJustClearedQuestion(null);
   }, [testType]);
 
   const handleSelectAnswer = useCallback(async (answer: 'A' | 'B' | 'C' | 'D') => {
@@ -114,26 +142,11 @@ export function WeakQuestionsReview({
     const isCorrect = answer === currentQuestion.correctAnswer;
     const questionId = currentQuestion.id;
 
-    // Helper to clear a question and adjust navigation
+    // Helper to mark a question as cleared (user stays on question to see explanation)
     const clearQuestion = () => {
-      setClearedQuestions(prevCleared => {
-        const newClearedSet = new Set([...prevCleared, questionId]);
-        const remainingCount = weakQuestions.filter(q => !newClearedSet.has(q.id)).length;
-
-        // Adjust current index based on new list length
-        setCurrentIndex(prevIndex => {
-          if (prevIndex === null) return null;
-          // If no questions remain, return to list view
-          if (remainingCount === 0) return null;
-          // If current index would be out of bounds, move to last valid index
-          if (prevIndex >= remainingCount) {
-            return remainingCount - 1;
-          }
-          return prevIndex;
-        });
-
-        return newClearedSet;
-      });
+      // Store the current question so user can still see it after it's removed from the list
+      setJustClearedQuestion(currentQuestion);
+      setClearedQuestions(prevCleared => new Set([...prevCleared, questionId]));
     };
 
     // Update streak for this question using functional updates to avoid stale closures
@@ -223,6 +236,9 @@ export function WeakQuestionsReview({
   // Question detail view
   if (currentQuestion) {
     const currentStreak = streaks[currentQuestion.id] || 0;
+    const isJustCleared = justClearedQuestion !== null;
+    const hasMoreQuestions = activeWeakQuestions.length > 0;
+
     return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
       <div className="max-w-3xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-6">
@@ -232,15 +248,39 @@ export function WeakQuestionsReview({
           </Button>
           <div className="flex items-center gap-2">
             <KeyboardShortcutsHelp />
-            <div className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="w-5 h-5" />
-              <span className="font-mono font-semibold">Weak Area</span>
-            </div>
+            {isJustCleared ? (
+              <div className="flex items-center gap-2 text-success">
+                <CheckCircle className="w-5 h-5" />
+                <span className="font-mono font-semibold">Cleared!</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="w-5 h-5" />
+                <span className="font-mono font-semibold">Weak Area</span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Streak Progress - only shown when streak mode is enabled */}
-        {streakModeEnabled && (
+        {/* Cleared banner */}
+        {isJustCleared && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-success/10 border border-success/30 rounded-lg p-4 mb-4"
+          >
+            <div className="flex items-center gap-2 text-success">
+              <CheckCircle className="w-5 h-5" />
+              <span className="font-medium">Question cleared from weak areas!</span>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              Take your time to review the explanation. Click Next to continue.
+            </p>
+          </motion.div>
+        )}
+
+        {/* Streak Progress - only shown when streak mode is enabled and not just cleared */}
+        {streakModeEnabled && !isJustCleared && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -272,29 +312,34 @@ export function WeakQuestionsReview({
 
       {/* Navigation Actions */}
       <div className="max-w-3xl mx-auto mt-8 flex justify-center gap-4">
-        <Button variant="outline" onClick={handlePrevQuestion} disabled={!canGoPrev} className="gap-2">
+        <Button variant="outline" onClick={handlePrevQuestion} disabled={!canGoPrev || isJustCleared} className="gap-2">
           <ChevronLeft className="w-4 h-4" />
           Previous
         </Button>
         <Button
           variant="outline"
           onClick={handleRandomize}
-          disabled={activeWeakQuestions.length <= 1}
+          disabled={activeWeakQuestions.length <= 1 || isJustCleared}
           className="gap-2"
           title="Random question"
           aria-label="Jump to random question"
         >
           <Dices className="w-4 h-4" />
         </Button>
-        <Button variant={showResult ? "default" : "outline"} onClick={handleNextQuestion} disabled={!canGoNext} className="gap-2">
-          Next
+        <Button
+          variant={showResult ? "default" : "outline"}
+          onClick={handleNextQuestion}
+          disabled={!isJustCleared && !canGoNext}
+          className="gap-2"
+        >
+          {isJustCleared && !hasMoreQuestions ? 'Done' : 'Next'}
           <ChevronRight className="w-4 h-4" />
         </Button>
       </div>
 
-      {/* Question counter */}
-      {activeWeakQuestions.length > 1 && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center text-muted-foreground text-sm mt-4">
-        Question {currentIndex + 1} of {activeWeakQuestions.length}
+      {/* Question counter - only shown when there are multiple questions */}
+      {activeWeakQuestions.length > 1 && !isJustCleared && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center text-muted-foreground text-sm mt-4">
+        Question {(currentIndex || 0) + 1} of {activeWeakQuestions.length}
         {clearedQuestions.size > 0 && (
           <span className="text-success ml-2">({clearedQuestions.size} cleared)</span>
         )}

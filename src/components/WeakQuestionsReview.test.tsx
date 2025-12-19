@@ -329,13 +329,24 @@ describe('WeakQuestionsReview', () => {
       });
     });
 
-    it('disables Next button on last question', async () => {
+    it('disables Next button on last question when not cleared', async () => {
+      const user = userEvent.setup();
+
       render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
 
       // Click on last question
       fireEvent.click(screen.getByText('What is CW?'));
 
       await waitFor(() => {
+        // Answer incorrectly to not trigger clearing
+        expect(screen.getByTestId('select-a')).toBeInTheDocument();
+      });
+
+      // Answer wrong (D is wrong for the last question which has correct answer C)
+      await user.click(screen.getByTestId('select-d'));
+
+      await waitFor(() => {
+        // Next button should be disabled since we're on the last question and didn't clear it
         const nextButton = screen.getByRole('button', { name: /next/i });
         expect(nextButton).toBeDisabled();
       });
@@ -381,7 +392,9 @@ describe('WeakQuestionsReview', () => {
       });
     });
 
-    it('does not show question counter with single question', async () => {
+    it('does not show question counter with single question after answering wrong', async () => {
+      const user = userEvent.setup();
+
       render(<WeakQuestionsReview {...defaultProps} weakQuestionIds={['T1A01']} />, { wrapper: createWrapper() });
 
       fireEvent.click(screen.getByText('What is amateur radio?'));
@@ -390,6 +403,14 @@ describe('WeakQuestionsReview', () => {
         expect(screen.getByTestId('question-card')).toBeInTheDocument();
       });
 
+      // Answer incorrectly to stay on the question without clearing
+      await user.click(screen.getByTestId('select-b'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('show-result')).toHaveTextContent('true');
+      });
+
+      // With only 1 question, counter should not show
       expect(screen.queryByText(/Question \d+ of \d+/)).not.toBeInTheDocument();
     });
   });
