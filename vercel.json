@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/questions/:id([TtGgEe][0-9][A-Za-z][0-9]{2})",
+      "destination": "https://sahfeuvmbnmqusjctrtw.supabase.co/functions/v1/question-opengraph?id=:id"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

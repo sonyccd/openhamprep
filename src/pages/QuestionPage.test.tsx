@@ -130,36 +130,54 @@ describe('QuestionPage', () => {
     mockQuestionError = null;
   });
 
-  describe('Authentication', () => {
-    it('redirects to auth page when user is not logged in', async () => {
+  describe('Public Access', () => {
+    it('renders question page for anonymous users', () => {
       mockUser = null;
       mockAuthLoading = false;
 
       renderQuestionPage('T1A01');
 
-      await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/auth?returnTo=/questions/T1A01', { replace: true });
-      });
+      // Should show the question card, not redirect
+      expect(screen.getByTestId('question-card')).toBeInTheDocument();
+      expect(mockNavigate).not.toHaveBeenCalledWith(expect.stringContaining('/auth'), { replace: true });
     });
 
-    it('shows loading spinner while checking auth', () => {
-      mockAuthLoading = true;
+    it('shows sign-up CTA for anonymous users', () => {
+      mockUser = null;
+      mockAuthLoading = false;
 
       renderQuestionPage('T1A01');
 
-      // Should show spinner (via Loader2 component class)
-      expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+      expect(screen.getByText(/create a free account/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /create free account/i })).toBeInTheDocument();
     });
 
-    it('does not redirect when user is logged in', async () => {
+    it('does not show sign-up CTA for logged-in users', () => {
       mockUser = { id: 'test-user', email: 'test@example.com' };
 
       renderQuestionPage('T1A01');
 
-      // Wait a tick to ensure effects have run
-      await waitFor(() => {
-        expect(mockNavigate).not.toHaveBeenCalledWith(expect.stringContaining('/auth'));
-      });
+      expect(screen.queryByText(/create a free account/i)).not.toBeInTheDocument();
+    });
+
+    it('shows Back to Home button for anonymous users', () => {
+      mockUser = null;
+      mockAuthLoading = false;
+
+      renderQuestionPage('T1A01');
+
+      expect(screen.getByRole('button', { name: /back to home/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /back to dashboard/i })).not.toBeInTheDocument();
+    });
+
+    it('shows Start Practicing button for anonymous users', () => {
+      mockUser = null;
+      mockAuthLoading = false;
+
+      renderQuestionPage('T1A01');
+
+      expect(screen.getByRole('button', { name: /start practicing/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /practice more questions/i })).not.toBeInTheDocument();
     });
   });
 
@@ -252,13 +270,15 @@ describe('QuestionPage', () => {
       expect(screen.getByRole('button', { name: /back$/i })).toBeInTheDocument();
     });
 
-    it('renders Back to Dashboard button', () => {
+    it('renders Back to Dashboard button for logged-in users', () => {
+      mockUser = { id: 'test-user', email: 'test@example.com' };
       renderQuestionPage('T1A01');
 
       expect(screen.getByRole('button', { name: /back to dashboard/i })).toBeInTheDocument();
     });
 
-    it('renders Practice More Questions button', () => {
+    it('renders Practice More Questions button for logged-in users', () => {
+      mockUser = { id: 'test-user', email: 'test@example.com' };
       renderQuestionPage('T1A01');
 
       expect(screen.getByRole('button', { name: /practice more questions/i })).toBeInTheDocument();
