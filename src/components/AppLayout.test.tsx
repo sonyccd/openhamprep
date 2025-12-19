@@ -42,17 +42,36 @@ vi.mock('@/hooks/usePostHog', () => ({
   }),
 }));
 
+// Mock question attempts data for testing weak questions calculation
+const mockQuestionAttempts = [
+  { question_id: 'T1A01', is_correct: false, user_id: 'test-user' }, // 1 wrong
+  { question_id: 'T1A02', is_correct: false, user_id: 'test-user' }, // 1 wrong, then 1 right = not weak
+  { question_id: 'T1A02', is_correct: true, user_id: 'test-user' },
+  { question_id: 'T1A03', is_correct: false, user_id: 'test-user' }, // 2 wrong, 1 right = weak
+  { question_id: 'T1A03', is_correct: false, user_id: 'test-user' },
+  { question_id: 'T1A03', is_correct: true, user_id: 'test-user' },
+];
+
 // Mock Supabase
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn(() => ({
+    from: vi.fn((table: string) => ({
       select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({
-            data: { display_name: 'Test User', best_streak: 5 },
-            error: null,
-          }),
-        })),
+        eq: vi.fn(() => {
+          if (table === 'question_attempts') {
+            return Promise.resolve({
+              data: mockQuestionAttempts,
+              error: null,
+            });
+          }
+          // For profiles table
+          return {
+            single: vi.fn().mockResolvedValue({
+              data: { display_name: 'Test User', best_streak: 5 },
+              error: null,
+            }),
+          };
+        }),
       })),
     })),
   },
@@ -203,6 +222,27 @@ describe('AppLayout', () => {
       await waitFor(() => {
         // Should show bookmark count of 2 (from mock)
         expect(screen.getByText('2')).toBeInTheDocument();
+      });
+    });
+
+    it('calculates weak question count correctly (incorrect > correct)', async () => {
+      render(
+        <AppLayout {...defaultProps}>
+          <div>Content</div>
+        </AppLayout>,
+        { wrapper: createWrapper() }
+      );
+
+      // From mockQuestionAttempts:
+      // T1A01: 1 wrong, 0 right = weak (1 > 0)
+      // T1A02: 1 wrong, 1 right = NOT weak (1 > 1 is false)
+      // T1A03: 2 wrong, 1 right = weak (2 > 1)
+      // So weak count should be 2, not 3
+      await waitFor(() => {
+        // Find the Weak Areas nav item and check its badge
+        const weakAreasItem = screen.getByText('Weak Areas');
+        const badge = weakAreasItem.parentElement?.querySelector('[class*="bg-primary"]');
+        expect(badge).toHaveTextContent('2');
       });
     });
   });

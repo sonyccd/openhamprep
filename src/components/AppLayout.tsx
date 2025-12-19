@@ -9,6 +9,7 @@ import { View, TestType, testTypes } from '@/types/navigation';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Loader2 } from 'lucide-react';
 import { HelpButton } from '@/components/HelpButton';
+import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -57,18 +58,9 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
     enabled: !!user,
   });
 
-  // Calculate weak questions
+  // Calculate weak questions using shared logic
   const weakQuestionIds = questionAttempts
-    ? Object.entries(
-        questionAttempts.reduce((acc, attempt) => {
-          if (!attempt.is_correct) {
-            acc[attempt.question_id] = (acc[attempt.question_id] || 0) + 1;
-          }
-          return acc;
-        }, {} as Record<string, number>)
-      )
-        .filter(([_, count]) => count >= 1)
-        .map(([id]) => id)
+    ? calculateWeakQuestionIds(questionAttempts)
     : [];
 
   const handleSignOut = async () => {
