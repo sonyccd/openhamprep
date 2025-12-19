@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactNode } from 'react';
 import { useProgress } from './useProgress';
 import type { Question } from './useQuestions';
 
@@ -16,6 +18,20 @@ vi.mock('@/integrations/supabase/client', () => ({
     from: vi.fn(),
   },
 }));
+
+// Create a wrapper with QueryClientProvider for testing
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+};
 
 const mockQuestion: Question = {
   id: 'T1A01',
@@ -66,7 +82,7 @@ describe('useProgress', () => {
         return {} as ReturnType<typeof supabase.from>;
       });
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       const questions = [mockQuestion];
       const answers = { 'T1A01': 'A' as const };
@@ -116,7 +132,7 @@ describe('useProgress', () => {
         return {} as ReturnType<typeof supabase.from>;
       });
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       // Create 35 questions (full test)
       const questions = Array.from({ length: 35 }, (_, i) => ({
@@ -169,7 +185,7 @@ describe('useProgress', () => {
         return {} as ReturnType<typeof supabase.from>;
       });
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       const questions = [mockQuestion];
       const answers = { 'T1A01': 'B' as const }; // Wrong answer
@@ -188,7 +204,7 @@ describe('useProgress', () => {
       const { useAuth } = await import('./useAuth');
       vi.mocked(useAuth).mockReturnValue({ user: null } as ReturnType<typeof useAuth>);
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       const testResult = await result.current.saveTestResult([], {});
       expect(testResult).toBeNull();
@@ -209,7 +225,7 @@ describe('useProgress', () => {
 
       vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
       const testResult = await result.current.saveTestResult([mockQuestion], { 'T1A01': 'A' });
 
       // Should return null when there's a database error
@@ -236,7 +252,7 @@ describe('useProgress', () => {
 
       vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       await result.current.saveRandomAttempt(mockQuestion, 'A');
 
@@ -259,7 +275,7 @@ describe('useProgress', () => {
 
       vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       await result.current.saveRandomAttempt(mockQuestion, 'D');
 
@@ -279,7 +295,7 @@ describe('useProgress', () => {
       const mockInsert = vi.fn();
       vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       await result.current.saveRandomAttempt(mockQuestion, 'A');
 
@@ -296,7 +312,7 @@ describe('useProgress', () => {
 
       vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       await result.current.saveRandomAttempt(mockQuestion, 'A');
       expect(mockInsert).toHaveBeenLastCalledWith(
@@ -329,7 +345,7 @@ describe('useProgress', () => {
 
       vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       await result.current.saveRandomAttempt(mockQuestion, 'A');
 
@@ -348,7 +364,7 @@ describe('useProgress', () => {
 
       vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       await result.current.saveRandomAttempt(mockQuestion, 'A', 'weak_questions');
 
@@ -367,7 +383,7 @@ describe('useProgress', () => {
 
       vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       await result.current.saveRandomAttempt(mockQuestion, 'B', 'subelement_practice');
 
@@ -414,7 +430,7 @@ describe('useProgress', () => {
         return {} as ReturnType<typeof supabase.from>;
       });
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       const generalQuestion = {
         ...mockQuestion,
@@ -459,7 +475,7 @@ describe('useProgress', () => {
         return {} as ReturnType<typeof supabase.from>;
       });
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       const extraQuestion = {
         ...mockQuestion,
@@ -504,7 +520,7 @@ describe('useProgress', () => {
         return {} as ReturnType<typeof supabase.from>;
       });
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       const questions = [mockQuestion];
       const answers = { 'T1A01': 'A' as const };
@@ -548,7 +564,7 @@ describe('useProgress', () => {
         return {} as ReturnType<typeof supabase.from>;
       });
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       // 25 correct = fail, 26 correct = pass for technician
       const questions = Array.from({ length: 35 }, (_, i) => ({
@@ -609,7 +625,7 @@ describe('useProgress', () => {
         return {} as ReturnType<typeof supabase.from>;
       });
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       const questions = Array.from({ length: 35 }, (_, i) => ({
         ...mockQuestion,
@@ -655,7 +671,7 @@ describe('useProgress', () => {
         return {} as ReturnType<typeof supabase.from>;
       });
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       // Create 50 questions for extra exam
       const questions = Array.from({ length: 50 }, (_, i) => ({
@@ -718,7 +734,7 @@ describe('useProgress', () => {
         return {} as ReturnType<typeof supabase.from>;
       });
 
-      const { result } = renderHook(() => useProgress());
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
       // 26 correct passes technician
       const techQuestions = Array.from({ length: 35 }, (_, i) => ({
@@ -749,6 +765,157 @@ describe('useProgress', () => {
       expect(mockInsert).toHaveBeenLastCalledWith(
         expect.objectContaining({ passed: false })
       );
+    });
+  });
+
+  describe('cache invalidation', () => {
+    // These tests ensure the dashboard updates immediately after saving progress
+    // by verifying that React Query caches are invalidated
+
+    beforeEach(async () => {
+      const { useAuth } = await import('./useAuth');
+      vi.mocked(useAuth).mockReturnValue({ user: { id: 'test-user-id' } } as ReturnType<typeof useAuth>);
+    });
+
+    it('invalidates test-results query after saveTestResult', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'test-result-id' },
+            error: null,
+          }),
+        }),
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === 'practice_test_results') {
+          return { insert: mockInsert } as ReturnType<typeof supabase.from>;
+        }
+        if (table === 'question_attempts') {
+          return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) } as ReturnType<typeof supabase.from>;
+        }
+        return {} as ReturnType<typeof supabase.from>;
+      });
+
+      const queryClient = new QueryClient();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      );
+
+      const { result } = renderHook(() => useProgress(), { wrapper });
+
+      await result.current.saveTestResult([mockQuestion], { 'T1A01': 'A' });
+
+      // Verify all progress-related queries are invalidated
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['test-results', 'test-user-id'] });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['question-attempts', 'test-user-id'] });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['profile-stats', 'test-user-id'] });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['weekly-goals', 'test-user-id'] });
+    });
+
+    it('invalidates question-attempts query after saveRandomAttempt', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockInsert = vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
+
+      const queryClient = new QueryClient();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      );
+
+      const { result } = renderHook(() => useProgress(), { wrapper });
+
+      await result.current.saveRandomAttempt(mockQuestion, 'A');
+
+      // Verify all progress-related queries are invalidated
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['test-results', 'test-user-id'] });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['question-attempts', 'test-user-id'] });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['profile-stats', 'test-user-id'] });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['weekly-goals', 'test-user-id'] });
+    });
+
+    it('does not invalidate queries when saveTestResult fails', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const mockInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'Database error' },
+          }),
+        }),
+      });
+
+      vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
+
+      const queryClient = new QueryClient();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      );
+
+      const { result } = renderHook(() => useProgress(), { wrapper });
+
+      await result.current.saveTestResult([mockQuestion], { 'T1A01': 'A' });
+
+      // Should NOT invalidate queries when there's an error
+      expect(invalidateSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not invalidate queries when no user is logged in', async () => {
+      const { useAuth } = await import('./useAuth');
+      vi.mocked(useAuth).mockReturnValue({ user: null } as ReturnType<typeof useAuth>);
+
+      const queryClient = new QueryClient();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      );
+
+      const { result } = renderHook(() => useProgress(), { wrapper });
+
+      await result.current.saveTestResult([mockQuestion], { 'T1A01': 'A' });
+      await result.current.saveRandomAttempt(mockQuestion, 'A');
+
+      // Should NOT invalidate queries when no user
+      expect(invalidateSpy).not.toHaveBeenCalled();
+    });
+
+    it('exposes invalidateProgressQueries function for manual cache invalidation', async () => {
+      const queryClient = new QueryClient();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      );
+
+      const { result } = renderHook(() => useProgress(), { wrapper });
+
+      // The hook should expose the invalidateProgressQueries function
+      expect(result.current.invalidateProgressQueries).toBeDefined();
+      expect(typeof result.current.invalidateProgressQueries).toBe('function');
+
+      // Calling it should invalidate all progress queries
+      result.current.invalidateProgressQueries();
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['test-results', 'test-user-id'] });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['question-attempts', 'test-user-id'] });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['profile-stats', 'test-user-id'] });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['weekly-goals', 'test-user-id'] });
     });
   });
 });

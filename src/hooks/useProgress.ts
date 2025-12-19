@@ -2,9 +2,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Question } from '@/hooks/useQuestions';
 import { TestType, testConfig } from '@/types/navigation';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
 export function useProgress() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const invalidateProgressQueries = useCallback(() => {
+    if (!user) return;
+
+    // Invalidate all queries that depend on user progress data
+    queryClient.invalidateQueries({ queryKey: ['test-results', user.id] });
+    queryClient.invalidateQueries({ queryKey: ['question-attempts', user.id] });
+    queryClient.invalidateQueries({ queryKey: ['profile-stats', user.id] });
+    queryClient.invalidateQueries({ queryKey: ['weekly-goals', user.id] });
+  }, [queryClient, user]);
 
   const saveTestResult = async (
     questions: Question[],
@@ -42,7 +55,7 @@ export function useProgress() {
 
     // Save individual question attempts
     const answerToIndex: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
-    
+
     const attempts = questions.map((q) => ({
       user_id: user.id,
       question_id: q.id,
@@ -59,6 +72,9 @@ export function useProgress() {
     if (attemptsError) {
       console.error('Error saving question attempts:', attemptsError);
     }
+
+    // Invalidate cached queries so UI updates immediately
+    invalidateProgressQueries();
 
     return testResult;
   };
@@ -85,7 +101,10 @@ export function useProgress() {
     if (error) {
       console.error('Error saving attempt:', error);
     }
+
+    // Invalidate cached queries so UI updates immediately
+    invalidateProgressQueries();
   };
 
-  return { saveTestResult, saveRandomAttempt };
+  return { saveTestResult, saveRandomAttempt, invalidateProgressQueries };
 }

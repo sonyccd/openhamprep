@@ -8,6 +8,7 @@ import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Zap, SkipForward, RotateCcw, Loader2, Flame, Trophy, Award, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ export function RandomPractice({
   const {
     user
   } = useAuth();
+  const queryClient = useQueryClient();
   const {
     data: allQuestions,
     isLoading,
@@ -110,6 +112,9 @@ export function RandomPractice({
     await supabase.from('profiles').update({
       best_streak: newBestStreak
     }).eq('id', user.id);
+
+    // Invalidate profile-stats query so dashboard updates
+    queryClient.invalidateQueries({ queryKey: ['profile-stats', user.id] });
   };
   const getRandomQuestion = useCallback((excludeIds: string[] = []): { question: Question; shouldResetAskedIds: boolean } | null => {
     if (!allQuestions || allQuestions.length === 0) return null;
