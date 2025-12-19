@@ -127,18 +127,41 @@ serve(async (req) => {
     // Build canonical URL for the question
     const canonicalUrl = `${SITE_URL}/questions/${questionId.toLowerCase()}`;
 
-    // For regular browsers, do an instant 302 redirect to the SPA
-    // This avoids any flash or delay for normal users
-    // Cache the redirect for 24 hours to reduce Edge Function invocations
+    // For regular browsers, fetch and serve the SPA index.html
+    // This allows the React app to handle the route client-side
+    // We can't redirect because Vercel's rewrite would intercept it again (infinite loop)
     if (!isCrawler(userAgent)) {
-      return new Response(null, {
-        status: 302,
-        headers: {
-          ...corsHeaders,
-          'Location': canonicalUrl,
-          'Cache-Control': 'public, max-age=86400, immutable',
-        },
-      });
+      try {
+        const spaResponse = await fetch(`${SITE_URL}/index.html`);
+        const spaHtml = await spaResponse.text();
+        return new Response(spaHtml, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'text/html; charset=utf-8',
+            // Cache for 5 minutes - allows SPA updates to propagate
+            'Cache-Control': 'public, max-age=300',
+          },
+        });
+      } catch {
+        // Fallback: return a simple page that redirects via JavaScript
+        const fallbackHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0;url=${canonicalUrl}">
+  <script>window.location.href = "${canonicalUrl}";</script>
+</head>
+<body>
+  <p>Redirecting to <a href="${canonicalUrl}">${canonicalUrl}</a>...</p>
+</body>
+</html>`;
+        return new Response(fallbackHtml, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'text/html; charset=utf-8',
+          },
+        });
+      }
     }
 
     // For crawlers, fetch the question and return OG HTML
