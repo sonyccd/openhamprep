@@ -184,6 +184,8 @@ interface DiscourseTopic {
 // =============================================================================
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID().slice(0, 8);
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -191,6 +193,7 @@ serve(async (req) => {
 
   // Only accept POST requests
   if (req.method !== "POST") {
+    console.warn(`[${requestId}] Method not allowed: ${req.method}`);
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -208,12 +211,12 @@ serve(async (req) => {
     const discourseInstance = req.headers.get("X-Discourse-Instance");
 
     console.log(
-      `Received webhook: type=${eventType}, event=${eventName}, instance=${discourseInstance}`
+      `[${requestId}] discourse-webhook: type=${eventType}, event=${eventName}, instance=${discourseInstance}`
     );
 
     // Only process post events
     if (eventType !== "post") {
-      console.log(`Ignoring non-post event: ${eventType}`);
+      console.log(`[${requestId}] Ignoring non-post event: ${eventType}`);
       return new Response(
         JSON.stringify({ status: "ignored", reason: "Not a post event" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -222,7 +225,7 @@ serve(async (req) => {
 
     // Only process post_edited events
     if (eventName !== "post_edited") {
-      console.log(`Ignoring event: ${eventName}`);
+      console.log(`[${requestId}] Ignoring event: ${eventName}`);
       return new Response(
         JSON.stringify({ status: "ignored", reason: "Not a post_edited event" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -235,7 +238,7 @@ serve(async (req) => {
 
     const webhookSecret = Deno.env.get("DISCOURSE_WEBHOOK_SECRET");
     if (!webhookSecret) {
-      console.error("DISCOURSE_WEBHOOK_SECRET not configured");
+      console.error(`[${requestId}] DISCOURSE_WEBHOOK_SECRET not configured`);
       return new Response(
         JSON.stringify({ error: "Webhook secret not configured" }),
         {
@@ -246,7 +249,7 @@ serve(async (req) => {
     }
 
     if (!signature) {
-      console.error("Missing signature header");
+      console.error(`[${requestId}] Missing signature header`);
       return new Response(JSON.stringify({ error: "Missing signature" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -262,14 +265,14 @@ serve(async (req) => {
       webhookSecret
     );
     if (!isValid) {
-      console.error("Invalid webhook signature");
+      console.error(`[${requestId}] Invalid webhook signature`);
       return new Response(JSON.stringify({ error: "Invalid signature" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log("Signature verified successfully");
+    console.log(`[${requestId}] Signature verified successfully`);
 
     // =========================================================================
     // 3. PARSE WEBHOOK PAYLOAD
@@ -280,7 +283,7 @@ serve(async (req) => {
 
     // Only process edits to the first post (OP) of a topic
     if (post.post_number !== 1) {
-      console.log(`Ignoring edit to post #${post.post_number} (not the OP)`);
+      console.log(`[${requestId}] Ignoring edit to post #${post.post_number} (not the OP)`);
       return new Response(
         JSON.stringify({ status: "ignored", reason: "Not the first post" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -288,7 +291,7 @@ serve(async (req) => {
     }
 
     console.log(
-      `Processing edit to topic ${post.topic_id}, post ${post.id} by ${post.username}`
+      `[${requestId}] Processing edit to topic ${post.topic_id}, post ${post.id} by ${post.username}`
     );
 
     // =========================================================================
@@ -312,14 +315,14 @@ serve(async (req) => {
 
     if (questionByUrl) {
       questionId = questionByUrl.id;
-      console.log(`Found question ${questionId} by forum_url lookup`);
+      console.log(`[${requestId}] Found question ${questionId} by forum_url lookup`);
     } else {
       // Method 2: Fetch topic title from Discourse API (production fallback)
       const discourseApiKey = Deno.env.get("DISCOURSE_API_KEY");
       const discourseUsername = Deno.env.get("DISCOURSE_USERNAME");
 
       if (!discourseApiKey || !discourseUsername) {
-        console.error("Discourse API credentials not configured and question not found by forum_url");
+        console.error(`[${requestId}] Discourse API credentials not configured and question not found by forum_url`);
         return new Response(
           JSON.stringify({ error: "Cannot determine question ID" }),
           {
@@ -340,7 +343,7 @@ serve(async (req) => {
       );
 
       if (!topicResponse.ok) {
-        console.error(`Failed to fetch topic: ${topicResponse.status}`);
+        console.error(`[${requestId}] Failed to fetch topic: ${topicResponse.status}`);
         return new Response(
           JSON.stringify({ error: "Failed to fetch topic from Discourse" }),
           {
@@ -355,7 +358,7 @@ serve(async (req) => {
 
       if (!questionId) {
         console.log(
-          `Topic title does not match question format: "${topicData.title}"`
+          `[${requestId}] Topic title does not match question format: "${topicData.title}"`
         );
         return new Response(
           JSON.stringify({
@@ -366,7 +369,7 @@ serve(async (req) => {
         );
       }
 
-      console.log(`Matched topic to question: ${questionId} via Discourse API`);
+      console.log(`[${requestId}] Matched topic to question: ${questionId} via Discourse API`);
     }
 
     // =========================================================================
@@ -378,7 +381,7 @@ serve(async (req) => {
     if (newExplanation === null) {
       // Can't parse explanation - keep existing, log warning, return success
       console.warn(
-        `Could not parse explanation section for question ${questionId}. ` +
+        `[${requestId}] Could not parse explanation section for question ${questionId}. ` +
           `Keeping existing explanation. Post content may have been modified ` +
           `to remove or change the expected format.`
       );
@@ -392,7 +395,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Parsed explanation (${newExplanation.length} chars)`);
+    console.log(`[${requestId}] Parsed explanation (${newExplanation.length} chars)`);
 
     // =========================================================================
     // 6. CHECK IF EXPLANATION CHANGED
@@ -408,7 +411,7 @@ serve(async (req) => {
     if (fetchError) {
       if (fetchError.code === "PGRST116") {
         // Question not found
-        console.error(`Question not found in database: ${questionId}`);
+        console.error(`[${requestId}] Question not found in database: ${questionId}`);
         return new Response(
           JSON.stringify({ error: "Question not found", questionId }),
           {
@@ -424,7 +427,7 @@ serve(async (req) => {
 
     // Skip if explanation hasn't changed
     if (previousExplanation === newExplanation) {
-      console.log("Explanation unchanged, marking as synced");
+      console.log(`[${requestId}] Explanation unchanged for ${questionId}, marking as synced`);
       // Still update sync status to show we verified it's in sync
       await supabase
         .from("questions")
@@ -441,7 +444,7 @@ serve(async (req) => {
     }
 
     console.log(
-      `Explanation changed for ${questionId}: ` +
+      `[${requestId}] Explanation changed for ${questionId}: ` +
         `${previousExplanation?.length || 0} -> ${newExplanation.length} chars`
     );
 
@@ -460,7 +463,7 @@ serve(async (req) => {
       .eq("id", questionId);
 
     if (updateError) {
-      console.error("Failed to update question:", updateError);
+      console.error(`[${requestId}] Failed to update question ${questionId}:`, updateError);
       // Try to record the error in sync status
       await supabase
         .from("questions")
@@ -473,7 +476,7 @@ serve(async (req) => {
       throw updateError;
     }
 
-    console.log(`Successfully updated explanation for ${questionId}`);
+    console.log(`[${requestId}] Successfully updated explanation for ${questionId}`);
 
     // =========================================================================
     // 7b. EXTRACT LINKS FROM NEW EXPLANATION
@@ -499,17 +502,17 @@ serve(async (req) => {
       if (linkResponse.ok) {
         const linkResult = await linkResponse.json();
         console.log(
-          `Extracted ${linkResult.links?.length || 0} links from explanation ` +
+          `[${requestId}] Extracted ${linkResult.links?.length || 0} links from explanation ` +
             `(${linkResult.newCount} new, ${linkResult.keptCount} kept)`
         );
       } else {
         console.warn(
-          `Failed to extract links: ${linkResponse.status} ${linkResponse.statusText}`
+          `[${requestId}] Failed to extract links: ${linkResponse.status} ${linkResponse.statusText}`
         );
       }
     } catch (linkError) {
       // Non-fatal - log warning but don't fail the webhook
-      console.warn("Failed to extract links from explanation:", linkError);
+      console.warn(`[${requestId}] Failed to extract links from explanation:`, linkError);
     }
 
     // =========================================================================
@@ -527,7 +530,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Webhook handler error:", error);
+    console.error(`[${requestId}] Webhook handler error:`, error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,

@@ -189,14 +189,19 @@ async function deleteDiscourseUser(
 }
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID().slice(0, 8);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log(`[${requestId}] delete-discourse-user: Request received`);
+
     // Only allow POST requests
     if (req.method !== 'POST') {
+      console.warn(`[${requestId}] Method not allowed: ${req.method}`);
       return errorResponse('Method not allowed', 405);
     }
 
@@ -210,6 +215,7 @@ serve(async (req) => {
     // Require authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.warn(`[${requestId}] Missing authorization header`);
       return errorResponse('Unauthorized: Authentication required', 401);
     }
 
@@ -219,28 +225,31 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
+      console.warn(`[${requestId}] Invalid token:`, authError?.message || 'no user');
       return errorResponse('Unauthorized: Invalid token', 401);
     }
 
-    console.log(`User ${user.id} requested Discourse account deletion`);
+    console.log(`[${requestId}] User ${user.id} requested Discourse account deletion`);
 
     // Look up the user in Discourse by their Supabase user ID (external_id)
     const discourseUser = await findDiscourseUserByExternalId(discourseConfig, user.id);
 
     if (!discourseUser) {
       // User doesn't have a Discourse account - this is fine, return success
-      console.log(`User ${user.id} has no Discourse account - nothing to delete`);
+      console.log(`[${requestId}] User ${user.id} has no Discourse account - nothing to delete`);
       return successResponse({
         discourseAccountFound: false,
         message: 'No Discourse account found for this user',
       });
     }
 
-    console.log(`Found Discourse user: ${discourseUser.username} (ID: ${discourseUser.id})`);
+    console.log(`[${requestId}] Found Discourse user: ${discourseUser.username} (ID: ${discourseUser.id})`);
 
     // Parse request body for options
     const body = await req.json().catch(() => ({}));
     const deletePosts = body.deletePosts === true;
+
+    console.log(`[${requestId}] Deleting Discourse user ${discourseUser.id} (deletePosts: ${deletePosts})`);
 
     // Delete the user from Discourse
     const deleteResult = await deleteDiscourseUser(discourseConfig, discourseUser.id, {
@@ -249,7 +258,7 @@ serve(async (req) => {
     });
 
     if (!deleteResult.success) {
-      console.error(`Failed to delete Discourse user ${discourseUser.id}: ${deleteResult.error}`);
+      console.error(`[${requestId}] Failed to delete Discourse user ${discourseUser.id}: ${deleteResult.error}`);
       return new Response(
         JSON.stringify({
           success: false,
@@ -261,7 +270,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Successfully deleted Discourse user ${discourseUser.username} (ID: ${discourseUser.id})`);
+    console.log(`[${requestId}] Successfully deleted Discourse user ${discourseUser.username} (ID: ${discourseUser.id})`);
 
     return successResponse({
       discourseAccountFound: true,
@@ -270,7 +279,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error(`[${requestId}] Error:`, error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return errorResponse(errorMessage, 500);
   }

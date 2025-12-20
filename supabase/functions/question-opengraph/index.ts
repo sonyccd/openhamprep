@@ -99,6 +99,11 @@ function getLicenseName(questionId: string): string {
 }
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID().slice(0, 8);
+  const userAgent = req.headers.get('user-agent');
+
+  console.log(`[${requestId}] question-opengraph: Request received, User-Agent: ${userAgent?.slice(0, 50) || 'none'}`);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -107,10 +112,13 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const questionId = url.searchParams.get('id');
-    const userAgent = req.headers.get('user-agent');
+
+    console.log(`[${requestId}] Question ID: ${questionId || 'missing'}`);
+    const isCrawlerRequest = isCrawler(userAgent);
 
     // Validate question ID is present
     if (!questionId) {
+      console.warn(`[${requestId}] Missing question ID parameter`);
       return new Response('Missing question ID parameter', {
         status: 400,
         headers: corsHeaders,
@@ -119,6 +127,7 @@ serve(async (req) => {
 
     // Validate question ID format
     if (!isValidQuestionId(questionId)) {
+      console.warn(`[${requestId}] Invalid question ID format: ${questionId}`);
       return new Response('Invalid question ID format. Expected format: T1A01, G2B03, E3C12', {
         status: 400,
         headers: corsHeaders,
@@ -130,10 +139,11 @@ serve(async (req) => {
 
     // For regular browsers, redirect to /app/questions/:id which bypasses the rewrite
     // The SPA will handle the route and then use history.replaceState to fix the URL
-    if (!isCrawler(userAgent)) {
+    if (!isCrawlerRequest) {
       // Redirect to a path that doesn't match the rewrite pattern
       // We use /q/:id as a short alias that the SPA can handle
       const bypassUrl = `${SITE_URL}/q/${questionId.toLowerCase()}`;
+      console.log(`[${requestId}] Browser request, redirecting to ${bypassUrl}`);
       return new Response(null, {
         status: 302,
         headers: {
@@ -143,6 +153,8 @@ serve(async (req) => {
         },
       });
     }
+
+    console.log(`[${requestId}] Crawler detected, fetching question data from database`);
 
     // For crawlers, fetch the question and return OG HTML
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -156,6 +168,7 @@ serve(async (req) => {
       .single();
 
     if (error || !question) {
+      console.warn(`[${requestId}] Question not found: ${questionId}, error: ${error?.message || 'no data'}`);
       // For crawlers, return a 404 with generic OG tags
       // This prevents crawlers from indexing a redirect that leads nowhere useful
       const notFoundHtml = `<!DOCTYPE html>
@@ -192,6 +205,7 @@ serve(async (req) => {
     }
 
     // Build metadata for crawlers
+    console.log(`[${requestId}] Found question ${question.id}, generating OG HTML`);
     const title = `Question ${question.id.toUpperCase()} | ${SITE_NAME}`;
     const licenseName = getLicenseName(question.id);
     // Truncate description to optimal OG length (150-200 chars)
@@ -240,7 +254,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error generating OpenGraph HTML:', error);
+    console.error(`[${requestId}] Error generating OpenGraph HTML:`, error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(`Internal server error: ${errorMessage}`, {
       status: 500,
