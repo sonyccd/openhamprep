@@ -89,7 +89,7 @@ function extractUrlsFromText(text: string): string[] {
 
   // Extract bare URLs (not inside markdown links)
   const textWithoutMarkdownLinks = text.replace(markdownLinkRegex, '');
-  const bareUrlRegex = /https?:\/\/[^\s<>\[\]()]+/gi;
+  const bareUrlRegex = /https?:\/\/[^\s<>[\]()]+/gi;
   while ((match = bareUrlRegex.exec(textWithoutMarkdownLinks)) !== null) {
     const url = match[0].replace(/[.,;:!?'"]+$/, ''); // Clean trailing punctuation
     if (!seen.has(url)) {

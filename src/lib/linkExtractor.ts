@@ -23,7 +23,7 @@ export function extractLinksFromText(text: string): string[] {
   // Extract bare URLs (not inside markdown links)
   // First, remove markdown links to avoid double-counting
   const textWithoutMarkdownLinks = text.replace(markdownLinkRegex, '');
-  const bareUrlRegex = /https?:\/\/[^\s<>\[\]()]+/gi;
+  const bareUrlRegex = /https?:\/\/[^\s<>[\]()]+/gi;
   while ((match = bareUrlRegex.exec(textWithoutMarkdownLinks)) !== null) {
     const url = match[0];
     // Clean trailing punctuation that might be part of sentence

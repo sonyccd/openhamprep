@@ -162,7 +162,7 @@ export function MarkdownText({ text, className }: MarkdownTextProps) {
       }
 
       // Check for bare URLs (https://... or http://...)
-      const urlMatch = remaining.match(/^(https?:\/\/[^\s<>\[\]()]+)/i);
+      const urlMatch = remaining.match(/^(https?:\/\/[^\s<>[\]()]+)/i);
       if (urlMatch) {
         const url = urlMatch[1];
         const safeUrl = getSafeUrl(url);
