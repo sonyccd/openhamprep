@@ -3,7 +3,7 @@ import { Question } from "@/hooks/useQuestions";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import { useAuth } from "@/hooks/useAuth";
 import { useExplanationFeedback } from "@/hooks/useExplanationFeedback";
-import { cn } from "@/lib/utils";
+import { cn, getSafeUrl } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Bookmark, BookmarkCheck, MessageSquare, ThumbsUp, ThumbsDown, ExternalLink, Users, Link } from "lucide-react";
 import { toast } from "sonner";
@@ -29,15 +29,19 @@ import type { LinkData } from "@/hooks/useQuestions";
  * @param forumUrl - The full forum topic URL (e.g., https://forum.openhamprep.com/t/topic/123)
  * @returns The OIDC auth URL with origin parameter for post-auth redirect
  */
-function getForumAuthUrl(forumUrl: string): string {
+function getForumAuthUrl(forumUrl: string): string | null {
+  // First validate the URL is safe (http/https only)
+  const safeUrl = getSafeUrl(forumUrl);
+  if (!safeUrl) return null;
+
   try {
-    const url = new URL(forumUrl);
+    const url = new URL(safeUrl);
     // Extract the path (e.g., /t/topic-slug/123) to use as the origin parameter
     const origin = url.pathname + url.search + url.hash;
     return `https://forum.openhamprep.com/auth/oidc?origin=${encodeURIComponent(origin)}`;
   } catch {
-    // Fallback to direct URL if parsing fails
-    return forumUrl;
+    // URL parsing failed - return null for safety
+    return null;
   }
 }
 
@@ -399,28 +403,31 @@ export function QuestionCard({
             </div>
 
             {/* Discuss in Forum Button */}
-            {question.forumUrl && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <Button
-                  variant="outline"
-                  className="w-full sm:w-auto gap-2"
-                  asChild
-                >
-                  <a
-                    href={getForumAuthUrl(question.forumUrl)}
-                    target="_blank"
-                    rel="noopener noreferrer"
+            {(() => {
+              const authUrl = question.forumUrl ? getForumAuthUrl(question.forumUrl) : null;
+              return authUrl ? (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <Button
+                    variant="outline"
+                    className="w-full sm:w-auto gap-2"
+                    asChild
                   >
-                    <Users className="w-4 h-4" aria-hidden="true" />
-                    Discuss with Other Hams
-                    <ExternalLink className="w-3 h-3 ml-1" aria-hidden="true" />
-                  </a>
-                </Button>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Join the community discussion, share study tips, or suggest improvements to this explanation.
-                </p>
-              </div>
-            )}
+                    <a
+                      href={authUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Users className="w-4 h-4" aria-hidden="true" />
+                      Discuss with Other Hams
+                      <ExternalLink className="w-3 h-3 ml-1" aria-hidden="true" />
+                    </a>
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Join the community discussion, share study tips, or suggest improvements to this explanation.
+                  </p>
+                </div>
+              ) : null;
+            })()}
           </motion.div>
         )}
       </div>

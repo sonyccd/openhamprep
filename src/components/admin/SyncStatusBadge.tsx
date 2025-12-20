@@ -16,6 +16,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
+import { getSafeUrl } from "@/lib/utils";
 
 interface SyncStatusBadgeProps {
   status: string | null | undefined;
@@ -84,14 +85,21 @@ export function SyncStatusBadge({
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Topic URL</span>
-            <a
-              href={forumUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-primary hover:underline flex items-center gap-1"
-            >
-              Open in Forum <ExternalLink className="w-3 h-3" />
-            </a>
+            {(() => {
+              const safeUrl = getSafeUrl(forumUrl);
+              return safeUrl ? (
+                <a
+                  href={safeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline flex items-center gap-1"
+                >
+                  Open in Forum <ExternalLink className="w-3 h-3" />
+                </a>
+              ) : (
+                <span className="text-sm text-muted-foreground">Invalid URL</span>
+              );
+            })()}
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Status</span>

@@ -21,6 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { FigureUpload } from "./FigureUpload";
 import { SyncStatusBadge } from "./SyncStatusBadge";
+import { getSafeUrl } from "@/lib/utils";
 
 interface LinkData {
   url: string;
@@ -501,23 +502,6 @@ export function AdminQuestions({
 
   const removeLinkFromNewQuestion = (url: string) => {
     setNewLinks(prev => prev.filter(l => l.url !== url));
-  };
-
-  /**
-   * Validates a URL string and returns it only if it uses a safe protocol (http/https).
-   * Prevents XSS attacks via javascript: or other dangerous URL schemes.
-   */
-  const getSafeUrl = (urlString: string | null | undefined): string | null => {
-    if (!urlString) return null;
-    try {
-      const url = new URL(urlString);
-      if (url.protocol === 'http:' || url.protocol === 'https:') {
-        return urlString;
-      }
-      return null;
-    } catch {
-      return null;
-    }
   };
 
   const updateOption = (index: number, value: string) => {
