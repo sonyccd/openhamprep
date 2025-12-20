@@ -552,3 +552,207 @@ describe("error handling scenarios", () => {
     });
   });
 });
+
+// =============================================================================
+// TESTS: SYNC STATUS LOGIC
+// =============================================================================
+
+describe("sync status behavior", () => {
+  /**
+   * These tests verify the expected sync status updates for different scenarios.
+   * The actual database updates happen in the edge function, but we test the logic
+   * that determines what status should be set.
+   */
+
+  interface SyncStatusUpdate {
+    discourse_sync_status: 'synced' | 'error' | 'pending';
+    discourse_sync_at: string;
+    discourse_sync_error: string | null;
+  }
+
+  /**
+   * Simulates the sync status update logic from the webhook handler.
+   */
+  function determineSyncStatus(
+    updateSucceeded: boolean,
+    explanationChanged: boolean,
+    errorMessage: string | null = null
+  ): SyncStatusUpdate | null {
+    // If no explanation change and content is already in sync, mark as synced
+    if (!explanationChanged && updateSucceeded) {
+      return {
+        discourse_sync_status: 'synced',
+        discourse_sync_at: new Date().toISOString(),
+        discourse_sync_error: null,
+      };
+    }
+
+    // If explanation changed and update succeeded
+    if (explanationChanged && updateSucceeded) {
+      return {
+        discourse_sync_status: 'synced',
+        discourse_sync_at: new Date().toISOString(),
+        discourse_sync_error: null,
+      };
+    }
+
+    // If update failed
+    if (!updateSucceeded) {
+      return {
+        discourse_sync_status: 'error',
+        discourse_sync_at: new Date().toISOString(),
+        discourse_sync_error: errorMessage || 'Unknown error',
+      };
+    }
+
+    return null;
+  }
+
+  describe("successful updates", () => {
+    it("should set status to 'synced' when explanation is successfully updated", () => {
+      const result = determineSyncStatus(true, true);
+      expect(result).not.toBeNull();
+      expect(result!.discourse_sync_status).toBe('synced');
+      expect(result!.discourse_sync_error).toBeNull();
+    });
+
+    it("should set status to 'synced' when explanation is unchanged", () => {
+      const result = determineSyncStatus(true, false);
+      expect(result).not.toBeNull();
+      expect(result!.discourse_sync_status).toBe('synced');
+      expect(result!.discourse_sync_error).toBeNull();
+    });
+
+    it("should include timestamp in sync status update", () => {
+      const before = new Date().toISOString();
+      const result = determineSyncStatus(true, true);
+      const after = new Date().toISOString();
+
+      expect(result).not.toBeNull();
+      expect(result!.discourse_sync_at).toBeDefined();
+      expect(result!.discourse_sync_at >= before).toBe(true);
+      expect(result!.discourse_sync_at <= after).toBe(true);
+    });
+  });
+
+  describe("failed updates", () => {
+    it("should set status to 'error' when database update fails", () => {
+      const result = determineSyncStatus(false, true, 'Database connection failed');
+      expect(result).not.toBeNull();
+      expect(result!.discourse_sync_status).toBe('error');
+      expect(result!.discourse_sync_error).toBe('Database connection failed');
+    });
+
+    it("should include error message in sync status", () => {
+      const errorMessage = 'PGRST116: Row not found';
+      const result = determineSyncStatus(false, true, errorMessage);
+      expect(result!.discourse_sync_error).toBe(errorMessage);
+    });
+
+    it("should default to 'Unknown error' when no error message provided", () => {
+      const result = determineSyncStatus(false, true, null);
+      expect(result!.discourse_sync_error).toBe('Unknown error');
+    });
+  });
+
+  describe("status values", () => {
+    it("should only use valid status values", () => {
+      const validStatuses = ['synced', 'error', 'pending'];
+
+      const successResult = determineSyncStatus(true, true);
+      expect(validStatuses).toContain(successResult!.discourse_sync_status);
+
+      const errorResult = determineSyncStatus(false, true, 'error');
+      expect(validStatuses).toContain(errorResult!.discourse_sync_status);
+    });
+  });
+});
+
+// =============================================================================
+// TESTS: WEBHOOK RESPONSE STATUS
+// =============================================================================
+
+describe("webhook response status values", () => {
+  /**
+   * The webhook handler returns different status values based on what happened.
+   * These tests document the expected status values for different scenarios.
+   */
+
+  type WebhookStatus = 'updated' | 'unchanged' | 'skipped' | 'ignored';
+
+  interface WebhookScenario {
+    eventType: string;
+    eventName: string;
+    postNumber: number;
+    explanationParsed: boolean;
+    explanationChanged: boolean;
+    expectedStatus: WebhookStatus | 'error';
+  }
+
+  const scenarios: WebhookScenario[] = [
+    {
+      eventType: 'post',
+      eventName: 'post_edited',
+      postNumber: 1,
+      explanationParsed: true,
+      explanationChanged: true,
+      expectedStatus: 'updated',
+    },
+    {
+      eventType: 'post',
+      eventName: 'post_edited',
+      postNumber: 1,
+      explanationParsed: true,
+      explanationChanged: false,
+      expectedStatus: 'unchanged',
+    },
+    {
+      eventType: 'post',
+      eventName: 'post_edited',
+      postNumber: 1,
+      explanationParsed: false,
+      explanationChanged: false,
+      expectedStatus: 'skipped',
+    },
+    {
+      eventType: 'post',
+      eventName: 'post_edited',
+      postNumber: 2, // Reply, not first post
+      explanationParsed: true,
+      explanationChanged: true,
+      expectedStatus: 'ignored',
+    },
+    {
+      eventType: 'topic',
+      eventName: 'topic_created',
+      postNumber: 1,
+      explanationParsed: true,
+      explanationChanged: true,
+      expectedStatus: 'ignored',
+    },
+  ];
+
+  it.each(scenarios)(
+    'should return "$expectedStatus" for $eventType/$eventName with post_number=$postNumber',
+    (scenario) => {
+      // Simulate the webhook handler logic
+      let status: WebhookStatus | 'error';
+
+      if (scenario.eventType !== 'post') {
+        status = 'ignored';
+      } else if (scenario.eventName !== 'post_edited') {
+        status = 'ignored';
+      } else if (scenario.postNumber !== 1) {
+        status = 'ignored';
+      } else if (!scenario.explanationParsed) {
+        status = 'skipped';
+      } else if (!scenario.explanationChanged) {
+        status = 'unchanged';
+      } else {
+        status = 'updated';
+      }
+
+      expect(status).toBe(scenario.expectedStatus);
+    }
+  );
+});

@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink, ThumbsUp, ThumbsDown, FileText, Filter, X, Image } from "lucide-react";
+import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink, ThumbsUp, ThumbsDown, Filter, X, Image } from "lucide-react";
 import { BulkImportQuestions } from "./BulkImportQuestions";
 import { BulkExport, escapeCSVField } from "./BulkExport";
 import { EditHistoryViewer, EditHistoryEntry } from "./EditHistoryViewer";
@@ -20,6 +20,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { FigureUpload } from "./FigureUpload";
+import { SyncStatusBadge } from "./SyncStatusBadge";
+import { getSafeUrl } from "@/lib/utils";
+
 interface LinkData {
   url: string;
   title: string;
@@ -40,6 +43,10 @@ interface Question {
   explanation?: string | null;
   edit_history?: EditHistoryEntry[];
   figure_url?: string | null;
+  forum_url?: string | null;
+  discourse_sync_status?: string | null;
+  discourse_sync_at?: string | null;
+  discourse_sync_error?: string | null;
 }
 interface AdminQuestionsProps {
   testType: 'technician' | 'general' | 'extra';
@@ -88,6 +95,7 @@ export function AdminQuestions({
   const [editLinks, setEditLinks] = useState<LinkData[]>([]);
   const [editExplanation, setEditExplanation] = useState("");
   const [editFigureUrl, setEditFigureUrl] = useState<string | null>(null);
+  const [editForumUrl, setEditForumUrl] = useState<string | null>(null);
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [isAddingLink, setIsAddingLink] = useState(false);
   const prefix = TEST_TYPE_PREFIXES[testType];
@@ -102,7 +110,7 @@ export function AdminQuestions({
         data,
         error
       } = await supabase.from('questions')
-        .select('id, question, options, correct_answer, subelement, question_group, links, explanation, edit_history, figure_url')
+        .select('id, question, options, correct_answer, subelement, question_group, links, explanation, edit_history, figure_url, forum_url, discourse_sync_status, discourse_sync_at, discourse_sync_error')
         .ilike('id', `${prefix}*`)
         .order('id', { ascending: true });
       if (error) throw error;
@@ -112,7 +120,11 @@ export function AdminQuestions({
         links: (Array.isArray(q.links) ? q.links : []) as unknown as LinkData[],
         explanation: q.explanation,
         edit_history: (Array.isArray(q.edit_history) ? q.edit_history : []) as unknown as EditHistoryEntry[],
-        figure_url: q.figure_url
+        figure_url: q.figure_url,
+        forum_url: q.forum_url,
+        discourse_sync_status: q.discourse_sync_status,
+        discourse_sync_at: q.discourse_sync_at,
+        discourse_sync_error: q.discourse_sync_error
       })) as Question[];
     }
   });
@@ -171,7 +183,7 @@ export function AdminQuestions({
     }
   });
   const updateQuestion = useMutation({
-    mutationFn: async (params: { question: Question & { explanation?: string | null; figure_url?: string | null }; originalQuestion: Question }) => {
+    mutationFn: async (params: { question: Question & { explanation?: string | null; figure_url?: string | null; forum_url?: string | null }; originalQuestion: Question }) => {
       const { question, originalQuestion } = params;
 
       // Build changes object
@@ -197,6 +209,9 @@ export function AdminQuestions({
       if ((originalQuestion.figure_url || '') !== (question.figure_url || '')) {
         changes.figure_url = { from: originalQuestion.figure_url || '', to: question.figure_url || '' };
       }
+      if ((originalQuestion.forum_url || '') !== (question.forum_url || '')) {
+        changes.forum_url = { from: originalQuestion.forum_url || '', to: question.forum_url || '' };
+      }
 
       const historyEntry: EditHistoryEntry = {
         user_id: user?.id || '',
@@ -218,9 +233,39 @@ export function AdminQuestions({
         question_group: question.question_group.trim(),
         explanation: question.explanation?.trim() || null,
         figure_url: question.figure_url || null,
+        forum_url: question.forum_url || null,
         edit_history: JSON.parse(JSON.stringify([...existingHistory, historyEntry]))
       }).eq('id', question.id);
       if (error) throw error;
+
+      // If explanation changed and question has forum_url (either original or newly set), sync to Discourse
+      const explanationChanged = (originalQuestion.explanation || '') !== (question.explanation?.trim() || '');
+      const effectiveForumUrl = question.forum_url || originalQuestion.forum_url;
+      if (explanationChanged && effectiveForumUrl) {
+        try {
+          // Set pending status
+          await supabase.from('questions').update({
+            discourse_sync_status: 'pending',
+            discourse_sync_at: new Date().toISOString()
+          }).eq('id', question.id);
+
+          // Call edge function to update Discourse
+          const response = await supabase.functions.invoke('update-discourse-post', {
+            body: {
+              questionId: question.id,
+              explanation: question.explanation?.trim() || ''
+            }
+          });
+
+          if (response.error) {
+            console.error('Discourse sync failed:', response.error);
+            // Don't throw - local save succeeded, just log the error
+          }
+        } catch (syncError) {
+          console.error('Failed to sync to Discourse:', syncError);
+          // Don't throw - local save succeeded
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -265,6 +310,44 @@ export function AdminQuestions({
   });
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Retry syncing explanation to Discourse
+  const handleRetrySync = async (questionId: string) => {
+    const question = questions.find(q => q.id === questionId);
+    if (!question?.forum_url) {
+      toast.error("Question has no Discourse topic");
+      return;
+    }
+
+    try {
+      // Set pending status first
+      await supabase.from('questions').update({
+        discourse_sync_status: 'pending',
+        discourse_sync_at: new Date().toISOString()
+      }).eq('id', questionId);
+
+      // Invalidate to show pending state
+      queryClient.invalidateQueries({ queryKey: ['admin-questions', testType] });
+
+      const response = await supabase.functions.invoke('update-discourse-post', {
+        body: {
+          questionId,
+          explanation: question.explanation || ''
+        }
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      toast.success('Synced to Discourse successfully');
+      queryClient.invalidateQueries({ queryKey: ['admin-questions', testType] });
+    } catch (error) {
+      toast.error('Sync failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      queryClient.invalidateQueries({ queryKey: ['admin-questions', testType] });
+    }
+  };
+
   const addLinkToQuestion = async () => {
     if (!editingQuestion || !newLinkUrl.trim()) {
       toast.error("Please enter a URL");
@@ -436,6 +519,7 @@ export function AdminQuestions({
     setEditLinks(q.links || []);
     setEditExplanation(q.explanation || "");
     setEditFigureUrl(q.figure_url || null);
+    setEditForumUrl(q.forum_url || null);
     setNewLinkUrl("");
   };
   const updateEditOption = (index: number, value: string) => {
@@ -457,7 +541,8 @@ export function AdminQuestions({
         subelement: editSubelement,
         question_group: editQuestionGroup,
         explanation: editExplanation,
-        figure_url: editFigureUrl
+        figure_url: editFigureUrl,
+        forum_url: editForumUrl?.trim() || null
       },
       originalQuestion: editingQuestion
     });
@@ -595,6 +680,41 @@ export function AdminQuestions({
                 </div> : <p className="text-sm text-muted-foreground italic">
                   No learning resources attached yet
                 </p>}
+            </div>
+
+            <Separator />
+
+            {/* Forum URL Section */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Discourse Forum Topic (Optional)
+              </Label>
+              <Input
+                placeholder="https://forum.openhamprep.com/t/topic-slug/123"
+                value={editForumUrl || ''}
+                onChange={e => setEditForumUrl(e.target.value || null)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Link to the Discourse forum topic for this question. When set, explanations will sync bidirectionally.
+              </p>
+              {(() => {
+                const safeForumUrl = getSafeUrl(editForumUrl);
+                return safeForumUrl ? (
+                  <a
+                    href={safeForumUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                  >
+                    Open in Forum <ExternalLink className="w-3 h-3" />
+                  </a>
+                ) : editForumUrl ? (
+                  <p className="text-xs text-destructive">
+                    Invalid URL format. Please enter a valid http:// or https:// URL.
+                  </p>
+                ) : null;
+              })()}
             </div>
 
             <Separator />
@@ -926,10 +1046,16 @@ export function AdminQuestions({
                           <LinkIcon className="w-3 h-3 mr-1" />
                           {q.links.length}
                         </Badge>}
-                      {q.explanation && <Badge variant="outline" className="text-xs text-primary border-primary/50">
-                          <FileText className="w-3 h-3 mr-1" />
-                          Explanation
-                        </Badge>}
+                      {q.forum_url && (
+                        <SyncStatusBadge
+                          status={q.discourse_sync_status}
+                          syncAt={q.discourse_sync_at}
+                          error={q.discourse_sync_error}
+                          questionId={q.id}
+                          forumUrl={q.forum_url}
+                          onRetrySync={() => handleRetrySync(q.id)}
+                        />
+                      )}
                       {feedbackStats[q.id] && <Badge variant="outline" className="text-xs gap-1">
                           <ThumbsUp className="w-3 h-3 text-success" />
                           <span className="text-success">{feedbackStats[q.id].helpful}</span>

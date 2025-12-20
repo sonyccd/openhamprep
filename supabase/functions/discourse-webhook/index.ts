@@ -424,7 +424,16 @@ serve(async (req) => {
 
     // Skip if explanation hasn't changed
     if (previousExplanation === newExplanation) {
-      console.log("Explanation unchanged, skipping update");
+      console.log("Explanation unchanged, marking as synced");
+      // Still update sync status to show we verified it's in sync
+      await supabase
+        .from("questions")
+        .update({
+          discourse_sync_status: "synced",
+          discourse_sync_at: new Date().toISOString(),
+          discourse_sync_error: null,
+        })
+        .eq("id", questionId);
       return new Response(
         JSON.stringify({ status: "unchanged", questionId }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -442,11 +451,25 @@ serve(async (req) => {
 
     const { error: updateError } = await supabase
       .from("questions")
-      .update({ explanation: newExplanation })
+      .update({
+        explanation: newExplanation,
+        discourse_sync_status: "synced",
+        discourse_sync_at: new Date().toISOString(),
+        discourse_sync_error: null,
+      })
       .eq("id", questionId);
 
     if (updateError) {
       console.error("Failed to update question:", updateError);
+      // Try to record the error in sync status
+      await supabase
+        .from("questions")
+        .update({
+          discourse_sync_status: "error",
+          discourse_sync_at: new Date().toISOString(),
+          discourse_sync_error: updateError.message,
+        })
+        .eq("id", questionId);
       throw updateError;
     }
 
