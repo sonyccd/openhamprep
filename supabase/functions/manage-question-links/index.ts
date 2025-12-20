@@ -66,6 +66,41 @@ function extractSiteName(url: string, html: string): string {
   }
 }
 
+/**
+ * Extracts all URLs from explanation text.
+ * Handles both markdown links [text](url) and bare URLs (https://...).
+ */
+function extractUrlsFromText(text: string): string[] {
+  if (!text) return [];
+
+  const urls: string[] = [];
+  const seen = new Set<string>();
+
+  // Extract URLs from markdown links [text](url)
+  const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/gi;
+  let match;
+  while ((match = markdownLinkRegex.exec(text)) !== null) {
+    const url = match[2];
+    if (!seen.has(url)) {
+      seen.add(url);
+      urls.push(url);
+    }
+  }
+
+  // Extract bare URLs (not inside markdown links)
+  const textWithoutMarkdownLinks = text.replace(markdownLinkRegex, '');
+  const bareUrlRegex = /https?:\/\/[^\s<>[\]()]+/gi;
+  while ((match = bareUrlRegex.exec(textWithoutMarkdownLinks)) !== null) {
+    const url = match[0].replace(/[.,;:!?'"]+$/, ''); // Clean trailing punctuation
+    if (!seen.has(url)) {
+      seen.add(url);
+      urls.push(url);
+    }
+  }
+
+  return urls;
+}
+
 async function unfurlUrl(url: string): Promise<UnfurledLink> {
   try {
     const response = await fetch(url, {
@@ -296,10 +331,108 @@ serve(async (req) => {
         JSON.stringify({ success: true, refreshedCount }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+
+    } else if (action === 'extract-from-explanation') {
+      // Extract URLs from explanation and unfurl them
+      if (!questionId) {
+        return new Response(
+          JSON.stringify({ error: 'questionId is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`Extracting links from explanation for question ${questionId}`);
+
+      // Fetch the question's explanation and current links
+      const { data: question, error: fetchError } = await supabase
+        .from('questions')
+        .select('explanation, links')
+        .eq('id', questionId)
+        .single();
+
+      if (fetchError || !question) {
+        return new Response(
+          JSON.stringify({ error: 'Question not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!question.explanation) {
+        // No explanation, clear links
+        await supabase
+          .from('questions')
+          .update({ links: [] })
+          .eq('id', questionId);
+
+        return new Response(
+          JSON.stringify({ success: true, links: [], message: 'No explanation, links cleared' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Extract URLs from explanation
+      const extractedUrls = extractUrlsFromText(question.explanation);
+
+      if (extractedUrls.length === 0) {
+        // No URLs found, clear links
+        await supabase
+          .from('questions')
+          .update({ links: [] })
+          .eq('id', questionId);
+
+        return new Response(
+          JSON.stringify({ success: true, links: [], message: 'No URLs found in explanation' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check existing links to avoid re-unfurling
+      const existingLinks = (question.links as UnfurledLink[]) || [];
+      const existingUrlMap = new Map(existingLinks.map(l => [l.url, l]));
+
+      // Keep existing links that are still in explanation, unfurl new ones
+      const allLinks: UnfurledLink[] = [];
+      for (const url of extractedUrls) {
+        if (existingUrlMap.has(url)) {
+          // Keep existing unfurled data
+          allLinks.push(existingUrlMap.get(url)!);
+        } else {
+          // Unfurl new URL
+          const unfurled = await unfurlUrl(url);
+          allLinks.push(unfurled);
+        }
+      }
+
+      // Update question
+      const { error: updateError } = await supabase
+        .from('questions')
+        .update({ links: allLinks })
+        .eq('id', questionId);
+
+      if (updateError) {
+        return new Response(
+          JSON.stringify({ error: 'Failed to update question' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const newCount = extractedUrls.filter(url => !existingUrlMap.has(url)).length;
+      const keptCount = allLinks.length - newCount;
+
+      console.log(`Extracted ${allLinks.length} links for question ${questionId} (${newCount} new, ${keptCount} kept)`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          links: allLinks,
+          newCount,
+          keptCount
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     return new Response(
-      JSON.stringify({ error: 'Invalid action. Use: unfurl, add, remove, or refresh' }),
+      JSON.stringify({ error: 'Invalid action. Use: unfurl, add, remove, refresh, or extract-from-explanation' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

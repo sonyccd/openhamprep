@@ -476,6 +476,43 @@ serve(async (req) => {
     console.log(`Successfully updated explanation for ${questionId}`);
 
     // =========================================================================
+    // 7b. EXTRACT LINKS FROM NEW EXPLANATION
+    // =========================================================================
+
+    // Extract and unfurl links from the updated explanation
+    try {
+      const linkResponse = await fetch(
+        `${supabaseUrl}/functions/v1/manage-question-links`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({
+            action: "extract-from-explanation",
+            questionId,
+          }),
+        }
+      );
+
+      if (linkResponse.ok) {
+        const linkResult = await linkResponse.json();
+        console.log(
+          `Extracted ${linkResult.links?.length || 0} links from explanation ` +
+            `(${linkResult.newCount} new, ${linkResult.keptCount} kept)`
+        );
+      } else {
+        console.warn(
+          `Failed to extract links: ${linkResponse.status} ${linkResponse.statusText}`
+        );
+      }
+    } catch (linkError) {
+      // Non-fatal - log warning but don't fail the webhook
+      console.warn("Failed to extract links from explanation:", linkError);
+    }
+
+    // =========================================================================
     // 8. RETURN SUCCESS
     // =========================================================================
 
