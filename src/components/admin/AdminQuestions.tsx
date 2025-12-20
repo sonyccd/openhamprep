@@ -259,11 +259,23 @@ export function AdminQuestions({
 
           if (response.error) {
             console.error('Discourse sync failed:', response.error);
-            // Don't throw - local save succeeded, just log the error
+            // Update status to error - edge function may not have done it
+            const errorMessage = response.error.message || 'Sync failed';
+            await supabase.from('questions').update({
+              discourse_sync_status: 'error',
+              discourse_sync_at: new Date().toISOString(),
+              discourse_sync_error: errorMessage
+            }).eq('id', question.id);
           }
         } catch (syncError) {
           console.error('Failed to sync to Discourse:', syncError);
-          // Don't throw - local save succeeded
+          // Update status to error
+          const errorMessage = syncError instanceof Error ? syncError.message : 'Sync failed';
+          await supabase.from('questions').update({
+            discourse_sync_status: 'error',
+            discourse_sync_at: new Date().toISOString(),
+            discourse_sync_error: errorMessage
+          }).eq('id', question.id);
         }
       }
     },
@@ -343,7 +355,16 @@ export function AdminQuestions({
       toast.success('Synced to Discourse successfully');
       queryClient.invalidateQueries({ queryKey: ['admin-questions', testType] });
     } catch (error) {
-      toast.error('Sync failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error('Sync failed: ' + errorMessage);
+
+      // Update status to error as fallback (in case edge function didn't update it)
+      await supabase.from('questions').update({
+        discourse_sync_status: 'error',
+        discourse_sync_at: new Date().toISOString(),
+        discourse_sync_error: errorMessage
+      }).eq('id', questionId);
+
       queryClient.invalidateQueries({ queryKey: ['admin-questions', testType] });
     }
   };
