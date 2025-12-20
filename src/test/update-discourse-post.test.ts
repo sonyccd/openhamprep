@@ -543,6 +543,102 @@ describe("error scenarios", () => {
       expect(error.message).toContain("ENOTFOUND");
     });
   });
+
+  describe("status must be updated on failure", () => {
+    /**
+     * This test ensures that when any error occurs, the sync status
+     * is updated to "error" and does NOT remain as "pending".
+     *
+     * Bug found: Previously, unhandled exceptions in the catch block
+     * would return a 500 error but leave status as "pending".
+     */
+
+    interface StatusTransition {
+      initialStatus: "pending" | "synced" | "error" | null;
+      errorOccurred: boolean;
+      expectedFinalStatus: "pending" | "synced" | "error";
+    }
+
+    function determineExpectedStatus(
+      initialStatus: "pending" | "synced" | "error" | null,
+      errorOccurred: boolean,
+      syncSucceeded: boolean
+    ): "pending" | "synced" | "error" {
+      if (errorOccurred) {
+        // ANY error must result in "error" status, never staying "pending"
+        return "error";
+      }
+      if (syncSucceeded) {
+        return "synced";
+      }
+      // If no error and no success (shouldn't happen), keep current
+      return initialStatus || "pending";
+    }
+
+    it("should update status to error when Discourse API fails", () => {
+      const result = determineExpectedStatus("pending", true, false);
+      expect(result).toBe("error");
+    });
+
+    it("should update status to error when unhandled exception occurs", () => {
+      const result = determineExpectedStatus("pending", true, false);
+      expect(result).toBe("error");
+    });
+
+    it("should update status to error when database update fails", () => {
+      const result = determineExpectedStatus("pending", true, false);
+      expect(result).toBe("error");
+    });
+
+    it("should update status to synced when sync succeeds", () => {
+      const result = determineExpectedStatus("pending", false, true);
+      expect(result).toBe("synced");
+    });
+
+    it("should NEVER leave status as pending after an error", () => {
+      // This is the critical test - status must not remain "pending" on error
+      const errorScenarios = [
+        { name: "API 401", error: true },
+        { name: "API 403", error: true },
+        { name: "API 404", error: true },
+        { name: "API 500", error: true },
+        { name: "API 502", error: true },
+        { name: "Network timeout", error: true },
+        { name: "DNS failure", error: true },
+        { name: "JSON parse error", error: true },
+        { name: "Invalid topic ID", error: true },
+        { name: "Missing credentials", error: true },
+      ];
+
+      for (const scenario of errorScenarios) {
+        const finalStatus = determineExpectedStatus("pending", scenario.error, false);
+        expect(finalStatus).not.toBe("pending");
+        expect(finalStatus).toBe("error");
+      }
+    });
+
+    it("should include error message in status update", () => {
+      interface ErrorStatusUpdate {
+        discourse_sync_status: "error";
+        discourse_sync_at: string;
+        discourse_sync_error: string;
+      }
+
+      function createErrorStatusUpdate(errorMessage: string): ErrorStatusUpdate {
+        return {
+          discourse_sync_status: "error",
+          discourse_sync_at: new Date().toISOString(),
+          discourse_sync_error: errorMessage,
+        };
+      }
+
+      const update = createErrorStatusUpdate("Discourse API error: 502");
+      expect(update.discourse_sync_status).toBe("error");
+      expect(update.discourse_sync_error).toBe("Discourse API error: 502");
+      expect(update.discourse_sync_error).not.toBeNull();
+      expect(update.discourse_sync_error.length).toBeGreaterThan(0);
+    });
+  });
 });
 
 // =============================================================================

@@ -137,19 +137,34 @@ serve(async (req) => {
       const payload = decodeJwtPayload(token);
       const userId = payload?.sub as string;
 
+      console.log("Decoded JWT payload:", JSON.stringify(payload));
+      console.log("User ID from token:", userId);
+
       if (!userId) {
+        console.error("No user ID in token");
         return new Response(JSON.stringify({ error: "Invalid token" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      const { data: hasRole } = await supabase.rpc("has_role", {
-        p_user_id: userId,
-        p_role: "admin",
+      const { data: hasRole, error: roleError } = await supabase.rpc("has_role", {
+        _user_id: userId,
+        _role: "admin",
       });
 
+      console.log("has_role result:", hasRole, "error:", roleError);
+
+      if (roleError) {
+        console.error("has_role RPC error:", roleError);
+        return new Response(JSON.stringify({ error: "Failed to check admin role: " + roleError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       if (!hasRole) {
+        console.error("User is not admin:", userId);
         return new Response(JSON.stringify({ error: "Admin role required" }), {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -385,6 +400,27 @@ serve(async (req) => {
     console.error("Update Discourse post error:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
+
+    // Try to update the sync status to error
+    // We need to extract questionId from the request if possible
+    try {
+      const bodyText = await req.clone().text();
+      const body = JSON.parse(bodyText);
+      if (body.questionId) {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        await supabase.from("questions").update({
+          discourse_sync_status: "error",
+          discourse_sync_at: new Date().toISOString(),
+          discourse_sync_error: errorMessage,
+        }).eq("id", body.questionId);
+      }
+    } catch {
+      // Ignore errors updating status - just log the main error
+      console.error("Failed to update sync status after error");
+    }
 
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
