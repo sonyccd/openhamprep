@@ -30,3 +30,12 @@ verify_jwt = false
 
 [functions.question-opengraph]
 verify_jwt = false
+
+[functions.update-discourse-post]
+verify_jwt = false
+
+[functions.delete-discourse-user]
+verify_jwt = false
+
+[functions.geocode-addresses]
+verify_jwt = false
