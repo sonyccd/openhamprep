@@ -80,9 +80,6 @@ export function AdminQuestions({
   const [newSubelement, setNewSubelement] = useState("");
   const [newQuestionGroup, setNewQuestionGroup] = useState("");
   const [newExplanation, setNewExplanation] = useState("");
-  const [newLinks, setNewLinks] = useState<LinkData[]>([]);
-  const [newLinkUrlForAdd, setNewLinkUrlForAdd] = useState("");
-  const [isAddingLinkForNew, setIsAddingLinkForNew] = useState(false);
   const [newFigureUrl, setNewFigureUrl] = useState<string | null>(null);
 
   // Edit state
@@ -92,12 +89,9 @@ export function AdminQuestions({
   const [editCorrectAnswer, setEditCorrectAnswer] = useState("0");
   const [editSubelement, setEditSubelement] = useState("");
   const [editQuestionGroup, setEditQuestionGroup] = useState("");
-  const [editLinks, setEditLinks] = useState<LinkData[]>([]);
   const [editExplanation, setEditExplanation] = useState("");
   const [editFigureUrl, setEditFigureUrl] = useState<string | null>(null);
   const [editForumUrl, setEditForumUrl] = useState<string | null>(null);
-  const [newLinkUrl, setNewLinkUrl] = useState("");
-  const [isAddingLink, setIsAddingLink] = useState(false);
   const prefix = TEST_TYPE_PREFIXES[testType];
 
   const {
@@ -148,21 +142,37 @@ export function AdminQuestions({
         timestamp: new Date().toISOString(),
       };
 
+      const questionId = question.id.trim().toUpperCase();
       const {
         error
       } = await supabase.from('questions').insert({
-        id: question.id.trim().toUpperCase(),
+        id: questionId,
         question: question.question.trim(),
         options: question.options,
         correct_answer: question.correct_answer,
         subelement: question.subelement.trim(),
         question_group: question.question_group.trim(),
         explanation: question.explanation?.trim() || null,
-        links: JSON.parse(JSON.stringify(question.links)),
+        links: [], // Links are now extracted from explanation
         edit_history: JSON.parse(JSON.stringify([historyEntry])),
         figure_url: question.figure_url || null
       });
       if (error) throw error;
+
+      // Extract links from explanation and unfurl them
+      if (question.explanation?.trim()) {
+        try {
+          await supabase.functions.invoke('manage-question-links', {
+            body: {
+              action: 'extract-from-explanation',
+              questionId
+            }
+          });
+        } catch (linkError) {
+          console.warn('Failed to extract links from explanation:', linkError);
+          // Non-fatal - don't show error to user
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -278,6 +288,21 @@ export function AdminQuestions({
           }).eq('id', question.id);
         }
       }
+
+      // Extract links from explanation and unfurl them
+      if (explanationChanged || !originalQuestion.explanation) {
+        try {
+          await supabase.functions.invoke('manage-question-links', {
+            body: {
+              action: 'extract-from-explanation',
+              questionId: question.id
+            }
+          });
+        } catch (linkError) {
+          console.warn('Failed to extract links from explanation:', linkError);
+          // Non-fatal - don't show error to user
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -369,78 +394,6 @@ export function AdminQuestions({
     }
   };
 
-  const addLinkToQuestion = async () => {
-    if (!editingQuestion || !newLinkUrl.trim()) {
-      toast.error("Please enter a URL");
-      return;
-    }
-    setIsAddingLink(true);
-    try {
-      const response = await supabase.functions.invoke('manage-question-links', {
-        body: {
-          action: 'add',
-          questionId: editingQuestion.id,
-          url: newLinkUrl.trim()
-        }
-      });
-      if (response.error) throw response.error;
-      queryClient.invalidateQueries({
-        queryKey: ['admin-questions-full']
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['admin-stats-questions']
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['admin-questions-with-links']
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['questions']
-      });
-
-      // Refresh the edit dialog with updated links
-      const {
-        data
-      } = await supabase.from('questions').select('links').eq('id', editingQuestion.id).single();
-      if (data) {
-        setEditLinks((Array.isArray(data.links) ? data.links : []) as unknown as LinkData[]);
-      }
-      setNewLinkUrl("");
-      toast.success("Link added successfully");
-    } catch (error: unknown) {
-      toast.error("Failed to add link: " + (error instanceof Error ? error.message : String(error)));
-    } finally {
-      setIsAddingLink(false);
-    }
-  };
-  const removeLinkFromQuestion = async (url: string) => {
-    if (!editingQuestion) return;
-    try {
-      const response = await supabase.functions.invoke('manage-question-links', {
-        body: {
-          action: 'remove',
-          questionId: editingQuestion.id,
-          url
-        }
-      });
-      if (response.error) throw response.error;
-      queryClient.invalidateQueries({
-        queryKey: ['admin-questions-full']
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['admin-stats-questions']
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['admin-questions-with-links']
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['questions']
-      });
-      setEditLinks(prev => prev.filter(l => l.url !== url));
-      toast.success("Link removed successfully");
-    } catch (error: unknown) {
-      toast.error("Failed to remove link: " + (error instanceof Error ? error.message : String(error)));
-    }
-  };
   const resetForm = () => {
     setNewId("");
     setNewQuestion("");
@@ -449,8 +402,6 @@ export function AdminQuestions({
     setNewSubelement("");
     setNewQuestionGroup("");
     setNewExplanation("");
-    setNewLinks([]);
-    setNewLinkUrlForAdd("");
     setNewFigureUrl(null);
   };
   // Get unique subelements and groups for filter dropdowns
@@ -490,39 +441,9 @@ export function AdminQuestions({
       subelement: newSubelement,
       question_group: newQuestionGroup,
       explanation: newExplanation,
-      links: newLinks,
+      links: [], // Links are now extracted from explanation
       figure_url: newFigureUrl
     });
-  };
-
-  const addLinkForNewQuestion = async () => {
-    if (!newLinkUrlForAdd.trim()) {
-      toast.error("Please enter a URL");
-      return;
-    }
-    setIsAddingLinkForNew(true);
-    try {
-      // Use the edge function to unfurl the link
-      const response = await supabase.functions.invoke('manage-question-links', {
-        body: {
-          action: 'unfurl',
-          url: newLinkUrlForAdd.trim()
-        }
-      });
-      if (response.error) throw response.error;
-      const linkData = response.data as LinkData;
-      setNewLinks(prev => [...prev, linkData]);
-      setNewLinkUrlForAdd("");
-      toast.success("Link added");
-    } catch (error: unknown) {
-      toast.error("Failed to add link: " + (error instanceof Error ? error.message : String(error)));
-    } finally {
-      setIsAddingLinkForNew(false);
-    }
-  };
-
-  const removeLinkFromNewQuestion = (url: string) => {
-    setNewLinks(prev => prev.filter(l => l.url !== url));
   };
 
   const updateOption = (index: number, value: string) => {
@@ -537,11 +458,9 @@ export function AdminQuestions({
     setEditCorrectAnswer(q.correct_answer.toString());
     setEditSubelement(q.subelement);
     setEditQuestionGroup(q.question_group);
-    setEditLinks(q.links || []);
     setEditExplanation(q.explanation || "");
     setEditFigureUrl(q.figure_url || null);
     setEditForumUrl(q.forum_url || null);
-    setNewLinkUrl("");
   };
   const updateEditOption = (index: number, value: string) => {
     const updated = [...editOptions];
@@ -649,58 +568,30 @@ export function AdminQuestions({
 
             <Separator />
 
-            {/* Learning Resources Section */}
-            <div className="space-y-3">
+            {/* Learning Resources Info */}
+            <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <LinkIcon className="w-4 h-4" />
-                Learning Resources ({editLinks.length})
+                Learning Resources
               </Label>
-              
-              {/* Add new link */}
-              <div className="flex gap-2">
-                <Input placeholder="https://..." value={newLinkUrl} onChange={e => setNewLinkUrl(e.target.value)} className="flex-1" />
-                <Button onClick={addLinkToQuestion} disabled={isAddingLink} size="sm">
-                  {isAddingLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                </Button>
-              </div>
-
-              {/* Existing links */}
-              {editLinks.length > 0 ? <div className="space-y-2">
-                  {editLinks.map((link, index) => <div key={index} className="flex items-center justify-between gap-2 p-2 rounded bg-secondary/30 border border-border">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${link.type === 'video' ? 'bg-red-500/20 text-red-400' : link.type === 'article' ? 'bg-blue-500/20 text-blue-400' : 'bg-secondary text-muted-foreground'}`}>
-                          {link.type}
-                        </span>
-                        <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-sm text-foreground hover:text-primary truncate flex items-center gap-1">
-                          {link.title || link.url}
-                          <ExternalLink className="w-3 h-3 shrink-0" />
-                        </a>
-                      </div>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive h-7 w-7 shrink-0">
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Remove Link</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Remove this learning resource from the question?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => removeLinkFromQuestion(link.url)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                              Remove
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>)}
-                </div> : <p className="text-sm text-muted-foreground italic">
-                  No learning resources attached yet
-                </p>}
+              <p className="text-sm text-muted-foreground">
+                Links are automatically extracted from the explanation. Use markdown syntax: <code className="px-1 py-0.5 rounded bg-muted text-xs">[Link Text](https://...)</code>
+              </p>
+              {editingQuestion?.links && editingQuestion.links.length > 0 && (
+                <div className="space-y-2 mt-2">
+                  {editingQuestion.links.map((link, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 rounded bg-secondary/30 border border-border">
+                      <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${link.type === 'video' ? 'bg-red-500/20 text-red-400' : link.type === 'article' ? 'bg-blue-500/20 text-blue-400' : 'bg-secondary text-muted-foreground'}`}>
+                        {link.type}
+                      </span>
+                      <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-sm text-foreground hover:text-primary truncate flex items-center gap-1">
+                        {link.title || link.url}
+                        <ExternalLink className="w-3 h-3 shrink-0" />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <Separator />
@@ -916,67 +807,17 @@ export function AdminQuestions({
 
                   <Separator />
 
-                  {/* Learning Resources Section */}
-                  <div className="space-y-3">
+                  {/* Learning Resources Info */}
+                  <div className="space-y-2">
                     <Label className="flex items-center gap-2">
                       <LinkIcon className="w-4 h-4" />
-                      Learning Resources ({newLinks.length})
+                      Learning Resources
                     </Label>
-                    
-                    {/* Add new link */}
-                    <div className="flex gap-2">
-                      <Input 
-                        placeholder="https://..." 
-                        value={newLinkUrlForAdd} 
-                        onChange={e => setNewLinkUrlForAdd(e.target.value)} 
-                        className="flex-1" 
-                      />
-                      <Button onClick={addLinkForNewQuestion} disabled={isAddingLinkForNew} size="sm">
-                        {isAddingLinkForNew ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                      </Button>
-                    </div>
-
-                    {/* Existing links */}
-                    {newLinks.length > 0 ? (
-                      <div className="space-y-2">
-                        {newLinks.map((link, index) => (
-                          <div key={index} className="flex items-center justify-between gap-2 p-2 rounded bg-secondary/30 border border-border">
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${
-                                link.type === 'video' ? 'bg-red-500/20 text-red-400' : 
-                                link.type === 'article' ? 'bg-blue-500/20 text-blue-400' : 
-                                'bg-secondary text-muted-foreground'
-                              }`}>
-                                {link.type}
-                              </span>
-                              <a 
-                                href={link.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-sm text-foreground hover:text-primary truncate flex items-center gap-1"
-                              >
-                                {link.title || link.url}
-                                <ExternalLink className="w-3 h-3 shrink-0" />
-                              </a>
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="text-destructive hover:text-destructive h-7 w-7 shrink-0"
-                              onClick={() => removeLinkFromNewQuestion(link.url)}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground italic">
-                        No learning resources added yet (optional)
-                      </p>
-                    )}
+                    <p className="text-sm text-muted-foreground">
+                      Links are automatically extracted from the explanation. Use markdown syntax: <code className="px-1 py-0.5 rounded bg-muted text-xs">[Link Text](https://...)</code>
+                    </p>
                   </div>
-                  
+
                   <Button onClick={handleAddQuestion} disabled={addQuestion.isPending} className="w-full">
                     {addQuestion.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
                     Add Question

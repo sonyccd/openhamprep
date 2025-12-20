@@ -1,4 +1,5 @@
-import { cn } from "@/lib/utils";
+import { cn, getSafeUrl } from "@/lib/utils";
+import { ExternalLink } from "lucide-react";
 
 interface MarkdownTextProps {
   text: string;
@@ -135,8 +136,57 @@ export function MarkdownText({ text, className }: MarkdownTextProps) {
         continue;
       }
 
-      // Find the next special character
-      const nextSpecial = remaining.search(/[*_`^]/);
+      // Check for markdown links [text](url)
+      const linkMatch = remaining.match(/^\[([^\]]+)\]\(([^)]+)\)/);
+      if (linkMatch) {
+        const [fullMatch, linkText, url] = linkMatch;
+        const safeUrl = getSafeUrl(url);
+        elements.push(
+          safeUrl ? (
+            <a
+              key={key++}
+              href={safeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline inline-flex items-center gap-0.5"
+            >
+              {linkText}
+              <ExternalLink className="w-3 h-3 inline flex-shrink-0" />
+            </a>
+          ) : (
+            <span key={key++}>{linkText}</span>
+          )
+        );
+        remaining = remaining.slice(fullMatch.length);
+        continue;
+      }
+
+      // Check for bare URLs (https://... or http://...)
+      const urlMatch = remaining.match(/^(https?:\/\/[^\s<>\[\]()]+)/i);
+      if (urlMatch) {
+        const url = urlMatch[1];
+        const safeUrl = getSafeUrl(url);
+        elements.push(
+          safeUrl ? (
+            <a
+              key={key++}
+              href={safeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline break-all"
+            >
+              {url}
+            </a>
+          ) : (
+            <span key={key++}>{url}</span>
+          )
+        );
+        remaining = remaining.slice(url.length);
+        continue;
+      }
+
+      // Find the next special character (including [ for links and http for bare URLs)
+      const nextSpecial = remaining.search(/[*_`^[\]]|https?:\/\//i);
       if (nextSpecial === -1) {
         // No more special characters, add the rest as text
         elements.push(<span key={key++}>{remaining}</span>);
