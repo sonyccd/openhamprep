@@ -244,11 +244,15 @@ function getCategorySlug(categoryName: string): string {
 }
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID().slice(0, 8);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log(`[${requestId}] sync-discourse-topics: Request received`);
+
     // Get Discourse configuration from environment
     const { apiKey, username } = getDiscourseConfig();
 
@@ -318,10 +322,10 @@ serve(async (req) => {
 
     // Audit logging for security monitoring
     const authMethod = isServiceRole ? 'service_role' : 'user_jwt';
-    console.log(`Starting Discourse sync - auth: ${authMethod}, action: ${action}, license: ${license || 'all'}, batchSize: ${effectiveBatchSize}`);
+    console.log(`[${requestId}] Starting Discourse sync - auth: ${authMethod}, action: ${action}, license: ${license || 'all'}, batchSize: ${effectiveBatchSize}`);
 
     // Fetch category IDs from Discourse
-    console.log('Fetching Discourse categories...');
+    console.log(`[${requestId}] Fetching Discourse categories...`);
     const categoryIds = await fetchDiscourseCategories(apiKey, username);
 
     // Validate required categories exist
@@ -362,7 +366,7 @@ serve(async (req) => {
     }
 
     // Fetch existing topics for each category to check for duplicates
-    console.log('Fetching existing topics from Discourse...');
+    console.log(`[${requestId}] Fetching existing topics from Discourse...`);
     const existingTopics = new Set<string>();
 
     for (const prefix of licenseFilter) {
@@ -376,10 +380,10 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Found ${existingTopics.size} existing topics`);
+    console.log(`[${requestId}] Found ${existingTopics.size} existing topics`);
 
     // Fetch questions from Supabase
-    console.log('Fetching questions from database...');
+    console.log(`[${requestId}] Fetching questions from database...`);
     let query = supabase
       .from('questions')
       .select('id, question, options, correct_answer, explanation');
@@ -402,13 +406,13 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Found ${questions.length} questions in database`);
+    console.log(`[${requestId}] Found ${questions.length} questions in database`);
 
     // Filter to only questions that need to be created
     const questionsToCreate = questions.filter(q => !existingTopics.has(q.id));
     const skippedQuestions = questions.filter(q => existingTopics.has(q.id));
 
-    console.log(`${questionsToCreate.length} topics to create, ${skippedQuestions.length} already exist`);
+    console.log(`[${requestId}] ${questionsToCreate.length} topics to create, ${skippedQuestions.length} already exist`);
 
     // For dry-run, return detailed preview of what would be done
     if (action === 'dry-run') {
@@ -486,14 +490,14 @@ serve(async (req) => {
     const batchToProcess = questionsToCreate.slice(0, effectiveBatchSize);
     const remaining = questionsToCreate.length - batchToProcess.length;
 
-    console.log(`Processing batch of ${batchToProcess.length} topics (${remaining} remaining after this batch)`);
+    console.log(`[${requestId}] Processing batch of ${batchToProcess.length} topics (${remaining} remaining after this batch)`);
 
     for (const question of batchToProcess) {
       const prefix = question.id[0];
       const categoryName = CATEGORY_MAP[prefix];
       const categoryId = categoryIds.get(categoryName)!;
 
-      console.log(`Creating topic for ${question.id}...`);
+      console.log(`[${requestId}] Creating topic for ${question.id}...`);
       const result = await createDiscourseTopic(apiKey, username, categoryId, question as Question);
 
       if (result.success) {
@@ -506,10 +510,10 @@ serve(async (req) => {
             .eq('id', question.id);
 
           if (updateError) {
-            console.error(`Failed to save forum_url for ${question.id}: ${updateError.message}`);
+            console.error(`[${requestId}] Failed to save forum_url for ${question.id}: ${updateError.message}`);
             dbUpdateSuccess = false;
           } else {
-            console.log(`Saved forum_url for ${question.id}: ${result.topicUrl}`);
+            console.log(`[${requestId}] Saved forum_url for ${question.id}: ${result.topicUrl}`);
           }
         }
 
@@ -530,7 +534,7 @@ serve(async (req) => {
       } else {
         results.push({ questionId: question.id, status: 'error', reason: result.error });
         errors++;
-        console.error(`Failed to create topic for ${question.id}: ${result.error}`);
+        console.error(`[${requestId}] Failed to create topic for ${question.id}: ${result.error}`);
       }
 
       // Rate limiting: wait between requests
@@ -539,7 +543,7 @@ serve(async (req) => {
 
     const isComplete = remaining === 0;
 
-    console.log(`Batch complete. Created: ${created}, Errors: ${errors}, Remaining: ${remaining}`);
+    console.log(`[${requestId}] Batch complete. Created: ${created}, Errors: ${errors}, Remaining: ${remaining}`);
 
     return new Response(
       JSON.stringify({
@@ -567,7 +571,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error(`[${requestId}] Error:`, error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),

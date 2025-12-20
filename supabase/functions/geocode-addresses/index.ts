@@ -47,12 +47,16 @@ async function geocodeAddress(address: string, city: string, state: string, zip:
 }
 
 Deno.serve(async (req) => {
+  const requestId = crypto.randomUUID().slice(0, 8);
+  console.log(`[${requestId}] geocode-addresses: Request received`);
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log(`[${requestId}] Initializing Supabase client...`);
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -65,10 +69,14 @@ Deno.serve(async (req) => {
       .limit(50); // Process 50 at a time to stay within timeout
 
     if (fetchError) {
+      console.error(`[${requestId}] Failed to fetch sessions:`, fetchError.message);
       throw new Error(`Failed to fetch sessions: ${fetchError.message}`);
     }
 
+    console.log(`[${requestId}] Found ${sessions?.length || 0} sessions needing geocoding`);
+
     if (!sessions || sessions.length === 0) {
+      console.log(`[${requestId}] No sessions need geocoding, returning early`);
       return new Response(
         JSON.stringify({ message: 'No sessions need geocoding', processed: 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -81,8 +89,11 @@ Deno.serve(async (req) => {
     for (const session of sessions) {
       // Skip sessions without addresses
       if (!session.address || !session.city || !session.state) {
+        console.log(`[${requestId}] Skipping session ${session.id}: missing address/city/state`);
         continue;
       }
+
+      console.log(`[${requestId}] Geocoding session ${session.id}: ${session.address}, ${session.city}, ${session.state}`);
 
       // Geocode the address
       const coords = await geocodeAddress(
@@ -93,12 +104,15 @@ Deno.serve(async (req) => {
       );
 
       if (coords) {
+        console.log(`[${requestId}] Session ${session.id}: geocoded to (${coords.lat}, ${coords.lon})`);
         results.push({
           id: session.id,
           latitude: coords.lat,
           longitude: coords.lon,
         });
         successCount++;
+      } else {
+        console.warn(`[${requestId}] Session ${session.id}: geocoding returned no results`);
       }
 
       // Rate limit: 1 request per second for Nominatim
@@ -106,6 +120,7 @@ Deno.serve(async (req) => {
     }
 
     // Update sessions with coordinates
+    console.log(`[${requestId}] Updating ${results.length} sessions with coordinates...`);
     for (const result of results) {
       const { error: updateError } = await supabase
         .from('exam_sessions')
@@ -113,7 +128,9 @@ Deno.serve(async (req) => {
         .eq('id', result.id);
 
       if (updateError) {
-        console.error(`Failed to update session ${result.id}:`, updateError);
+        console.error(`[${requestId}] Failed to update session ${result.id}:`, updateError);
+      } else {
+        console.log(`[${requestId}] Updated session ${result.id} with coordinates`);
       }
     }
 
@@ -122,6 +139,8 @@ Deno.serve(async (req) => {
       .from('exam_sessions')
       .select('*', { count: 'exact', head: true })
       .is('latitude', null);
+
+    console.log(`[${requestId}] Completed: geocoded ${successCount} of ${sessions.length} sessions, ${count || 0} remaining`);
 
     return new Response(
       JSON.stringify({
@@ -132,7 +151,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Geocoding error:', error);
+    console.error(`[${requestId}] Geocoding error:`, error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: message }),
