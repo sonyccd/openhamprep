@@ -138,43 +138,46 @@ serve(async (req) => {
     const isServiceRole = isServiceRoleToken(token);
 
     if (!isServiceRole) {
-      // Verify user is admin
-      const payload = decodeJwtPayload(token);
-      const userId = payload?.sub as string;
+      // Validate the user token using Supabase Auth
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
-      console.log(`[${requestId}] Decoded JWT payload:`, JSON.stringify(payload));
-      console.log(`[${requestId}] User ID from token:`, userId);
+      console.log(`[${requestId}] Auth result - user:`, user?.id, "error:", authError?.message);
 
-      if (!userId) {
-        console.error(`[${requestId}] No user ID in token`);
+      if (authError || !user) {
+        console.error(`[${requestId}] Auth failed:`, authError?.message);
         return new Response(JSON.stringify({ error: "Invalid token" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      const { data: hasRole, error: roleError } = await supabase.rpc("has_role", {
-        _user_id: userId,
-        _role: "admin",
-      });
+      // Verify user has admin role by querying the user_roles table
+      const { data: roleData, error: roleError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
 
-      console.log(`[${requestId}] has_role result:`, hasRole, "error:", roleError);
+      console.log(`[${requestId}] Role check - data:`, roleData, "error:", roleError?.message);
 
       if (roleError) {
-        console.error(`[${requestId}] has_role RPC error:`, roleError);
+        console.error(`[${requestId}] Role check error:`, roleError);
         return new Response(JSON.stringify({ error: "Failed to check admin role: " + roleError.message }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      if (!hasRole) {
-        console.error(`[${requestId}] User is not admin:`, userId);
+      if (!roleData) {
+        console.error(`[${requestId}] User is not admin:`, user.id);
         return new Response(JSON.stringify({ error: "Admin role required" }), {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      console.log(`[${requestId}] User ${user.id} authenticated as admin`);
     } else {
       console.log(`[${requestId}] Service role token detected`);
     }
