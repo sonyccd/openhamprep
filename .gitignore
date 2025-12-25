@@ -21,7 +21,15 @@ dist-ssr
 # Supabase local
 .supabase/
 supabase/.temp/
+supabase/.branches/
 supabase/functions/.env
+
+# Claude Code local settings
+.claude/
+
+# Cypress artifacts
+cypress/screenshots/
+cypress/videos/
 
 # Data directory (may contain PII from exports)
 data/
