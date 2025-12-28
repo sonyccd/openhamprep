@@ -207,6 +207,7 @@ describe('DashboardSidebar', () => {
 
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
       expect(screen.getByText('Practice Test')).toBeInTheDocument();
+      expect(screen.getByText('Study')).toBeInTheDocument();
       expect(screen.getByText('Random Practice')).toBeInTheDocument();
       expect(screen.getByText('Study by Topic')).toBeInTheDocument();
       expect(screen.getByText('Weak Areas')).toBeInTheDocument();
@@ -256,7 +257,64 @@ describe('DashboardSidebar', () => {
     it('shows 9+ for counts above 9', () => {
       render(<DashboardSidebar {...defaultProps} weakQuestionCount={15} />, { wrapper: createWrapper() });
 
-      expect(screen.getByText('9+')).toBeInTheDocument();
+      // Multiple 9+ badges may appear (on Study group header and individual item)
+      expect(screen.getAllByText('9+').length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Study Group', () => {
+    it('displays Study group header', () => {
+      render(<DashboardSidebar {...defaultProps} />, { wrapper: createWrapper() });
+
+      expect(screen.getByText('Study')).toBeInTheDocument();
+    });
+
+    it('shows study items when expanded (default)', () => {
+      render(<DashboardSidebar {...defaultProps} />, { wrapper: createWrapper() });
+
+      // Study group is expanded by default
+      expect(screen.getByText('Random Practice')).toBeInTheDocument();
+      expect(screen.getByText('Study by Topic')).toBeInTheDocument();
+      expect(screen.getByText('Weak Areas')).toBeInTheDocument();
+      expect(screen.getByText('Bookmarked')).toBeInTheDocument();
+    });
+
+    it('toggles study items visibility when header clicked', async () => {
+      const user = userEvent.setup();
+      render(<DashboardSidebar {...defaultProps} />, { wrapper: createWrapper() });
+
+      // Initially expanded - items should be in the document
+      expect(screen.getByText('Random Practice')).toBeInTheDocument();
+
+      // Click Study header to collapse
+      await user.click(screen.getByText('Study'));
+
+      // Items should be removed from DOM when collapsed
+      await waitFor(() => {
+        expect(screen.queryByText('Random Practice')).not.toBeInTheDocument();
+      });
+
+      // Click again to expand
+      await user.click(screen.getByText('Study'));
+
+      // Items should be back in the document
+      await waitFor(() => {
+        expect(screen.getByText('Random Practice')).toBeInTheDocument();
+      });
+    });
+
+    it('shows combined badge count on Study header', () => {
+      render(<DashboardSidebar {...defaultProps} weakQuestionCount={5} bookmarkCount={3} />, { wrapper: createWrapper() });
+
+      // The Study header should show a badge with total count (5 + 3 = 8)
+      expect(screen.getByText('8')).toBeInTheDocument();
+    });
+
+    it('shows 9+ on Study header when combined count exceeds 9', () => {
+      render(<DashboardSidebar {...defaultProps} weakQuestionCount={10} bookmarkCount={5} />, { wrapper: createWrapper() });
+
+      // Multiple 9+ badges may appear (on Study group header and individual items)
+      expect(screen.getAllByText('9+').length).toBeGreaterThan(0);
     });
   });
 

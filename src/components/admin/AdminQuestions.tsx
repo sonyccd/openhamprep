@@ -33,7 +33,8 @@ interface LinkData {
   unfurledAt?: string;
 }
 interface Question {
-  id: string;
+  id: string;  // UUID
+  display_name: string;  // Human-readable ID (T1A01, etc.)
   question: string;
   options: string[];
   correct_answer: number;
@@ -104,12 +105,13 @@ export function AdminQuestions({
         data,
         error
       } = await supabase.from('questions')
-        .select('id, question, options, correct_answer, subelement, question_group, links, explanation, edit_history, figure_url, forum_url, discourse_sync_status, discourse_sync_at, discourse_sync_error')
-        .ilike('id', `${prefix}*`)
-        .order('id', { ascending: true });
+        .select('id, display_name, question, options, correct_answer, subelement, question_group, links, explanation, edit_history, figure_url, forum_url, discourse_sync_status, discourse_sync_at, discourse_sync_error')
+        .ilike('display_name', `${prefix}%`)
+        .order('display_name', { ascending: true });
       if (error) throw error;
       return data.map(q => ({
         ...q,
+        display_name: q.display_name,
         options: q.options as string[],
         links: (Array.isArray(q.links) ? q.links : []) as unknown as LinkData[],
         explanation: q.explanation,
@@ -126,7 +128,7 @@ export function AdminQuestions({
   // Auto-open edit dialog when highlightQuestionId is set
   useEffect(() => {
     if (highlightQuestionId && questions.length > 0) {
-      const question = questions.find(q => q.id === highlightQuestionId);
+      const question = questions.find(q => q.display_name === highlightQuestionId);
       if (question) {
         handleEditClick(question);
       }
@@ -142,11 +144,11 @@ export function AdminQuestions({
         timestamp: new Date().toISOString(),
       };
 
-      const questionId = question.id.trim().toUpperCase();
+      const displayName = question.display_name.trim().toUpperCase();
       const {
         error
       } = await supabase.from('questions').insert({
-        id: questionId,
+        display_name: displayName,
         question: question.question.trim(),
         options: question.options,
         correct_answer: question.correct_answer,
@@ -165,7 +167,7 @@ export function AdminQuestions({
           await supabase.functions.invoke('manage-question-links', {
             body: {
               action: 'extract-from-explanation',
-              questionId
+              questionId: displayName  // Edge function accepts display_name for lookup
             }
           });
         } catch (linkError) {
@@ -349,26 +351,27 @@ export function AdminQuestions({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Retry syncing explanation to Discourse
-  const handleRetrySync = async (questionId: string) => {
-    const question = questions.find(q => q.id === questionId);
+  // Note: questionId here is the display_name (T1A01 format) for user-facing operations
+  const handleRetrySync = async (displayName: string) => {
+    const question = questions.find(q => q.display_name === displayName);
     if (!question?.forum_url) {
       toast.error("Question has no Discourse topic");
       return;
     }
 
     try {
-      // Set pending status first
+      // Set pending status first (use UUID for database update)
       await supabase.from('questions').update({
         discourse_sync_status: 'pending',
         discourse_sync_at: new Date().toISOString()
-      }).eq('id', questionId);
+      }).eq('id', question.id);
 
       // Invalidate to show pending state
       queryClient.invalidateQueries({ queryKey: ['admin-questions', testType] });
 
       const response = await supabase.functions.invoke('update-discourse-post', {
         body: {
-          questionId,
+          questionId: displayName,  // Edge function accepts display_name
           explanation: question.explanation || ''
         }
       });
@@ -388,7 +391,7 @@ export function AdminQuestions({
         discourse_sync_status: 'error',
         discourse_sync_at: new Date().toISOString(),
         discourse_sync_error: errorMessage
-      }).eq('id', questionId);
+      }).eq('id', question.id);
 
       queryClient.invalidateQueries({ queryKey: ['admin-questions', testType] });
     }
@@ -413,12 +416,12 @@ export function AdminQuestions({
   )].sort();
 
   const filteredQuestions = questions.filter(q => {
-    const matchesSearch = q.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = q.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           q.question.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSubelement = subelementFilter === "all" || q.subelement === subelementFilter;
     const matchesGroup = groupFilter === "all" || q.question_group === groupFilter;
-    const matchesNegativeFeedback = !showNegativeFeedbackOnly || 
-      (feedbackStats[q.id] && feedbackStats[q.id].notHelpful > feedbackStats[q.id].helpful);
+    const matchesNegativeFeedback = !showNegativeFeedbackOnly ||
+      (feedbackStats[q.display_name] && feedbackStats[q.display_name].notHelpful > feedbackStats[q.display_name].helpful);
     return matchesSearch && matchesSubelement && matchesGroup && matchesNegativeFeedback;
   });
   
@@ -434,7 +437,8 @@ export function AdminQuestions({
       return;
     }
     addQuestion.mutate({
-      id: newId,
+      id: '',  // UUID will be auto-generated by database
+      display_name: newId,
       question: newQuestion,
       options: newOptions.map(o => o.trim()),
       correct_answer: parseInt(newCorrectAnswer),
@@ -493,8 +497,8 @@ export function AdminQuestions({
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              Edit Question: {editingQuestion?.id}
-              {highlightQuestionId === editingQuestion?.id && <Badge variant="secondary" className="bg-amber-500/20 text-amber-500">
+              Edit Question: {editingQuestion?.display_name}
+              {highlightQuestionId === editingQuestion?.display_name && <Badge variant="secondary" className="bg-amber-500/20 text-amber-500">
                   From Stats
                 </Badge>}
             </DialogTitle>
@@ -648,7 +652,7 @@ export function AdminQuestions({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Question</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to delete question "{editingQuestion?.id}"? This action cannot be undone.
+                      Are you sure you want to delete question "{editingQuestion?.display_name}"? This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -690,9 +694,9 @@ export function AdminQuestions({
                 filename={`${testType}_questions`}
                 itemLabel="questions"
                 formatCSV={(items) => {
-                  const header = 'id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group,explanation';
+                  const header = 'display_name,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group,explanation';
                   const rows = items.map(q => [
-                    escapeCSVField(q.id),
+                    escapeCSVField(q.display_name),
                     escapeCSVField(q.question),
                     escapeCSVField(q.options[0]),
                     escapeCSVField(q.options[1]),
@@ -707,6 +711,7 @@ export function AdminQuestions({
                 }}
                 formatJSON={(items) => items.map(q => ({
                   id: q.id,
+                  display_name: q.display_name,
                   question: q.question,
                   options: q.options,
                   correct_answer: q.correct_answer,
@@ -895,11 +900,11 @@ export function AdminQuestions({
           {isLoading ? <div className="flex justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div> : <div className="space-y-3 h-full overflow-y-auto pb-4">
-              {filteredQuestions.map(q => <div key={q.id} className={`flex items-start justify-between p-4 rounded-lg border bg-card hover:bg-secondary/30 transition-colors ${highlightQuestionId === q.id ? 'border-amber-500 bg-amber-500/5' : 'border-border'}`}>
+              {filteredQuestions.map(q => <div key={q.id} className={`flex items-start justify-between p-4 rounded-lg border bg-card hover:bg-secondary/30 transition-colors ${highlightQuestionId === q.display_name ? 'border-amber-500 bg-amber-500/5' : 'border-border'}`}>
                   <div className="flex-1 min-w-0 mr-4">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-mono text-sm text-primary bg-primary/10 px-2 py-0.5 rounded">
-                        {q.id}
+                        {q.display_name}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {q.subelement} / {q.question_group}
@@ -913,16 +918,16 @@ export function AdminQuestions({
                           status={q.discourse_sync_status}
                           syncAt={q.discourse_sync_at}
                           error={q.discourse_sync_error}
-                          questionId={q.id}
+                          questionId={q.display_name}
                           forumUrl={q.forum_url}
-                          onRetrySync={() => handleRetrySync(q.id)}
+                          onRetrySync={() => handleRetrySync(q.display_name)}
                         />
                       )}
-                      {feedbackStats[q.id] && <Badge variant="outline" className="text-xs gap-1">
+                      {feedbackStats[q.display_name] && <Badge variant="outline" className="text-xs gap-1">
                           <ThumbsUp className="w-3 h-3 text-success" />
-                          <span className="text-success">{feedbackStats[q.id].helpful}</span>
+                          <span className="text-success">{feedbackStats[q.display_name].helpful}</span>
                           <ThumbsDown className="w-3 h-3 text-destructive ml-1" />
-                          <span className="text-destructive">{feedbackStats[q.id].notHelpful}</span>
+                          <span className="text-destructive">{feedbackStats[q.display_name].notHelpful}</span>
                         </Badge>}
                     </div>
                     <p className="text-sm text-foreground line-clamp-2">{q.question}</p>

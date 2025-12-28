@@ -303,19 +303,21 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    let questionId: string | null = null;
+    let questionId: string | null = null;  // This will be the UUID
+    let displayName: string | null = null;  // Human-readable ID (T1A01)
 
     // Method 1: Look up question by forum_url in database (works locally without Discourse API)
     const expectedForumUrl = `${DISCOURSE_URL}/t/%/${post.topic_id}`;
     const { data: questionByUrl } = await supabase
       .from("questions")
-      .select("id")
+      .select("id, display_name")
       .like("forum_url", `%/${post.topic_id}`)
       .single();
 
     if (questionByUrl) {
       questionId = questionByUrl.id;
-      console.log(`[${requestId}] Found question ${questionId} by forum_url lookup`);
+      displayName = questionByUrl.display_name;
+      console.log(`[${requestId}] Found question ${displayName} (${questionId}) by forum_url lookup`);
     } else {
       // Method 2: Fetch topic title from Discourse API (production fallback)
       const discourseApiKey = Deno.env.get("DISCOURSE_API_KEY");
@@ -354,9 +356,9 @@ serve(async (req) => {
       }
 
       const topicData: DiscourseTopic = await topicResponse.json();
-      questionId = extractQuestionIdFromTitle(topicData.title);
+      displayName = extractQuestionIdFromTitle(topicData.title);
 
-      if (!questionId) {
+      if (!displayName) {
         console.log(
           `[${requestId}] Topic title does not match question format: "${topicData.title}"`
         );
@@ -369,7 +371,26 @@ serve(async (req) => {
         );
       }
 
-      console.log(`[${requestId}] Matched topic to question: ${questionId} via Discourse API`);
+      // Look up the UUID by display_name
+      const { data: questionByDisplayName, error: lookupError } = await supabase
+        .from("questions")
+        .select("id")
+        .eq("display_name", displayName)
+        .single();
+
+      if (lookupError || !questionByDisplayName) {
+        console.error(`[${requestId}] Question not found by display_name: ${displayName}`);
+        return new Response(
+          JSON.stringify({ error: "Question not found", displayName }),
+          {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      questionId = questionByDisplayName.id;
+      console.log(`[${requestId}] Matched topic to question: ${displayName} (${questionId}) via Discourse API`);
     }
 
     // =========================================================================
@@ -381,7 +402,7 @@ serve(async (req) => {
     if (newExplanation === null) {
       // Can't parse explanation - keep existing, log warning, return success
       console.warn(
-        `[${requestId}] Could not parse explanation section for question ${questionId}. ` +
+        `[${requestId}] Could not parse explanation section for question ${displayName} (${questionId}). ` +
           `Keeping existing explanation. Post content may have been modified ` +
           `to remove or change the expected format.`
       );
@@ -390,6 +411,7 @@ serve(async (req) => {
           status: "skipped",
           reason: "Could not parse explanation section",
           questionId,
+          displayName,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -411,9 +433,9 @@ serve(async (req) => {
     if (fetchError) {
       if (fetchError.code === "PGRST116") {
         // Question not found
-        console.error(`[${requestId}] Question not found in database: ${questionId}`);
+        console.error(`[${requestId}] Question not found in database: ${displayName} (${questionId})`);
         return new Response(
-          JSON.stringify({ error: "Question not found", questionId }),
+          JSON.stringify({ error: "Question not found", questionId, displayName }),
           {
             status: 404,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -427,7 +449,7 @@ serve(async (req) => {
 
     // Skip if explanation hasn't changed
     if (previousExplanation === newExplanation) {
-      console.log(`[${requestId}] Explanation unchanged for ${questionId}, marking as synced`);
+      console.log(`[${requestId}] Explanation unchanged for ${displayName}, marking as synced`);
       // Still update sync status to show we verified it's in sync
       await supabase
         .from("questions")
@@ -438,13 +460,13 @@ serve(async (req) => {
         })
         .eq("id", questionId);
       return new Response(
-        JSON.stringify({ status: "unchanged", questionId }),
+        JSON.stringify({ status: "unchanged", questionId, displayName }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     console.log(
-      `[${requestId}] Explanation changed for ${questionId}: ` +
+      `[${requestId}] Explanation changed for ${displayName}: ` +
         `${previousExplanation?.length || 0} -> ${newExplanation.length} chars`
     );
 
@@ -463,7 +485,7 @@ serve(async (req) => {
       .eq("id", questionId);
 
     if (updateError) {
-      console.error(`[${requestId}] Failed to update question ${questionId}:`, updateError);
+      console.error(`[${requestId}] Failed to update question ${displayName}:`, updateError);
       // Try to record the error in sync status
       await supabase
         .from("questions")
@@ -476,7 +498,7 @@ serve(async (req) => {
       throw updateError;
     }
 
-    console.log(`[${requestId}] Successfully updated explanation for ${questionId}`);
+    console.log(`[${requestId}] Successfully updated explanation for ${displayName}`);
 
     // =========================================================================
     // 7b. EXTRACT LINKS FROM NEW EXPLANATION
@@ -523,6 +545,7 @@ serve(async (req) => {
       JSON.stringify({
         status: "updated",
         questionId,
+        displayName,
         topicId: post.topic_id,
         explanationLength: newExplanation.length,
         previousLength: previousExplanation?.length || 0,

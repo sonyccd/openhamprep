@@ -3,6 +3,8 @@ import {
   isCrawler,
   escapeHtml,
   isValidQuestionId,
+  isValidDisplayName,
+  isUUID,
   getLicenseName,
   buildQuestionUrl,
   buildOpenGraphHtml,
@@ -163,6 +165,18 @@ describe('opengraph utilities', () => {
       expect(isValidQuestionId('T1A 01')).toBe(false);
       expect(isValidQuestionId(' T1A01')).toBe(false);
     });
+
+    it('accepts valid UUIDs', () => {
+      expect(isValidQuestionId('550e8400-e29b-41d4-a716-446655440000')).toBe(true);
+      expect(isValidQuestionId('6ba7b810-9dad-11d1-80b4-00c04fd430c8')).toBe(true);
+      expect(isValidQuestionId('AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE')).toBe(true); // uppercase
+    });
+
+    it('rejects invalid UUIDs', () => {
+      expect(isValidQuestionId('550e8400-e29b-41d4-a716')).toBe(false); // too short
+      expect(isValidQuestionId('not-a-uuid')).toBe(false);
+      expect(isValidQuestionId('550e8400e29b41d4a716446655440000')).toBe(false); // no dashes
+    });
   });
 
   describe('getLicenseName', () => {
@@ -188,13 +202,14 @@ describe('opengraph utilities', () => {
   });
 
   describe('buildQuestionUrl', () => {
-    it('builds correct URL with lowercase question ID', () => {
+    it('builds correct URL with question ID', () => {
+      // Now uses ID as-is (UUIDs should not be lowercased)
       expect(buildQuestionUrl('T1A01', 'https://example.com')).toBe(
-        'https://example.com/questions/t1a01'
+        'https://example.com/questions/T1A01'
       );
     });
 
-    it('handles already lowercase IDs', () => {
+    it('handles lowercase IDs', () => {
       expect(buildQuestionUrl('t1a01', 'https://example.com')).toBe(
         'https://example.com/questions/t1a01'
       );
@@ -202,14 +217,21 @@ describe('opengraph utilities', () => {
 
     it('works with different site URLs', () => {
       expect(buildQuestionUrl('G2B03', 'https://app.openhamprep.com')).toBe(
-        'https://app.openhamprep.com/questions/g2b03'
+        'https://app.openhamprep.com/questions/G2B03'
+      );
+    });
+
+    it('works with UUIDs', () => {
+      expect(buildQuestionUrl('550e8400-e29b-41d4-a716-446655440000', 'https://example.com')).toBe(
+        'https://example.com/questions/550e8400-e29b-41d4-a716-446655440000'
       );
     });
   });
 
   describe('buildOpenGraphHtml', () => {
     const defaultParams = {
-      questionId: 'T1A01',
+      questionId: 'abc123-uuid-here',  // UUID
+      displayName: 'T1A01',  // Human-readable display name
       questionText: 'What is the purpose of the FCC rules?',
       siteUrl: 'https://app.openhamprep.com',
       siteName: 'Open Ham Prep',
@@ -242,7 +264,7 @@ describe('opengraph utilities', () => {
       const html = buildOpenGraphHtml(defaultParams);
 
       expect(html).toContain(
-        '<meta property="og:url" content="https://app.openhamprep.com/questions/t1a01">'
+        '<meta property="og:url" content="https://app.openhamprep.com/questions/abc123-uuid-here">'
       );
     });
 
@@ -267,7 +289,7 @@ describe('opengraph utilities', () => {
       const html = buildOpenGraphHtml(defaultParams);
 
       expect(html).toContain(
-        '<link rel="canonical" href="https://app.openhamprep.com/questions/t1a01">'
+        '<link rel="canonical" href="https://app.openhamprep.com/questions/abc123-uuid-here">'
       );
     });
 
@@ -286,6 +308,7 @@ describe('opengraph utilities', () => {
       });
 
       expect(html).toContain('&quot;P &lt; 10W&quot;');
+      // The original text with < should be escaped
       expect(html).not.toContain('"P < 10W"');
     });
 
@@ -300,7 +323,8 @@ describe('opengraph utilities', () => {
     it('handles General license questions', () => {
       const html = buildOpenGraphHtml({
         ...defaultParams,
-        questionId: 'G2B03',
+        questionId: 'uuid-for-g2b03',
+        displayName: 'G2B03',
       });
 
       expect(html).toContain('Question G2B03');
@@ -310,7 +334,8 @@ describe('opengraph utilities', () => {
     it('handles Extra license questions', () => {
       const html = buildOpenGraphHtml({
         ...defaultParams,
-        questionId: 'E3C12',
+        questionId: 'uuid-for-e3c12',
+        displayName: 'E3C12',
       });
 
       expect(html).toContain('Question E3C12');

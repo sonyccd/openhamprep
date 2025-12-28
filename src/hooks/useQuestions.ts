@@ -20,7 +20,8 @@ export interface LinkData {
 }
 
 export interface Question {
-  id: string;
+  id: string;  // UUID
+  displayName: string;  // Human-readable ID (T1A01, G2B03, etc.)
   question: string;
   options: {
     A: string;
@@ -38,7 +39,8 @@ export interface Question {
 }
 
 interface DbQuestion {
-  id: string;
+  id: string;  // UUID
+  display_name: string;  // Human-readable ID (T1A01, etc.)
   question: string;
   options: unknown;
   correct_answer: number;
@@ -62,6 +64,7 @@ function transformQuestion(dbQuestion: DbQuestion): Question {
   const links = (dbQuestion.links as LinkData[]) || [];
   return {
     id: dbQuestion.id,
+    displayName: dbQuestion.display_name,
     question: dbQuestion.question,
     options: {
       A: options[0] || '',
@@ -79,6 +82,11 @@ function transformQuestion(dbQuestion: DbQuestion): Question {
   };
 }
 
+// Helper to detect if a string is a UUID format
+function isUUID(str: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
 export function useQuestions(testType?: TestType) {
   return useQuery({
     queryKey: ['questions', testType],
@@ -90,10 +98,10 @@ export function useQuestions(testType?: TestType) {
       if (error) throw error;
       let questions = (data as DbQuestion[]).map(transformQuestion);
 
-      // Filter by test type if provided
+      // Filter by test type if provided (using displayName which has T/G/E prefix)
       if (testType) {
         const prefix = testTypePrefixMap[testType];
-        questions = questions.filter(q => q.id.startsWith(prefix));
+        questions = questions.filter(q => q.displayName.startsWith(prefix));
       }
 
       return questions;
@@ -126,17 +134,26 @@ export function useQuestion(questionId: string | undefined) {
   return useQuery({
     queryKey: ['question', questionId],
     queryFn: async () => {
+      if (!questionId) throw new Error('Question ID is required');
+
+      // Determine if we're looking up by UUID or display_name
+      const lookupByUUID = isUUID(questionId);
+
       // Check if we have it in the all-questions cache
       if (allQuestions) {
-        const found = allQuestions.find(q => q.id.toUpperCase() === questionId?.toUpperCase());
+        const found = lookupByUUID
+          ? allQuestions.find(q => q.id === questionId)
+          : allQuestions.find(q => q.displayName.toUpperCase() === questionId.toUpperCase());
         if (found) return found;
       }
 
       // Fallback: fetch directly from database
+      // Use the appropriate column based on ID format
+      const column = lookupByUUID ? 'id' : 'display_name';
       const { data, error } = await supabase
         .from('questions')
         .select('*')
-        .ilike('id', questionId || '')
+        .ilike(column, questionId)
         .single();
 
       if (error) throw error;

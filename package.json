@@ -23,6 +23,7 @@
     "supabase:stop": "npx supabase stop",
     "supabase:restart": "npx supabase stop && npx supabase start",
     "supabase:reset": "npx supabase db reset",
+    "supabase:nuke": "node scripts/nuke-supabase.js",
     "supabase:status": "npx supabase status",
     "supabase:studio": "open http://localhost:54323",
     "supabase:setup-env": "node scripts/setup-local-env.js",

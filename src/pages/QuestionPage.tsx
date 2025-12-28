@@ -8,7 +8,10 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowLeft, Loader2, AlertCircle, Zap, UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const isValidQuestionId = (id: string) => /^[TGE]\d[A-Z]\d{2}$/i.test(id);
+// Accept either display name format (T1A01) or UUID format
+const isValidDisplayName = (id: string) => /^[TGE]\d[A-Z]\d{2}$/i.test(id);
+const isUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+const isValidQuestionId = (id: string) => isValidDisplayName(id) || isUUID(id);
 
 export default function QuestionPage() {
   const { id } = useParams<{ id: string }>();
@@ -16,14 +19,15 @@ export default function QuestionPage() {
   const { user, loading: authLoading } = useAuth();
   const { data: question, isLoading, error } = useQuestion(id);
 
-  // Update document title
+  // Update document title - use displayName if available (for UUID-based URLs)
   useEffect(() => {
     const prevTitle = document.title;
-    document.title = id ? `Question ${id.toUpperCase()} | Open Ham Prep` : 'Question | Open Ham Prep';
+    const displayId = question?.displayName || (id && isValidDisplayName(id) ? id.toUpperCase() : id);
+    document.title = displayId ? `Question ${displayId} | Open Ham Prep` : 'Question | Open Ham Prep';
     return () => {
       document.title = prevTitle;
     };
-  }, [id]);
+  }, [id, question?.displayName]);
 
   // Validate question ID format
   if (id && !isValidQuestionId(id)) {
@@ -43,7 +47,7 @@ export default function QuestionPage() {
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-2">Invalid Question ID</h1>
             <p className="text-muted-foreground mb-6">
-              The question ID "{id}" is not a valid format. Question IDs should look like T1A01, G2B03, or E3C12.
+              The question ID "{id}" is not a valid format. Question IDs should look like T1A01, G2B03, E3C12, or be a valid UUID.
             </p>
             <Button onClick={() => navigate(user ? '/dashboard' : '/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />

@@ -49,18 +49,26 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
     queryFn: async () => {
       const { data, error } = await supabase
         .from('question_attempts')
-        .select('*')
+        .select('*, questions!inner(display_name)')
         .eq('user_id', user!.id);
-      
+
       if (error) throw error;
-      return data;
+      // Flatten the joined data to include display_name at the top level
+      return data?.map(attempt => ({
+        ...attempt,
+        display_name: attempt.questions?.display_name
+      })) || [];
     },
     enabled: !!user,
   });
 
-  // Calculate weak questions using shared logic
-  const weakQuestionIds = questionAttempts
-    ? calculateWeakQuestionIds(questionAttempts)
+  // Get question ID prefix for current test type (T, G, or E)
+  const testTypePrefix = selectedTest === 'technician' ? 'T' : selectedTest === 'general' ? 'G' : 'E';
+
+  // Filter attempts by selected test type, then calculate weak questions
+  const filteredAttempts = questionAttempts?.filter(a => a.display_name?.startsWith(testTypePrefix)) || [];
+  const weakQuestionIds = filteredAttempts.length > 0
+    ? calculateWeakQuestionIds(filteredAttempts)
     : [];
 
   const handleSignOut = async () => {
