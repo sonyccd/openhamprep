@@ -150,11 +150,11 @@ export function useQuestion(questionId: string | undefined) {
       // Fallback: fetch directly from database
       // Use the appropriate column based on ID format
       const column = lookupByUUID ? 'id' : 'display_name';
-      const { data, error } = await supabase
-        .from('questions')
-        .select('*')
-        .ilike(column, questionId)
-        .single();
+      // Use eq for UUID lookups (exact match), ilike for display_name (case-insensitive)
+      const query = supabase.from('questions').select('*');
+      const { data, error } = lookupByUUID
+        ? await query.eq(column, questionId).single()
+        : await query.ilike(column, questionId).single();
 
       if (error) throw error;
       return transformQuestion(data as DbQuestion);

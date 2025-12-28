@@ -6,6 +6,23 @@
 -- 2. Converts id from TEXT to UUID
 -- 3. Updates all foreign key references
 -- ============================================
+--
+-- IMPORTANT: This migration is DESTRUCTIVE and cannot be automatically rolled back.
+--
+-- ROLLBACK STRATEGY:
+-- If you need to rollback, restore from a database backup taken before migration.
+-- The migration modifies primary keys and foreign key relationships which makes
+-- automatic rollback impractical.
+--
+-- BEFORE RUNNING IN PRODUCTION:
+-- 1. Take a full database backup: pg_dump -Fc dbname > backup_before_uuid.dump
+-- 2. Test migration on staging/preview environment first
+-- 3. Verify all application queries work with UUID-based IDs
+-- 4. Keep backup for at least 7 days after migration
+--
+-- TO RESTORE FROM BACKUP:
+-- pg_restore -d dbname backup_before_uuid.dump
+-- ============================================
 
 -- ============================================
 -- PHASE 1: Add display_name column to questions
