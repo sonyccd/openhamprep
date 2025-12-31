@@ -44,6 +44,13 @@ vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({ user: null }),
 }));
 
+vi.mock('@/hooks/useAppNavigation', () => ({
+  useAppNavigation: () => ({
+    navigateToQuestion: vi.fn(),
+    selectedLicense: 'technician',
+  }),
+}));
+
 vi.mock('@/hooks/useProgress', () => ({
   useProgress: () => ({
     saveRandomAttempt: vi.fn().mockResolvedValue(undefined),

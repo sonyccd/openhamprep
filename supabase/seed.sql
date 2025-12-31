@@ -1068,6 +1068,219 @@ INSERT INTO public.exam_sessions (
 ON CONFLICT DO NOTHING;
 
 -- =============================================================================
+-- TOPICS (learning content with linked questions)
+-- =============================================================================
+
+INSERT INTO public.topics (slug, title, description, display_order, is_published, license_types, content_path) VALUES
+  (
+    'fcc-rules-basics',
+    'FCC Rules and Regulations',
+    'Understanding the fundamental rules governing amateur radio in the United States, including licensing, station identification, and permitted communications.',
+    1,
+    true,
+    ARRAY['technician', 'general', 'extra'],
+    'articles/fcc-rules-basics.md'
+  ),
+  (
+    'radio-frequency-fundamentals',
+    'Radio Frequency Fundamentals',
+    'Learn about radio frequencies, wavelengths, band allocations, and how different parts of the spectrum are used in amateur radio.',
+    2,
+    true,
+    ARRAY['technician', 'general', 'extra'],
+    'articles/radio-frequency-fundamentals.md'
+  ),
+  (
+    'repeater-operations',
+    'Repeater Operations',
+    'Master the art of using repeaters including offsets, CTCSS tones, linked systems, and proper operating procedures.',
+    3,
+    true,
+    ARRAY['technician', 'general'],
+    'articles/repeater-operations.md'
+  ),
+  (
+    'radio-wave-propagation',
+    'Radio Wave Propagation',
+    'Understand how radio waves travel, including line-of-sight, tropospheric ducting, ionospheric skip, and other propagation modes.',
+    4,
+    true,
+    ARRAY['technician', 'general', 'extra'],
+    'articles/radio-wave-propagation.md'
+  ),
+  (
+    'basic-electronics',
+    'Basic Electronics for Ham Radio',
+    'Essential electronics knowledge including voltage, current, resistance, capacitance, and Ohm''s Law.',
+    5,
+    true,
+    ARRAY['technician', 'general', 'extra'],
+    'articles/basic-electronics.md'
+  ),
+  (
+    'station-setup',
+    'Setting Up Your Station',
+    'A practical guide to setting up your amateur radio station, including power supplies, transceivers, and mobile installations.',
+    6,
+    true,
+    ARRAY['technician'],
+    'articles/station-setup.md'
+  )
+ON CONFLICT (slug) DO NOTHING;
+
+-- Link topics to subelements
+INSERT INTO public.topic_subelements (topic_id, subelement)
+SELECT t.id, s.subelement
+FROM public.topics t
+CROSS JOIN (VALUES ('T1'), ('G1'), ('E1')) AS s(subelement)
+WHERE t.slug = 'fcc-rules-basics'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_subelements (topic_id, subelement)
+SELECT t.id, s.subelement
+FROM public.topics t
+CROSS JOIN (VALUES ('T1'), ('T3'), ('G2')) AS s(subelement)
+WHERE t.slug = 'radio-frequency-fundamentals'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_subelements (topic_id, subelement)
+SELECT t.id, s.subelement
+FROM public.topics t
+CROSS JOIN (VALUES ('T2')) AS s(subelement)
+WHERE t.slug = 'repeater-operations'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_subelements (topic_id, subelement)
+SELECT t.id, s.subelement
+FROM public.topics t
+CROSS JOIN (VALUES ('T3'), ('G3'), ('E3')) AS s(subelement)
+WHERE t.slug = 'radio-wave-propagation'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_subelements (topic_id, subelement)
+SELECT t.id, s.subelement
+FROM public.topics t
+CROSS JOIN (VALUES ('T5'), ('G5'), ('E5')) AS s(subelement)
+WHERE t.slug = 'basic-electronics'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_subelements (topic_id, subelement)
+SELECT t.id, s.subelement
+FROM public.topics t
+CROSS JOIN (VALUES ('T4'), ('T7')) AS s(subelement)
+WHERE t.slug = 'station-setup'
+ON CONFLICT DO NOTHING;
+
+-- Add resources to topics
+INSERT INTO public.topic_resources (topic_id, resource_type, title, url, description, display_order)
+SELECT t.id, 'article', 'FCC Part 97 Rules', 'https://www.ecfr.gov/current/title-47/chapter-I/subchapter-D/part-97', 'Official FCC rules for amateur radio service.', 1
+FROM public.topics t WHERE t.slug = 'fcc-rules-basics'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_resources (topic_id, resource_type, title, url, description, display_order)
+SELECT t.id, 'link', 'FCC ULS License Search', 'https://wireless2.fcc.gov/UlsApp/UlsSearch/searchLicense.jsp', 'Search for amateur radio licenses.', 2
+FROM public.topics t WHERE t.slug = 'fcc-rules-basics'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_resources (topic_id, resource_type, title, url, description, display_order)
+SELECT t.id, 'article', 'ARRL Band Plan', 'https://www.arrl.org/band-plan', 'Complete guide to amateur radio frequency allocations.', 1
+FROM public.topics t WHERE t.slug = 'radio-frequency-fundamentals'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_resources (topic_id, resource_type, title, url, description, display_order)
+SELECT t.id, 'video', 'Understanding RF Basics', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'Visual explanation of radio frequency fundamentals.', 2
+FROM public.topics t WHERE t.slug = 'radio-frequency-fundamentals'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_resources (topic_id, resource_type, title, url, description, display_order)
+SELECT t.id, 'link', 'RepeaterBook', 'https://www.repeaterbook.com/', 'Comprehensive database of amateur radio repeaters.', 1
+FROM public.topics t WHERE t.slug = 'repeater-operations'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_resources (topic_id, resource_type, title, url, description, display_order)
+SELECT t.id, 'article', 'ARRL Repeater Directory', 'https://www.arrl.org/shop/2023-2024-ARRL-Repeater-Directory/', 'Official ARRL repeater directory.', 2
+FROM public.topics t WHERE t.slug = 'repeater-operations'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_resources (topic_id, resource_type, title, url, description, display_order)
+SELECT t.id, 'link', 'DX Info Centre - Propagation', 'https://www.dxinfocentre.com/tropo.html', 'Real-time VHF propagation forecasts.', 1
+FROM public.topics t WHERE t.slug = 'radio-wave-propagation'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_resources (topic_id, resource_type, title, url, description, display_order)
+SELECT t.id, 'article', 'ARRL Propagation', 'https://www.arrl.org/propagation', 'Current propagation conditions and forecasts.', 2
+FROM public.topics t WHERE t.slug = 'radio-wave-propagation'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_resources (topic_id, resource_type, title, url, description, display_order)
+SELECT t.id, 'video', 'Ohm''s Law Explained', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'Simple explanation of Ohm''s Law for beginners.', 1
+FROM public.topics t WHERE t.slug = 'basic-electronics'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_resources (topic_id, resource_type, title, url, description, display_order)
+SELECT t.id, 'article', 'All About Circuits', 'https://www.allaboutcircuits.com/textbook/direct-current/', 'Comprehensive guide to DC circuit theory.', 2
+FROM public.topics t WHERE t.slug = 'basic-electronics'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.topic_resources (topic_id, resource_type, title, url, description, display_order)
+SELECT t.id, 'article', 'Choosing Your First Radio', 'https://www.arrl.org/shop/Choosing-a-Ham-Radio', 'Guide to selecting your first amateur radio.', 1
+FROM public.topics t WHERE t.slug = 'station-setup'
+ON CONFLICT DO NOTHING;
+
+-- =============================================================================
+-- TOPIC-QUESTION ASSOCIATIONS
+-- Links questions to their relevant learning topics
+-- =============================================================================
+
+-- FCC Rules topic - link to T1 questions
+INSERT INTO public.topic_questions (topic_id, question_id)
+SELECT t.id, q.id
+FROM public.topics t, public.questions q
+WHERE t.slug = 'fcc-rules-basics'
+  AND q.display_name IN ('T1A01', 'T1A02', 'T1A03', 'T1A04', 'T1A05', 'T1B01', 'T1B02', 'T1C01', 'T1C02', 'T1C03', 'T1D01', 'T1D02', 'G1A01')
+ON CONFLICT DO NOTHING;
+
+-- Radio Frequency Fundamentals topic - link to frequency-related questions
+INSERT INTO public.topic_questions (topic_id, question_id)
+SELECT t.id, q.id
+FROM public.topics t, public.questions q
+WHERE t.slug = 'radio-frequency-fundamentals'
+  AND q.display_name IN ('T1B03', 'T1B04', 'T1B05', 'T3B01', 'T3B02')
+ON CONFLICT DO NOTHING;
+
+-- Repeater Operations topic - link to T2 questions
+INSERT INTO public.topic_questions (topic_id, question_id)
+SELECT t.id, q.id
+FROM public.topics t, public.questions q
+WHERE t.slug = 'repeater-operations'
+  AND q.display_name IN ('T2A01', 'T2A02', 'T2A03', 'T2A04', 'T2A05', 'T2B01', 'T2B02', 'T2B03')
+ON CONFLICT DO NOTHING;
+
+-- Radio Wave Propagation topic - link to T3 questions
+INSERT INTO public.topic_questions (topic_id, question_id)
+SELECT t.id, q.id
+FROM public.topics t, public.questions q
+WHERE t.slug = 'radio-wave-propagation'
+  AND q.display_name IN ('T3A01', 'T3A02', 'T3A03', 'T3B01', 'T3B02')
+ON CONFLICT DO NOTHING;
+
+-- Basic Electronics topic - link to T5 questions
+INSERT INTO public.topic_questions (topic_id, question_id)
+SELECT t.id, q.id
+FROM public.topics t, public.questions q
+WHERE t.slug = 'basic-electronics'
+  AND q.display_name IN ('T5A01', 'T5A02', 'T5A03', 'T5B01', 'T5B02', 'T5C01', 'T5C02')
+ON CONFLICT DO NOTHING;
+
+-- Station Setup topic - link to T4 questions
+INSERT INTO public.topic_questions (topic_id, question_id)
+SELECT t.id, q.id
+FROM public.topics t, public.questions q
+WHERE t.slug = 'station-setup'
+  AND q.display_name IN ('T4A01', 'T4A02', 'T4B01', 'T4B02')
+ON CONFLICT DO NOTHING;
+
+-- =============================================================================
 -- SUMMARY
 -- =============================================================================
 
@@ -1086,5 +1299,7 @@ BEGIN
   RAISE NOTICE '  - Extra: %', (SELECT COUNT(*) FROM public.questions WHERE display_name LIKE 'E%');
   RAISE NOTICE 'Glossary Terms: %', (SELECT COUNT(*) FROM public.glossary_terms);
   RAISE NOTICE 'Exam Sessions: %', (SELECT COUNT(*) FROM public.exam_sessions);
+  RAISE NOTICE 'Topics: %', (SELECT COUNT(*) FROM public.topics);
+  RAISE NOTICE 'Topic-Question Links: %', (SELECT COUNT(*) FROM public.topic_questions);
   RAISE NOTICE '========================================';
 END $$;

@@ -68,6 +68,13 @@ vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({ user: { id: 'test-user' } }),
 }));
 
+vi.mock('@/hooks/useAppNavigation', () => ({
+  useAppNavigation: () => ({
+    navigateToQuestion: vi.fn(),
+    selectedLicense: 'technician',
+  }),
+}));
+
 const mockRemoveBookmark = { mutate: vi.fn() };
 
 const mockBookmarksHook = vi.fn(() => ({

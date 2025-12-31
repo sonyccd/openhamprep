@@ -26,6 +26,8 @@ import { GlossaryFlashcards } from '@/components/GlossaryFlashcards';
 import { WeeklyGoalsModal } from '@/components/WeeklyGoalsModal';
 import { ExamSessionSearch } from '@/components/ExamSessionSearch';
 import { WelcomeModal } from '@/components/WelcomeModal';
+import { TopicGallery } from '@/components/TopicGallery';
+import { TopicDetailPage } from '@/components/TopicDetailPage';
 import { TestType, testTypes, View } from '@/types/navigation';
 export default function Dashboard() {
   const {
@@ -41,7 +43,9 @@ export default function Dashboard() {
     currentView,
     setCurrentView,
     reviewingTestId,
-    setReviewingTestId
+    setReviewingTestId,
+    selectedTopicSlug,
+    navigateToTopics,
   } = useAppNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
   // Persist selectedTest in localStorage
@@ -298,6 +302,12 @@ export default function Dashboard() {
     }
     if (currentView === 'find-test-site') {
       return <ExamSessionSearch />;
+    }
+    if (currentView === 'topics') {
+      return <TopicGallery testType={selectedTest} />;
+    }
+    if (currentView === 'topic-detail' && selectedTopicSlug) {
+      return <TopicDetailPage slug={selectedTopicSlug} onBack={navigateToTopics} />;
     }
     if (authLoading || testsLoading || attemptsLoading) {
       return <div className="min-h-screen bg-background flex items-center justify-center">

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuestion } from '@/hooks/useQuestions';
+import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { QuestionCard } from '@/components/QuestionCard';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -17,6 +18,7 @@ export default function QuestionPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { navigateToTopic } = useAppNavigation();
   const { data: question, isLoading, error } = useQuestion(id);
 
   // Update document title - use displayName if available (for UUID-based URLs)
@@ -124,6 +126,7 @@ export default function QuestionPage() {
           onSelectAnswer={() => {}}
           showResult={true}
           enableGlossaryHighlight
+          onTopicClick={navigateToTopic}
         />
 
         {/* Sign-up CTA for anonymous users */}

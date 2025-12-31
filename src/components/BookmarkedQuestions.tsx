@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useBookmarks } from "@/hooks/useBookmarks";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { Bookmark, Loader2, Trash2, MessageSquare, ArrowLeft, ChevronLeft, ChevronRight, Dices } from "lucide-react";
@@ -21,6 +22,7 @@ export function BookmarkedQuestions({
   onStartPractice,
   testType
 }: BookmarkedQuestionsProps) {
+  const { navigateToTopic } = useAppNavigation();
   const {
     data: allQuestions,
     isLoading: questionsLoading
@@ -151,7 +153,7 @@ export function BookmarkedQuestions({
         <QuestionCard question={selectedQuestion} selectedAnswer={selectedAnswer} onSelectAnswer={answer => {
         setSelectedAnswer(answer);
         setShowResult(true);
-      }} showResult={showResult} enableGlossaryHighlight />
+      }} showResult={showResult} enableGlossaryHighlight onTopicClick={navigateToTopic} />
 
         {/* Navigation Actions */}
         <div className="max-w-3xl mx-auto mt-8 flex justify-center gap-4">

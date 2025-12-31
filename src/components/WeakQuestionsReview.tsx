@@ -6,6 +6,7 @@ import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
 import { useAuth } from "@/hooks/useAuth";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { AlertTriangle, Loader2, CheckCircle, ArrowLeft, ChevronLeft, ChevronRight, Dices, Flame } from "lucide-react";
@@ -28,6 +29,7 @@ export function WeakQuestionsReview({
 }: WeakQuestionsReviewProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { navigateToTopic } = useAppNavigation();
   const {
     data: allQuestions,
     isLoading,
@@ -308,7 +310,7 @@ export function WeakQuestionsReview({
 
       </div>
 
-      <QuestionCard question={currentQuestion} selectedAnswer={selectedAnswer} onSelectAnswer={handleSelectAnswer} showResult={showResult} enableGlossaryHighlight />
+      <QuestionCard question={currentQuestion} selectedAnswer={selectedAnswer} onSelectAnswer={handleSelectAnswer} showResult={showResult} enableGlossaryHighlight onTopicClick={navigateToTopic} />
 
       {/* Navigation Actions */}
       <div className="max-w-3xl mx-auto mt-8 flex justify-center gap-4">

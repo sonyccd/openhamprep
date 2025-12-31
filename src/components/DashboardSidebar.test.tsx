@@ -209,7 +209,7 @@ describe('DashboardSidebar', () => {
       expect(screen.getByText('Practice Test')).toBeInTheDocument();
       expect(screen.getByText('Study')).toBeInTheDocument();
       expect(screen.getByText('Random Practice')).toBeInTheDocument();
-      expect(screen.getByText('Study by Topic')).toBeInTheDocument();
+      expect(screen.getByText('Topics')).toBeInTheDocument();
       expect(screen.getByText('Weak Areas')).toBeInTheDocument();
       expect(screen.getByText('Bookmarked')).toBeInTheDocument();
       expect(screen.getByText('Glossary')).toBeInTheDocument();
@@ -274,7 +274,7 @@ describe('DashboardSidebar', () => {
 
       // Study group is expanded by default
       expect(screen.getByText('Random Practice')).toBeInTheDocument();
-      expect(screen.getByText('Study by Topic')).toBeInTheDocument();
+      expect(screen.getByText('Topics')).toBeInTheDocument();
       expect(screen.getByText('Weak Areas')).toBeInTheDocument();
       expect(screen.getByText('Bookmarked')).toBeInTheDocument();
     });
