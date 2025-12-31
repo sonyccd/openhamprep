@@ -272,10 +272,4 @@ describe('TopicResourceManager', () => {
     });
   });
 
-  describe('Drag Handle', () => {
-    it('should show drag handle for reordering', () => {
-      const { container } = renderComponent();
-      expect(container.querySelectorAll('svg[class*="grip-vertical"]').length).toBe(2);
-    });
-  });
 });

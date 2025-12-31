@@ -17,7 +17,6 @@ import {
   Link as LinkIcon,
   Image as ImageIcon,
   File,
-  GripVertical,
   ExternalLink,
   Pencil,
   X,
@@ -146,7 +145,12 @@ export function TopicResourceManager({
       if (error) {
         // Clean up uploaded file if database insert fails
         if (storagePath) {
-          await supabase.storage.from("topic-content").remove([storagePath]);
+          try {
+            await supabase.storage.from("topic-content").remove([storagePath]);
+          } catch (cleanupError) {
+            // Log cleanup failure but don't mask the original error
+            console.error("Failed to clean up uploaded file:", cleanupError);
+          }
         }
         throw error;
       }
@@ -366,9 +370,6 @@ export function TopicResourceManager({
                 key={resource.id}
                 className="p-3 flex items-center gap-3 group hover:bg-secondary/30 transition-colors"
               >
-                <div className="cursor-grab text-muted-foreground hover:text-foreground">
-                  <GripVertical className="w-4 h-4" />
-                </div>
                 <div
                   className={cn(
                     "w-8 h-8 rounded-md flex items-center justify-center bg-secondary shrink-0"
