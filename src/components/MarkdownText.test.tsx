@@ -205,6 +205,28 @@ describe('MarkdownText', () => {
     });
   });
 
+  describe('math rendering', () => {
+    it('renders inline math with $ delimiters', () => {
+      const { container } = render(<MarkdownText text="The formula is $E = mc^2$ here" />);
+      // KaTeX renders math into span elements with katex class
+      const katexElement = container.querySelector('.katex');
+      expect(katexElement).toBeInTheDocument();
+    });
+
+    it('renders block math with $$ delimiters', () => {
+      const { container } = render(<MarkdownText text="The formula is:\n$$E = mc^2$$" />);
+      // Block math also renders with katex class
+      const katexElement = container.querySelector('.katex');
+      expect(katexElement).toBeInTheDocument();
+    });
+
+    it('renders math with LaTeX commands', () => {
+      const { container } = render(<MarkdownText text="Convert: $1.5 \\times 1000 = 1500$" />);
+      const katexElement = container.querySelector('.katex');
+      expect(katexElement).toBeInTheDocument();
+    });
+  });
+
   describe('real-world examples', () => {
     it('renders a typical explanation with links', () => {
       const text = `The correct answer is **20 meters**. According to the [ARRL Band Plan](https://arrl.org/band-plan), the 20-meter band extends from 14.000 to 14.350 MHz.`;
