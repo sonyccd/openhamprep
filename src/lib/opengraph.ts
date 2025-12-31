@@ -53,17 +53,32 @@ export function escapeHtml(text: string): string {
 }
 
 /**
- * Validate question ID format (T1A01, G2B03, E3C12, etc.)
+ * Check if string is a valid UUID format
  */
-export function isValidQuestionId(id: string): boolean {
-  return /^[TGE]\d[A-Z]\d{2}$/i.test(id);
+export function isUUID(str: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 }
 
 /**
- * Get human-readable license name from question ID prefix
+ * Validate question display name format (T1A01, G2B03, E3C12, etc.)
  */
-export function getLicenseName(questionId: string): string {
-  const prefix = questionId[0].toUpperCase();
+export function isValidDisplayName(displayName: string): boolean {
+  return /^[TGE]\d[A-Z]\d{2}$/i.test(displayName);
+}
+
+/**
+ * Validate question ID - accepts either UUID or display name format
+ */
+export function isValidQuestionId(id: string): boolean {
+  return isUUID(id) || isValidDisplayName(id);
+}
+
+/**
+ * Get human-readable license name from question display name prefix
+ * @param displayName - The display name (T1A01, G2B03, etc.) - NOT UUID
+ */
+export function getLicenseName(displayName: string): string {
+  const prefix = displayName[0]?.toUpperCase();
   switch (prefix) {
     case 'T': return 'Technician';
     case 'G': return 'General';
@@ -73,27 +88,29 @@ export function getLicenseName(questionId: string): string {
 }
 
 /**
- * Build the canonical URL for a question
+ * Build the canonical URL for a question using UUID
+ * @param questionId - The UUID of the question (preferred) or display name for backwards compat
  */
 export function buildQuestionUrl(questionId: string, siteUrl: string): string {
-  return `${siteUrl}/questions/${questionId.toLowerCase()}`;
+  return `${siteUrl}/questions/${questionId}`;
 }
 
 /**
  * Build OpenGraph meta tags HTML for a question
  */
 export function buildOpenGraphHtml(params: {
-  questionId: string;
+  questionId: string;  // UUID for URL
+  displayName: string;  // Human-readable ID for display (T1A01)
   questionText: string;
   siteUrl: string;
   siteName: string;
   imageUrl: string;
 }): string {
-  const { questionId, questionText, siteUrl, siteName, imageUrl } = params;
+  const { questionId, displayName, questionText, siteUrl, siteName, imageUrl } = params;
 
   const canonicalUrl = buildQuestionUrl(questionId, siteUrl);
-  const title = `Question ${questionId.toUpperCase()} | ${siteName}`;
-  const licenseName = getLicenseName(questionId);
+  const title = `Question ${displayName.toUpperCase()} | ${siteName}`;
+  const licenseName = getLicenseName(displayName);
   const description = questionText;
 
   return `<!DOCTYPE html>

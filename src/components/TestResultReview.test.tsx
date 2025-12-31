@@ -7,9 +7,9 @@ import { TestResultReview } from './TestResultReview';
 
 // Mock useQuestions
 const mockQuestions = [
-  { id: 'T1A01', question: 'What is amateur radio?', options: ['A', 'B', 'C', 'D'], correctAnswer: 'A' },
-  { id: 'T1A02', question: 'What band is best for beginners?', options: ['A', 'B', 'C', 'D'], correctAnswer: 'B' },
-  { id: 'T1A03', question: 'What is CW?', options: ['A', 'B', 'C', 'D'], correctAnswer: 'C' },
+  { id: 'uuid-t1a01', displayName: 'T1A01', question: 'What is amateur radio?', options: ['A', 'B', 'C', 'D'], correctAnswer: 'A' },
+  { id: 'uuid-t1a02', displayName: 'T1A02', question: 'What band is best for beginners?', options: ['A', 'B', 'C', 'D'], correctAnswer: 'B' },
+  { id: 'uuid-t1a03', displayName: 'T1A03', question: 'What is CW?', options: ['A', 'B', 'C', 'D'], correctAnswer: 'C' },
 ];
 
 vi.mock('@/hooks/useQuestions', () => ({
@@ -46,9 +46,9 @@ const mockTestResult = {
 };
 
 const mockAttempts = [
-  { question_id: 'T1A01', selected_answer: 0, test_result_id: 'test-123', attempted_at: '2024-01-15T10:30:00Z' },
-  { question_id: 'T1A02', selected_answer: 1, test_result_id: 'test-123', attempted_at: '2024-01-15T10:31:00Z' },
-  { question_id: 'T1A03', selected_answer: 2, test_result_id: 'test-123', attempted_at: '2024-01-15T10:32:00Z' },
+  { question_id: 'uuid-t1a01', selected_answer: 0, test_result_id: 'test-123', attempted_at: '2024-01-15T10:30:00Z' },
+  { question_id: 'uuid-t1a02', selected_answer: 1, test_result_id: 'test-123', attempted_at: '2024-01-15T10:31:00Z' },
+  { question_id: 'uuid-t1a03', selected_answer: 2, test_result_id: 'test-123', attempted_at: '2024-01-15T10:32:00Z' },
 ];
 
 function createWrapper() {

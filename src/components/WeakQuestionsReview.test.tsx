@@ -7,9 +7,9 @@ import { WeakQuestionsReview } from './WeakQuestionsReview';
 
 // Mock useQuestions
 const mockQuestions = [
-  { id: 'T1A01', question: 'What is amateur radio?', options: ['Option A', 'Option B', 'Option C', 'Option D'], correctAnswer: 'A' },
-  { id: 'T1A02', question: 'What band is best for beginners?', options: ['Option A', 'Option B', 'Option C', 'Option D'], correctAnswer: 'B' },
-  { id: 'T1A03', question: 'What is CW?', options: ['Option A', 'Option B', 'Option C', 'Option D'], correctAnswer: 'C' },
+  { id: 'uuid-t1a01', displayName: 'T1A01', question: 'What is amateur radio?', options: ['Option A', 'Option B', 'Option C', 'Option D'], correctAnswer: 'A' },
+  { id: 'uuid-t1a02', displayName: 'T1A02', question: 'What band is best for beginners?', options: ['Option A', 'Option B', 'Option C', 'Option D'], correctAnswer: 'B' },
+  { id: 'uuid-t1a03', displayName: 'T1A03', question: 'What is CW?', options: ['Option A', 'Option B', 'Option C', 'Option D'], correctAnswer: 'C' },
 ];
 
 vi.mock('@/hooks/useQuestions', () => ({
@@ -41,13 +41,13 @@ vi.mock('@/components/KeyboardShortcutsHelp', () => ({
 // Mock QuestionCard
 vi.mock('@/components/QuestionCard', () => ({
   QuestionCard: ({ question, selectedAnswer, onSelectAnswer, showResult }: {
-    question: { id: string; question: string };
+    question: { id: string; displayName: string; question: string };
     selectedAnswer: string | null;
     onSelectAnswer: (answer: string) => void;
     showResult: boolean;
   }) => (
     <div data-testid="question-card">
-      <div data-testid="question-id">{question?.id}</div>
+      <div data-testid="question-id">{question?.displayName}</div>
       <div data-testid="question-text">{question?.question}</div>
       <div data-testid="selected-answer">{selectedAnswer || 'none'}</div>
       <div data-testid="show-result">{showResult ? 'true' : 'false'}</div>
@@ -83,7 +83,7 @@ function createWrapper() {
 
 describe('WeakQuestionsReview', () => {
   const defaultProps = {
-    weakQuestionIds: ['T1A01', 'T1A02', 'T1A03'],
+    weakQuestionIds: ['uuid-t1a01', 'uuid-t1a02', 'uuid-t1a03'],
     onBack: vi.fn(),
     testType: 'technician' as const,
   };
@@ -155,9 +155,10 @@ describe('WeakQuestionsReview', () => {
       expect(screen.getByText('3 questions to review')).toBeInTheDocument();
     });
 
-    it('displays question IDs', () => {
+    it('displays question display names', () => {
       render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
 
+      // Component displays displayName, not id
       expect(screen.getByText('T1A01')).toBeInTheDocument();
       expect(screen.getByText('T1A02')).toBeInTheDocument();
       expect(screen.getByText('T1A03')).toBeInTheDocument();
@@ -395,7 +396,7 @@ describe('WeakQuestionsReview', () => {
     it('does not show question counter with single question after answering wrong', async () => {
       const user = userEvent.setup();
 
-      render(<WeakQuestionsReview {...defaultProps} weakQuestionIds={['T1A01']} />, { wrapper: createWrapper() });
+      render(<WeakQuestionsReview {...defaultProps} weakQuestionIds={['uuid-t1a01']} />, { wrapper: createWrapper() });
 
       fireEvent.click(screen.getByText('What is amateur radio?'));
 
@@ -539,7 +540,7 @@ describe('WeakQuestionsReview', () => {
       const user = userEvent.setup();
 
       // Use only one question for simplicity
-      render(<WeakQuestionsReview {...defaultProps} weakQuestionIds={['T1A01']} />, { wrapper: createWrapper() });
+      render(<WeakQuestionsReview {...defaultProps} weakQuestionIds={['uuid-t1a01']} />, { wrapper: createWrapper() });
 
       fireEvent.click(screen.getByText('What is amateur radio?'));
 
@@ -756,7 +757,7 @@ describe('WeakQuestionsReview', () => {
       const user = userEvent.setup();
 
       // Use only one question for simplicity
-      render(<WeakQuestionsReview {...defaultProps} weakQuestionIds={['T1A01']} />, { wrapper: createWrapper() });
+      render(<WeakQuestionsReview {...defaultProps} weakQuestionIds={['uuid-t1a01']} />, { wrapper: createWrapper() });
 
       // Enable streak mode
       const toggle = screen.getByRole('switch');
@@ -918,7 +919,7 @@ describe('WeakQuestionsReview', () => {
     });
 
     it('disables randomize button when only one question', async () => {
-      render(<WeakQuestionsReview {...defaultProps} weakQuestionIds={['T1A01']} />, { wrapper: createWrapper() });
+      render(<WeakQuestionsReview {...defaultProps} weakQuestionIds={['uuid-t1a01']} />, { wrapper: createWrapper() });
 
       fireEvent.click(screen.getByText('What is amateur radio?'));
 
@@ -976,7 +977,7 @@ describe('WeakQuestionsReview', () => {
       const user = userEvent.setup();
 
       // Use only one question
-      render(<WeakQuestionsReview {...defaultProps} weakQuestionIds={['T1A01']} />, { wrapper: createWrapper() });
+      render(<WeakQuestionsReview {...defaultProps} weakQuestionIds={['uuid-t1a01']} />, { wrapper: createWrapper() });
 
       // Click on the only question
       fireEvent.click(screen.getByText('What is amateur radio?'));

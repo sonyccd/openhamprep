@@ -146,6 +146,13 @@ async function unfurlUrl(url: string): Promise<UnfurledLink> {
   }
 }
 
+/**
+ * Helper to detect if a string is a UUID format.
+ */
+function isUUID(str: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
 serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
 
@@ -159,6 +166,17 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { action, questionId, url } = await req.json();
+
+    // Helper to get question by ID (supports both UUID and display_name)
+    const getQuestionById = async (qId: string, selectColumns: string = 'id, links') => {
+      const lookupColumn = isUUID(qId) ? 'id' : 'display_name';
+      const { data, error } = await supabase
+        .from('questions')
+        .select(selectColumns)
+        .eq(lookupColumn, lookupColumn === 'display_name' ? qId.toUpperCase() : qId)
+        .single();
+      return { data, error };
+    };
 
     console.log(`[${requestId}] manage-question-links: action=${action}, questionId=${questionId || 'n/a'}, url=${url ? url.slice(0, 50) + '...' : 'n/a'}`);
 
@@ -193,12 +211,8 @@ serve(async (req) => {
 
       console.log(`[${requestId}] Adding link to question ${questionId}: ${url}`);
 
-      // Get current links
-      const { data: question, error: fetchError } = await supabase
-        .from('questions')
-        .select('links')
-        .eq('id', questionId)
-        .single();
+      // Get current links (supports both UUID and display_name)
+      const { data: question, error: fetchError } = await getQuestionById(questionId, 'id, links');
 
       if (fetchError) {
         console.error(`[${requestId}] Error fetching question ${questionId}:`, fetchError);
@@ -225,20 +239,21 @@ serve(async (req) => {
       // Add to links array
       const updatedLinks = [...existingLinks, unfurled];
 
+      // Use question.id (UUID) for update
       const { error: updateError } = await supabase
         .from('questions')
         .update({ links: updatedLinks })
-        .eq('id', questionId);
+        .eq('id', question.id);
 
       if (updateError) {
-        console.error(`[${requestId}] Error updating question ${questionId}:`, updateError);
+        console.error(`[${requestId}] Error updating question ${question.id}:`, updateError);
         return new Response(
           JSON.stringify({ error: 'Failed to update question' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      console.log(`[${requestId}] Successfully added link to question ${questionId}, total links: ${updatedLinks.length}`);
+      console.log(`[${requestId}] Successfully added link to question ${question.id}, total links: ${updatedLinks.length}`);
       return new Response(
         JSON.stringify({ success: true, link: unfurled, links: updatedLinks }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -256,11 +271,7 @@ serve(async (req) => {
 
       console.log(`[${requestId}] Removing link from question ${questionId}: ${url}`);
 
-      const { data: question, error: fetchError } = await supabase
-        .from('questions')
-        .select('links')
-        .eq('id', questionId)
-        .single();
+      const { data: question, error: fetchError } = await getQuestionById(questionId, 'id, links');
 
       if (fetchError) {
         console.error(`[${requestId}] Error fetching question ${questionId}:`, fetchError);
@@ -273,20 +284,21 @@ serve(async (req) => {
       const existingLinks = (question.links as UnfurledLink[]) || [];
       const updatedLinks = existingLinks.filter(link => link.url !== url);
 
+      // Use question.id (UUID) for update
       const { error: updateError } = await supabase
         .from('questions')
         .update({ links: updatedLinks })
-        .eq('id', questionId);
+        .eq('id', question.id);
 
       if (updateError) {
-        console.error(`[${requestId}] Error updating question ${questionId}:`, updateError);
+        console.error(`[${requestId}] Error updating question ${question.id}:`, updateError);
         return new Response(
           JSON.stringify({ error: 'Failed to update question' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      console.log(`[${requestId}] Successfully removed link from question ${questionId}, remaining links: ${updatedLinks.length}`);
+      console.log(`[${requestId}] Successfully removed link from question ${question.id}, remaining links: ${updatedLinks.length}`);
       return new Response(
         JSON.stringify({ success: true, links: updatedLinks }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -301,17 +313,14 @@ serve(async (req) => {
 
       let questionsToRefresh;
       if (questionId) {
-        // Refresh specific question
+        // Refresh specific question (supports both UUID and display_name)
         console.log(`[${requestId}] Fetching specific question ${questionId}`);
-        const { data, error } = await supabase
-          .from('questions')
-          .select('id, links')
-          .eq('id', questionId);
+        const { data, error } = await getQuestionById(questionId, 'id, links');
         if (error) {
           console.error(`[${requestId}] Error fetching question ${questionId}:`, error);
           throw error;
         }
-        questionsToRefresh = data;
+        questionsToRefresh = data ? [data] : [];
       } else {
         // Refresh all questions with stale links
         console.log(`[${requestId}] Fetching all questions with links`);
@@ -375,12 +384,8 @@ serve(async (req) => {
 
       console.log(`[${requestId}] Extracting links from explanation for question ${questionId}`);
 
-      // Fetch the question's explanation and current links
-      const { data: question, error: fetchError } = await supabase
-        .from('questions')
-        .select('explanation, links')
-        .eq('id', questionId)
-        .single();
+      // Fetch the question's explanation and current links (supports both UUID and display_name)
+      const { data: question, error: fetchError } = await getQuestionById(questionId, 'id, explanation, links');
 
       if (fetchError || !question) {
         console.error(`[${requestId}] Question not found: ${questionId}`, fetchError);
@@ -391,12 +396,12 @@ serve(async (req) => {
       }
 
       if (!question.explanation) {
-        console.log(`[${requestId}] Question ${questionId} has no explanation, clearing links`);
-        // No explanation, clear links
+        console.log(`[${requestId}] Question ${question.id} has no explanation, clearing links`);
+        // No explanation, clear links (use UUID)
         await supabase
           .from('questions')
           .update({ links: [] })
-          .eq('id', questionId);
+          .eq('id', question.id);
 
         return new Response(
           JSON.stringify({ success: true, links: [], message: 'No explanation, links cleared' }),
@@ -406,15 +411,15 @@ serve(async (req) => {
 
       // Extract URLs from explanation
       const extractedUrls = extractUrlsFromText(question.explanation);
-      console.log(`[${requestId}] Found ${extractedUrls.length} URLs in explanation for question ${questionId}`);
+      console.log(`[${requestId}] Found ${extractedUrls.length} URLs in explanation for question ${question.id}`);
 
       if (extractedUrls.length === 0) {
-        console.log(`[${requestId}] No URLs in explanation for question ${questionId}, clearing links`);
-        // No URLs found, clear links
+        console.log(`[${requestId}] No URLs in explanation for question ${question.id}, clearing links`);
+        // No URLs found, clear links (use UUID)
         await supabase
           .from('questions')
           .update({ links: [] })
-          .eq('id', questionId);
+          .eq('id', question.id);
 
         return new Response(
           JSON.stringify({ success: true, links: [], message: 'No URLs found in explanation' }),
@@ -441,14 +446,14 @@ serve(async (req) => {
         }
       }
 
-      // Update question
+      // Update question (use UUID)
       const { error: updateError } = await supabase
         .from('questions')
         .update({ links: allLinks })
-        .eq('id', questionId);
+        .eq('id', question.id);
 
       if (updateError) {
-        console.error(`[${requestId}] Failed to update question ${questionId}:`, updateError);
+        console.error(`[${requestId}] Failed to update question ${question.id}:`, updateError);
         return new Response(
           JSON.stringify({ error: 'Failed to update question' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -458,7 +463,7 @@ serve(async (req) => {
       const newCount = extractedUrls.filter(url => !existingUrlMap.has(url)).length;
       const keptCount = allLinks.length - newCount;
 
-      console.log(`[${requestId}] Extracted ${allLinks.length} links for question ${questionId} (${newCount} new, ${keptCount} kept)`);
+      console.log(`[${requestId}] Extracted ${allLinks.length} links for question ${question.id} (${newCount} new, ${keptCount} kept)`);
       return new Response(
         JSON.stringify({
           success: true,

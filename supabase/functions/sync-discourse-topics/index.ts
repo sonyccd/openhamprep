@@ -53,7 +53,8 @@ const CATEGORY_MAP: Record<string, string> = {
 };
 
 interface Question {
-  id: string;
+  id: string;  // UUID
+  display_name: string;  // Human-readable ID (T1A01, etc.)
   question: string;
   options: string[];
   correct_answer: number;
@@ -202,7 +203,8 @@ async function createDiscourseTopic(
   question: Question
 ): Promise<{ success: boolean; topicId?: number; topicUrl?: string; error?: string }> {
   // Truncate title if needed (Discourse has a 255 char limit)
-  let title = `${question.id} - ${question.question}`;
+  // Use display_name (e.g., T1A01) in the topic title for human readability
+  let title = `${question.display_name} - ${question.question}`;
   if (title.length > MAX_TITLE_LENGTH) {
     title = title.substring(0, MAX_TITLE_LENGTH - 3) + '...';
   }
@@ -386,11 +388,11 @@ serve(async (req) => {
     console.log(`[${requestId}] Fetching questions from database...`);
     let query = supabase
       .from('questions')
-      .select('id, question, options, correct_answer, explanation');
+      .select('id, display_name, question, options, correct_answer, explanation');
 
-    // Filter by license if specified
+    // Filter by license if specified (use display_name for prefix filtering)
     if (licenseFilter.length === 1) {
-      query = query.ilike('id', `${licenseFilter[0]}%`);
+      query = query.ilike('display_name', `${licenseFilter[0]}%`);
     }
 
     const { data: questions, error: dbError } = await query;
@@ -408,9 +410,9 @@ serve(async (req) => {
 
     console.log(`[${requestId}] Found ${questions.length} questions in database`);
 
-    // Filter to only questions that need to be created
-    const questionsToCreate = questions.filter(q => !existingTopics.has(q.id));
-    const skippedQuestions = questions.filter(q => existingTopics.has(q.id));
+    // Filter to only questions that need to be created (check by display_name)
+    const questionsToCreate = questions.filter(q => !existingTopics.has(q.display_name));
+    const skippedQuestions = questions.filter(q => existingTopics.has(q.display_name));
 
     console.log(`[${requestId}] ${questionsToCreate.length} topics to create, ${skippedQuestions.length} already exist`);
 
@@ -426,16 +428,16 @@ serve(async (req) => {
 
       for (const q of questionsToCreate.slice(0, 9)) {
         const question = q as Question;
-        const prefix = question.id[0];
+        const prefix = question.display_name[0];
         const countForPrefix = exampleTopics.filter(e => e.questionId[0] === prefix).length;
         if (countForPrefix < 3) {
-          let title = `${question.id} - ${question.question}`;
+          let title = `${question.display_name} - ${question.question}`;
           if (title.length > MAX_TITLE_LENGTH) {
             title = title.substring(0, MAX_TITLE_LENGTH - 3) + '...';
           }
           const body = formatTopicBody(question);
           exampleTopics.push({
-            questionId: question.id,
+            questionId: question.display_name,
             category: CATEGORY_MAP[prefix],
             title,
             bodyPreview: body.length > 500 ? body.substring(0, 500) + '...' : body,
@@ -447,8 +449,8 @@ serve(async (req) => {
       const countByLicense: Record<string, { toCreate: number; toSkip: number }> = {};
       for (const prefix of ['T', 'G', 'E']) {
         countByLicense[CATEGORY_MAP[prefix]] = {
-          toCreate: questionsToCreate.filter((q: Question) => q.id[0] === prefix).length,
-          toSkip: skippedQuestions.filter((q: Question) => q.id[0] === prefix).length,
+          toCreate: questionsToCreate.filter((q: Question) => q.display_name[0] === prefix).length,
+          toSkip: skippedQuestions.filter((q: Question) => q.display_name[0] === prefix).length,
         };
       }
 
@@ -456,9 +458,9 @@ serve(async (req) => {
       const estimatedTimeSeconds = questionsToCreate.length;
       const estimatedTimeMinutes = Math.ceil(estimatedTimeSeconds / 60);
 
-      // Limit question IDs in response to prevent large payloads
-      const questionsToCreateIds = questionsToCreate.map((q: Question) => q.id);
-      const questionsToSkipIds = skippedQuestions.map((q: Question) => q.id);
+      // Limit question IDs in response to prevent large payloads (use display_name for readability)
+      const questionsToCreateIds = questionsToCreate.map((q: Question) => q.display_name);
+      const questionsToSkipIds = skippedQuestions.map((q: Question) => q.display_name);
 
       return new Response(
         JSON.stringify({
@@ -493,15 +495,15 @@ serve(async (req) => {
     console.log(`[${requestId}] Processing batch of ${batchToProcess.length} topics (${remaining} remaining after this batch)`);
 
     for (const question of batchToProcess) {
-      const prefix = question.id[0];
+      const prefix = question.display_name[0];
       const categoryName = CATEGORY_MAP[prefix];
       const categoryId = categoryIds.get(categoryName)!;
 
-      console.log(`[${requestId}] Creating topic for ${question.id}...`);
+      console.log(`[${requestId}] Creating topic for ${question.display_name}...`);
       const result = await createDiscourseTopic(apiKey, username, categoryId, question as Question);
 
       if (result.success) {
-        // Save the forum URL to the database
+        // Save the forum URL to the database (use UUID for database update)
         let dbUpdateSuccess = true;
         if (result.topicUrl) {
           const { error: updateError } = await supabase
@@ -510,20 +512,20 @@ serve(async (req) => {
             .eq('id', question.id);
 
           if (updateError) {
-            console.error(`[${requestId}] Failed to save forum_url for ${question.id}: ${updateError.message}`);
+            console.error(`[${requestId}] Failed to save forum_url for ${question.display_name}: ${updateError.message}`);
             dbUpdateSuccess = false;
           } else {
-            console.log(`[${requestId}] Saved forum_url for ${question.id}: ${result.topicUrl}`);
+            console.log(`[${requestId}] Saved forum_url for ${question.display_name}: ${result.topicUrl}`);
           }
         }
 
         if (dbUpdateSuccess) {
-          results.push({ questionId: question.id, status: 'created', topicId: result.topicId, topicUrl: result.topicUrl });
+          results.push({ questionId: question.display_name, status: 'created', topicId: result.topicId, topicUrl: result.topicUrl });
           created++;
         } else {
           // Topic was created but DB update failed - report as partial success
           results.push({
-            questionId: question.id,
+            questionId: question.display_name,
             status: 'partial',
             topicId: result.topicId,
             topicUrl: result.topicUrl,
@@ -532,9 +534,9 @@ serve(async (req) => {
           errors++;
         }
       } else {
-        results.push({ questionId: question.id, status: 'error', reason: result.error });
+        results.push({ questionId: question.display_name, status: 'error', reason: result.error });
         errors++;
-        console.error(`[${requestId}] Failed to create topic for ${question.id}: ${result.error}`);
+        console.error(`[${requestId}] Failed to create topic for ${question.display_name}: ${result.error}`);
       }
 
       // Rate limiting: wait between requests

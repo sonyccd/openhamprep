@@ -79,10 +79,24 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * Validate question ID format (T1A01, G2B03, E3C12, etc.)
+ * Validate display name format (T1A01, G2B03, E3C12, etc.)
+ */
+function isValidDisplayName(id: string): boolean {
+  return /^[TGE]\d[A-Z]\d{2}$/i.test(id);
+}
+
+/**
+ * Check if a string is a valid UUID format
+ */
+function isUUID(id: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
+
+/**
+ * Validate question ID format (accepts both display_name and UUID)
  */
 function isValidQuestionId(id: string): boolean {
-  return /^[TGE]\d[A-Z]\d{2}$/i.test(id);
+  return isValidDisplayName(id) || isUUID(id);
 }
 
 /**
@@ -128,14 +142,16 @@ serve(async (req) => {
     // Validate question ID format
     if (!isValidQuestionId(questionId)) {
       console.warn(`[${requestId}] Invalid question ID format: ${questionId}`);
-      return new Response('Invalid question ID format. Expected format: T1A01, G2B03, E3C12', {
+      return new Response('Invalid question ID format. Expected format: T1A01, G2B03, E3C12, or UUID', {
         status: 400,
         headers: corsHeaders,
       });
     }
 
-    // Build canonical URL for the question
-    const canonicalUrl = `${SITE_URL}/questions/${questionId.toLowerCase()}`;
+    // Build canonical URL for the question (use questionId as-is for now, will be updated after DB lookup)
+    // For display_name format, lowercase it; for UUID, keep as-is
+    const questionIdForUrl = isValidDisplayName(questionId) ? questionId.toLowerCase() : questionId;
+    let canonicalUrl = `${SITE_URL}/questions/${questionIdForUrl}`;
 
     // For regular browsers, redirect to /app/questions/:id which bypasses the rewrite
     // The SPA will handle the route and then use history.replaceState to fix the URL
@@ -161,10 +177,12 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Support both UUID and display_name lookups
+    const lookupColumn = isUUID(questionId) ? 'id' : 'display_name';
     const { data: question, error } = await supabase
       .from('questions')
-      .select('id, question')
-      .ilike('id', questionId)
+      .select('id, display_name, question')
+      .ilike(lookupColumn, questionId)
       .single();
 
     if (error || !question) {
@@ -205,9 +223,11 @@ serve(async (req) => {
     }
 
     // Build metadata for crawlers
-    console.log(`[${requestId}] Found question ${question.id}, generating OG HTML`);
-    const title = `Question ${question.id.toUpperCase()} | ${SITE_NAME}`;
-    const licenseName = getLicenseName(question.id);
+    console.log(`[${requestId}] Found question ${question.display_name} (${question.id}), generating OG HTML`);
+    // Use UUID in canonical URL for stability
+    canonicalUrl = `${SITE_URL}/questions/${question.id}`;
+    const title = `Question ${question.display_name.toUpperCase()} | ${SITE_NAME}`;
+    const licenseName = getLicenseName(question.display_name);
     // Truncate description to optimal OG length (150-200 chars)
     const description = truncateText(question.question, MAX_DESCRIPTION_LENGTH);
 

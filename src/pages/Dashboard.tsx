@@ -170,9 +170,16 @@ export default function Dashboard() {
       const {
         data,
         error
-      } = await supabase.from('question_attempts').select('*').eq('user_id', user!.id);
+      } = await supabase
+        .from('question_attempts')
+        .select('*, questions!inner(display_name)')
+        .eq('user_id', user!.id);
       if (error) throw error;
-      return data;
+      // Flatten the joined data to include display_name at the top level
+      return data?.map(attempt => ({
+        ...attempt,
+        display_name: attempt.questions?.display_name
+      })) || [];
     },
     enabled: !!user,
     staleTime: 1000 * 60 * 2, // Cache for 2 minutes
@@ -227,8 +234,8 @@ export default function Dashboard() {
   // Get question ID prefix for current test type
   const testTypePrefix = selectedTest === 'technician' ? 'T' : selectedTest === 'general' ? 'G' : 'E';
 
-  // Filter question attempts by test type (based on question_id prefix)
-  const filteredAttempts = questionAttempts?.filter(a => a.question_id.startsWith(testTypePrefix)) || [];
+  // Filter question attempts by test type (based on display_name prefix, e.g., T1A01, G2B03)
+  const filteredAttempts = questionAttempts?.filter(a => a.display_name?.startsWith(testTypePrefix)) || [];
 
   const thisWeekTests = testResults?.filter(t => new Date(t.completed_at) >= weekStart).length || 0;
   const thisWeekQuestions = filteredAttempts.filter(a => new Date(a.attempted_at) >= weekStart).length || 0;

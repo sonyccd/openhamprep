@@ -246,7 +246,7 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
                       {idx + 1}
                     </span>
                     <span className="flex-1 text-sm text-muted-foreground truncate">
-                      {q.id}: {q.question.substring(0, 60)}...
+                      {q.displayName}: {q.question.substring(0, 60)}...
                     </span>
                     <span
                       className={cn(

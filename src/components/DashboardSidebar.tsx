@@ -1,4 +1,4 @@
-import { Play, Zap, BookOpen, AlertTriangle, Bookmark, LogOut, Radio, PanelLeftClose, PanelLeft, BarChart3, Menu, Lock, ChevronDown, BookText, Shield, MapPin, Users, ExternalLink, Award } from "lucide-react";
+import { Play, Zap, BookOpen, AlertTriangle, Bookmark, LogOut, Radio, PanelLeftClose, PanelLeft, BarChart3, Menu, Lock, ChevronDown, ChevronRight, BookText, Shield, MapPin, Users, ExternalLink, Award, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -17,6 +17,13 @@ interface NavItem {
   icon: React.ElementType;
   badge?: number;
   disabled?: boolean;
+}
+
+interface NavGroup {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  items: NavItem[];
 }
 interface UserInfo {
   displayName: string | null;
@@ -72,6 +79,7 @@ export function DashboardSidebar({
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
   const [licenseModalOpen, setLicenseModalOpen] = useState(false);
+  const [studyExpanded, setStudyExpanded] = useState(true);
   const {
     isAdmin
   } = useAdmin();
@@ -87,7 +95,9 @@ export function DashboardSidebar({
     }
     return 'U';
   };
-  const navItems: NavItem[] = [{
+
+  // Top-level nav items (before Study group)
+  const topNavItems: NavItem[] = [{
     id: 'dashboard',
     label: 'Dashboard',
     icon: BarChart3
@@ -96,28 +106,39 @@ export function DashboardSidebar({
     label: 'Practice Test',
     icon: Play,
     disabled: !isTestAvailable
-  }, {
-    id: 'random-practice',
-    label: 'Random Practice',
-    icon: Zap,
-    disabled: !isTestAvailable
-  }, {
-    id: 'subelement-practice',
-    label: 'Study by Topic',
-    icon: BookOpen,
-    disabled: !isTestAvailable
-  }, {
-    id: 'weak-questions',
-    label: 'Weak Areas',
-    icon: AlertTriangle,
-    badge: weakQuestionCount,
-    disabled: !isTestAvailable || weakQuestionCount === 0
-  }, {
-    id: 'bookmarks',
-    label: 'Bookmarked',
-    icon: Bookmark,
-    badge: bookmarkCount
-  }, {
+  }];
+
+  // Study group items
+  const studyGroup: NavGroup = {
+    id: 'study',
+    label: 'Study',
+    icon: GraduationCap,
+    items: [{
+      id: 'random-practice',
+      label: 'Random Practice',
+      icon: Zap,
+      disabled: !isTestAvailable
+    }, {
+      id: 'subelement-practice',
+      label: 'Study by Topic',
+      icon: BookOpen,
+      disabled: !isTestAvailable
+    }, {
+      id: 'weak-questions',
+      label: 'Weak Areas',
+      icon: AlertTriangle,
+      badge: weakQuestionCount,
+      disabled: !isTestAvailable || weakQuestionCount === 0
+    }, {
+      id: 'bookmarks',
+      label: 'Bookmarked',
+      icon: Bookmark,
+      badge: bookmarkCount
+    }]
+  };
+
+  // Bottom nav items (after Study group)
+  const bottomNavItems: NavItem[] = [{
     id: 'glossary',
     label: 'Glossary',
     icon: BookText
@@ -126,6 +147,9 @@ export function DashboardSidebar({
     label: 'Find Test Site',
     icon: MapPin
   }];
+
+  // Check if any study item is active
+  const isStudyItemActive = studyGroup.items.some(item => currentView === item.id);
   const handleNavClick = (view: View, disabled?: boolean) => {
     if (!disabled) {
       // Navigate to dashboard with the selected view
@@ -209,33 +233,147 @@ export function DashboardSidebar({
 
       {/* Navigation */}
       <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-        {navItems.map(item => {
-        // Don't highlight nav items when on admin page
-        const isActive = !isOnAdminPage && currentView === item.id;
-        const Icon = item.icon;
-        const showExpanded = isMobile || !isCollapsed;
-        const buttonContent = <button onClick={() => handleNavClick(item.id, item.disabled)} disabled={item.disabled} data-tour={item.id} className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors", isActive ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-secondary", item.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground", !showExpanded && "justify-center px-2")}>
+        {/* Top nav items: Dashboard, Practice Test */}
+        {topNavItems.map(item => {
+          const isActive = !isOnAdminPage && currentView === item.id;
+          const Icon = item.icon;
+          const showExpanded = isMobile || !isCollapsed;
+          const buttonContent = <button onClick={() => handleNavClick(item.id, item.disabled)} disabled={item.disabled} data-tour={item.id} className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors", isActive ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-secondary", item.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground", !showExpanded && "justify-center px-2")}>
               <div className="relative shrink-0">
                 <Icon className="w-5 h-5" />
-                {item.badge !== undefined && item.badge > 0 && <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                    {item.badge > 9 ? '9+' : item.badge}
-                  </span>}
               </div>
               {showExpanded && <span className="text-sm font-medium truncate">{item.label}</span>}
             </button>;
-        if (!showExpanded) {
-          return <Tooltip key={item.id} delayDuration={0}>
+          if (!showExpanded) {
+            return <Tooltip key={item.id} delayDuration={0}>
                 <TooltipTrigger asChild>
                   {buttonContent}
                 </TooltipTrigger>
                 <TooltipContent side="right" className="bg-popover border-border">
                   <p>{item.label}</p>
-                  {item.badge !== undefined && item.badge > 0 && <span className="text-xs text-muted-foreground ml-1">({item.badge})</span>}
                 </TooltipContent>
               </Tooltip>;
-        }
-        return <div key={item.id}>{buttonContent}</div>;
-      })}
+          }
+          return <div key={item.id}>{buttonContent}</div>;
+        })}
+
+        {/* Study Group - Collapsible */}
+        {(() => {
+          const showExpanded = isMobile || !isCollapsed;
+          const StudyIcon = studyGroup.icon;
+          const totalBadge = studyGroup.items.reduce((sum, item) => sum + (item.badge || 0), 0);
+
+          if (!showExpanded) {
+            // Collapsed: show Study icon with tooltip listing items
+            return (
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setStudyExpanded(!studyExpanded)}
+                    className={cn(
+                      "w-full flex items-center justify-center px-2 py-2.5 rounded-lg transition-colors",
+                      isStudyItemActive ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    )}
+                  >
+                    <div className="relative shrink-0">
+                      <StudyIcon className="w-5 h-5" />
+                      {totalBadge > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                          {totalBadge > 9 ? '9+' : totalBadge}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-popover border-border">
+                  <p className="font-medium">Study</p>
+                  <p className="text-xs text-muted-foreground">Random, Topics, Weak Areas, Bookmarks</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
+
+          return (
+            <div className="space-y-1">
+              {/* Study header - clickable to expand/collapse */}
+              <button
+                onClick={() => setStudyExpanded(!studyExpanded)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                  isStudyItemActive ? "text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                )}
+              >
+                <div className="relative shrink-0">
+                  <StudyIcon className="w-5 h-5" />
+                  {totalBadge > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                      {totalBadge > 9 ? '9+' : totalBadge}
+                    </span>
+                  )}
+                </div>
+                <span className="text-sm font-medium truncate flex-1 text-left">{studyGroup.label}</span>
+                {studyExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+
+              {/* Study items - shown when expanded */}
+              {studyExpanded && (
+                <div className="ml-4 pl-2 border-l border-border space-y-1">
+                  {studyGroup.items.map(item => {
+                    const isActive = !isOnAdminPage && currentView === item.id;
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => handleNavClick(item.id, item.disabled)}
+                        disabled={item.disabled}
+                        data-tour={item.id}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm",
+                          isActive ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-secondary",
+                          item.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground"
+                        )}
+                      >
+                        <div className="relative shrink-0">
+                          <Icon className="w-4 h-4" />
+                          {item.badge !== undefined && item.badge > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center">
+                              {item.badge > 9 ? '9+' : item.badge}
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-medium truncate">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Bottom nav items: Glossary, Find Test Site */}
+        {bottomNavItems.map(item => {
+          const isActive = !isOnAdminPage && currentView === item.id;
+          const Icon = item.icon;
+          const showExpanded = isMobile || !isCollapsed;
+          const buttonContent = <button onClick={() => handleNavClick(item.id, item.disabled)} disabled={item.disabled} data-tour={item.id} className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors", isActive ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-secondary", item.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground", !showExpanded && "justify-center px-2")}>
+              <div className="relative shrink-0">
+                <Icon className="w-5 h-5" />
+              </div>
+              {showExpanded && <span className="text-sm font-medium truncate">{item.label}</span>}
+            </button>;
+          if (!showExpanded) {
+            return <Tooltip key={item.id} delayDuration={0}>
+                <TooltipTrigger asChild>
+                  {buttonContent}
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-popover border-border">
+                  <p>{item.label}</p>
+                </TooltipContent>
+              </Tooltip>;
+          }
+          return <div key={item.id}>{buttonContent}</div>;
+        })}
 
         {/* Community Link - External */}
         {(() => {

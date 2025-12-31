@@ -61,7 +61,8 @@ vi.mock('./FigureImage', () => ({
 }));
 
 const mockQuestion: Question = {
-  id: 'T1A01',
+  id: 'uuid-t1a01',
+  displayName: 'T1A01',
   question: 'What is the purpose of the Amateur Radio Service?',
   options: {
     A: 'To provide emergency communications',

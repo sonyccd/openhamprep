@@ -75,6 +75,7 @@ npm run dev                # Start dev server only
 npm run supabase:start     # Start local Supabase
 npm run supabase:stop      # Stop (keeps data)
 npm run supabase:reset     # Reset database (wipes data)
+npm run supabase:nuke      # Nuclear option: delete everything
 npm run supabase:studio    # Open database GUI
 npm run dev:full           # Start everything
 ```
@@ -96,9 +97,8 @@ npm run supabase:start
 
 **Need fresh start?**
 ```bash
-npm run supabase:stop
-docker system prune -a  # Warning: deletes all Docker data!
-npm run supabase:start
+npm run supabase:nuke   # Removes all Supabase containers and volumes
+npm run supabase:start  # Start fresh
 ```
 
 ## Why Local Supabase?

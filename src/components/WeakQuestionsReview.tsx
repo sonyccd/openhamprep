@@ -389,7 +389,7 @@ export function WeakQuestionsReview({
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                      {question.id}
+                      {question.displayName}
                     </span>
                     <span className="text-xs text-destructive">Needs practice</span>
                   </div>

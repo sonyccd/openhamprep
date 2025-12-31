@@ -20,12 +20,20 @@ const corsHeaders = {
 const DISCOURSE_URL = "https://forum.openhamprep.com";
 
 interface Question {
-  id: string;
+  id: string;  // UUID
+  display_name: string;  // Human-readable ID (T1A01, etc.)
   question: string;
   options: string[];
   correct_answer: number;
   explanation: string | null;
   forum_url: string | null;
+}
+
+/**
+ * Helper to detect if a string is a UUID format.
+ */
+function isUUID(str: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 }
 
 interface RequestBody {
@@ -206,10 +214,12 @@ serve(async (req) => {
     // 3. FETCH QUESTION FROM DATABASE
     // ==========================================================================
 
+    // Support both UUID and display_name lookups
+    const lookupColumn = isUUID(questionId) ? "id" : "display_name";
     const { data: question, error: fetchError } = await supabase
       .from("questions")
-      .select("id, question, options, correct_answer, explanation, forum_url")
-      .eq("id", questionId)
+      .select("id, display_name, question, options, correct_answer, explanation, forum_url")
+      .eq(lookupColumn, lookupColumn === "display_name" ? questionId.toUpperCase() : questionId)
       .single();
 
     if (fetchError) {
@@ -234,7 +244,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[${requestId}] Question ${questionId} forum_url: ${question.forum_url}`);
+    console.log(`[${requestId}] Question ${question.display_name} (${question.id}) forum_url: ${question.forum_url}`);
 
     // ==========================================================================
     // 4. EXTRACT TOPIC ID AND GET FIRST POST ID
@@ -249,7 +259,7 @@ serve(async (req) => {
         discourse_sync_status: "error",
         discourse_sync_at: new Date().toISOString(),
         discourse_sync_error: errorMsg,
-      }).eq("id", questionId);
+      }).eq("id", question.id);
 
       return new Response(
         JSON.stringify({ error: errorMsg }),
@@ -273,7 +283,7 @@ serve(async (req) => {
         discourse_sync_status: "error",
         discourse_sync_at: new Date().toISOString(),
         discourse_sync_error: errorMsg,
-      }).eq("id", questionId);
+      }).eq("id", question.id);
 
       return new Response(
         JSON.stringify({ error: errorMsg }),
@@ -300,7 +310,7 @@ serve(async (req) => {
         discourse_sync_status: "error",
         discourse_sync_at: new Date().toISOString(),
         discourse_sync_error: errorMsg,
-      }).eq("id", questionId);
+      }).eq("id", question.id);
 
       return new Response(
         JSON.stringify({ error: errorMsg }),
@@ -326,7 +336,7 @@ serve(async (req) => {
         discourse_sync_status: "error",
         discourse_sync_at: new Date().toISOString(),
         discourse_sync_error: errorMsg,
-      }).eq("id", questionId);
+      }).eq("id", question.id);
 
       return new Response(
         JSON.stringify({ error: errorMsg }),
@@ -369,7 +379,7 @@ serve(async (req) => {
         discourse_sync_status: "error",
         discourse_sync_at: new Date().toISOString(),
         discourse_sync_error: errorMsg,
-      }).eq("id", questionId);
+      }).eq("id", question.id);
 
       return new Response(
         JSON.stringify({ error: errorMsg }),
@@ -380,7 +390,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[${requestId}] Successfully updated Discourse post ${postId} for question ${questionId}`);
+    console.log(`[${requestId}] Successfully updated Discourse post ${postId} for question ${question.display_name}`);
 
     // ==========================================================================
     // 6. UPDATE SYNC STATUS IN DATABASE
@@ -390,13 +400,13 @@ serve(async (req) => {
       discourse_sync_status: "synced",
       discourse_sync_at: new Date().toISOString(),
       discourse_sync_error: null,
-    }).eq("id", questionId);
+    }).eq("id", question.id);
 
     if (statusError) {
       console.error(`[${requestId}] Failed to update sync status:`, statusError);
       // Don't fail the request - the Discourse update succeeded
     } else {
-      console.log(`[${requestId}] Updated sync status for question ${questionId}`);
+      console.log(`[${requestId}] Updated sync status for question ${question.display_name}`);
     }
 
     // ==========================================================================
@@ -406,7 +416,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        questionId,
+        questionId: question.id,
+        displayName: question.display_name,
         topicId,
         postId,
       }),

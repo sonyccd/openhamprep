@@ -9,7 +9,8 @@ import '@/test/mocks/supabase';
 
 const mockQuestions = [
   {
-    id: 'T1A01',
+    id: 'uuid-t1a01',
+    displayName: 'T1A01',
     question: 'What is the purpose of the Amateur Radio Service?',
     options: { A: 'Emergency', B: 'Money', C: 'Music', D: 'Phones' },
     correctAnswer: 'A',
@@ -19,7 +20,8 @@ const mockQuestions = [
     links: [],
   },
   {
-    id: 'T1A02',
+    id: 'uuid-t1a02',
+    displayName: 'T1A02',
     question: 'Second question?',
     options: { A: 'Answer 1', B: 'Answer 2', C: 'Answer 3', D: 'Answer 4' },
     correctAnswer: 'B',
@@ -29,7 +31,8 @@ const mockQuestions = [
     links: [],
   },
   {
-    id: 'T1A03',
+    id: 'uuid-t1a03',
+    displayName: 'T1A03',
     question: 'Third question for navigation testing?',
     options: { A: 'Option A', B: 'Option B', C: 'Option C', D: 'Option D' },
     correctAnswer: 'C',
@@ -41,13 +44,13 @@ const mockQuestions = [
 ];
 
 const mockSingleBookmark = [
-  { id: 'bookmark-1', question_id: 'T1A01', note: 'Remember this one!', created_at: '2024-01-01' },
+  { id: 'bookmark-1', question_id: 'uuid-t1a01', note: 'Remember this one!', created_at: '2024-01-01' },
 ];
 
 const mockMultipleBookmarks = [
-  { id: 'bookmark-1', question_id: 'T1A01', note: 'Remember this one!', created_at: '2024-01-01' },
-  { id: 'bookmark-2', question_id: 'T1A02', note: null, created_at: '2024-01-02' },
-  { id: 'bookmark-3', question_id: 'T1A03', note: 'Third note', created_at: '2024-01-03' },
+  { id: 'bookmark-1', question_id: 'uuid-t1a01', note: 'Remember this one!', created_at: '2024-01-01' },
+  { id: 'bookmark-2', question_id: 'uuid-t1a02', note: null, created_at: '2024-01-02' },
+  { id: 'bookmark-3', question_id: 'uuid-t1a03', note: 'Third note', created_at: '2024-01-03' },
 ];
 
 // Default to single bookmark for backward compatibility
@@ -302,18 +305,18 @@ describe('BookmarkedQuestions', () => {
   describe('Remove Bookmark', () => {
     it('calls removeBookmark when delete button is clicked', async () => {
       renderBookmarkedQuestions();
-      
+
       // Find and click the delete button (the trash icon button)
       const allButtons = screen.getAllByRole('button');
       const deleteButton = allButtons.find(btn => {
         // Look for button with trash icon
-        return btn.querySelector('svg.lucide-trash-2') !== null || 
+        return btn.querySelector('svg.lucide-trash-2') !== null ||
                btn.classList.contains('text-muted-foreground');
       });
-      
+
       if (deleteButton) {
         fireEvent.click(deleteButton);
-        expect(mockRemoveBookmark.mutate).toHaveBeenCalledWith('T1A01');
+        expect(mockRemoveBookmark.mutate).toHaveBeenCalledWith('uuid-t1a01');
       }
     });
   });

@@ -234,7 +234,7 @@ export function BookmarkedQuestions({
                   <button onClick={() => setCurrentIndex(index)} className="flex-1 text-left">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="font-mono text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                        {question.id}
+                        {question.displayName}
                       </span>
                       {bookmark?.note && <span className="flex items-center gap-1 text-xs text-accent">
                         <MessageSquare className="w-3 h-3" />

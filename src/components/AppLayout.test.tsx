@@ -43,13 +43,14 @@ vi.mock('@/hooks/usePostHog', () => ({
 }));
 
 // Mock question attempts data for testing weak questions calculation
+// Now includes joined questions data with display_name (since query uses questions!inner(display_name))
 const mockQuestionAttempts = [
-  { question_id: 'T1A01', is_correct: false, user_id: 'test-user' }, // 1 wrong
-  { question_id: 'T1A02', is_correct: false, user_id: 'test-user' }, // 1 wrong, then 1 right = not weak
-  { question_id: 'T1A02', is_correct: true, user_id: 'test-user' },
-  { question_id: 'T1A03', is_correct: false, user_id: 'test-user' }, // 2 wrong, 1 right = weak
-  { question_id: 'T1A03', is_correct: false, user_id: 'test-user' },
-  { question_id: 'T1A03', is_correct: true, user_id: 'test-user' },
+  { question_id: 'uuid-t1a01', is_correct: false, user_id: 'test-user', questions: { display_name: 'T1A01' } }, // 1 wrong
+  { question_id: 'uuid-t1a02', is_correct: false, user_id: 'test-user', questions: { display_name: 'T1A02' } }, // 1 wrong, then 1 right = not weak
+  { question_id: 'uuid-t1a02', is_correct: true, user_id: 'test-user', questions: { display_name: 'T1A02' } },
+  { question_id: 'uuid-t1a03', is_correct: false, user_id: 'test-user', questions: { display_name: 'T1A03' } }, // 2 wrong, 1 right = weak
+  { question_id: 'uuid-t1a03', is_correct: false, user_id: 'test-user', questions: { display_name: 'T1A03' } },
+  { question_id: 'uuid-t1a03', is_correct: true, user_id: 'test-user', questions: { display_name: 'T1A03' } },
 ];
 
 // Mock Supabase
@@ -220,8 +221,11 @@ describe('AppLayout', () => {
       );
 
       await waitFor(() => {
-        // Should show bookmark count of 2 (from mock)
-        expect(screen.getByText('2')).toBeInTheDocument();
+        // Should show bookmark count of 2 (from mock) on the Bookmarked item
+        // There may be multiple '2' elements (weak questions also shows 2)
+        const bookmarkedItem = screen.getByText('Bookmarked');
+        const badge = bookmarkedItem.parentElement?.querySelector('[class*="bg-primary"]');
+        expect(badge).toHaveTextContent('2');
       });
     });
 
