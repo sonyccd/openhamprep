@@ -5,9 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useExamSessions, useExamSessionsCount, useExamSessionsLastUpdated, useBulkImportExamSessions, type ExamSession } from '@/hooks/useExamSessions';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import {
+  useExamSessions,
+  useExamSessionsCount,
+  useExamSessionsLastUpdated,
+  useBulkImportExamSessions,
+  useGeocodeExamSessions,
+  type ExamSession,
+  type GeocodeProgress,
+} from '@/hooks/useExamSessions';
 import { format, formatDistanceToNow } from 'date-fns';
 
 interface ParsedSession {
@@ -41,67 +47,28 @@ export const AdminExamSessions = () => {
   const [file, setFile] = useState<File | null>(null);
   const [parsing, setParsing] = useState(false);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
-  const [geocoding, setGeocoding] = useState(false);
-  const [geocodeProgress, setGeocodeProgress] = useState<{
-    processed: number;
-    remaining: number;
-    total: number;
-  } | null>(null);
+  const [geocodeProgress, setGeocodeProgress] = useState<GeocodeProgress | null>(null);
 
-  const { data: sessionsData, refetch } = useExamSessions({ pageSize: 1000 });
+  const { data: sessionsData } = useExamSessions({ pageSize: 1000 });
   const existingSessions = sessionsData?.sessions ?? [];
-  const { data: totalCount = 0, refetch: refetchCount } = useExamSessionsCount();
+  const { data: totalCount = 0 } = useExamSessionsCount();
   const { data: lastUpdated, refetch: refetchLastUpdated } = useExamSessionsLastUpdated();
   const importMutation = useBulkImportExamSessions();
+  const geocodeMutation = useGeocodeExamSessions();
 
   // Calculate sessions needing geocoding
   const sessionsNeedingGeocode = existingSessions.filter((s) => !s.latitude || !s.longitude).length;
 
-  const handleGeocode = async () => {
-    setGeocoding(true);
-    const initialRemaining = sessionsNeedingGeocode;
-    let totalProcessed = 0;
-    
-    try {
-      // Keep processing until all are done or an error occurs
-      let remaining = initialRemaining;
-      
-      while (remaining > 0) {
-        const { data, error } = await supabase.functions.invoke('geocode-addresses');
-        
-        if (error) {
-          toast.error('Geocoding failed: ' + error.message);
-          break;
-        }
-
-        totalProcessed += data.processed;
-        remaining = data.remaining;
-        
-        setGeocodeProgress({
-          processed: totalProcessed,
-          remaining: remaining,
-          total: initialRemaining,
-        });
-
-        // If nothing was processed this round, break to avoid infinite loop
-        if (data.processed === 0) {
-          break;
-        }
+  const handleGeocode = () => {
+    geocodeMutation.mutate(
+      {
+        initialCount: sessionsNeedingGeocode,
+        onProgress: setGeocodeProgress,
+      },
+      {
+        onSettled: () => setGeocodeProgress(null),
       }
-      
-      toast.success(`Geocoded ${totalProcessed} sessions`);
-      
-      // Refresh the data
-      refetch();
-      refetchCount();
-      refetchLastUpdated();
-    } catch (err) {
-      toast.error('Geocoding failed');
-      console.error('Geocoding exam sessions failed:', err);
-    } finally {
-      setGeocoding(false);
-      setGeocodeProgress(null);
-    }
+    );
   };
 
   const parseCSV = (content: string): ParsedSession[] => {
@@ -414,9 +381,9 @@ export const AdminExamSessions = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleGeocode}
-                disabled={geocoding}
+                disabled={geocodeMutation.isPending}
               >
-                {geocoding ? (
+                {geocodeMutation.isPending ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <MapPin className="h-4 w-4 mr-2" />
