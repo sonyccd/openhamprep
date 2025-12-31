@@ -25,6 +25,14 @@ vi.mock('@/hooks/useAuth', () => ({
   }),
 }));
 
+// Mock useAppNavigation
+vi.mock('@/hooks/useAppNavigation', () => ({
+  useAppNavigation: () => ({
+    navigateToQuestion: vi.fn(),
+    selectedLicense: 'technician',
+  }),
+}));
+
 // Mock useQuestion
 let mockQuestion: {
   id: string;

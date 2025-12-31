@@ -16,6 +16,13 @@ vi.mock('@/hooks/useQuestions', () => ({
   useQuestions: vi.fn(() => ({ data: mockQuestions })),
 }));
 
+vi.mock('@/hooks/useAppNavigation', () => ({
+  useAppNavigation: () => ({
+    navigateToQuestion: vi.fn(),
+    selectedLicense: 'technician',
+  }),
+}));
+
 // Mock Supabase
 const mockSelect = vi.fn();
 const mockEq = vi.fn();

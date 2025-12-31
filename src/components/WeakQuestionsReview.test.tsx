@@ -27,6 +27,14 @@ vi.mock('@/hooks/useAuth', () => ({
   useAuth: vi.fn(() => ({ user: { id: 'user-123' } })),
 }));
 
+// Mock useAppNavigation
+vi.mock('@/hooks/useAppNavigation', () => ({
+  useAppNavigation: vi.fn(() => ({
+    navigateToQuestion: vi.fn(),
+    selectedLicense: 'technician',
+  })),
+}));
+
 // Mock useKeyboardShortcuts
 vi.mock('@/hooks/useKeyboardShortcuts', () => ({
   useKeyboardShortcuts: vi.fn(),
