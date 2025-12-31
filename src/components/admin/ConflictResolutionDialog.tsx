@@ -80,15 +80,15 @@ export function ConflictResolutionDialog<T>({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="bg-blue-500/20 text-blue-500">
+          <Badge variant="secondary" className="bg-info/20 text-info">
             <Database className="w-3 h-3 mr-1" />
             {resolutionCounts.keep} Keep
           </Badge>
-          <Badge variant="secondary" className="bg-orange-500/20 text-orange-500">
+          <Badge variant="secondary" className="bg-warning/20 text-warning">
             <Replace className="w-3 h-3 mr-1" />
             {resolutionCounts.replace} Replace
           </Badge>
-          <Badge variant="secondary" className="bg-green-500/20 text-green-500">
+          <Badge variant="secondary" className="bg-success/20 text-success">
             <GitMerge className="w-3 h-3 mr-1" />
             {resolutionCounts.merge} Merge
           </Badge>
@@ -155,7 +155,7 @@ export function ConflictResolutionDialog<T>({
                 {isExpanded && (
                   <div className="mt-3 grid grid-cols-3 gap-3">
                     {/* Existing */}
-                    <div className={`p-2 rounded-lg border ${conflict.resolution === 'keep' ? 'border-blue-500 bg-blue-500/10' : 'border-border bg-secondary/30'}`}>
+                    <div className={`p-2 rounded-lg border ${conflict.resolution === 'keep' ? 'border-info bg-info/10' : 'border-border bg-secondary/30'}`}>
                       <div className="flex items-center gap-1 mb-2 text-xs font-medium text-muted-foreground">
                         <Database className="w-3 h-3" />
                         Current in Database
@@ -170,10 +170,10 @@ export function ConflictResolutionDialog<T>({
 
                     {/* Incoming or Merged */}
                     <div className={`p-2 rounded-lg border ${
-                      conflict.resolution === 'replace' 
-                        ? 'border-orange-500 bg-orange-500/10' 
+                      conflict.resolution === 'replace'
+                        ? 'border-warning bg-warning/10'
                         : conflict.resolution === 'merge'
-                        ? 'border-green-500 bg-green-500/10'
+                        ? 'border-success bg-success/10'
                         : 'border-border bg-secondary/30'
                     }`}>
                       <div className="flex items-center gap-1 mb-2 text-xs font-medium text-muted-foreground">

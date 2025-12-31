@@ -15,7 +15,7 @@ export function FigureLightbox({ isOpen, onClose, figureUrl, questionId }: Figur
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay
           className={cn(
-            "fixed inset-0 z-50 bg-black/90",
+            "fixed inset-0 z-50 bg-background/95",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
           )}
@@ -36,7 +36,7 @@ export function FigureLightbox({ isOpen, onClose, figureUrl, questionId }: Figur
             alt={`Figure for question ${questionId}`}
             className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg"
           />
-          <p className="mt-3 text-sm text-white/80 font-mono">
+          <p className="mt-3 text-sm text-muted-foreground font-mono">
             {questionId}
           </p>
           <DialogPrimitive.Close

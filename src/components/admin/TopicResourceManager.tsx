@@ -12,10 +12,7 @@ import {
   Plus,
   Trash2,
   Loader2,
-  Video,
-  FileText,
   Link as LinkIcon,
-  Image as ImageIcon,
   File,
   ExternalLink,
   Pencil,
@@ -23,6 +20,7 @@ import {
   Upload,
   Download,
 } from "lucide-react";
+import { getResourceTypeOptions, getResourceIcon, getResourceColorClass } from "@/lib/resourceTypes";
 import {
   Select,
   SelectContent,
@@ -54,13 +52,7 @@ interface TopicResourceManagerProps {
   resources: TopicResource[];
 }
 
-const RESOURCE_TYPES = [
-  { value: "video", label: "Video", icon: Video, color: "text-red-500" },
-  { value: "article", label: "Article", icon: FileText, color: "text-blue-500" },
-  { value: "link", label: "Link", icon: LinkIcon, color: "text-purple-500" },
-  { value: "pdf", label: "PDF", icon: File, color: "text-orange-500" },
-  { value: "image", label: "Image", icon: ImageIcon, color: "text-green-500" },
-];
+const RESOURCE_TYPES = getResourceTypeOptions();
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 
@@ -324,16 +316,6 @@ export function TopicResourceManager({
     });
   };
 
-  const getResourceIcon = (type: string) => {
-    const config = RESOURCE_TYPES.find((t) => t.value === type);
-    if (!config) return LinkIcon;
-    return config.icon;
-  };
-
-  const getResourceColor = (type: string) => {
-    const config = RESOURCE_TYPES.find((t) => t.value === type);
-    return config?.color || "text-muted-foreground";
-  };
 
   const sortedResources = [...resources].sort(
     (a, b) => (a.display_order || 0) - (b.display_order || 0)
@@ -375,7 +357,7 @@ export function TopicResourceManager({
                     "w-8 h-8 rounded-md flex items-center justify-center bg-secondary shrink-0"
                   )}
                 >
-                  <Icon className={cn("w-4 h-4", getResourceColor(resource.resource_type))} />
+                  <Icon className={cn("w-4 h-4", getResourceColorClass(resource.resource_type))} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -461,7 +443,7 @@ export function TopicResourceManager({
                   {RESOURCE_TYPES.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       <div className="flex items-center gap-2">
-                        <type.icon className={cn("w-4 h-4", type.color)} />
+                        <type.icon className={cn("w-4 h-4", type.colorClass)} />
                         {type.label}
                       </div>
                     </SelectItem>
@@ -577,7 +559,7 @@ export function TopicResourceManager({
                   {RESOURCE_TYPES.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       <div className="flex items-center gap-2">
-                        <type.icon className={cn("w-4 h-4", type.color)} />
+                        <type.icon className={cn("w-4 h-4", type.colorClass)} />
                         {type.label}
                       </div>
                     </SelectItem>

@@ -432,7 +432,7 @@ Frequency,"The number of cycles per second of a radio wave, measured in Hertz"`;
       <div className="text-xs space-y-1">
         <p className="font-medium">{merged.term}</p>
         <p className="text-muted-foreground line-clamp-3">{merged.definition}</p>
-        <p className="text-green-500 text-[10px]">({definitionSource})</p>
+        <p className="text-success text-[10px]">({definitionSource})</p>
       </div>
     );
   };
@@ -478,7 +478,7 @@ Frequency,"The number of cycles per second of a radio wave, measured in Hertz"`;
               </CardHeader>
               <CardContent className="py-2 space-y-3 text-sm">
                 <div className="flex items-start gap-2">
-                  <FileSpreadsheet className="w-4 h-4 mt-0.5 text-green-500" />
+                  <FileSpreadsheet className="w-4 h-4 mt-0.5 text-success" />
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <p className="font-medium">CSV</p>
@@ -493,7 +493,7 @@ Frequency,"The number of cycles per second of a radio wave, measured in Hertz"`;
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <FileJson className="w-4 h-4 mt-0.5 text-blue-500" />
+                  <FileJson className="w-4 h-4 mt-0.5 text-info" />
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <p className="font-medium">JSON</p>
@@ -544,7 +544,7 @@ Frequency,"The number of cycles per second of a radio wave, measured in Hertz"`;
             {validationResult && (
               <div className="flex-1 overflow-hidden flex flex-col">
                 <div className="flex items-center gap-4 mb-3 flex-wrap">
-                  <Badge variant="secondary" className="bg-green-500/20 text-green-500">
+                  <Badge variant="secondary" className="bg-success/20 text-success">
                     <CheckCircle2 className="w-3 h-3 mr-1" />
                     {validationResult.valid.length} Valid
                   </Badge>
@@ -555,13 +555,13 @@ Frequency,"The number of cycles per second of a radio wave, measured in Hertz"`;
                     </Badge>
                   )}
                   {conflicts.length > 0 && (
-                    <Badge variant="secondary" className="bg-amber-500/20 text-amber-500">
+                    <Badge variant="secondary" className="bg-warning/20 text-warning">
                       <GitMerge className="w-3 h-3 mr-1" />
                       {conflicts.length} Conflicts
                     </Badge>
                   )}
                   {newTerms.length > 0 && (
-                    <Badge variant="secondary" className="bg-blue-500/20 text-blue-500">
+                    <Badge variant="secondary" className="bg-info/20 text-info">
                       <Upload className="w-3 h-3 mr-1" />
                       {newTerms.length} New
                     </Badge>

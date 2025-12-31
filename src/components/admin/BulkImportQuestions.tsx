@@ -326,10 +326,10 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
       <div className="text-muted-foreground">
         <p>Options: {q.options.filter(o => o).length}/4</p>
         <p>Answer: {['A', 'B', 'C', 'D'][q.correct_answer]}</p>
-        <p className={q.explanation ? 'text-green-500' : 'text-amber-500'}>
+        <p className={q.explanation ? 'text-success' : 'text-warning'}>
           Explanation: {q.explanation ? 'Yes' : 'None'}
         </p>
-        <p className={q.links && q.links.length > 0 ? 'text-green-500' : 'text-amber-500'}>
+        <p className={q.links && q.links.length > 0 ? 'text-success' : 'text-warning'}>
           Links: {q.links?.length || 0}
         </p>
       </div>
@@ -344,10 +344,10 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
         <div className="text-muted-foreground">
           <p>Options: {merged.options.filter(o => o).length}/4</p>
           <p>Answer: {['A', 'B', 'C', 'D'][merged.correct_answer]}</p>
-          <p className={merged.explanation ? 'text-green-500' : 'text-amber-500'}>
+          <p className={merged.explanation ? 'text-success' : 'text-warning'}>
             Explanation: {merged.explanation ? (existing.explanation ? 'Kept' : 'Added') : 'None'}
           </p>
-          <p className={merged.links && merged.links.length > 0 ? 'text-green-500' : 'text-amber-500'}>
+          <p className={merged.links && merged.links.length > 0 ? 'text-success' : 'text-warning'}>
             Links: {merged.links?.length || 0} {existing.links && existing.links.length > 0 ? '(Kept)' : ''}
           </p>
         </div>
@@ -396,7 +396,7 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
               </CardHeader>
               <CardContent className="py-2 space-y-3 text-sm">
                 <div className="flex items-start gap-2">
-                  <FileSpreadsheet className="w-4 h-4 mt-0.5 text-green-500" />
+                  <FileSpreadsheet className="w-4 h-4 mt-0.5 text-success" />
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <p className="font-medium">CSV</p>
@@ -411,7 +411,7 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <FileJson className="w-4 h-4 mt-0.5 text-blue-500" />
+                  <FileJson className="w-4 h-4 mt-0.5 text-info" />
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <p className="font-medium">JSON</p>
@@ -466,7 +466,7 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
             {validationResult && (
               <div className="flex-1 overflow-hidden flex flex-col">
                 <div className="flex items-center gap-4 mb-3 flex-wrap">
-                  <Badge variant="secondary" className="bg-green-500/20 text-green-500">
+                  <Badge variant="secondary" className="bg-success/20 text-success">
                     <CheckCircle2 className="w-3 h-3 mr-1" />
                     {validationResult.valid.length} Valid
                   </Badge>
@@ -477,13 +477,13 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
                     </Badge>
                   )}
                   {conflicts.length > 0 && (
-                    <Badge variant="secondary" className="bg-amber-500/20 text-amber-500">
+                    <Badge variant="secondary" className="bg-warning/20 text-warning">
                       <GitMerge className="w-3 h-3 mr-1" />
                       {conflicts.length} Conflicts
                     </Badge>
                   )}
                   {newQuestions.length > 0 && (
-                    <Badge variant="secondary" className="bg-blue-500/20 text-blue-500">
+                    <Badge variant="secondary" className="bg-info/20 text-info">
                       <Upload className="w-3 h-3 mr-1" />
                       {newQuestions.length} New
                     </Badge>

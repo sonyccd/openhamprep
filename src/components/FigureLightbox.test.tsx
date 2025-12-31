@@ -94,10 +94,10 @@ describe('FigureLightbox', () => {
   });
 
   describe('Styling', () => {
-    it('should have dark overlay background', () => {
+    it('should have overlay background', () => {
       render(<FigureLightbox {...defaultProps} />);
-      // The overlay has bg-black/90 class
-      const overlay = document.querySelector('[class*="bg-black"]');
+      // The overlay uses semantic bg-background/95 class
+      const overlay = document.querySelector('[class*="bg-background"]');
       expect(overlay).toBeInTheDocument();
     });
 

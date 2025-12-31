@@ -290,7 +290,7 @@ export function WeakQuestionsReview({
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Flame className="w-4 h-4 text-orange-500" />
+                <Flame className="w-4 h-4 text-warning" />
                 <span className="text-sm text-muted-foreground">Streak to clear ({STREAK_TO_CLEAR} correct in a row)</span>
               </div>
               <div className="flex items-center gap-2">
@@ -368,7 +368,7 @@ export function WeakQuestionsReview({
           </div>
           <div className="flex items-center justify-between bg-card border border-border rounded-lg p-3">
             <div className="flex items-center gap-2">
-              <Flame className={`w-4 h-4 ${streakModeEnabled ? 'text-orange-500' : 'text-muted-foreground'}`} />
+              <Flame className={`w-4 h-4 ${streakModeEnabled ? 'text-warning' : 'text-muted-foreground'}`} />
               <Label htmlFor="streak-mode" className="text-sm cursor-pointer">
                 Streak mode
               </Label>

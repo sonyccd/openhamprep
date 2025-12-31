@@ -1,29 +1,17 @@
-import { ExternalLink, Video, FileText, Globe } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LinkData } from "@/hooks/useQuestions";
+import { LINK_TYPE_CONFIG, type LinkType } from "@/lib/resourceTypes";
 
 interface LinkPreviewProps {
   link: LinkData;
 }
 
 export function LinkPreview({ link }: LinkPreviewProps) {
-  const TypeIcon = {
-    video: Video,
-    article: FileText,
-    website: Globe,
-  }[link.type];
-
-  const typeLabel = {
-    video: 'Video',
-    article: 'Article',
-    website: 'Website',
-  }[link.type];
-
-  const typeColor = {
-    video: 'text-red-500 bg-red-500/10',
-    article: 'text-blue-500 bg-blue-500/10',
-    website: 'text-muted-foreground bg-secondary',
-  }[link.type];
+  const config = LINK_TYPE_CONFIG[link.type as LinkType];
+  const TypeIcon = config?.icon;
+  const typeLabel = config?.label ?? "Link";
+  const typeColor = config ? `${config.colorClass} ${config.bgClass}` : "text-muted-foreground bg-secondary";
 
   return (
     <a
