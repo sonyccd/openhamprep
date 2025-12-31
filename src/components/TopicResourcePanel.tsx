@@ -3,17 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Video,
-  FileText,
   Link as LinkIcon,
-  Image as ImageIcon,
-  File,
   ExternalLink,
   Download,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RESOURCE_TYPE_CONFIG, getResourceIcon, getResourceColorClass } from "@/lib/resourceTypes";
 import { useState } from "react";
 import {
   Collapsible,
@@ -33,24 +30,10 @@ interface TopicResourcePanelProps {
   resources: TopicResource[];
 }
 
-const resourceTypeConfig: Record<
-  string,
-  { icon: typeof Video; label: string; color: string }
-> = {
-  video: { icon: Video, label: "Videos", color: "text-red-500" },
-  article: { icon: FileText, label: "Articles", color: "text-blue-500" },
-  pdf: { icon: File, label: "PDFs", color: "text-orange-500" },
-  image: { icon: ImageIcon, label: "Images", color: "text-green-500" },
-  link: { icon: LinkIcon, label: "Links", color: "text-purple-500" },
-};
-
 function ResourceItem({ resource }: { resource: TopicResource }) {
-  const config = resourceTypeConfig[resource.resource_type] || {
-    icon: LinkIcon,
-    label: "Resource",
-    color: "text-muted-foreground",
-  };
-  const Icon = config.icon;
+  const config = RESOURCE_TYPE_CONFIG[resource.resource_type as keyof typeof RESOURCE_TYPE_CONFIG];
+  const Icon = config?.icon ?? LinkIcon;
+  const colorClass = config?.colorClass ?? "text-muted-foreground";
 
   // Generate the proper URL - use storage URL for uploaded files
   const url = resource.storage_path
@@ -93,7 +76,7 @@ function ResourceItem({ resource }: { resource: TopicResource }) {
           "bg-background"
         )}
       >
-        <Icon className={cn("w-4 h-4", config.color)} />
+        <Icon className={cn("w-4 h-4", colorClass)} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -136,20 +119,18 @@ function ResourceGroup({
   defaultOpen?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const config = resourceTypeConfig[type] || {
-    icon: LinkIcon,
-    label: "Resources",
-    color: "text-muted-foreground",
-  };
-  const Icon = config.icon;
+  const config = RESOURCE_TYPE_CONFIG[type as keyof typeof RESOURCE_TYPE_CONFIG];
+  const Icon = config?.icon ?? LinkIcon;
+  const colorClass = config?.colorClass ?? "text-muted-foreground";
+  const label = config?.pluralLabel ?? "Resources";
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger asChild>
         <button className="w-full flex items-center justify-between py-2 px-1 text-sm font-medium text-foreground hover:text-primary transition-colors">
           <span className="flex items-center gap-2">
-            <Icon className={cn("w-4 h-4", config.color)} />
-            {config.label}
+            <Icon className={cn("w-4 h-4", colorClass)} />
+            {label}
             <Badge variant="secondary" className="text-xs">
               {resources.length}
             </Badge>

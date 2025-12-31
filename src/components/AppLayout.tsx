@@ -10,6 +10,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Loader2 } from 'lucide-react';
 import { HelpButton } from '@/components/HelpButton';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
+import { filterByTestType } from '@/lib/testTypeUtils';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -62,11 +63,12 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
     enabled: !!user,
   });
 
-  // Get question ID prefix for current test type (T, G, or E)
-  const testTypePrefix = selectedTest === 'technician' ? 'T' : selectedTest === 'general' ? 'G' : 'E';
-
   // Filter attempts by selected test type, then calculate weak questions
-  const filteredAttempts = questionAttempts?.filter(a => a.display_name?.startsWith(testTypePrefix)) || [];
+  const filteredAttempts = filterByTestType(
+    questionAttempts || [],
+    selectedTest,
+    (a) => a.display_name
+  );
   const weakQuestionIds = filteredAttempts.length > 0
     ? calculateWeakQuestionIds(filteredAttempts)
     : [];

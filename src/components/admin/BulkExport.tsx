@@ -65,11 +65,11 @@ export function BulkExport<T>({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={handleExportCSV}>
-          <FileSpreadsheet className="w-4 h-4 mr-2 text-green-500" />
+          <FileSpreadsheet className="w-4 h-4 mr-2 text-success" />
           Export as CSV
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleExportJSON}>
-          <FileJson className="w-4 h-4 mr-2 text-blue-500" />
+          <FileJson className="w-4 h-4 mr-2 text-info" />
           Export as JSON
         </DropdownMenuItem>
       </DropdownMenuContent>

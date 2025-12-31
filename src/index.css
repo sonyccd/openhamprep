@@ -35,6 +35,12 @@
     --success: 150 70% 28%;
     --success-foreground: 0 0% 100%;
 
+    --info: 210 80% 45%;
+    --info-foreground: 0 0% 100%;
+
+    --warning: 25 90% 48%;
+    --warning-foreground: 0 0% 100%;
+
     --border: 220 13% 82%;
     --input: 220 13% 85%;
     --ring: 35 90% 45%;
@@ -84,6 +90,12 @@
 
     --success: 150 70% 45%;
     --success-foreground: 222 47% 8%;
+
+    --info: 210 80% 55%;
+    --info-foreground: 222 47% 8%;
+
+    --warning: 25 90% 55%;
+    --warning-foreground: 222 47% 8%;
 
     --border: 222 25% 20%;
     --input: 222 30% 18%;

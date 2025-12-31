@@ -35,20 +35,20 @@ describe('LinkPreview', () => {
   });
 
   describe('Type Colors', () => {
-    it('applies red styling for video type', () => {
+    it('applies destructive styling for video type', () => {
       const link = createLink({ type: 'video' });
       render(<LinkPreview link={link} />);
 
       const badge = screen.getByText('Video').closest('span');
-      expect(badge).toHaveClass('text-red-500', 'bg-red-500/10');
+      expect(badge).toHaveClass('text-destructive', 'bg-destructive/10');
     });
 
-    it('applies blue styling for article type', () => {
+    it('applies info styling for article type', () => {
       const link = createLink({ type: 'article' });
       render(<LinkPreview link={link} />);
 
       const badge = screen.getByText('Article').closest('span');
-      expect(badge).toHaveClass('text-blue-500', 'bg-blue-500/10');
+      expect(badge).toHaveClass('text-info', 'bg-info/10');
     });
 
     it('applies muted styling for website type', () => {

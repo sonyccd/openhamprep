@@ -161,7 +161,7 @@ Wrap up the topic with a brief summary of what was covered.
           <FileText className="w-5 h-5 text-primary" />
           <h3 className="font-semibold text-foreground">Content Editor</h3>
           {hasChanges && (
-            <span className="text-xs text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded">
+            <span className="text-xs text-warning bg-warning/10 px-2 py-0.5 rounded">
               Unsaved changes
             </span>
           )}

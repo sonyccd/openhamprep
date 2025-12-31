@@ -23,6 +23,7 @@ import { FigureUpload } from "./FigureUpload";
 import { SyncStatusBadge } from "./SyncStatusBadge";
 import { useAdminTopics } from "@/hooks/useTopics";
 import { getSafeUrl } from "@/lib/utils";
+import { LINK_TYPE_CONFIG, type LinkType } from "@/lib/resourceTypes";
 
 interface LinkData {
   url: string;
@@ -547,7 +548,7 @@ export function AdminQuestions({
                 <div className="space-y-2 mt-2">
                   {editingQuestion.links.map((link, index) => (
                     <div key={index} className="flex items-center gap-2 p-2 rounded bg-secondary/30 border border-border">
-                      <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${link.type === 'video' ? 'bg-red-500/20 text-red-400' : link.type === 'article' ? 'bg-blue-500/20 text-blue-400' : 'bg-secondary text-muted-foreground'}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${LINK_TYPE_CONFIG[link.type as LinkType]?.bgClass ?? 'bg-secondary'} ${LINK_TYPE_CONFIG[link.type as LinkType]?.colorClass ?? 'text-muted-foreground'}`}>
                         {link.type}
                       </span>
                       <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-sm text-foreground hover:text-primary truncate flex items-center gap-1">

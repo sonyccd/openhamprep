@@ -206,15 +206,15 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
           </p>
 
           <div className="grid grid-cols-2 gap-4 w-full max-w-xs mb-6">
-            <Card className="bg-green-500/10 border-green-500/30">
+            <Card className="bg-success/10 border-success/30">
               <CardContent className="py-4 text-center">
-                <div className="text-3xl font-bold text-green-500">{knownCount}</div>
+                <div className="text-3xl font-bold text-success">{knownCount}</div>
                 <div className="text-sm text-muted-foreground">Known</div>
               </CardContent>
             </Card>
-            <Card className="bg-red-500/10 border-red-500/30">
+            <Card className="bg-destructive/10 border-destructive/30">
               <CardContent className="py-4 text-center">
-                <div className="text-3xl font-bold text-red-500">{unknownCount}</div>
+                <div className="text-3xl font-bold text-destructive">{unknownCount}</div>
                 <div className="text-sm text-muted-foreground">Need Review</div>
               </CardContent>
             </Card>
@@ -261,8 +261,8 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
       {/* Progress */}
       <div className="mb-6">
         <div className="flex justify-between text-xs text-muted-foreground mb-1">
-          <span className="text-green-500">{stats.known.size} known</span>
-          <span className="text-red-500">{stats.unknown.size} need review</span>
+          <span className="text-success">{stats.known.size} known</span>
+          <span className="text-destructive">{stats.unknown.size} need review</span>
         </div>
         <Progress value={sessionProgress} className="h-2" />
       </div>
@@ -316,19 +316,19 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
             <ChevronLeft className="w-5 h-5" />
           </Button>
 
-          <Button 
+          <Button
             variant="outline"
             onClick={handleMarkUnknown}
-            className="gap-2 text-red-500 hover:text-red-500 hover:bg-red-500/10 border-red-500/30"
+            className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
           >
             <XCircle className="w-4 h-4" />
             Need Review
           </Button>
 
-          <Button 
+          <Button
             variant="outline"
             onClick={handleMarkKnown}
-            className="gap-2 text-green-500 hover:text-green-500 hover:bg-green-500/10 border-green-500/30"
+            className="gap-2 text-success hover:text-success hover:bg-success/10 border-success/30"
           >
             <CheckCircle2 className="w-4 h-4" />
             Got It

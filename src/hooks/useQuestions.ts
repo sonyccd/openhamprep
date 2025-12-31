@@ -1,13 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TestType } from "@/types/navigation";
-
-// Map test type to question ID prefix
-const testTypePrefixMap: Record<TestType, string> = {
-  technician: 'T',
-  general: 'G',
-  extra: 'E',
-};
+import { getTestTypePrefix } from "@/lib/testTypeUtils";
 
 export interface LinkData {
   url: string;
@@ -133,7 +127,7 @@ export function useQuestions(testType?: TestType) {
 
       // Filter by test type if provided (using displayName which has T/G/E prefix)
       if (testType) {
-        const prefix = testTypePrefixMap[testType];
+        const prefix = getTestTypePrefix(testType);
         questions = questions.filter(q => q.displayName.startsWith(prefix));
       }
 
