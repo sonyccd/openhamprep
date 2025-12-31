@@ -10,7 +10,7 @@ VALUES (
     'image/jpeg',
     'image/gif',
     'image/webp',
-    'image/svg+xml',
+    -- Note: SVG excluded due to XSS risk (can contain executable JavaScript)
     'application/pdf',
     'text/markdown',
     'text/plain',

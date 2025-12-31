@@ -6,6 +6,17 @@ interface TopicContentProps {
   content: string;
 }
 
+/**
+ * Generates a URL-friendly ID from heading text for TOC linking.
+ * Converts to lowercase, removes special characters, and replaces spaces with hyphens.
+ */
+function generateHeadingId(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-");
+}
+
 export function TopicContent({ content }: TopicContentProps) {
   return (
     <article className="prose prose-slate dark:prose-invert max-w-none">
@@ -13,54 +24,33 @@ export function TopicContent({ content }: TopicContentProps) {
         remarkPlugins={[remarkGfm]}
         components={{
           // Headings with IDs for TOC linking
-          h1: ({ children, ...props }) => {
-            const text = String(children);
-            const id = text
-              .toLowerCase()
-              .replace(/[^\w\s-]/g, "")
-              .replace(/\s+/g, "-");
-            return (
-              <h1
-                id={id}
-                className="text-3xl font-bold text-foreground mt-8 mb-4 first:mt-0 scroll-mt-4"
-                {...props}
-              >
-                {children}
-              </h1>
-            );
-          },
-          h2: ({ children, ...props }) => {
-            const text = String(children);
-            const id = text
-              .toLowerCase()
-              .replace(/[^\w\s-]/g, "")
-              .replace(/\s+/g, "-");
-            return (
-              <h2
-                id={id}
-                className="text-2xl font-semibold text-foreground mt-6 mb-3 scroll-mt-4"
-                {...props}
-              >
-                {children}
-              </h2>
-            );
-          },
-          h3: ({ children, ...props }) => {
-            const text = String(children);
-            const id = text
-              .toLowerCase()
-              .replace(/[^\w\s-]/g, "")
-              .replace(/\s+/g, "-");
-            return (
-              <h3
-                id={id}
-                className="text-xl font-semibold text-foreground mt-4 mb-2 scroll-mt-4"
-                {...props}
-              >
-                {children}
-              </h3>
-            );
-          },
+          h1: ({ children, ...props }) => (
+            <h1
+              id={generateHeadingId(String(children))}
+              className="text-3xl font-bold text-foreground mt-8 mb-4 first:mt-0 scroll-mt-4"
+              {...props}
+            >
+              {children}
+            </h1>
+          ),
+          h2: ({ children, ...props }) => (
+            <h2
+              id={generateHeadingId(String(children))}
+              className="text-2xl font-semibold text-foreground mt-6 mb-3 scroll-mt-4"
+              {...props}
+            >
+              {children}
+            </h2>
+          ),
+          h3: ({ children, ...props }) => (
+            <h3
+              id={generateHeadingId(String(children))}
+              className="text-xl font-semibold text-foreground mt-4 mb-2 scroll-mt-4"
+              {...props}
+            >
+              {children}
+            </h3>
+          ),
           // Paragraphs
           p: ({ children, ...props }) => (
             <p className="text-foreground/90 leading-7 mb-4" {...props}>

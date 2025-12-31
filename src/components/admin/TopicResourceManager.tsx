@@ -67,7 +67,8 @@ const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 
 const ALLOWED_FILE_TYPES: Record<string, string[]> = {
   pdf: ["application/pdf"],
-  image: ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"],
+  // Note: SVG excluded due to XSS risk (can contain executable JavaScript)
+  image: ["image/jpeg", "image/png", "image/gif", "image/webp"],
   video: ["video/mp4", "video/webm", "video/ogg"],
   article: ["application/pdf", "text/plain", "text/markdown"],
 };
