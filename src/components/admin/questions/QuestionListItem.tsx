@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, Link as LinkIcon, BookOpen, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Pencil, Link as LinkIcon, BookOpen, ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
 import { SyncStatusBadge } from '../SyncStatusBadge';
 import type { Question } from './types';
 
@@ -43,7 +43,7 @@ export function QuestionListItem({
               {question.linked_topic_ids.length !== 1 ? 's' : ''}
             </Badge>
           )}
-          {question.forum_url && (
+          {question.forum_url ? (
             <SyncStatusBadge
               status={question.discourse_sync_status}
               syncAt={question.discourse_sync_at}
@@ -52,6 +52,11 @@ export function QuestionListItem({
               forumUrl={question.forum_url}
               onRetrySync={onRetrySync}
             />
+          ) : (
+            <Badge variant="outline" className="text-xs text-muted-foreground">
+              <MessageSquare className="w-3 h-3 mr-1" />
+              No Topic
+            </Badge>
           )}
           {feedbackStats && (
             <Badge variant="outline" className="text-xs gap-1">

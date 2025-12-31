@@ -14,6 +14,7 @@ import {
   ExternalLink,
   RefreshCw,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { getSafeUrl } from "@/lib/utils";
@@ -41,9 +42,11 @@ export function SyncStatusBadge({
   const isSynced = status === "synced";
   const isError = status === "error";
   const isPending = status === "pending";
+  // Show "needs verification" when forum_url exists but status is null
+  const isUnknown = !status && forumUrl;
 
-  // Only show badge if there's a sync status to display
-  if (!status) return null;
+  // Only show badge if there's a sync status or forum_url to display
+  if (!status && !forumUrl) return null;
 
   const handleRetry = async () => {
     setIsRetrying(true);
@@ -65,13 +68,16 @@ export function SyncStatusBadge({
               ? "bg-success/20 text-success hover:bg-success/30"
               : isError
                 ? "bg-destructive/20 text-destructive hover:bg-destructive/30"
-                : "bg-muted text-muted-foreground"
+                : isUnknown
+                  ? "bg-amber-500/20 text-amber-600 hover:bg-amber-500/30"
+                  : "bg-muted text-muted-foreground"
           }`}
         >
           {isSynced && <CheckCircle className="w-3 h-3 mr-1" />}
           {isError && <XCircle className="w-3 h-3 mr-1" />}
           {isPending && <RefreshCw className="w-3 h-3 mr-1 animate-spin" />}
-          {isSynced ? "Synced" : isError ? "Sync Error" : "Pending"}
+          {isUnknown && <AlertTriangle className="w-3 h-3 mr-1" />}
+          {isSynced ? "Synced" : isError ? "Sync Error" : isUnknown ? "Unverified" : "Pending"}
         </Badge>
       </DialogTrigger>
       <DialogContent className="max-w-md">
@@ -110,10 +116,12 @@ export function SyncStatusBadge({
                   ? "bg-success/20 text-success"
                   : isError
                     ? "bg-destructive/20 text-destructive"
-                    : "bg-muted text-muted-foreground"
+                    : isUnknown
+                      ? "bg-amber-500/20 text-amber-600"
+                      : "bg-muted text-muted-foreground"
               }
             >
-              {isSynced ? "Synced" : isError ? "Error" : "Pending"}
+              {isSynced ? "Synced" : isError ? "Error" : isUnknown ? "Unverified" : "Pending"}
             </Badge>
           </div>
           {syncAt && (

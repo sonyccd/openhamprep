@@ -503,19 +503,34 @@ serve(async (req) => {
       const result = await createDiscourseTopic(apiKey, username, categoryId, question as Question);
 
       if (result.success) {
-        // Save the forum URL to the database (use UUID for database update)
-        let dbUpdateSuccess = true;
-        if (result.topicUrl) {
-          const { error: updateError } = await supabase
-            .from('questions')
-            .update({ forum_url: result.topicUrl })
-            .eq('id', question.id);
+        // Save the forum URL and sync status to the database with retry logic
+        let dbUpdateSuccess = false;
+        const maxRetries = 3;
 
-          if (updateError) {
-            console.error(`[${requestId}] Failed to save forum_url for ${question.display_name}: ${updateError.message}`);
-            dbUpdateSuccess = false;
-          } else {
-            console.log(`[${requestId}] Saved forum_url for ${question.display_name}: ${result.topicUrl}`);
+        if (result.topicUrl) {
+          for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            const { error: updateError } = await supabase
+              .from('questions')
+              .update({
+                forum_url: result.topicUrl,
+                discourse_sync_status: 'synced',
+                discourse_sync_at: new Date().toISOString(),
+                discourse_sync_error: null,
+              })
+              .eq('id', question.id);
+
+            if (!updateError) {
+              dbUpdateSuccess = true;
+              console.log(`[${requestId}] Saved forum_url for ${question.display_name}: ${result.topicUrl}`);
+              break;
+            }
+
+            console.error(`[${requestId}] Attempt ${attempt}/${maxRetries} failed to save forum_url for ${question.display_name}: ${updateError.message}`);
+
+            if (attempt < maxRetries) {
+              // Exponential backoff: 1s, 2s, 4s
+              await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
+            }
           }
         }
 
@@ -523,13 +538,13 @@ serve(async (req) => {
           results.push({ questionId: question.display_name, status: 'created', topicId: result.topicId, topicUrl: result.topicUrl });
           created++;
         } else {
-          // Topic was created but DB update failed - report as partial success
+          // Topic was created but DB update failed after retries - report as partial success
           results.push({
             questionId: question.display_name,
             status: 'partial',
             topicId: result.topicId,
             topicUrl: result.topicUrl,
-            reason: 'Topic created in Discourse but failed to save forum_url to database'
+            reason: 'Topic created in Discourse but failed to save forum_url to database after 3 retries'
           });
           errors++;
         }
