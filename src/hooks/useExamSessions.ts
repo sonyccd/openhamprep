@@ -285,3 +285,60 @@ export const useBulkImportExamSessions = () => {
     },
   });
 };
+
+export interface GeocodeProgress {
+  processed: number;
+  remaining: number;
+  total: number;
+}
+
+export const useGeocodeExamSessions = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      initialCount,
+      onProgress,
+    }: {
+      initialCount: number;
+      onProgress?: (progress: GeocodeProgress) => void;
+    }) => {
+      let totalProcessed = 0;
+      let remaining = initialCount;
+
+      while (remaining > 0) {
+        const { data, error } = await supabase.functions.invoke('geocode-addresses');
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        totalProcessed += data.processed;
+        remaining = data.remaining;
+
+        if (onProgress) {
+          onProgress({
+            processed: totalProcessed,
+            remaining: remaining,
+            total: initialCount,
+          });
+        }
+
+        // Break if nothing was processed to avoid infinite loop
+        if (data.processed === 0) {
+          break;
+        }
+      }
+
+      return { processed: totalProcessed };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['exam-sessions'] });
+      toast.success(`Geocoded ${data.processed} sessions`);
+    },
+    onError: (error) => {
+      console.error('Geocoding exam sessions failed:', error);
+      toast.error('Geocoding failed: ' + error.message);
+    },
+  });
+};
