@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
@@ -68,6 +69,7 @@ export function SubelementPractice({
   onBack,
   testType
 }: SubelementPracticeProps) {
+  const { navigateToTopic } = useAppNavigation();
   const {
     data: allQuestions,
     isLoading,
@@ -453,7 +455,7 @@ export function SubelementPractice({
       </div>
 
       {/* Question */}
-      <QuestionCard question={question} selectedAnswer={selectedAnswer} onSelectAnswer={handleSelectAnswer} showResult={showResult} enableGlossaryHighlight />
+      <QuestionCard question={question} selectedAnswer={selectedAnswer} onSelectAnswer={handleSelectAnswer} showResult={showResult} enableGlossaryHighlight onTopicClick={navigateToTopic} />
 
       {/* Actions */}
       <div className="max-w-3xl mx-auto mt-8 flex justify-center gap-4">

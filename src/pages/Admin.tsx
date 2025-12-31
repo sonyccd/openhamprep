@@ -7,7 +7,8 @@ import { AdminGlossary } from "@/components/admin/AdminGlossary";
 import { AdminQuestions } from "@/components/admin/AdminQuestions";
 import { AdminStats } from "@/components/admin/AdminStats";
 import { AdminExamSessions } from "@/components/admin/AdminExamSessions";
-import { Loader2, ShieldAlert, BookOpen, MapPin } from "lucide-react";
+import { AdminTopics } from "@/components/admin/AdminTopics";
+import { Loader2, ShieldAlert, BookOpen, MapPin, Library } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppLayout } from "@/components/AppLayout";
 import { TestType } from "@/types/navigation";
@@ -25,7 +26,7 @@ export default function Admin() {
   const [sidebarTest, setSidebarTest] = useState<TestType>('technician');
   const [adminExamType, setAdminExamType] = useState<TestType>('technician');
   const [activeTab, setActiveTab] = useState("stats");
-  const [activeSection, setActiveSection] = useState<"exam" | "glossary" | "sessions">("exam");
+  const [activeSection, setActiveSection] = useState<"exam" | "glossary" | "sessions" | "topics">("exam");
   const [linkQuestionId, setLinkQuestionId] = useState("");
   useEffect(() => {
     if (!authLoading && !user) {
@@ -60,7 +61,7 @@ export default function Admin() {
     extra: 'Extra'
   };
   // Stats tab needs full page scroll, Questions/Glossary need fixed viewport with internal scroll
-  const needsFixedHeight = activeSection === "glossary" || activeSection === "sessions" || (activeSection === "exam" && activeTab === "questions");
+  const needsFixedHeight = activeSection === "glossary" || activeSection === "sessions" || activeSection === "topics" || (activeSection === "exam" && activeTab === "questions");
 
   return <AppLayout currentView="dashboard" onViewChange={handleViewChange} selectedTest={sidebarTest} onTestChange={setSidebarTest}>
       <div className={`flex-1 p-6 md:p-8 flex flex-col ${needsFixedHeight ? 'h-full overflow-hidden' : 'overflow-y-auto'}`}>
@@ -95,6 +96,15 @@ export default function Admin() {
               </div>
               <p className="text-sm text-muted-foreground">
                 Import and manage VE exam session locations
+              </p>
+            </button>
+            <button onClick={() => setActiveSection("topics")} className={`flex-1 min-w-[200px] p-4 rounded-lg border-2 transition-all text-left ${activeSection === "topics" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/50"}`}>
+              <div className="flex items-center gap-2 font-semibold text-foreground mb-1">
+                <Library className="w-4 h-4" />
+                Topics
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Create and manage learning topics with articles and resources
               </p>
             </button>
           </div>
@@ -141,12 +151,18 @@ export default function Admin() {
                 </span>
               </div>
               <AdminGlossary />
-            </div> : <div className="flex-1 flex flex-col min-h-0">
+            </div> : activeSection === "sessions" ? <div className="flex-1 flex flex-col min-h-0">
               <div className="flex items-center gap-2 mb-6">
                 <MapPin className="w-5 h-5 text-primary" />
                 <h2 className="text-xl font-semibold text-foreground">Exam Sessions</h2>
               </div>
               <AdminExamSessions />
+            </div> : <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex items-center gap-2 mb-6">
+                <Library className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold text-foreground">Topics</h2>
+              </div>
+              <AdminTopics />
             </div>}
         </div>
       </div>

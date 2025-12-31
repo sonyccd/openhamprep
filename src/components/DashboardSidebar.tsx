@@ -1,4 +1,4 @@
-import { Play, Zap, BookOpen, AlertTriangle, Bookmark, LogOut, Radio, PanelLeftClose, PanelLeft, BarChart3, Menu, Lock, ChevronDown, ChevronRight, BookText, Shield, MapPin, Users, ExternalLink, Award, GraduationCap } from "lucide-react";
+import { Play, Zap, BookOpen, AlertTriangle, Bookmark, LogOut, Radio, PanelLeftClose, PanelLeft, BarChart3, Menu, Lock, ChevronDown, ChevronRight, BookText, Shield, MapPin, Users, ExternalLink, Award, GraduationCap, Library } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -106,6 +106,10 @@ export function DashboardSidebar({
     label: 'Practice Test',
     icon: Play,
     disabled: !isTestAvailable
+  }, {
+    id: 'topics',
+    label: 'Topics',
+    icon: Library
   }];
 
   // Study group items
@@ -120,7 +124,7 @@ export function DashboardSidebar({
       disabled: !isTestAvailable
     }, {
       id: 'subelement-practice',
-      label: 'Study by Topic',
+      label: 'By Subelement',
       icon: BookOpen,
       disabled: !isTestAvailable
     }, {

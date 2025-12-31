@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink, ThumbsUp, ThumbsDown, Filter, X, Image } from "lucide-react";
+import { Plus, Trash2, Search, Loader2, Pencil, Link as LinkIcon, ExternalLink, ThumbsUp, ThumbsDown, X, Image, BookOpen } from "lucide-react";
 import { BulkImportQuestions } from "./BulkImportQuestions";
 import { BulkExport, escapeCSVField } from "./BulkExport";
 import { EditHistoryViewer, EditHistoryEntry } from "./EditHistoryViewer";
@@ -21,6 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { FigureUpload } from "./FigureUpload";
 import { SyncStatusBadge } from "./SyncStatusBadge";
+import { useAdminTopics } from "@/hooks/useTopics";
 import { getSafeUrl } from "@/lib/utils";
 
 interface LinkData {
@@ -34,12 +35,10 @@ interface LinkData {
 }
 interface Question {
   id: string;  // UUID
-  display_name: string;  // Human-readable ID (T1A01, etc.)
+  display_name: string;  // Human-readable ID (T1A01, etc.) - set by FCC
   question: string;
   options: string[];
   correct_answer: number;
-  subelement: string;
-  question_group: string;
   links?: LinkData[];
   explanation?: string | null;
   edit_history?: EditHistoryEntry[];
@@ -48,6 +47,7 @@ interface Question {
   discourse_sync_status?: string | null;
   discourse_sync_at?: string | null;
   discourse_sync_error?: string | null;
+  linked_topic_ids?: string[];
 }
 interface AdminQuestionsProps {
   testType: 'technician' | 'general' | 'extra';
@@ -67,9 +67,8 @@ export function AdminQuestions({
   const {
     data: feedbackStats = {}
   } = useExplanationFeedbackStats();
+  const { data: allTopics = [] } = useAdminTopics();
   const [searchTerm, setSearchTerm] = useState("");
-  const [subelementFilter, setSubelementFilter] = useState<string>("all");
-  const [groupFilter, setGroupFilter] = useState<string>("all");
   const [showNegativeFeedbackOnly, setShowNegativeFeedbackOnly] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
@@ -78,8 +77,6 @@ export function AdminQuestions({
   const [newQuestion, setNewQuestion] = useState("");
   const [newOptions, setNewOptions] = useState(["", "", "", ""]);
   const [newCorrectAnswer, setNewCorrectAnswer] = useState("0");
-  const [newSubelement, setNewSubelement] = useState("");
-  const [newQuestionGroup, setNewQuestionGroup] = useState("");
   const [newExplanation, setNewExplanation] = useState("");
   const [newFigureUrl, setNewFigureUrl] = useState<string | null>(null);
 
@@ -88,8 +85,6 @@ export function AdminQuestions({
   const [editQuestion, setEditQuestion] = useState("");
   const [editOptions, setEditOptions] = useState(["", "", "", ""]);
   const [editCorrectAnswer, setEditCorrectAnswer] = useState("0");
-  const [editSubelement, setEditSubelement] = useState("");
-  const [editQuestionGroup, setEditQuestionGroup] = useState("");
   const [editExplanation, setEditExplanation] = useState("");
   const [editFigureUrl, setEditFigureUrl] = useState<string | null>(null);
   const [editForumUrl, setEditForumUrl] = useState<string | null>(null);
@@ -105,7 +100,12 @@ export function AdminQuestions({
         data,
         error
       } = await supabase.from('questions')
-        .select('id, display_name, question, options, correct_answer, subelement, question_group, links, explanation, edit_history, figure_url, forum_url, discourse_sync_status, discourse_sync_at, discourse_sync_error')
+        .select(`
+          id, display_name, question, options, correct_answer,
+          links, explanation, edit_history, figure_url, forum_url,
+          discourse_sync_status, discourse_sync_at, discourse_sync_error,
+          topic_questions(topic_id)
+        `)
         .ilike('display_name', `${prefix}%`)
         .order('display_name', { ascending: true });
       if (error) throw error;
@@ -120,7 +120,8 @@ export function AdminQuestions({
         forum_url: q.forum_url,
         discourse_sync_status: q.discourse_sync_status,
         discourse_sync_at: q.discourse_sync_at,
-        discourse_sync_error: q.discourse_sync_error
+        discourse_sync_error: q.discourse_sync_error,
+        linked_topic_ids: (q.topic_questions as { topic_id: string }[] || []).map(tq => tq.topic_id)
       })) as Question[];
     }
   });
@@ -152,8 +153,6 @@ export function AdminQuestions({
         question: question.question.trim(),
         options: question.options,
         correct_answer: question.correct_answer,
-        subelement: question.subelement.trim(),
-        question_group: question.question_group.trim(),
         explanation: question.explanation?.trim() || null,
         links: [], // Links are now extracted from explanation
         edit_history: JSON.parse(JSON.stringify([historyEntry])),
@@ -209,12 +208,6 @@ export function AdminQuestions({
       if (originalQuestion.correct_answer !== question.correct_answer) {
         changes.correct_answer = { from: originalQuestion.correct_answer, to: question.correct_answer };
       }
-      if (originalQuestion.subelement !== question.subelement.trim()) {
-        changes.subelement = { from: originalQuestion.subelement, to: question.subelement.trim() };
-      }
-      if (originalQuestion.question_group !== question.question_group.trim()) {
-        changes.question_group = { from: originalQuestion.question_group, to: question.question_group.trim() };
-      }
       if ((originalQuestion.explanation || '') !== (question.explanation?.trim() || '')) {
         changes.explanation = { from: originalQuestion.explanation || '', to: question.explanation?.trim() || '' };
       }
@@ -241,8 +234,6 @@ export function AdminQuestions({
         question: question.question.trim(),
         options: question.options,
         correct_answer: question.correct_answer,
-        subelement: question.subelement.trim(),
-        question_group: question.question_group.trim(),
         explanation: question.explanation?.trim() || null,
         figure_url: question.figure_url || null,
         forum_url: question.forum_url || null,
@@ -402,35 +393,16 @@ export function AdminQuestions({
     setNewQuestion("");
     setNewOptions(["", "", "", ""]);
     setNewCorrectAnswer("0");
-    setNewSubelement("");
-    setNewQuestionGroup("");
     setNewExplanation("");
     setNewFigureUrl(null);
   };
-  // Get unique subelements and groups for filter dropdowns
-  const subelements = [...new Set(questions.map(q => q.subelement))].sort();
-  const groups = [...new Set(
-    questions
-      .filter(q => subelementFilter === "all" || q.subelement === subelementFilter)
-      .map(q => q.question_group)
-  )].sort();
-
   const filteredQuestions = questions.filter(q => {
     const matchesSearch = q.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           q.question.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSubelement = subelementFilter === "all" || q.subelement === subelementFilter;
-    const matchesGroup = groupFilter === "all" || q.question_group === groupFilter;
     const matchesNegativeFeedback = !showNegativeFeedbackOnly ||
       (feedbackStats[q.display_name] && feedbackStats[q.display_name].notHelpful > feedbackStats[q.display_name].helpful);
-    return matchesSearch && matchesSubelement && matchesGroup && matchesNegativeFeedback;
+    return matchesSearch && matchesNegativeFeedback;
   });
-  
-  // Reset group filter when subelement changes and group is no longer valid
-  useEffect(() => {
-    if (groupFilter !== "all" && !groups.includes(groupFilter)) {
-      setGroupFilter("all");
-    }
-  }, [subelementFilter, groups, groupFilter]);
   const handleAddQuestion = () => {
     if (!newId.trim() || !newQuestion.trim() || newOptions.some(o => !o.trim())) {
       toast.error("Please fill in all fields");
@@ -442,8 +414,6 @@ export function AdminQuestions({
       question: newQuestion,
       options: newOptions.map(o => o.trim()),
       correct_answer: parseInt(newCorrectAnswer),
-      subelement: newSubelement,
-      question_group: newQuestionGroup,
       explanation: newExplanation,
       links: [], // Links are now extracted from explanation
       figure_url: newFigureUrl
@@ -460,11 +430,15 @@ export function AdminQuestions({
     setEditQuestion(q.question);
     setEditOptions([...q.options]);
     setEditCorrectAnswer(q.correct_answer.toString());
-    setEditSubelement(q.subelement);
-    setEditQuestionGroup(q.question_group);
     setEditExplanation(q.explanation || "");
     setEditFigureUrl(q.figure_url || null);
     setEditForumUrl(q.forum_url || null);
+  };
+
+  // Get topic names for linked topics display
+  const getLinkedTopicNames = (topicIds: string[] | undefined) => {
+    if (!topicIds || topicIds.length === 0) return [];
+    return allTopics.filter(t => topicIds.includes(t.id)).map(t => t.title);
   };
   const updateEditOption = (index: number, value: string) => {
     const updated = [...editOptions];
@@ -479,11 +453,10 @@ export function AdminQuestions({
     updateQuestion.mutate({
       question: {
         id: editingQuestion.id,
+        display_name: editingQuestion.display_name,
         question: editQuestion,
         options: editOptions.map(o => o.trim()),
         correct_answer: parseInt(editCorrectAnswer),
-        subelement: editSubelement,
-        question_group: editQuestionGroup,
         explanation: editExplanation,
         figure_url: editFigureUrl,
         forum_url: editForumUrl?.trim() || null
@@ -504,17 +477,6 @@ export function AdminQuestions({
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Subelement</Label>
-                <Input placeholder="e.g., T1" value={editSubelement} onChange={e => setEditSubelement(e.target.value)} />
-              </div>
-              <div>
-                <Label>Question Group</Label>
-                <Input placeholder="e.g., T1A" value={editQuestionGroup} onChange={e => setEditQuestionGroup(e.target.value)} />
-              </div>
-            </div>
-            
             <div>
               <Label>Question Text</Label>
               <Textarea placeholder="Enter the question..." value={editQuestion} onChange={e => setEditQuestion(e.target.value)} rows={3} />
@@ -635,6 +597,36 @@ export function AdminQuestions({
 
             <Separator />
 
+            {/* Linked Topics (Read-only) */}
+            {editingQuestion && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4" />
+                  Linked Topics
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Topics are linked from the Topics admin section. Go to Admin &gt; Topics to manage topic-question links.
+                </p>
+                {(() => {
+                  const linkedTopicNames = getLinkedTopicNames(editingQuestion.linked_topic_ids);
+                  return linkedTopicNames.length > 0 ? (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {linkedTopicNames.map((name, index) => (
+                        <Badge key={index} variant="secondary" className="bg-primary/10">
+                          <BookOpen className="w-3 h-3 mr-1" />
+                          {name}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">No topics linked</p>
+                  );
+                })()}
+              </div>
+            )}
+
+            <Separator />
+
             <EditHistoryViewer 
               history={editingQuestion?.edit_history || []} 
               entityType="question" 
@@ -694,7 +686,7 @@ export function AdminQuestions({
                 filename={`${testType}_questions`}
                 itemLabel="questions"
                 formatCSV={(items) => {
-                  const header = 'display_name,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group,explanation';
+                  const header = 'display_name,question,option_a,option_b,option_c,option_d,correct_answer,explanation';
                   const rows = items.map(q => [
                     escapeCSVField(q.display_name),
                     escapeCSVField(q.question),
@@ -703,8 +695,6 @@ export function AdminQuestions({
                     escapeCSVField(q.options[2]),
                     escapeCSVField(q.options[3]),
                     ['A', 'B', 'C', 'D'][q.correct_answer],
-                    escapeCSVField(q.subelement),
-                    escapeCSVField(q.question_group),
                     escapeCSVField(q.explanation || ''),
                   ].join(','));
                   return [header, ...rows].join('\n');
@@ -715,8 +705,6 @@ export function AdminQuestions({
                   question: q.question,
                   options: q.options,
                   correct_answer: q.correct_answer,
-                  subelement: q.subelement,
-                  question_group: q.question_group,
                   explanation: q.explanation || null,
                   links: q.links || [],
                 }))}
@@ -734,21 +722,14 @@ export function AdminQuestions({
                   <DialogTitle>Add New Question</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <Label>Question ID</Label>
-                      <Input placeholder="e.g., T1A01" value={newId} onChange={e => setNewId(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label>Subelement</Label>
-                      <Input placeholder="e.g., T1" value={newSubelement} onChange={e => setNewSubelement(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label>Question Group</Label>
-                      <Input placeholder="e.g., T1A" value={newQuestionGroup} onChange={e => setNewQuestionGroup(e.target.value)} />
-                    </div>
+                  <div>
+                    <Label>Question ID (FCC assigned, e.g., T1A01)</Label>
+                    <Input placeholder="e.g., T1A01" value={newId} onChange={e => setNewId(e.target.value)} />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      This is the official FCC question ID and cannot be changed after creation.
+                    </p>
                   </div>
-                  
+
                   <div>
                     <Label>Question Text</Label>
                     <Textarea placeholder="Enter the question..." value={newQuestion} onChange={e => setNewQuestion(e.target.value)} rows={3} />
@@ -838,30 +819,7 @@ export function AdminQuestions({
               <Input placeholder="Search questions..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <Filter className="w-4 h-4 text-muted-foreground" />
-              <Select value={subelementFilter} onValueChange={setSubelementFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Subelement" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Subelements</SelectItem>
-                  {subelements.map(sub => (
-                    <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={groupFilter} onValueChange={setGroupFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Group" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Groups</SelectItem>
-                  {groups.map(grp => (
-                    <SelectItem key={grp} value={grp}>{grp}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex items-center gap-2 ml-2">
+              <div className="flex items-center gap-2">
                 <Checkbox 
                   id="negative-feedback-filter"
                   checked={showNegativeFeedbackOnly}
@@ -875,19 +833,15 @@ export function AdminQuestions({
                   Negative feedback
                 </label>
               </div>
-              {(subelementFilter !== "all" || groupFilter !== "all" || showNegativeFeedbackOnly) && (
+              {showNegativeFeedbackOnly && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    setSubelementFilter("all");
-                    setGroupFilter("all");
-                    setShowNegativeFeedbackOnly(false);
-                  }}
+                  onClick={() => setShowNegativeFeedbackOnly(false)}
                   className="text-muted-foreground"
                 >
                   <X className="w-4 h-4 mr-1" />
-                  Clear filters
+                  Clear filter
                 </Button>
               )}
               <span className="text-sm text-muted-foreground ml-auto">
@@ -902,16 +856,17 @@ export function AdminQuestions({
             </div> : <div className="space-y-3 h-full overflow-y-auto pb-4">
               {filteredQuestions.map(q => <div key={q.id} className={`flex items-start justify-between p-4 rounded-lg border bg-card hover:bg-secondary/30 transition-colors ${highlightQuestionId === q.display_name ? 'border-amber-500 bg-amber-500/5' : 'border-border'}`}>
                   <div className="flex-1 min-w-0 mr-4">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-mono text-sm text-primary bg-primary/10 px-2 py-0.5 rounded">
                         {q.display_name}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {q.subelement} / {q.question_group}
                       </span>
                       {q.links && q.links.length > 0 && <Badge variant="secondary" className="text-xs">
                           <LinkIcon className="w-3 h-3 mr-1" />
                           {q.links.length}
+                        </Badge>}
+                      {q.linked_topic_ids && q.linked_topic_ids.length > 0 && <Badge variant="outline" className="text-xs bg-primary/5">
+                          <BookOpen className="w-3 h-3 mr-1" />
+                          {q.linked_topic_ids.length} topic{q.linked_topic_ids.length !== 1 ? 's' : ''}
                         </Badge>}
                       {q.forum_url && (
                         <SyncStatusBadge

@@ -5,10 +5,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useExplanationFeedback } from "@/hooks/useExplanationFeedback";
 import { cn, getSafeUrl } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Bookmark, BookmarkCheck, MessageSquare, ThumbsUp, ThumbsDown, ExternalLink, Users, Link } from "lucide-react";
+import { Bookmark, BookmarkCheck, MessageSquare, ThumbsUp, ThumbsDown, ExternalLink, Users, Link, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Popover,
@@ -54,6 +55,7 @@ interface QuestionCardProps {
   totalQuestions?: number;
   enableGlossaryHighlight?: boolean; // Enable glossary term highlighting (disabled during practice tests)
   hideLinks?: boolean; // Hide links during active practice test (show only on review)
+  onTopicClick?: (slug: string) => void; // Navigate to topic when clicked
 }
 
 export function QuestionCard({
@@ -65,6 +67,7 @@ export function QuestionCard({
   totalQuestions,
   hideLinks = false,
   enableGlossaryHighlight = false,
+  onTopicClick,
 }: QuestionCardProps) {
   const options = ['A', 'B', 'C', 'D'] as const;
   const { user } = useAuth();
@@ -428,6 +431,32 @@ export function QuestionCard({
                 </div>
               ) : null;
             })()}
+
+            {/* Related Topics */}
+            {question.topics && question.topics.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <BookOpen className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                  <span className="text-sm font-medium text-foreground">Study this topic:</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {question.topics.map((topic) => (
+                    <Badge
+                      key={topic.id}
+                      variant="secondary"
+                      className={cn(
+                        "text-sm py-1.5 px-3",
+                        onTopicClick && "cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                      )}
+                      onClick={() => onTopicClick?.(topic.slug)}
+                    >
+                      <BookOpen className="w-3 h-3 mr-1.5" aria-hidden="true" />
+                      {topic.title}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </div>

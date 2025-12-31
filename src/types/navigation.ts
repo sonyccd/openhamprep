@@ -1,14 +1,16 @@
-export type View = 
-  | 'dashboard' 
-  | 'practice-test' 
-  | 'random-practice' 
-  | 'weak-questions' 
-  | 'bookmarks' 
-  | 'subelement-practice' 
-  | 'review-test' 
-  | 'glossary' 
-  | 'glossary-flashcards' 
-  | 'find-test-site';
+export type View =
+  | 'dashboard'
+  | 'practice-test'
+  | 'random-practice'
+  | 'weak-questions'
+  | 'bookmarks'
+  | 'subelement-practice'
+  | 'review-test'
+  | 'glossary'
+  | 'glossary-flashcards'
+  | 'find-test-site'
+  | 'topics'
+  | 'topic-detail';
 
 export type TestType = 'technician' | 'general' | 'extra';
 

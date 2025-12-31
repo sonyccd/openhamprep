@@ -6,6 +6,10 @@ interface AppNavigationContextType {
   setCurrentView: (view: View) => void;
   reviewingTestId: string | null;
   setReviewingTestId: (id: string | null) => void;
+  selectedTopicSlug: string | null;
+  setSelectedTopicSlug: (slug: string | null) => void;
+  navigateToTopic: (slug: string) => void;
+  navigateToTopics: () => void;
 }
 
 const AppNavigationContext = createContext<AppNavigationContextType | undefined>(undefined);
@@ -13,13 +17,28 @@ const AppNavigationContext = createContext<AppNavigationContextType | undefined>
 export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [reviewingTestId, setReviewingTestId] = useState<string | null>(null);
+  const [selectedTopicSlug, setSelectedTopicSlug] = useState<string | null>(null);
+
+  const navigateToTopic = (slug: string) => {
+    setSelectedTopicSlug(slug);
+    setCurrentView('topic-detail');
+  };
+
+  const navigateToTopics = () => {
+    setSelectedTopicSlug(null);
+    setCurrentView('topics');
+  };
 
   return (
-    <AppNavigationContext.Provider value={{ 
-      currentView, 
-      setCurrentView, 
-      reviewingTestId, 
-      setReviewingTestId 
+    <AppNavigationContext.Provider value={{
+      currentView,
+      setCurrentView,
+      reviewingTestId,
+      setReviewingTestId,
+      selectedTopicSlug,
+      setSelectedTopicSlug,
+      navigateToTopic,
+      navigateToTopics,
     }}>
       {children}
     </AppNavigationContext.Provider>

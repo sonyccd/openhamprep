@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Question, useQuestions } from "@/hooks/useQuestions";
 import { QuestionCard } from "@/components/QuestionCard";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, ArrowRight, Trophy, XCircle, Loader2, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
@@ -22,6 +23,7 @@ const indexToAnswer: Record<number, 'A' | 'B' | 'C' | 'D'> = {
 
 export function TestResultReview({ testResultId, onBack }: TestResultReviewProps) {
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
+  const { navigateToTopic } = useAppNavigation();
   const { data: allQuestions } = useQuestions();
 
   // Fetch the test result
@@ -113,6 +115,8 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
           showResult={true}
           questionNumber={reviewIndex + 1}
           totalQuestions={totalQuestions}
+          enableGlossaryHighlight
+          onTopicClick={navigateToTopic}
         />
 
         <div className="max-w-3xl mx-auto mt-8 flex justify-between">

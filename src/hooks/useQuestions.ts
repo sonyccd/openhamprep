@@ -19,6 +19,12 @@ export interface LinkData {
   unfurledAt?: string;
 }
 
+export interface QuestionTopic {
+  id: string;
+  slug: string;
+  title: string;
+}
+
 export interface Question {
   id: string;  // UUID
   displayName: string;  // Human-readable ID (T1A01, G2B03, etc.)
@@ -36,6 +42,16 @@ export interface Question {
   explanation?: string | null;
   forumUrl?: string | null;
   figureUrl?: string | null;
+  topics?: QuestionTopic[];  // Related topics for this question
+}
+
+interface DbTopicQuestion {
+  topic: {
+    id: string;
+    slug: string;
+    title: string;
+    is_published: boolean;
+  };
 }
 
 interface DbQuestion {
@@ -50,6 +66,7 @@ interface DbQuestion {
   explanation: string | null;
   forum_url: string | null;
   figure_url: string | null;
+  topic_questions?: DbTopicQuestion[];
 }
 
 const answerMap: Record<number, 'A' | 'B' | 'C' | 'D'> = {
@@ -62,6 +79,16 @@ const answerMap: Record<number, 'A' | 'B' | 'C' | 'D'> = {
 function transformQuestion(dbQuestion: DbQuestion): Question {
   const options = dbQuestion.options as string[];
   const links = (dbQuestion.links as LinkData[]) || [];
+
+  // Extract topics from the junction table, filtering to only published topics
+  const topics: QuestionTopic[] = (dbQuestion.topic_questions || [])
+    .filter(tq => tq.topic?.is_published)
+    .map(tq => ({
+      id: tq.topic.id,
+      slug: tq.topic.slug,
+      title: tq.topic.title,
+    }));
+
   return {
     id: dbQuestion.id,
     displayName: dbQuestion.display_name,
@@ -79,6 +106,7 @@ function transformQuestion(dbQuestion: DbQuestion): Question {
     explanation: dbQuestion.explanation,
     forumUrl: dbQuestion.forum_url,
     figureUrl: dbQuestion.figure_url,
+    topics: topics.length > 0 ? topics : undefined,
   };
 }
 
@@ -93,7 +121,12 @@ export function useQuestions(testType?: TestType) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
-        .select('*');
+        .select(`
+          *,
+          topic_questions(
+            topic:topics(id, slug, title, is_published)
+          )
+        `);
 
       if (error) throw error;
       let questions = (data as DbQuestion[]).map(transformQuestion);
@@ -147,11 +180,14 @@ export function useQuestion(questionId: string | undefined) {
         if (found) return found;
       }
 
-      // Fallback: fetch directly from database
-      // Use the appropriate column based on ID format
+      // Fallback: fetch directly from database with topic associations
       const column = lookupByUUID ? 'id' : 'display_name';
-      // Use eq for UUID lookups (exact match), ilike for display_name (case-insensitive)
-      const query = supabase.from('questions').select('*');
+      const query = supabase.from('questions').select(`
+        *,
+        topic_questions(
+          topic:topics(id, slug, title, is_published)
+        )
+      `);
       const { data, error } = lookupByUUID
         ? await query.eq(column, questionId).single()
         : await query.ilike(column, questionId).single();
