@@ -8,39 +8,39 @@ import { Topic } from '@/hooks/useTopics';
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    aside: ({ children, ...props }: any) => <aside {...props}>{children}</aside>,
-    main: ({ children, ...props }: any) => <main {...props}>{children}</main>,
+    div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
+    aside: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <aside {...props}>{children}</aside>,
+    main: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <main {...props}>{children}</main>,
   },
 }));
 
 // Mock child components to simplify testing
 vi.mock('./TopicTableOfContents', () => ({
-  TopicTableOfContents: ({ content }: any) => (
+  TopicTableOfContents: ({ content }: { content?: string }) => (
     <div data-testid="table-of-contents">TOC for content length: {content?.length || 0}</div>
   ),
 }));
 
 vi.mock('./TopicContent', () => ({
-  TopicContent: ({ content }: any) => (
+  TopicContent: ({ content }: { content: string }) => (
     <div data-testid="topic-content">{content}</div>
   ),
 }));
 
 vi.mock('./TopicResourcePanel', () => ({
-  TopicResourcePanel: ({ resources }: any) => (
+  TopicResourcePanel: ({ resources }: { resources?: unknown[] }) => (
     <div data-testid="resource-panel">Resources: {resources?.length || 0}</div>
   ),
 }));
 
 vi.mock('./TopicQuestionsPanel', () => ({
-  TopicQuestionsPanel: ({ topicId }: any) => (
+  TopicQuestionsPanel: ({ topicId }: { topicId: string }) => (
     <div data-testid="questions-panel">Questions for: {topicId}</div>
   ),
 }));
 
 vi.mock('./TopicProgressButton', () => ({
-  TopicProgressButton: ({ topicId }: any) => (
+  TopicProgressButton: ({ topicId }: { topicId: string }) => (
     <button data-testid="progress-button">Progress: {topicId}</button>
   ),
 }));

@@ -57,7 +57,7 @@ const mockTopics: Topic[] = [
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
     subelements: [],
-    resources: [{ id: 'r1' }] as any,
+    resources: [{ id: 'r1' }] as Topic['resources'],
   },
   {
     id: 'topic-2',

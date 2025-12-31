@@ -41,7 +41,8 @@ describe('TopicResourcePanel', () => {
     });
 
     it('should render nothing when resources is undefined', () => {
-      const { container } = render(<TopicResourcePanel resources={undefined as any} />);
+      // @ts-expect-error Testing undefined prop handling
+      const { container } = render(<TopicResourcePanel resources={undefined} />);
       expect(container.firstChild).toBeNull();
     });
   });

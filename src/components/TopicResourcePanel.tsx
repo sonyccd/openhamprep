@@ -59,8 +59,21 @@ function ResourceItem({ resource }: { resource: TopicResource }) {
 
   const isUploaded = !!resource.storage_path;
 
-  // Check if it's a YouTube video
-  const isYouTube = url?.includes("youtube.com") || url?.includes("youtu.be");
+  // Check if it's a YouTube video by parsing the URL and checking the host
+  const isYouTube = (() => {
+    if (!url) return false;
+    try {
+      const parsedUrl = new URL(url);
+      const host = parsedUrl.hostname.toLowerCase();
+      // Only match exact YouTube domains
+      return host === "youtube.com" ||
+             host === "www.youtube.com" ||
+             host === "youtu.be" ||
+             host === "m.youtube.com";
+    } catch {
+      return false;
+    }
+  })();
 
   return (
     <a
