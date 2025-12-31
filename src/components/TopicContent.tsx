@@ -1,5 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import { cn } from "@/lib/utils";
 
 interface TopicContentProps {
@@ -21,7 +23,8 @@ export function TopicContent({ content }: TopicContentProps) {
   return (
     <article className="prose prose-slate dark:prose-invert max-w-none">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeKatex]}
         components={{
           // Headings with IDs for TOC linking
           h1: ({ children, ...props }) => (

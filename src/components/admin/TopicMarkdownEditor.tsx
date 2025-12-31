@@ -231,7 +231,7 @@ Wrap up the topic with a brief summary of what was covered.
 
       {/* Help text */}
       <div className="mt-2 text-xs text-muted-foreground shrink-0">
-        Supports Markdown: **bold**, *italic*, `code`, [links](url), # headings, - lists, and more.
+        Supports Markdown: **bold**, *italic*, `code`, [links](url), # headings, - lists, and math: $inline$ or $$block$$.
         Press Ctrl+S to save.
       </div>
     </div>
