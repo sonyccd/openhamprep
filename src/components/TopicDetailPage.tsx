@@ -30,7 +30,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   // Loading state
   if (topicLoading) {
     return (
-      <div className="flex-1 overflow-y-auto py-8 px-4 md:px-8">
+      <div className="flex-1 py-8 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Header skeleton */}
           <div className="mb-8">
@@ -87,7 +87,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   const displayContent = content || `# ${topic.title}\n\n${topic.description || "Content coming soon..."}\n\nThis topic is still being developed. Check back later for the full article.`;
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
