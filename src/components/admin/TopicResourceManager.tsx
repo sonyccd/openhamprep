@@ -142,7 +142,13 @@ export function TopicResourceManager({
         display_order: maxOrder + 1,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Clean up uploaded file if database insert fails
+        if (storagePath) {
+          await supabase.storage.from("topic-content").remove([storagePath]);
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-topics"] });

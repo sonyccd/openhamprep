@@ -4,7 +4,7 @@ VALUES (
   'topic-content',
   'topic-content',
   true,
-  10485760, -- 10 MB in bytes (for PDFs and larger files)
+  26214400, -- 25 MB in bytes (matches TopicResourceManager MAX_FILE_SIZE)
   ARRAY[
     'image/png',
     'image/jpeg',
@@ -13,7 +13,10 @@ VALUES (
     'image/svg+xml',
     'application/pdf',
     'text/markdown',
-    'text/plain'
+    'text/plain',
+    'video/mp4',
+    'video/webm',
+    'video/ogg'
   ]
 )
 ON CONFLICT (id) DO NOTHING;
