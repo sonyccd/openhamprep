@@ -64,7 +64,6 @@ export function DashboardReadiness({
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      data-tour="dashboard-readiness"
       className={cn('rounded-xl p-5 mb-6 border-2', colors.container)}
     >
       <div className="flex items-center gap-4 mb-3">

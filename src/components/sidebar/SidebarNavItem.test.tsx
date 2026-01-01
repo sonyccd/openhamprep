@@ -102,9 +102,4 @@ describe('SidebarNavItem', () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it('has data-tour attribute', () => {
-    renderWithTooltip(<SidebarNavItem {...defaultProps} />);
-    const button = screen.getByRole('button');
-    expect(button).toHaveAttribute('data-tour', 'dashboard');
-  });
 });
