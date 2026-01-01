@@ -66,12 +66,6 @@ describe('SidebarLicenseSelector', () => {
     expect(onOpenModal).toHaveBeenCalledTimes(1);
   });
 
-  it('has data-tour attribute', () => {
-    const { container } = renderWithTooltip(<SidebarLicenseSelector {...defaultProps} />);
-    const element = container.querySelector('[data-tour="license-selector"]');
-    expect(element).toBeInTheDocument();
-  });
-
   it('does not show label when collapsed on desktop', () => {
     renderWithTooltip(
       <SidebarLicenseSelector {...defaultProps} isCollapsed={true} isMobile={false} />

@@ -5,8 +5,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { useUserTargetExam } from '@/hooks/useExamSessions';
-import { useOnboarding } from '@/hooks/useOnboarding';
-import { useAppTour } from '@/hooks/useAppTour';
 import { useTestReadiness } from '@/hooks/useTestReadiness';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
@@ -32,7 +30,6 @@ import { Glossary } from '@/components/Glossary';
 import { GlossaryFlashcards } from '@/components/GlossaryFlashcards';
 import { WeeklyGoalsModal } from '@/components/WeeklyGoalsModal';
 import { ExamSessionSearch } from '@/components/ExamSessionSearch';
-import { WelcomeModal } from '@/components/WelcomeModal';
 import { TopicGallery } from '@/components/TopicGallery';
 import { TopicDetailPage } from '@/components/TopicDetailPage';
 import { TestType, testTypes, View } from '@/types/navigation';
@@ -69,61 +66,6 @@ export default function Dashboard() {
   const [pendingView, setPendingView] = useState<typeof currentView | null>(null);
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
   const [showGoalsModal, setShowGoalsModal] = useState(false);
-
-  // Mobile menu state for sidebar (controlled by tour)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isTourActive, setIsTourActive] = useState(false);
-
-  // Onboarding
-  const {
-    showOnboarding,
-    setShowOnboarding,
-    completeOnboarding,
-    skipOnboarding,
-  } = useOnboarding();
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-
-  const { startTour } = useAppTour({
-    onComplete: () => {
-      setIsTourActive(false);
-      setMobileMenuOpen(false);
-      completeOnboarding();
-    },
-    onCancel: () => {
-      setIsTourActive(false);
-      setMobileMenuOpen(false);
-      skipOnboarding();
-    },
-    onOpenMobileMenu: () => setMobileMenuOpen(true),
-    onCloseMobileMenu: () => setMobileMenuOpen(false),
-  });
-
-  // Show welcome modal when onboarding should start
-  useEffect(() => {
-    if (showOnboarding && user && !authLoading) {
-      // Small delay to ensure the dashboard has loaded
-      const timer = setTimeout(() => {
-        setShowWelcomeModal(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [showOnboarding, user, authLoading]);
-
-  const handleWelcomeComplete = (selectedLicense: TestType) => {
-    setSelectedTest(selectedLicense);
-    setShowWelcomeModal(false);
-    setShowOnboarding(false);
-    // Start the tour after a short delay to let the modal close
-    setTimeout(() => {
-      setIsTourActive(true);
-      startTour();
-    }, 300);
-  };
-
-  const handleWelcomeSkip = () => {
-    setShowWelcomeModal(false);
-    skipOnboarding();
-  };
 
   // Handle view from URL query parameter (only on initial load)
   useEffect(() => {
@@ -433,14 +375,7 @@ export default function Dashboard() {
       queryKey: ['weekly-goals', user.id]
     })} />}
 
-      {/* Welcome Modal for Onboarding */}
-      <WelcomeModal
-        open={showWelcomeModal}
-        onComplete={handleWelcomeComplete}
-        onSkip={handleWelcomeSkip}
-      />
-
-      <AppLayout currentView={currentView} onViewChange={handleViewChange} selectedTest={selectedTest} onTestChange={setSelectedTest} mobileMenuOpen={mobileMenuOpen} onMobileMenuChange={setMobileMenuOpen} isTourActive={isTourActive}>
+      <AppLayout currentView={currentView} onViewChange={handleViewChange} selectedTest={selectedTest} onTestChange={setSelectedTest}>
         {renderContent()}
       </AppLayout>
     </>;

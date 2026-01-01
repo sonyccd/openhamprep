@@ -56,19 +56,8 @@ export function DashboardSidebar({
   onProfileUpdate,
   selectedTest,
   onTestChange,
-  mobileMenuOpen,
-  onMobileMenuChange,
-  isTourActive,
 }: DashboardSidebarProps) {
-  const [localMobileOpen, setLocalMobileOpen] = useState(false);
-  const mobileOpen = mobileMenuOpen !== undefined ? mobileMenuOpen : localMobileOpen;
-  const setMobileOpen = (open: boolean) => {
-    if (onMobileMenuChange) {
-      onMobileMenuChange(open);
-    } else {
-      setLocalMobileOpen(open);
-    }
-  };
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
@@ -243,14 +232,7 @@ export function DashboardSidebar({
 
       {/* Mobile Hamburger Button */}
       <div className="md:hidden fixed top-4 left-4 z-50">
-        <Sheet
-          open={mobileOpen}
-          onOpenChange={(open) => {
-            // Prevent closing when tour is active
-            if (!open && isTourActive) return;
-            setMobileOpen(open);
-          }}
-        >
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <Tooltip>
             <TooltipTrigger asChild>
               <SheetTrigger asChild>

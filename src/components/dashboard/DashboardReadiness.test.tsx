@@ -149,15 +149,8 @@ describe('DashboardReadiness', () => {
         />
       );
       // CheckCircle icon should be present - there should be an SVG in the component
-      const readinessContainer = document.querySelector('[data-tour="dashboard-readiness"]');
-      expect(readinessContainer?.querySelectorAll('svg').length).toBeGreaterThan(0);
-    });
-  });
-
-  describe('Tour Integration', () => {
-    it('has data-tour attribute for tour targeting', () => {
-      render(<DashboardReadiness {...defaultProps} />);
-      expect(document.querySelector('[data-tour="dashboard-readiness"]')).toBeInTheDocument();
+      const container = screen.getByText('Ready to Pass!').closest('div[class*="rounded-xl"]');
+      expect(container?.querySelectorAll('svg').length).toBeGreaterThan(0);
     });
   });
 });

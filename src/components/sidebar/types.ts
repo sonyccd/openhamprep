@@ -35,7 +35,4 @@ export interface DashboardSidebarProps {
   onProfileUpdate?: () => void;
   selectedTest: TestType;
   onTestChange: (test: TestType) => void;
-  mobileMenuOpen?: boolean;
-  onMobileMenuChange?: (open: boolean) => void;
-  isTourActive?: boolean;
 }

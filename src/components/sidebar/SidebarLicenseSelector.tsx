@@ -29,7 +29,6 @@ export function SidebarLicenseSelector({
   return (
     <div
       className={cn('border-b border-border', !isMobile && isCollapsed ? 'p-2' : 'p-3')}
-      data-tour="license-selector"
     >
       {showExpanded ? (
         <div>

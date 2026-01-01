@@ -154,30 +154,6 @@ vi.mock('@/components/WeeklyGoalsModal', () => ({
   WeeklyGoalsModal: () => null,
 }));
 
-vi.mock('@/components/WelcomeModal', () => ({
-  WelcomeModal: () => null,
-}));
-
-// Mock onboarding hooks
-vi.mock('@/hooks/useOnboarding', () => ({
-  useOnboarding: () => ({
-    showOnboarding: false,
-    setShowOnboarding: vi.fn(),
-    completeOnboarding: vi.fn(),
-    skipOnboarding: vi.fn(),
-    hasCompletedOnboarding: true,
-    resetOnboarding: vi.fn(),
-  }),
-}));
-
-vi.mock('@/hooks/useAppTour', () => ({
-  useAppTour: () => ({
-    tour: null,
-    startTour: vi.fn(),
-    cancelTour: vi.fn(),
-  }),
-}));
-
 const createTestQueryClient = () =>
   new QueryClient({
     defaultOptions: {
