@@ -206,6 +206,8 @@ serve(async (req) => {
     const action = typeof body.action === "string" ? body.action : "dry-run";
     const rawBatchSize = typeof body.batchSize === "number" ? body.batchSize : DEFAULT_BATCH_SIZE;
     const batchSize = Math.min(Math.max(1, rawBatchSize), MAX_BATCH_SIZE);
+    // Offset for pagination - which question to start from (0-indexed)
+    const offset = typeof body.offset === "number" ? Math.max(0, body.offset) : 0;
 
     if (action !== "dry-run" && action !== "migrate") {
       return new Response(
@@ -217,7 +219,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[${requestId}] Action: ${action}, Batch size: ${batchSize}`);
+    console.log(`[${requestId}] Action: ${action}, Batch size: ${batchSize}, Offset: ${offset}`);
 
     // =========================================================================
     // 3. GET DISCOURSE CONFIGURATION
@@ -267,18 +269,28 @@ serve(async (req) => {
     }
 
     // =========================================================================
-    // 5. CHECK WHICH TOPICS NEED MIGRATION
+    // 5. CHECK WHICH TOPICS NEED MIGRATION (BATCHED)
     // =========================================================================
 
-    console.log(`[${requestId}] Checking topics for existing external_id...`);
+    // Apply offset and batch limit to avoid timeouts
+    // With 1000 topics and 200ms delay each, checking all would take 200+ seconds
+    // Edge functions have a 60-second timeout, so we batch the checking phase too
+    const totalQuestions = questionsList.length;
+    const batchToCheck = questionsList.slice(offset, offset + batchSize);
+    const remainingAfterBatch = Math.max(0, totalQuestions - offset - batchSize);
+
+    console.log(
+      `[${requestId}] Checking topics ${offset + 1} to ${offset + batchToCheck.length} of ${totalQuestions} ` +
+        `(${remainingAfterBatch} remaining after this batch)`
+    );
 
     const needsMigration: Question[] = [];
     const alreadyMigrated: Question[] = [];
     const errors: Array<{ question: Question; error: string }> = [];
 
-    // Process in batches with rate limiting
-    for (let i = 0; i < questionsList.length; i++) {
-      const question = questionsList[i];
+    // Process only the current batch with rate limiting
+    for (let i = 0; i < batchToCheck.length; i++) {
+      const question = batchToCheck[i];
       const topicId = extractTopicId(question.forum_url);
 
       if (!topicId) {
@@ -303,13 +315,13 @@ serve(async (req) => {
       }
 
       // Rate limiting for read operations
-      if (i < questionsList.length - 1) {
+      if (i < batchToCheck.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, CHECK_DELAY_MS));
       }
     }
 
     console.log(
-      `[${requestId}] Migration status: ` +
+      `[${requestId}] Batch status: ` +
         `${needsMigration.length} need migration, ` +
         `${alreadyMigrated.length} already migrated, ` +
         `${errors.length} errors`
@@ -324,21 +336,32 @@ serve(async (req) => {
         JSON.stringify({
           success: true,
           dryRun: true,
-          summary: {
-            total: questionsList.length,
+          pagination: {
+            totalQuestions: totalQuestions,
+            offset: offset,
+            batchSize: batchSize,
+            checkedInThisBatch: batchToCheck.length,
+            remaining: remainingAfterBatch,
+            complete: remainingAfterBatch === 0,
+            nextOffset: remainingAfterBatch > 0 ? offset + batchSize : null,
+          },
+          batchSummary: {
             needsMigration: needsMigration.length,
             alreadyMigrated: alreadyMigrated.length,
             errors: errors.length,
           },
-          needsMigration: needsMigration.slice(0, 50).map((q) => ({
+          needsMigration: needsMigration.map((q) => ({
             displayName: q.display_name,
             questionId: q.id,
           })),
-          alreadyMigrated: alreadyMigrated.slice(0, 20).map((q) => q.display_name),
-          errors: errors.slice(0, 20).map((e) => ({
+          alreadyMigrated: alreadyMigrated.map((q) => q.display_name),
+          errors: errors.map((e) => ({
             displayName: e.question.display_name,
             error: e.error,
           })),
+          nextAction: remainingAfterBatch > 0
+            ? `Call again with offset: ${offset + batchSize} to check next batch`
+            : "All topics checked. Call with action: 'migrate' to apply changes.",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -435,29 +458,39 @@ serve(async (req) => {
     }
 
     console.log(
-      `[${requestId}] Migration batch complete. Updated: ${updated}, Errors: ${migrationErrors}, Remaining: ${remaining}`
+      `[${requestId}] Migration batch complete. Updated: ${updated}, Errors: ${migrationErrors}, ` +
+        `Remaining in needsMigration: ${remaining}, Remaining topics overall: ${remainingAfterBatch}`
     );
 
     return new Response(
       JSON.stringify({
         success: true,
-        complete: remaining === 0,
-        summary: {
-          total: questionsList.length,
+        complete: remainingAfterBatch === 0 && remaining === 0,
+        pagination: {
+          totalQuestions: totalQuestions,
+          offset: offset,
+          batchSize: batchSize,
+          checkedInThisBatch: batchToCheck.length,
+          remainingTopicsToCheck: remainingAfterBatch,
+          nextOffset: remainingAfterBatch > 0 ? offset + batchSize : null,
+        },
+        batchSummary: {
           needsMigration: needsMigration.length,
           alreadyMigrated: alreadyMigrated.length,
           checkErrors: errors.length,
         },
-        batch: {
+        migration: {
           processed: batch.length,
           updated,
           errors: migrationErrors,
-          remaining,
+          remainingNeedingMigration: remaining,
         },
         results,
-        nextAction: remaining > 0
-          ? `Call again to process next batch of ${Math.min(remaining, batchSize)} topics`
-          : null,
+        nextAction: remainingAfterBatch > 0
+          ? `Call again with offset: ${offset + batchSize} to process next batch of topics`
+          : remaining > 0
+            ? `Call again (same offset) to process remaining ${remaining} topics needing migration`
+            : null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
