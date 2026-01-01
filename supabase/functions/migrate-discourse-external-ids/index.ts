@@ -20,9 +20,14 @@ import {
  * Security: Requires admin role or service_role token.
  */
 
-// Configuration
-const RATE_LIMIT_DELAY_MS = 1000;  // 1 second between Discourse API write calls (updates)
-const CHECK_DELAY_MS = 200;  // 200ms between Discourse API read calls (checks)
+// Rate Limiting Configuration
+// Discourse has a default rate limit of 60 requests per minute for admin API keys.
+// We use conservative delays to avoid hitting limits and to be a good API citizen.
+// See: https://meta.discourse.org/t/global-rate-limits-and-டreams/78612
+const RATE_LIMIT_DELAY_MS = 1000;  // 1 second between write operations (updates)
+const CHECK_DELAY_MS = 200;  // 200ms between read operations (GET requests are less limited)
+
+// Batch Configuration
 const DEFAULT_BATCH_SIZE = 50;
 const MAX_BATCH_SIZE = 100;
 
@@ -353,13 +358,47 @@ serve(async (req) => {
     const batch = needsMigration.slice(0, batchSize);
     const remaining = needsMigration.length - batch.length;
 
-    // Note: There's a potential race condition between checking external_id in phase 5
-    // and updating here. Another process could set external_id in between. However,
-    // since this is a one-time migration and the delay between check and update is
-    // minimal (topics are processed in order), the practical risk is very low.
-    // The Discourse API will handle conflicts gracefully.
     for (const question of batch) {
       const topicId = extractTopicId(question.forum_url)!;
+
+      // Re-check external_id before updating to handle race conditions
+      // (e.g., if another process set external_id between check and update)
+      const currentState = await getTopicExternalId(
+        discourseApiKey,
+        discourseUsername,
+        topicId
+      );
+
+      if (currentState.external_id && currentState.external_id !== question.id) {
+        // Topic's external_id was set by another process to a different value
+        results.push({
+          questionId: question.id,
+          displayName: question.display_name,
+          topicId,
+          status: "error",
+          reason: `Topic external_id changed during migration (now: ${currentState.external_id})`,
+        });
+        migrationErrors++;
+        console.warn(
+          `[${requestId}] Skipping ${question.display_name}: external_id changed to ${currentState.external_id}`
+        );
+        await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY_MS));
+        continue;
+      }
+
+      if (currentState.external_id === question.id) {
+        // Already migrated (possibly by concurrent process) - skip but count as success
+        results.push({
+          questionId: question.id,
+          displayName: question.display_name,
+          topicId,
+          status: "skipped",
+          reason: "Already has correct external_id",
+        });
+        console.log(`[${requestId}] ${question.display_name} already migrated, skipping`);
+        await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY_MS));
+        continue;
+      }
 
       console.log(`[${requestId}] Updating topic ${topicId} with external_id ${question.id}...`);
 

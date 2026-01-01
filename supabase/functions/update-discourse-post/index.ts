@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isValidUuid } from "../_shared/constants.ts";
 
 /**
  * Update Discourse Post Edge Function
@@ -27,13 +28,6 @@ interface Question {
   correct_answer: number;
   explanation: string | null;
   forum_url: string | null;
-}
-
-/**
- * Helper to detect if a string is a UUID format.
- */
-function isUUID(str: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 }
 
 interface RequestBody {
@@ -254,7 +248,7 @@ serve(async (req) => {
     // ==========================================================================
 
     // Support both UUID and display_name lookups
-    const lookupColumn = isUUID(questionId) ? "id" : "display_name";
+    const lookupColumn = isValidUuid(questionId) ? "id" : "display_name";
     const { data: question, error: fetchError } = await supabase
       .from("questions")
       .select("id, display_name, question, options, correct_answer, explanation, forum_url")

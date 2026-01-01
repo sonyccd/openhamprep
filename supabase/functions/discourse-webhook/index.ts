@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { QUESTION_ID_PATTERN, isValidUuid } from "../_shared/constants.ts";
 
 /**
  * Discourse Webhook Handler for Explanation Sync
@@ -19,19 +20,6 @@ const corsHeaders = {
 
 // Configuration
 const DISCOURSE_URL = "https://forum.openhamprep.com";
-
-// Question ID pattern: T1A01, G2B03, E3C12, etc.
-const QUESTION_ID_PATTERN = /^([TGE]\d[A-Z]\d{2})\s*-/;
-
-// UUID v4 pattern for validating external_id
-const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-/**
- * Validate that a string is a valid UUID v4.
- */
-function isValidUuid(value: string): boolean {
-  return UUID_V4_PATTERN.test(value);
-}
 
 // =============================================================================
 // SIGNATURE VERIFICATION
