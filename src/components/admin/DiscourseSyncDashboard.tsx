@@ -110,6 +110,9 @@ export function DiscourseSyncDashboard() {
       verifyResult.discrepancies.missingStatus.length > 0
     : false;
 
+  // Extract complex disabled state for readability
+  const canRepair = verifyResult && hasDiscrepancies && !repair.isPending;
+
   return (
     <div className="space-y-6 pb-8">
       {/* Overview Cards */}
@@ -271,7 +274,7 @@ export function DiscourseSyncDashboard() {
 
             <Button
               onClick={() => setShowRepairDialog(true)}
-              disabled={repair.isPending || !verifyResult || !hasDiscrepancies}
+              disabled={!canRepair}
               variant="default"
             >
               {repair.isPending ? (

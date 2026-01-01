@@ -1,5 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  corsHeaders,
+  DISCOURSE_URL,
+  PAGINATION_DELAY_MS,
+  MAX_PAGINATION_PAGES,
+  QUESTION_ID_PATTERN,
+  CATEGORY_MAP,
+  getCategorySlug,
+  isServiceRoleToken,
+} from "../_shared/constants.ts";
 
 /**
  * Verify Discourse Sync Edge Function
@@ -13,26 +23,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
  *
  * Security: Requires admin role or service_role token.
  */
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
-
-// Configuration
-const DISCOURSE_URL = "https://forum.openhamprep.com";
-const PAGINATION_DELAY_MS = 200;
-const MAX_PAGINATION_PAGES = 100;
-
-// Question ID pattern: T1A01, G2B03, E3C12, etc.
-const QUESTION_ID_PATTERN = /^([TGE]\d[A-Z]\d{2})\s*-/;
-
-const CATEGORY_MAP: Record<string, string> = {
-  T: "Technician Questions",
-  G: "General Questions",
-  E: "Extra Questions",
-};
 
 // =============================================================================
 // TYPES
@@ -95,37 +85,6 @@ interface VerifyResult {
 // =============================================================================
 
 /**
- * Decode a JWT and extract the payload without verifying the signature.
- * The signature is already verified by Supabase's API gateway.
- */
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-
-    const payload = parts[1];
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
-    const decoded = atob(padded);
-    return JSON.parse(decoded);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Check if a JWT token has the service_role claim.
- */
-function isServiceRoleToken(token: string): boolean {
-  const payload = decodeJwtPayload(token);
-  return payload?.role === "service_role";
-}
-
-function getCategorySlug(categoryName: string): string {
-  return categoryName.toLowerCase().replace(/\s+/g, "-");
-}
-
-/**
  * Extract question ID from topic title.
  * Format: "T1A01 - Question text..."
  */
@@ -170,8 +129,15 @@ async function fetchDiscourseCategories(
   const data = await response.json();
   const categoryMap = new Map<string, number>();
 
+  // Validate response structure before accessing
+  if (!data?.category_list?.categories || !Array.isArray(data.category_list.categories)) {
+    throw new Error('Invalid Discourse API response: missing category_list.categories');
+  }
+
   for (const category of data.category_list.categories) {
-    categoryMap.set(category.name, category.id);
+    if (category?.name && typeof category.id === 'number') {
+      categoryMap.set(category.name, category.id);
+    }
   }
 
   return categoryMap;

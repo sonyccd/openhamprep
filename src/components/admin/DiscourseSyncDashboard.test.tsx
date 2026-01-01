@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiscourseSyncDashboard } from './DiscourseSyncDashboard';
+import type { VerifyResult } from '@/hooks/useDiscourseSyncStatus';
 
 // Mock sonner toast
 vi.mock('sonner', () => ({
@@ -11,7 +12,44 @@ vi.mock('sonner', () => ({
   },
 }));
 
-// Mock the hook
+// =============================================================================
+// TEST FACTORIES
+// =============================================================================
+
+/**
+ * Factory for creating mock VerifyResult objects
+ * Reduces verbosity in tests by providing sensible defaults
+ */
+function createMockVerifyResult(overrides?: {
+  action?: 'verify' | 'repair';
+  orphanedInDiscourse?: VerifyResult['discrepancies']['orphanedInDiscourse'];
+  brokenForumUrl?: VerifyResult['discrepancies']['brokenForumUrl'];
+  missingStatus?: VerifyResult['discrepancies']['missingStatus'];
+  repaired?: number;
+}): VerifyResult {
+  return {
+    success: true,
+    action: overrides?.action || 'verify',
+    summary: {
+      totalQuestionsInDb: 885,
+      totalTopicsInDiscourse: 850,
+      questionsWithForumUrl: 850,
+      questionsWithoutForumUrl: 35,
+      syncedCorrectly: 820,
+    },
+    discrepancies: {
+      orphanedInDiscourse: overrides?.orphanedInDiscourse || [],
+      brokenForumUrl: overrides?.brokenForumUrl || [],
+      missingStatus: overrides?.missingStatus || [],
+    },
+    ...(overrides?.repaired !== undefined && { repaired: overrides.repaired }),
+  };
+}
+
+// =============================================================================
+// MOCKS
+// =============================================================================
+
 const mockVerify = {
   mutateAsync: vi.fn(),
   isPending: false,
@@ -162,22 +200,7 @@ describe('DiscourseSyncDashboard', () => {
     });
 
     it('calls verify mutation when Verify button is clicked', async () => {
-      mockVerify.mutateAsync.mockResolvedValueOnce({
-        success: true,
-        action: 'verify',
-        summary: {
-          totalQuestionsInDb: 885,
-          totalTopicsInDiscourse: 850,
-          questionsWithForumUrl: 850,
-          questionsWithoutForumUrl: 35,
-          syncedCorrectly: 820,
-        },
-        discrepancies: {
-          orphanedInDiscourse: [],
-          brokenForumUrl: [],
-          missingStatus: [],
-        },
-      });
+      mockVerify.mutateAsync.mockResolvedValueOnce(createMockVerifyResult());
 
       render(<DiscourseSyncDashboard />, { wrapper: createWrapper() });
 
@@ -201,22 +224,7 @@ describe('DiscourseSyncDashboard', () => {
 
   describe('Verification Results', () => {
     it('displays verification results after verify is called', async () => {
-      mockVerify.mutateAsync.mockResolvedValueOnce({
-        success: true,
-        action: 'verify',
-        summary: {
-          totalQuestionsInDb: 885,
-          totalTopicsInDiscourse: 850,
-          questionsWithForumUrl: 850,
-          questionsWithoutForumUrl: 35,
-          syncedCorrectly: 820,
-        },
-        discrepancies: {
-          orphanedInDiscourse: [],
-          brokenForumUrl: [],
-          missingStatus: [],
-        },
-      });
+      mockVerify.mutateAsync.mockResolvedValueOnce(createMockVerifyResult());
 
       render(<DiscourseSyncDashboard />, { wrapper: createWrapper() });
 
@@ -229,22 +237,7 @@ describe('DiscourseSyncDashboard', () => {
     });
 
     it('displays success message when no discrepancies', async () => {
-      mockVerify.mutateAsync.mockResolvedValueOnce({
-        success: true,
-        action: 'verify',
-        summary: {
-          totalQuestionsInDb: 885,
-          totalTopicsInDiscourse: 850,
-          questionsWithForumUrl: 850,
-          questionsWithoutForumUrl: 35,
-          syncedCorrectly: 820,
-        },
-        discrepancies: {
-          orphanedInDiscourse: [],
-          brokenForumUrl: [],
-          missingStatus: [],
-        },
-      });
+      mockVerify.mutateAsync.mockResolvedValueOnce(createMockVerifyResult());
 
       render(<DiscourseSyncDashboard />, { wrapper: createWrapper() });
 
@@ -256,28 +249,15 @@ describe('DiscourseSyncDashboard', () => {
     });
 
     it('displays orphaned in Discourse section when discrepancies exist', async () => {
-      mockVerify.mutateAsync.mockResolvedValueOnce({
-        success: true,
-        action: 'verify',
-        summary: {
-          totalQuestionsInDb: 885,
-          totalTopicsInDiscourse: 850,
-          questionsWithForumUrl: 850,
-          questionsWithoutForumUrl: 35,
-          syncedCorrectly: 820,
-        },
-        discrepancies: {
-          orphanedInDiscourse: [
-            {
-              questionDisplayName: 'T1A05',
-              topicId: 123,
-              topicUrl: 'https://forum.example.com/t/t1a05/123',
-            },
-          ],
-          brokenForumUrl: [],
-          missingStatus: [],
-        },
-      });
+      mockVerify.mutateAsync.mockResolvedValueOnce(createMockVerifyResult({
+        orphanedInDiscourse: [
+          {
+            questionDisplayName: 'T1A05',
+            topicId: 123,
+            topicUrl: 'https://forum.example.com/t/t1a05/123',
+          },
+        ],
+      }));
 
       render(<DiscourseSyncDashboard />, { wrapper: createWrapper() });
 
@@ -290,28 +270,15 @@ describe('DiscourseSyncDashboard', () => {
     });
 
     it('enables repair button when discrepancies exist', async () => {
-      mockVerify.mutateAsync.mockResolvedValueOnce({
-        success: true,
-        action: 'verify',
-        summary: {
-          totalQuestionsInDb: 885,
-          totalTopicsInDiscourse: 850,
-          questionsWithForumUrl: 850,
-          questionsWithoutForumUrl: 35,
-          syncedCorrectly: 820,
-        },
-        discrepancies: {
-          orphanedInDiscourse: [
-            {
-              questionDisplayName: 'T1A05',
-              topicId: 123,
-              topicUrl: 'https://forum.example.com/t/t1a05/123',
-            },
-          ],
-          brokenForumUrl: [],
-          missingStatus: [],
-        },
-      });
+      mockVerify.mutateAsync.mockResolvedValueOnce(createMockVerifyResult({
+        orphanedInDiscourse: [
+          {
+            questionDisplayName: 'T1A05',
+            topicId: 123,
+            topicUrl: 'https://forum.example.com/t/t1a05/123',
+          },
+        ],
+      }));
 
       render(<DiscourseSyncDashboard />, { wrapper: createWrapper() });
 

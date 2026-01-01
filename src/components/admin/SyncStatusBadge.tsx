@@ -42,11 +42,13 @@ export function SyncStatusBadge({
   const isSynced = status === "synced";
   const isError = status === "error";
   const isPending = status === "pending";
+  // Use explicit Boolean check for empty string handling
+  const hasForumUrl = Boolean(forumUrl);
   // Show "needs verification" when forum_url exists but status is null
-  const isUnknown = !status && forumUrl;
+  const isUnknown = !status && hasForumUrl;
 
   // Only show badge if there's a sync status or forum_url to display
-  if (!status && !forumUrl) return null;
+  if (!status && !hasForumUrl) return null;
 
   const handleRetry = async () => {
     setIsRetrying(true);

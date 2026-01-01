@@ -1,56 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  corsHeaders,
+  DISCOURSE_URL,
+  PAGINATION_DELAY_MS,
+  MAX_PAGINATION_PAGES,
+  MAX_TITLE_LENGTH,
+  CATEGORY_MAP,
+  getCategorySlug,
+  isServiceRoleToken,
+} from "../_shared/constants.ts";
 
-/**
- * Decode a JWT and extract the payload without verifying the signature.
- * The signature is already verified by Supabase's API gateway.
- */
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-
-    // Base64url decode the payload (second part)
-    const payload = parts[1];
-    // Replace URL-safe characters and add padding
-    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
-    const decoded = atob(padded);
-    return JSON.parse(decoded);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Check if a JWT token has the service_role claim.
- * This is used for automated/scripted access to the edge function.
- */
-function isServiceRoleToken(token: string): boolean {
-  const payload = decodeJwtPayload(token);
-  return payload?.role === 'service_role';
-}
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-// Configuration constants
-const DISCOURSE_URL = 'https://forum.openhamprep.com';
+// Sync-specific configuration
 const DEFAULT_BATCH_SIZE = 50;
 const MAX_BATCH_SIZE = 100;
 const RATE_LIMIT_DELAY_MS = 1000;
-const PAGINATION_DELAY_MS = 200;
-const MAX_PAGINATION_PAGES = 50;
-const MAX_TITLE_LENGTH = 250;
 const MAX_QUESTION_IDS_IN_RESPONSE = 100;
-
-const CATEGORY_MAP: Record<string, string> = {
-  'T': 'Technician Questions',
-  'G': 'General Questions',
-  'E': 'Extra Questions',
-};
 
 interface Question {
   id: string;  // UUID
@@ -104,8 +69,15 @@ async function fetchDiscourseCategories(apiKey: string, username: string): Promi
   const data = await response.json();
   const categoryMap = new Map<string, number>();
 
+  // Validate response structure before accessing
+  if (!data?.category_list?.categories || !Array.isArray(data.category_list.categories)) {
+    throw new Error('Invalid Discourse API response: missing category_list.categories');
+  }
+
   for (const category of data.category_list.categories) {
-    categoryMap.set(category.name, category.id);
+    if (category?.name && typeof category.id === 'number') {
+      categoryMap.set(category.name, category.id);
+    }
   }
 
   return categoryMap;
@@ -239,10 +211,6 @@ async function createDiscourseTopic(
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
-}
-
-function getCategorySlug(categoryName: string): string {
-  return categoryName.toLowerCase().replace(/\s+/g, '-');
 }
 
 serve(async (req) => {

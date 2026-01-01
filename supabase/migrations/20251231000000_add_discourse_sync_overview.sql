@@ -1,6 +1,9 @@
 -- Add a view for efficient sync status queries in admin dashboard
 -- This aggregates sync status by license type for quick overview
 
+-- Drop first for idempotency (in case migration needs to be re-run)
+DROP VIEW IF EXISTS public.discourse_sync_overview;
+
 CREATE OR REPLACE VIEW public.discourse_sync_overview AS
 SELECT
   CASE
