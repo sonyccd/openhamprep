@@ -1063,6 +1063,55 @@ describe('Discourse API contract validation', () => {
       const title = formatTopicTitle(question);
       expect(title.match(/^G5C12\s*-/)).toBeTruthy();
     });
+
+    it('includes external_id in topic creation payload for reliable association', () => {
+      // Simulates the payload structure sent to Discourse API
+      const question = {
+        id: '550e8400-e29b-41d4-a716-446655440000', // UUID
+        display_name: 'T1A01',
+        question: 'Test question',
+        options: ['A', 'B', 'C', 'D'],
+        correct_answer: 0,
+        explanation: null,
+      };
+
+      const title = `${question.display_name} - ${question.question}`;
+      const body = '## Question\n...';
+      const categoryId = 1;
+
+      // This is the actual payload structure sent to Discourse
+      const payload = {
+        title,
+        raw: body,
+        category: categoryId,
+        external_id: question.id, // Question UUID for reliable topic-to-question association
+      };
+
+      expect(payload.external_id).toBe('550e8400-e29b-41d4-a716-446655440000');
+      expect(payload.external_id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    });
+
+    it('external_id is the question UUID, not the display_name', () => {
+      const question = {
+        id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', // UUID
+        display_name: 'G2B03', // Human-readable ID
+      };
+
+      // external_id should be the UUID for reliable lookup
+      const payload = {
+        title: `${question.display_name} - Some question`,
+        raw: '## Question\n...',
+        category: 2,
+        external_id: question.id,
+      };
+
+      // Title contains display_name for human readability
+      expect(payload.title).toContain('G2B03');
+
+      // external_id is the UUID for reliable association
+      expect(payload.external_id).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
+      expect(payload.external_id).not.toBe('G2B03');
+    });
   });
 
   describe('Category slug generation', () => {

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { QUESTION_ID_PATTERN, isValidUuid } from "../_shared/constants.ts";
 
 /**
  * Discourse Webhook Handler for Explanation Sync
@@ -19,9 +20,6 @@ const corsHeaders = {
 
 // Configuration
 const DISCOURSE_URL = "https://forum.openhamprep.com";
-
-// Question ID pattern: T1A01, G2B03, E3C12, etc.
-const QUESTION_ID_PATTERN = /^([TGE]\d[A-Z]\d{2})\s*-/;
 
 // =============================================================================
 // SIGNATURE VERIFICATION
@@ -306,34 +304,11 @@ serve(async (req) => {
     let questionId: string | null = null;  // This will be the UUID
     let displayName: string | null = null;  // Human-readable ID (T1A01)
 
-    // Method 1: Look up question by forum_url in database (works locally without Discourse API)
-    const expectedForumUrl = `${DISCOURSE_URL}/t/%/${post.topic_id}`;
-    const { data: questionByUrl } = await supabase
-      .from("questions")
-      .select("id, display_name")
-      .like("forum_url", `%/${post.topic_id}`)
-      .single();
+    // Method 1: Fetch topic from Discourse to get external_id (primary method)
+    const discourseApiKey = Deno.env.get("DISCOURSE_API_KEY");
+    const discourseUsername = Deno.env.get("DISCOURSE_USERNAME");
 
-    if (questionByUrl) {
-      questionId = questionByUrl.id;
-      displayName = questionByUrl.display_name;
-      console.log(`[${requestId}] Found question ${displayName} (${questionId}) by forum_url lookup`);
-    } else {
-      // Method 2: Fetch topic title from Discourse API (production fallback)
-      const discourseApiKey = Deno.env.get("DISCOURSE_API_KEY");
-      const discourseUsername = Deno.env.get("DISCOURSE_USERNAME");
-
-      if (!discourseApiKey || !discourseUsername) {
-        console.error(`[${requestId}] Discourse API credentials not configured and question not found by forum_url`);
-        return new Response(
-          JSON.stringify({ error: "Cannot determine question ID" }),
-          {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-
+    if (discourseApiKey && discourseUsername) {
       const topicResponse = await fetch(
         `${DISCOURSE_URL}/t/${post.topic_id}.json`,
         {
@@ -344,53 +319,68 @@ serve(async (req) => {
         }
       );
 
-      if (!topicResponse.ok) {
-        console.error(`[${requestId}] Failed to fetch topic: ${topicResponse.status}`);
-        return new Response(
-          JSON.stringify({ error: "Failed to fetch topic from Discourse" }),
-          {
-            status: 502,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+      if (topicResponse.ok) {
+        const topicData = await topicResponse.json();
+
+        // Use external_id if available and valid (this is the question UUID)
+        if (topicData.external_id && isValidUuid(topicData.external_id)) {
+          questionId = topicData.external_id;
+          // Look up display_name for logging
+          const { data: questionData } = await supabase
+            .from("questions")
+            .select("display_name")
+            .eq("id", questionId)
+            .single();
+          displayName = questionData?.display_name || null;
+          console.log(`[${requestId}] Found question ${displayName} (${questionId}) via external_id`);
+        } else if (topicData.external_id) {
+          // external_id exists but is not a valid UUID - log warning and fall back to title
+          console.warn(`[${requestId}] Topic has invalid external_id format: ${topicData.external_id}`);
+        }
+
+        if (!questionId) {
+          // Fall back to title parsing for topics created before external_id was added
+          displayName = extractQuestionIdFromTitle(topicData.title);
+          if (displayName) {
+            const { data: questionByDisplayName } = await supabase
+              .from("questions")
+              .select("id")
+              .eq("display_name", displayName)
+              .single();
+            if (questionByDisplayName) {
+              questionId = questionByDisplayName.id;
+              console.log(`[${requestId}] Found question ${displayName} (${questionId}) via title parsing`);
+            }
           }
-        );
+        }
       }
+    }
 
-      const topicData: DiscourseTopic = await topicResponse.json();
-      displayName = extractQuestionIdFromTitle(topicData.title);
-
-      if (!displayName) {
-        console.log(
-          `[${requestId}] Topic title does not match question format: "${topicData.title}"`
-        );
-        return new Response(
-          JSON.stringify({
-            status: "ignored",
-            reason: "Topic is not a question topic",
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Look up the UUID by display_name
-      const { data: questionByDisplayName, error: lookupError } = await supabase
+    // Method 2: Fall back to forum_url lookup in database
+    if (!questionId) {
+      const { data: questionByUrl } = await supabase
         .from("questions")
-        .select("id")
-        .eq("display_name", displayName)
+        .select("id, display_name")
+        .like("forum_url", `%/${post.topic_id}`)
         .single();
 
-      if (lookupError || !questionByDisplayName) {
-        console.error(`[${requestId}] Question not found by display_name: ${displayName}`);
-        return new Response(
-          JSON.stringify({ error: "Question not found", displayName }),
-          {
-            status: 404,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
+      if (questionByUrl) {
+        questionId = questionByUrl.id;
+        displayName = questionByUrl.display_name;
+        console.log(`[${requestId}] Found question ${displayName} (${questionId}) by forum_url lookup`);
       }
+    }
 
-      questionId = questionByDisplayName.id;
-      console.log(`[${requestId}] Matched topic to question: ${displayName} (${questionId}) via Discourse API`);
+    // If still not found, return error
+    if (!questionId) {
+      console.error(`[${requestId}] Could not determine question for topic ${post.topic_id}`);
+      return new Response(
+        JSON.stringify({ error: "Cannot determine question ID", topicId: post.topic_id }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     // =========================================================================

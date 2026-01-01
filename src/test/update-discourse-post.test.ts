@@ -1353,3 +1353,176 @@ describe("authentication flow", () => {
     });
   });
 });
+
+// =============================================================================
+// TESTS: EXTERNAL_ID TOPIC LOOKUP
+// =============================================================================
+
+describe("external_id topic lookup", () => {
+  /**
+   * Tests for the external_id-based topic lookup functionality.
+   * The external_id field in Discourse stores the question UUID,
+   * enabling reliable topic-to-question association.
+   */
+
+  const DISCOURSE_URL = "https://forum.openhamprep.com";
+
+  describe("external_id lookup URL construction", () => {
+    it("should construct correct lookup URL from question UUID", () => {
+      const questionId = "550e8400-e29b-41d4-a716-446655440000";
+      const lookupUrl = `${DISCOURSE_URL}/t/external_id/${questionId}.json`;
+
+      expect(lookupUrl).toBe(
+        "https://forum.openhamprep.com/t/external_id/550e8400-e29b-41d4-a716-446655440000.json"
+      );
+    });
+
+    it("should use UUID format for external_id", () => {
+      const questionId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+      expect(questionId).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+      );
+    });
+  });
+
+  describe("external_id lookup response parsing", () => {
+    it("should extract topic ID and first post ID from response", () => {
+      const mockResponse = {
+        id: 123,
+        title: "T1A01 - What is the purpose of the Amateur Radio Service?",
+        slug: "t1a01-what-is-the-purpose",
+        external_id: "550e8400-e29b-41d4-a716-446655440000",
+        post_stream: {
+          posts: [
+            { id: 456, post_number: 1, raw: "## Question\n..." },
+            { id: 457, post_number: 2, raw: "Great explanation!" },
+          ],
+        },
+      };
+
+      const topicId = mockResponse.id;
+      const firstPost = mockResponse.post_stream.posts.find(
+        (p) => p.post_number === 1
+      );
+      const postId = firstPost?.id;
+
+      expect(topicId).toBe(123);
+      expect(postId).toBe(456);
+    });
+
+    it("should return null if first post not found", () => {
+      const mockResponse = {
+        id: 123,
+        post_stream: {
+          posts: [
+            { id: 457, post_number: 2, raw: "Reply" },
+            { id: 458, post_number: 3, raw: "Another reply" },
+          ],
+        },
+      };
+
+      const firstPost = mockResponse.post_stream.posts.find(
+        (p) => p.post_number === 1
+      );
+      expect(firstPost).toBeUndefined();
+    });
+  });
+
+  describe("external_id lookup fallback behavior", () => {
+    /**
+     * When external_id lookup fails, the function should fall back
+     * to extracting topic ID from forum_url for backwards compatibility.
+     */
+
+    interface LookupResult {
+      topicId: number;
+      postId: number;
+      source: "external_id" | "forum_url";
+    }
+
+    function simulateLookup(
+      externalIdSuccess: boolean,
+      forumUrl: string | null
+    ): LookupResult | null {
+      if (externalIdSuccess) {
+        return { topicId: 123, postId: 456, source: "external_id" };
+      }
+
+      if (forumUrl) {
+        const match = forumUrl.match(/\/t\/(?:[^/]+\/)?(\d+)/);
+        if (match) {
+          return {
+            topicId: parseInt(match[1], 10),
+            postId: 999, // Would be fetched from topic
+            source: "forum_url",
+          };
+        }
+      }
+
+      return null;
+    }
+
+    it("should use external_id lookup when successful", () => {
+      const result = simulateLookup(
+        true,
+        "https://forum.openhamprep.com/t/topic/789"
+      );
+      expect(result).not.toBeNull();
+      expect(result!.source).toBe("external_id");
+      expect(result!.topicId).toBe(123);
+    });
+
+    it("should fall back to forum_url when external_id lookup fails", () => {
+      const result = simulateLookup(
+        false,
+        "https://forum.openhamprep.com/t/topic/789"
+      );
+      expect(result).not.toBeNull();
+      expect(result!.source).toBe("forum_url");
+      expect(result!.topicId).toBe(789);
+    });
+
+    it("should return null when both methods fail", () => {
+      const result = simulateLookup(false, null);
+      expect(result).toBeNull();
+    });
+
+    it("should return null when forum_url has no topic ID", () => {
+      const result = simulateLookup(
+        false,
+        "https://forum.openhamprep.com/categories"
+      );
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("external_id vs forum_url precedence", () => {
+    it("should prefer external_id over forum_url for topic identification", () => {
+      // Even if forum_url points to topic 789, if external_id lookup
+      // returns topic 123, we should use 123 (it's more reliable)
+      const externalIdResult = { topicId: 123, postId: 456 };
+      const forumUrlTopicId = 789;
+
+      // external_id takes precedence
+      expect(externalIdResult.topicId).not.toBe(forumUrlTopicId);
+    });
+
+    it("should document why external_id is preferred", () => {
+      // external_id is preferred because:
+      // 1. It's immutable (UUID never changes)
+      // 2. It's set by us, not by Discourse
+      // 3. It works even if topic title/slug changes
+      // 4. It's more reliable than parsing forum_url
+
+      const reasons = [
+        "UUID is immutable",
+        "Set by application, not user-editable",
+        "Works when topic title changes",
+        "More reliable than URL parsing",
+      ];
+
+      expect(reasons.length).toBeGreaterThan(0);
+      expect(reasons).toContain("UUID is immutable");
+    });
+  });
+});

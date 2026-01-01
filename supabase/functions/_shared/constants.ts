@@ -19,6 +19,22 @@ export const CATEGORY_MAP: Record<string, string> = {
 export const QUESTION_ID_PATTERN = /^([TGE]\d[A-Z]\d{2})\s*-/;
 
 /**
+ * UUID v4 pattern for validating question UUIDs.
+ * Supabase generates v4 UUIDs by default (gen_random_uuid()).
+ * Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx where y is 8, 9, a, or b.
+ */
+export const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * Validate that a string is a valid UUID v4.
+ * Use this to validate external_id values from Discourse to ensure they match
+ * our question UUIDs before using them for database lookups.
+ */
+export function isValidUuid(value: string): boolean {
+  return UUID_V4_PATTERN.test(value);
+}
+
+/**
  * Get the category slug from category name
  */
 export function getCategorySlug(categoryName: string): string {

@@ -756,3 +756,152 @@ describe("webhook response status values", () => {
     }
   );
 });
+
+// =============================================================================
+// TESTS: EXTERNAL_ID QUESTION LOOKUP
+// =============================================================================
+
+describe("external_id question lookup", () => {
+  /**
+   * Tests for using external_id to identify questions from Discourse topics.
+   * When a topic has external_id set (the question UUID), we use it directly
+   * instead of parsing the topic title.
+   */
+
+  describe("external_id extraction from topic response", () => {
+    it("should use external_id when available", () => {
+      const topicData = {
+        id: 123,
+        title: "T1A01 - What is the purpose of the Amateur Radio Service?",
+        external_id: "550e8400-e29b-41d4-a716-446655440000",
+      };
+
+      const questionId = topicData.external_id || null;
+      expect(questionId).toBe("550e8400-e29b-41d4-a716-446655440000");
+    });
+
+    it("should return null when external_id is not set", () => {
+      const topicData = {
+        id: 123,
+        title: "T1A01 - What is the purpose of the Amateur Radio Service?",
+      };
+
+      const questionId = (topicData as { external_id?: string }).external_id || null;
+      expect(questionId).toBeNull();
+    });
+
+    it("should return null when external_id is empty string", () => {
+      const topicData = {
+        id: 123,
+        title: "T1A01 - Question text",
+        external_id: "",
+      };
+
+      const questionId = topicData.external_id || null;
+      expect(questionId).toBeNull();
+    });
+  });
+
+  describe("fallback to title parsing when external_id missing", () => {
+    interface LookupStrategy {
+      method: "external_id" | "title" | "forum_url" | "none";
+      questionId: string | null;
+    }
+
+    function determineQuestionLookupStrategy(
+      externalId: string | null | undefined,
+      title: string | null | undefined,
+      forumUrl: string | null | undefined
+    ): LookupStrategy {
+      // Method 1: external_id (primary - most reliable)
+      if (externalId) {
+        return { method: "external_id", questionId: externalId };
+      }
+
+      // Method 2: Parse title (legacy fallback)
+      if (title) {
+        const match = title.match(/^([TGE]\d[A-Z]\d{2})\s*-/);
+        if (match) {
+          return { method: "title", questionId: match[1] };
+        }
+      }
+
+      // Method 3: forum_url lookup (last resort)
+      if (forumUrl) {
+        return { method: "forum_url", questionId: null }; // Would query DB
+      }
+
+      return { method: "none", questionId: null };
+    }
+
+    it("should prefer external_id over title parsing", () => {
+      const result = determineQuestionLookupStrategy(
+        "uuid-from-external-id",
+        "T1A01 - Question text",
+        null
+      );
+      expect(result.method).toBe("external_id");
+      expect(result.questionId).toBe("uuid-from-external-id");
+    });
+
+    it("should fall back to title parsing when external_id is missing", () => {
+      const result = determineQuestionLookupStrategy(
+        null,
+        "G2B03 - General question text",
+        null
+      );
+      expect(result.method).toBe("title");
+      expect(result.questionId).toBe("G2B03");
+    });
+
+    it("should fall back to forum_url when title parsing fails", () => {
+      const result = determineQuestionLookupStrategy(
+        null,
+        "Some random topic title",
+        "https://forum.openhamprep.com/t/topic/123"
+      );
+      expect(result.method).toBe("forum_url");
+    });
+
+    it("should return none when all methods fail", () => {
+      const result = determineQuestionLookupStrategy(
+        null,
+        "Some random topic title",
+        null
+      );
+      expect(result.method).toBe("none");
+      expect(result.questionId).toBeNull();
+    });
+  });
+
+  describe("external_id provides UUID directly", () => {
+    it("external_id is the question UUID, not display_name", () => {
+      // The external_id should be the database UUID (primary key)
+      // not the human-readable ID like T1A01
+      const externalId = "550e8400-e29b-41d4-a716-446655440000";
+
+      // Should be UUID format
+      expect(externalId).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+      );
+
+      // Should NOT be display_name format
+      expect(externalId).not.toMatch(/^[TGE]\d[A-Z]\d{2}$/);
+    });
+
+    it("display_name must be looked up from database after getting UUID", () => {
+      // When we have external_id, we have the UUID directly
+      // To get display_name for logging, we query the database
+      const mockDbQuery = (questionId: string) => ({
+        id: questionId,
+        display_name: "T1A01",
+      });
+
+      const externalId = "550e8400-e29b-41d4-a716-446655440000";
+      const result = mockDbQuery(externalId);
+
+      expect(result.id).toBe(externalId);
+      expect(result.display_name).toBe("T1A01");
+    });
+  });
+});
