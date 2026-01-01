@@ -44,13 +44,23 @@ describe('SyncStatusBadge', () => {
       expect(screen.getByText('Pending')).toBeInTheDocument();
     });
 
-    it('should not render when status is null', () => {
-      const { container } = render(<SyncStatusBadge {...defaultProps} status={null} />);
+    it('should render "Unverified" badge when status is null but forumUrl exists', () => {
+      render(<SyncStatusBadge {...defaultProps} status={null} />);
+      expect(screen.getByText('Unverified')).toBeInTheDocument();
+    });
+
+    it('should render "Unverified" badge when status is undefined but forumUrl exists', () => {
+      render(<SyncStatusBadge {...defaultProps} status={undefined} />);
+      expect(screen.getByText('Unverified')).toBeInTheDocument();
+    });
+
+    it('should not render when status is null and forumUrl is empty', () => {
+      const { container } = render(<SyncStatusBadge {...defaultProps} status={null} forumUrl="" />);
       expect(container.firstChild).toBeNull();
     });
 
-    it('should not render when status is undefined', () => {
-      const { container } = render(<SyncStatusBadge {...defaultProps} status={undefined} />);
+    it('should not render when status is undefined and forumUrl is empty', () => {
+      const { container } = render(<SyncStatusBadge {...defaultProps} status={undefined} forumUrl="" />);
       expect(container.firstChild).toBeNull();
     });
 
@@ -73,6 +83,13 @@ describe('SyncStatusBadge', () => {
       const badge = screen.getByText('Pending').closest('div');
       expect(badge).toHaveClass('bg-muted');
       expect(badge).toHaveClass('text-muted-foreground');
+    });
+
+    it('should have amber styling when unverified', () => {
+      render(<SyncStatusBadge {...defaultProps} status={null} />);
+      const badge = screen.getByText('Unverified').closest('div');
+      expect(badge).toHaveClass('bg-amber-500/20');
+      expect(badge).toHaveClass('text-amber-600');
     });
   });
 
