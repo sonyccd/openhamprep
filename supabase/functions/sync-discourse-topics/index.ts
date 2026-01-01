@@ -195,6 +195,7 @@ async function createDiscourseTopic(
         title,
         raw: body,
         category: categoryId,
+        external_id: question.id,  // Question UUID for reliable topic-to-question association
       }),
     });
 

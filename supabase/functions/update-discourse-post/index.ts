@@ -81,6 +81,45 @@ function extractTopicId(forumUrl: string): number | null {
 }
 
 /**
+ * Look up a Discourse topic by its external_id (question UUID).
+ * Returns topic ID and first post ID if found.
+ */
+async function getTopicByExternalId(
+  apiKey: string,
+  username: string,
+  questionId: string
+): Promise<{ topicId: number; postId: number } | null> {
+  try {
+    const response = await fetch(
+      `${DISCOURSE_URL}/t/external_id/${questionId}.json`,
+      {
+        headers: {
+          "Api-Key": apiKey,
+          "Api-Username": username,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    const firstPost = data.post_stream?.posts?.find(
+      (p: { post_number: number }) => p.post_number === 1
+    );
+
+    if (!firstPost) {
+      return null;
+    }
+
+    return { topicId: data.id, postId: firstPost.id };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Format the topic body to match sync-discourse-topics format.
  * This ensures the webhook can correctly parse explanations back.
  */
@@ -247,30 +286,8 @@ serve(async (req) => {
     console.log(`[${requestId}] Question ${question.display_name} (${question.id}) forum_url: ${question.forum_url}`);
 
     // ==========================================================================
-    // 4. EXTRACT TOPIC ID AND GET FIRST POST ID
+    // 4. LOOK UP TOPIC BY EXTERNAL_ID OR FORUM_URL
     // ==========================================================================
-
-    const topicId = extractTopicId(question.forum_url);
-    if (!topicId) {
-      const errorMsg = `Could not extract topic ID from forum_url: ${question.forum_url}`;
-      console.error(`[${requestId}] ${errorMsg}`);
-
-      await supabase.from("questions").update({
-        discourse_sync_status: "error",
-        discourse_sync_at: new Date().toISOString(),
-        discourse_sync_error: errorMsg,
-      }).eq("id", question.id);
-
-      return new Response(
-        JSON.stringify({ error: errorMsg }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    console.log(`[${requestId}] Extracted topic ID: ${topicId}`);
 
     const discourseApiKey = Deno.env.get("DISCOURSE_API_KEY");
     const discourseUsername = Deno.env.get("DISCOURSE_USERNAME");
@@ -294,61 +311,104 @@ serve(async (req) => {
       );
     }
 
-    // Fetch topic to get first post ID
-    const topicResponse = await fetch(`${DISCOURSE_URL}/t/${topicId}.json`, {
-      headers: {
-        "Api-Key": discourseApiKey,
-        "Api-Username": discourseUsername,
-      },
-    });
+    let topicId: number;
+    let postId: number;
 
-    if (!topicResponse.ok) {
-      const errorMsg = `Failed to fetch topic ${topicId}: ${topicResponse.status}`;
-      console.error(`[${requestId}] ${errorMsg}`);
-
-      await supabase.from("questions").update({
-        discourse_sync_status: "error",
-        discourse_sync_at: new Date().toISOString(),
-        discourse_sync_error: errorMsg,
-      }).eq("id", question.id);
-
-      return new Response(
-        JSON.stringify({ error: errorMsg }),
-        {
-          status: 502,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    const topicData = await topicResponse.json();
-
-    // The first post is the OP
-    const firstPost = topicData.post_stream?.posts?.find(
-      (p: { post_number: number }) => p.post_number === 1
+    // Try to look up topic by external_id first (primary method)
+    console.log(`[${requestId}] Looking up topic by external_id: ${question.id}`);
+    const externalIdResult = await getTopicByExternalId(
+      discourseApiKey,
+      discourseUsername,
+      question.id
     );
 
-    if (!firstPost) {
-      const errorMsg = `Could not find first post in topic ${topicId}`;
-      console.error(`[${requestId}] ${errorMsg}`);
+    if (externalIdResult) {
+      topicId = externalIdResult.topicId;
+      postId = externalIdResult.postId;
+      console.log(`[${requestId}] Found topic via external_id: topic=${topicId}, post=${postId}`);
+    } else {
+      // Fall back to forum_url extraction (for topics created before external_id was added)
+      console.log(`[${requestId}] external_id lookup failed, falling back to forum_url`);
 
-      await supabase.from("questions").update({
-        discourse_sync_status: "error",
-        discourse_sync_at: new Date().toISOString(),
-        discourse_sync_error: errorMsg,
-      }).eq("id", question.id);
+      const extractedTopicId = extractTopicId(question.forum_url);
+      if (!extractedTopicId) {
+        const errorMsg = `Could not find topic by external_id or extract topic ID from forum_url: ${question.forum_url}`;
+        console.error(`[${requestId}] ${errorMsg}`);
 
-      return new Response(
-        JSON.stringify({ error: errorMsg }),
-        {
-          status: 502,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        await supabase.from("questions").update({
+          discourse_sync_status: "error",
+          discourse_sync_at: new Date().toISOString(),
+          discourse_sync_error: errorMsg,
+        }).eq("id", question.id);
+
+        return new Response(
+          JSON.stringify({ error: errorMsg }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      console.log(`[${requestId}] Extracted topic ID from forum_url: ${extractedTopicId}`);
+
+      // Fetch topic to get first post ID
+      const topicResponse = await fetch(`${DISCOURSE_URL}/t/${extractedTopicId}.json`, {
+        headers: {
+          "Api-Key": discourseApiKey,
+          "Api-Username": discourseUsername,
+        },
+      });
+
+      if (!topicResponse.ok) {
+        const errorMsg = `Failed to fetch topic ${extractedTopicId}: ${topicResponse.status}`;
+        console.error(`[${requestId}] ${errorMsg}`);
+
+        await supabase.from("questions").update({
+          discourse_sync_status: "error",
+          discourse_sync_at: new Date().toISOString(),
+          discourse_sync_error: errorMsg,
+        }).eq("id", question.id);
+
+        return new Response(
+          JSON.stringify({ error: errorMsg }),
+          {
+            status: 502,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      const topicData = await topicResponse.json();
+
+      // The first post is the OP
+      const firstPost = topicData.post_stream?.posts?.find(
+        (p: { post_number: number }) => p.post_number === 1
       );
-    }
 
-    const postId = firstPost.id;
-    console.log(`[${requestId}] Found first post ID: ${postId} for topic ${topicId}`);
+      if (!firstPost) {
+        const errorMsg = `Could not find first post in topic ${extractedTopicId}`;
+        console.error(`[${requestId}] ${errorMsg}`);
+
+        await supabase.from("questions").update({
+          discourse_sync_status: "error",
+          discourse_sync_at: new Date().toISOString(),
+          discourse_sync_error: errorMsg,
+        }).eq("id", question.id);
+
+        return new Response(
+          JSON.stringify({ error: errorMsg }),
+          {
+            status: 502,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      topicId = extractedTopicId;
+      postId = firstPost.id;
+      console.log(`[${requestId}] Found topic via forum_url: topic=${topicId}, post=${postId}`);
+    }
 
     // ==========================================================================
     // 5. UPDATE THE POST IN DISCOURSE

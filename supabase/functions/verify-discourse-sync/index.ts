@@ -40,6 +40,7 @@ interface DiscourseTopic {
   id: number;
   title: string;
   slug: string;
+  external_id?: string;  // Question UUID if set
 }
 
 interface DiscrepancyOrphaned {
@@ -143,14 +144,20 @@ async function fetchDiscourseCategories(
   return categoryMap;
 }
 
+interface FetchTopicsResult {
+  byDisplayName: Map<string, DiscourseTopic>;  // Keyed by display_name (T1A01)
+  byExternalId: Map<string, DiscourseTopic>;   // Keyed by external_id (UUID)
+}
+
 async function fetchAllTopicsInCategory(
   apiKey: string,
   username: string,
   categoryId: number,
   categorySlug: string,
   requestId: string
-): Promise<Map<string, DiscourseTopic>> {
-  const topicsByQuestionId = new Map<string, DiscourseTopic>();
+): Promise<FetchTopicsResult> {
+  const byDisplayName = new Map<string, DiscourseTopic>();
+  const byExternalId = new Map<string, DiscourseTopic>();
   let page = 0;
   let hasMore = true;
 
@@ -181,13 +188,22 @@ async function fetchAllTopicsInCategory(
     }
 
     for (const topic of topics) {
-      const questionId = extractQuestionIdFromTitle(topic.title);
-      if (questionId) {
-        topicsByQuestionId.set(questionId, {
-          id: topic.id,
-          title: topic.title,
-          slug: topic.slug,
-        });
+      const discourseTopic: DiscourseTopic = {
+        id: topic.id,
+        title: topic.title,
+        slug: topic.slug,
+        external_id: topic.external_id,
+      };
+
+      // Index by external_id if available (primary key)
+      if (topic.external_id) {
+        byExternalId.set(topic.external_id, discourseTopic);
+      }
+
+      // Also index by display_name from title (for backwards compatibility)
+      const displayName = extractQuestionIdFromTitle(topic.title);
+      if (displayName) {
+        byDisplayName.set(displayName, discourseTopic);
       }
     }
 
@@ -200,7 +216,7 @@ async function fetchAllTopicsInCategory(
     await new Promise((resolve) => setTimeout(resolve, PAGINATION_DELAY_MS));
   }
 
-  return topicsByQuestionId;
+  return { byDisplayName, byExternalId };
 }
 
 async function verifyTopicExists(
@@ -398,7 +414,8 @@ serve(async (req) => {
     }
 
     console.log(`[${requestId}] Fetching topics from Discourse...`);
-    const allDiscourseTopics = new Map<string, DiscourseTopic>();
+    const allTopicsByDisplayName = new Map<string, DiscourseTopic>();
+    const allTopicsByExternalId = new Map<string, DiscourseTopic>();
 
     for (const prefix of prefixesToScan) {
       const categoryName = CATEGORY_MAP[prefix];
@@ -412,7 +429,7 @@ serve(async (req) => {
       }
 
       const categorySlug = getCategorySlug(categoryName);
-      const topics = await fetchAllTopicsInCategory(
+      const { byDisplayName, byExternalId } = await fetchAllTopicsInCategory(
         discourseApiKey,
         discourseUsername,
         categoryId,
@@ -420,13 +437,16 @@ serve(async (req) => {
         requestId
       );
 
-      for (const [questionId, topic] of topics) {
-        allDiscourseTopics.set(questionId, topic);
+      for (const [displayName, topic] of byDisplayName) {
+        allTopicsByDisplayName.set(displayName, topic);
+      }
+      for (const [externalId, topic] of byExternalId) {
+        allTopicsByExternalId.set(externalId, topic);
       }
     }
 
     console.log(
-      `[${requestId}] Found ${allDiscourseTopics.size} topics in Discourse`
+      `[${requestId}] Found ${allTopicsByDisplayName.size} topics by display_name, ${allTopicsByExternalId.size} with external_id`
     );
 
     // =========================================================================
@@ -439,19 +459,42 @@ serve(async (req) => {
       missingStatus: [],
     };
 
-    // Build a set of question IDs that have forum_urls
-    const questionsWithForumUrl = new Set<string>();
+    // Build maps of questions for quick lookup
+    const questionsWithForumUrl = new Set<string>();  // display_names with forum_url
+    const questionIdSet = new Set<string>();  // UUIDs of all questions
     const questionsByDisplayName = new Map<string, Question>();
+    const questionsById = new Map<string, Question>();
 
     for (const q of questionsList) {
       questionsByDisplayName.set(q.display_name, q);
+      questionsById.set(q.id, q);
+      questionIdSet.add(q.id);
       if (q.forum_url) {
         questionsWithForumUrl.add(q.display_name);
       }
     }
 
     // Find orphaned topics (in Discourse but no forum_url in DB)
-    for (const [displayName, topic] of allDiscourseTopics) {
+    // Check by external_id first (primary), then by display_name (fallback)
+    const processedTopicIds = new Set<number>();
+
+    // Process topics with external_id first
+    for (const [externalId, topic] of allTopicsByExternalId) {
+      processedTopicIds.add(topic.id);
+      const question = questionsById.get(externalId);
+      if (question && !question.forum_url) {
+        // Question exists but has no forum_url - orphaned
+        discrepancies.orphanedInDiscourse.push({
+          questionDisplayName: question.display_name,
+          topicId: topic.id,
+          topicUrl: `${DISCOURSE_URL}/t/${topic.slug}/${topic.id}`,
+        });
+      }
+    }
+
+    // Process topics without external_id (match by display_name)
+    for (const [displayName, topic] of allTopicsByDisplayName) {
+      if (processedTopicIds.has(topic.id)) continue;  // Already processed via external_id
       if (!questionsWithForumUrl.has(displayName)) {
         const question = questionsByDisplayName.get(displayName);
         if (question) {
@@ -462,31 +505,34 @@ serve(async (req) => {
             topicUrl: `${DISCOURSE_URL}/t/${topic.slug}/${topic.id}`,
           });
         }
-        // If question doesn't exist in DB, we ignore it (topic for non-existent question)
       }
     }
 
     // Find broken forum_urls and missing status
     for (const q of questionsList) {
       if (q.forum_url) {
-        // Check if topic still exists in our scan
-        const topicId = extractTopicId(q.forum_url);
-        const existsInDiscourse = allDiscourseTopics.has(q.display_name);
+        // Check if topic exists: first by external_id, then by display_name
+        const existsByExternalId = allTopicsByExternalId.has(q.id);
+        const existsByDisplayName = allTopicsByDisplayName.has(q.display_name);
+        const existsInDiscourse = existsByExternalId || existsByDisplayName;
 
-        if (!existsInDiscourse && topicId) {
-          // Topic might exist but with different title, verify directly
-          const exists = await verifyTopicExists(
-            discourseApiKey,
-            discourseUsername,
-            topicId
-          );
-          if (!exists) {
-            discrepancies.brokenForumUrl.push({
-              questionId: q.id,
-              questionDisplayName: q.display_name,
-              forumUrl: q.forum_url,
-              error: "Topic not found in Discourse",
-            });
+        if (!existsInDiscourse) {
+          // Topic might exist but with different title/external_id, verify directly
+          const topicId = extractTopicId(q.forum_url);
+          if (topicId) {
+            const exists = await verifyTopicExists(
+              discourseApiKey,
+              discourseUsername,
+              topicId
+            );
+            if (!exists) {
+              discrepancies.brokenForumUrl.push({
+                questionId: q.id,
+                questionDisplayName: q.display_name,
+                forumUrl: q.forum_url,
+                error: "Topic not found in Discourse",
+              });
+            }
           }
         }
 
@@ -585,7 +631,7 @@ serve(async (req) => {
       action,
       summary: {
         totalQuestionsInDb: questionsList.length,
-        totalTopicsInDiscourse: allDiscourseTopics.size,
+        totalTopicsInDiscourse: allTopicsByDisplayName.size,
         questionsWithForumUrl: questionsWithUrl,
         questionsWithoutForumUrl: questionsList.length - questionsWithUrl,
         syncedCorrectly,
