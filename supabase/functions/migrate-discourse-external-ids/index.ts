@@ -21,7 +21,8 @@ import {
  */
 
 // Configuration
-const RATE_LIMIT_DELAY_MS = 1000;  // 1 second between Discourse API calls
+const RATE_LIMIT_DELAY_MS = 1000;  // 1 second between Discourse API write calls (updates)
+const CHECK_DELAY_MS = 200;  // 200ms between Discourse API read calls (checks)
 const DEFAULT_BATCH_SIZE = 50;
 const MAX_BATCH_SIZE = 100;
 
@@ -296,9 +297,9 @@ serve(async (req) => {
         needsMigration.push(question);
       }
 
-      // Rate limiting
+      // Rate limiting for read operations
       if (i < questionsList.length - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 100));  // Light delay for checks
+        await new Promise((resolve) => setTimeout(resolve, CHECK_DELAY_MS));
       }
     }
 
@@ -352,6 +353,11 @@ serve(async (req) => {
     const batch = needsMigration.slice(0, batchSize);
     const remaining = needsMigration.length - batch.length;
 
+    // Note: There's a potential race condition between checking external_id in phase 5
+    // and updating here. Another process could set external_id in between. However,
+    // since this is a one-time migration and the delay between check and update is
+    // minimal (topics are processed in order), the practical risk is very low.
+    // The Discourse API will handle conflicts gracefully.
     for (const question of batch) {
       const topicId = extractTopicId(question.forum_url)!;
 

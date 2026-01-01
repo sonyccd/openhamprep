@@ -23,6 +23,16 @@ const DISCOURSE_URL = "https://forum.openhamprep.com";
 // Question ID pattern: T1A01, G2B03, E3C12, etc.
 const QUESTION_ID_PATTERN = /^([TGE]\d[A-Z]\d{2})\s*-/;
 
+// UUID v4 pattern for validating external_id
+const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * Validate that a string is a valid UUID v4.
+ */
+function isValidUuid(value: string): boolean {
+  return UUID_V4_PATTERN.test(value);
+}
+
 // =============================================================================
 // SIGNATURE VERIFICATION
 // =============================================================================
@@ -324,8 +334,8 @@ serve(async (req) => {
       if (topicResponse.ok) {
         const topicData = await topicResponse.json();
 
-        // Use external_id if available (this is the question UUID)
-        if (topicData.external_id) {
+        // Use external_id if available and valid (this is the question UUID)
+        if (topicData.external_id && isValidUuid(topicData.external_id)) {
           questionId = topicData.external_id;
           // Look up display_name for logging
           const { data: questionData } = await supabase
@@ -335,7 +345,12 @@ serve(async (req) => {
             .single();
           displayName = questionData?.display_name || null;
           console.log(`[${requestId}] Found question ${displayName} (${questionId}) via external_id`);
-        } else {
+        } else if (topicData.external_id) {
+          // external_id exists but is not a valid UUID - log warning and fall back to title
+          console.warn(`[${requestId}] Topic has invalid external_id format: ${topicData.external_id}`);
+        }
+
+        if (!questionId) {
           // Fall back to title parsing for topics created before external_id was added
           displayName = extractQuestionIdFromTitle(topicData.title);
           if (displayName) {

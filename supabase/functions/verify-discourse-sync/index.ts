@@ -219,11 +219,17 @@ async function fetchAllTopicsInCategory(
   return { byDisplayName, byExternalId };
 }
 
-async function verifyTopicExists(
+interface TopicVerifyResult {
+  exists: boolean;
+  external_id?: string | null;
+  title?: string;
+}
+
+async function verifyTopicDetails(
   apiKey: string,
   username: string,
   topicId: number
-): Promise<boolean> {
+): Promise<TopicVerifyResult> {
   try {
     const response = await fetch(`${DISCOURSE_URL}/t/${topicId}.json`, {
       headers: {
@@ -231,9 +237,17 @@ async function verifyTopicExists(
         "Api-Username": username,
       },
     });
-    return response.ok;
+    if (!response.ok) {
+      return { exists: false };
+    }
+    const data = await response.json();
+    return {
+      exists: true,
+      external_id: data.external_id || null,
+      title: data.title || null,
+    };
   } catch {
-    return false;
+    return { exists: false };
   }
 }
 
@@ -511,28 +525,50 @@ serve(async (req) => {
     // Find broken forum_urls and missing status
     for (const q of questionsList) {
       if (q.forum_url) {
-        // Check if topic exists: first by external_id, then by display_name
-        const existsByExternalId = allTopicsByExternalId.has(q.id);
-        const existsByDisplayName = allTopicsByDisplayName.has(q.display_name);
-        const existsInDiscourse = existsByExternalId || existsByDisplayName;
+        const topicId = extractTopicId(q.forum_url);
 
-        if (!existsInDiscourse) {
-          // Topic might exist but with different title/external_id, verify directly
-          const topicId = extractTopicId(q.forum_url);
-          if (topicId) {
-            const exists = await verifyTopicExists(
-              discourseApiKey,
-              discourseUsername,
-              topicId
-            );
-            if (!exists) {
-              discrepancies.brokenForumUrl.push({
-                questionId: q.id,
-                questionDisplayName: q.display_name,
-                forumUrl: q.forum_url,
-                error: "Topic not found in Discourse",
-              });
-            }
+        if (!topicId) {
+          discrepancies.brokenForumUrl.push({
+            questionId: q.id,
+            questionDisplayName: q.display_name,
+            forumUrl: q.forum_url,
+            error: "Could not extract topic ID from forum_url",
+          });
+          continue;
+        }
+
+        // Verify that the topic at forum_url matches this question
+        // The topic must have either:
+        // 1. external_id matching this question's UUID, OR
+        // 2. title containing this question's display_name (for legacy topics)
+        const topicDetails = await verifyTopicDetails(
+          discourseApiKey,
+          discourseUsername,
+          topicId
+        );
+
+        if (!topicDetails.exists) {
+          discrepancies.brokenForumUrl.push({
+            questionId: q.id,
+            questionDisplayName: q.display_name,
+            forumUrl: q.forum_url,
+            error: "Topic not found in Discourse",
+          });
+        } else {
+          // Topic exists - verify it matches this question
+          const matchesByExternalId = topicDetails.external_id === q.id;
+          const matchesByTitle = topicDetails.title
+            ? extractQuestionIdFromTitle(topicDetails.title) === q.display_name
+            : false;
+
+          if (!matchesByExternalId && !matchesByTitle) {
+            // Topic exists but doesn't match this question - data integrity issue
+            discrepancies.brokenForumUrl.push({
+              questionId: q.id,
+              questionDisplayName: q.display_name,
+              forumUrl: q.forum_url,
+              error: `Topic exists but belongs to different question (external_id: ${topicDetails.external_id || "none"}, title: "${topicDetails.title}")`,
+            });
           }
         }
 
