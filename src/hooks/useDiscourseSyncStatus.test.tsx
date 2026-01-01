@@ -90,7 +90,8 @@ function createWrapper() {
 }
 
 describe('useDiscourseSyncStatus', () => {
-  let supabase: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let supabase: { from: any; functions: { invoke: any } };
   let mockSelect: ReturnType<typeof vi.fn>;
   let mockInvoke: ReturnType<typeof vi.fn>;
 
@@ -307,13 +308,13 @@ describe('useDiscourseSyncStatus', () => {
 
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-      let resultData: any;
+      let resultData: typeof repairResult | undefined;
       await act(async () => {
         resultData = await result.current.repair.mutateAsync();
       });
 
       expect(resultData).toEqual(repairResult);
-      expect(resultData.repaired).toBe(5);
+      expect(resultData?.repaired).toBe(5);
     });
   });
 
