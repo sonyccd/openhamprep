@@ -115,13 +115,20 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
       return;
     }
 
-    // MIME type validation (with fallback to extension check for edge cases)
+    // File extension validation (required)
     const allowedExtensions = ['.csv', '.json', '.docx'];
     const hasValidExtension = allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
-    const hasValidMimeType = Object.keys(ALLOWED_TYPES).includes(file.type);
 
-    if (!hasValidExtension && !hasValidMimeType) {
-      toast.error('Invalid file type. Please upload a CSV, JSON, or DOCX file');
+    if (!hasValidExtension) {
+      toast.error('Invalid file extension. Please upload a .csv, .json, or .docx file');
+      return;
+    }
+
+    // MIME type validation (required when browser provides it)
+    // Some browsers may return empty string for certain file types
+    const hasValidMimeType = Object.keys(ALLOWED_TYPES).includes(file.type);
+    if (file.type !== '' && !hasValidMimeType) {
+      toast.error('Invalid file type detected. Please upload a valid CSV, JSON, or DOCX file');
       return;
     }
 

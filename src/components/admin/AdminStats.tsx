@@ -68,10 +68,17 @@ export function AdminStats({ testType, onAddLinkToQuestion }: AdminStatsProps) {
 
       if (error) throw error;
       // Map question_id to display_name for consistency with the rest of the stats logic
-      return data.map(a => ({
-        ...a,
-        question_id: (a.questions as { display_name: string }).display_name,
-      }));
+      // Filter out any attempts where the join failed (shouldn't happen with !inner, but defensive)
+      return data
+        .map(a => {
+          const question = a.questions as { display_name: string } | null;
+          if (!question) {
+            console.warn('Found attempt with no matching question:', a);
+            return null;
+          }
+          return { ...a, question_id: question.display_name };
+        })
+        .filter((a): a is NonNullable<typeof a> => a !== null);
     },
   });
 

@@ -28,9 +28,13 @@ export interface NCVECParseResult {
  * Extract plain text from a .docx file using mammoth
  */
 async function extractTextFromDocx(file: File): Promise<string> {
-  const arrayBuffer = await file.arrayBuffer();
-  const result = await mammoth.extractRawText({ arrayBuffer });
-  return result.value;
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value;
+  } catch (error) {
+    throw new Error(`Failed to extract text from DOCX file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
@@ -132,6 +136,9 @@ function parseQuestions(text: string): { questions: ImportQuestion[]; warnings: 
   // Split by the ~~ delimiter to get individual question blocks
   const blocks = text.split(/~~+/);
 
+  // Track seen question IDs to detect duplicates
+  const seenIds = new Set<string>();
+
   // Pattern for question header: "T1A01 (C) [97.1]" or "T1A01 (C)"
   // Uses 'i' flag for case-insensitive matching of question IDs and answer letters
   // Capture groups:
@@ -171,6 +178,17 @@ function parseQuestions(text: string): { questions: ImportQuestion[]; warnings: 
     const questionId = headerMatch[1].toUpperCase();
     const correctAnswerLetter = headerMatch[2].toUpperCase();
     const fccReference = headerMatch[3] ? headerMatch[3].trim() : null;
+
+    // Check for duplicate question IDs
+    if (seenIds.has(questionId)) {
+      warnings.push(`Question ${questionId}: Duplicate ID found, only last occurrence will be used`);
+      // Remove the previous occurrence so only the last one is kept
+      const prevIndex = questions.findIndex(q => q.id === questionId);
+      if (prevIndex !== -1) {
+        questions.splice(prevIndex, 1);
+      }
+    }
+    seenIds.add(questionId);
 
     // Extract subelement and question group from ID
     // T1A01 -> subelement: T1, group: T1A
