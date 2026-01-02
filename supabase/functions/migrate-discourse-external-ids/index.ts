@@ -9,26 +9,31 @@ import {
 /**
  * Migrate Discourse External IDs Edge Function
  *
- * One-time migration script to update existing Discourse topics with their
- * external_id set to the corresponding question UUID. This enables reliable
- * topic-to-question association without relying on title parsing.
+ * Migration script to update existing Discourse topics with their
+ * external_id set to the corresponding question UUID.
+ *
+ * Uses discourse_sync_status to track progress:
+ * - NULL: Needs external_id migration (pending)
+ * - 'synced': Successfully migrated (external_id set in Discourse)
+ * - 'error': Migration failed
  *
  * Actions:
- * - dry-run: Preview what would be updated without making changes
- * - migrate: Actually update topics in Discourse with external_id
+ * - prepare: Set sync status to NULL for all questions with forum_url
+ * - dry-run: Count how many questions need migration
+ * - migrate: Update topics in Discourse with external_id, mark synced immediately
  *
  * Security: Requires admin role or service_role token.
+ *
+ * WARNING: Do not run multiple migrate actions concurrently - they will
+ * process the same pending questions and waste API calls.
+ *
+ * Expected runtime: ~1 second per question (sequential processing to respect
+ * rate limits). A batch of 100 questions takes ~2 minutes.
  */
 
-// Rate Limiting Configuration
-// Discourse has a default rate limit of 60 requests per minute for admin API keys.
-// We use conservative delays to avoid hitting limits and to be a good API citizen.
-// See: https://meta.discourse.org/t/global-rate-limits-and-டreams/78612
-const RATE_LIMIT_DELAY_MS = 1000;  // 1 second between write operations (updates)
-const CHECK_DELAY_MS = 200;  // 200ms between read operations (GET requests are less limited)
-
-// Batch Configuration
-const DEFAULT_BATCH_SIZE = 50;
+// Batch size - how many to fetch per invocation
+// Keep MAX at 100 to stay within Edge Function timeout (60s default)
+const DEFAULT_BATCH_SIZE = 100;
 const MAX_BATCH_SIZE = 100;
 
 interface Question {
@@ -41,83 +46,95 @@ interface MigrationResult {
   questionId: string;
   displayName: string;
   topicId: number;
-  status: "updated" | "skipped" | "error";
+  status: "updated" | "error";
   reason?: string;
 }
 
 /**
+ * Validate that a forum_url is a trusted Discourse URL.
+ * Prevents SSRF attacks where malicious forum_url could point to internal servers.
+ */
+function isValidDiscourseUrl(forumUrl: string): boolean {
+  if (!forumUrl) return false;
+  return forumUrl.startsWith(DISCOURSE_URL);
+}
+
+/**
  * Extract topic ID from a Discourse forum URL.
+ * Returns null if URL is not from our Discourse instance (security check).
  */
 function extractTopicId(forumUrl: string): number | null {
+  // Security: Only process URLs from our Discourse instance
+  if (!isValidDiscourseUrl(forumUrl)) {
+    return null;
+  }
   const match = forumUrl.match(/\/t\/(?:[^/]+\/)?(\d+)/);
   return match ? parseInt(match[1], 10) : null;
 }
 
 /**
- * Check if a topic already has an external_id set.
+ * Update a topic's external_id in Discourse with retry on rate limit.
  */
-async function getTopicExternalId(
-  apiKey: string,
-  username: string,
-  topicId: number
-): Promise<{ exists: boolean; external_id: string | null; error?: string }> {
-  try {
-    const response = await fetch(`${DISCOURSE_URL}/t/${topicId}.json`, {
-      headers: {
-        "Api-Key": apiKey,
-        "Api-Username": username,
-      },
-    });
-
-    if (!response.ok) {
-      return { exists: false, external_id: null, error: `HTTP ${response.status}` };
-    }
-
-    const data = await response.json();
-    return { exists: true, external_id: data.external_id || null };
-  } catch (error) {
-    return {
-      exists: false,
-      external_id: null,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-}
-
-/**
- * Update a topic's external_id in Discourse.
- */
-async function updateTopicExternalId(
+async function updateTopicExternalIdWithRetry(
   apiKey: string,
   username: string,
   topicId: number,
-  externalId: string
+  externalId: string,
+  requestId: string,
+  displayName: string
 ): Promise<{ success: boolean; error?: string }> {
-  try {
-    const response = await fetch(`${DISCOURSE_URL}/t/${topicId}.json`, {
-      method: "PUT",
-      headers: {
-        "Api-Key": apiKey,
-        "Api-Username": username,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        external_id: externalId,
-      }),
-    });
+  const maxRetries = 3;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(`${DISCOURSE_URL}/t/${topicId}.json`, {
+        method: "PUT",
+        headers: {
+          "Api-Key": apiKey,
+          "Api-Username": username,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          external_id: externalId,
+        }),
+      });
+
+      if (response.status === 429) {
+        // Rate limited - parse wait time and retry
+        try {
+          const errorData = await response.json();
+          const waitSeconds = errorData.extras?.wait_seconds || 30;
+          console.log(`[${requestId}] Rate limited on ${displayName}, waiting ${waitSeconds}s (attempt ${attempt}/${maxRetries})`);
+          await new Promise((resolve) => setTimeout(resolve, waitSeconds * 1000));
+          continue; // Retry
+        } catch {
+          // Couldn't parse, wait default time
+          console.log(`[${requestId}] Rate limited on ${displayName}, waiting 30s (attempt ${attempt}/${maxRetries})`);
+          await new Promise((resolve) => setTimeout(resolve, 30000));
+          continue;
+        }
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+      }
+
+      return { success: true };
+    } catch (error) {
+      if (attempt === maxRetries) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+        };
+      }
+      // Network error - wait and retry
+      console.log(`[${requestId}] Network error on ${displayName}, retrying in 5s (attempt ${attempt}/${maxRetries})`);
+      await new Promise((resolve) => setTimeout(resolve, 5000));
     }
-
-    return { success: true };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
   }
+
+  return { success: false, error: "Max retries exceeded" };
 }
 
 serve(async (req) => {
@@ -206,12 +223,10 @@ serve(async (req) => {
     const action = typeof body.action === "string" ? body.action : "dry-run";
     const rawBatchSize = typeof body.batchSize === "number" ? body.batchSize : DEFAULT_BATCH_SIZE;
     const batchSize = Math.min(Math.max(1, rawBatchSize), MAX_BATCH_SIZE);
-    // Offset for pagination - which question to start from (0-indexed)
-    const offset = typeof body.offset === "number" ? Math.max(0, body.offset) : 0;
 
-    if (action !== "dry-run" && action !== "migrate") {
+    if (!["dry-run", "prepare", "migrate"].includes(action)) {
       return new Response(
-        JSON.stringify({ error: 'Invalid action. Use "dry-run" or "migrate"' }),
+        JSON.stringify({ error: 'Invalid action. Use "dry-run", "prepare", or "migrate"' }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -219,10 +234,99 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[${requestId}] Action: ${action}, Batch size: ${batchSize}, Offset: ${offset}`);
+    console.log(`[${requestId}] Action: ${action}, Batch size: ${batchSize}`);
 
     // =========================================================================
-    // 3. GET DISCOURSE CONFIGURATION
+    // 3. HANDLE PREPARE ACTION
+    // =========================================================================
+
+    if (action === "prepare") {
+      // Set sync status to NULL for all questions with forum_url (marks as pending)
+      console.log(`[${requestId}] Preparing migration - setting sync status to NULL for all questions with forum_url...`);
+
+      // First get count of questions to update (more memory efficient than returning all IDs)
+      const { count: countToUpdate } = await supabase
+        .from("questions")
+        .select("*", { count: "exact", head: true })
+        .not("forum_url", "is", null);
+
+      // Then perform the update
+      const { error: updateError } = await supabase
+        .from("questions")
+        .update({
+          discourse_sync_status: null,
+          discourse_sync_error: null,
+        })
+        .not("forum_url", "is", null);
+
+      if (updateError) {
+        throw new Error(`Failed to prepare migration: ${updateError.message}`);
+      }
+
+      const count = countToUpdate || 0;
+      console.log(`[${requestId}] Reset ${count} questions to NULL (pending)`);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          action: "prepare",
+          markedForMigration: count,
+          message: `Reset ${count} questions to pending (NULL). Run with action: "migrate" to start migration.`,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // =========================================================================
+    // 4. GET COUNTS FOR DRY-RUN
+    // =========================================================================
+
+    if (action === "dry-run") {
+      // Count questions by status
+      // Pending = has forum_url but NULL sync status
+      const { count: pendingCount } = await supabase
+        .from("questions")
+        .select("*", { count: "exact", head: true })
+        .not("forum_url", "is", null)
+        .is("discourse_sync_status", null);
+
+      const { count: syncedCount } = await supabase
+        .from("questions")
+        .select("*", { count: "exact", head: true })
+        .eq("discourse_sync_status", "synced");
+
+      const { count: errorCount } = await supabase
+        .from("questions")
+        .select("*", { count: "exact", head: true })
+        .eq("discourse_sync_status", "error");
+
+      const { count: totalWithForumUrl } = await supabase
+        .from("questions")
+        .select("*", { count: "exact", head: true })
+        .not("forum_url", "is", null);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          action: "dry-run",
+          counts: {
+            totalWithForumUrl: totalWithForumUrl || 0,
+            pending: pendingCount || 0,
+            synced: syncedCount || 0,
+            error: errorCount || 0,
+          },
+          nextAction: (pendingCount || 0) > 0
+            ? 'Run with action: "migrate" to process pending questions'
+            : (errorCount || 0) > 0
+              ? 'Run with action: "prepare" to reset errors and retry'
+              : "All questions are synced!",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // =========================================================================
+    // 5. GET DISCOURSE CONFIGURATION
     // =========================================================================
 
     const discourseApiKey = Deno.env.get("DISCOURSE_API_KEY");
@@ -239,200 +343,133 @@ serve(async (req) => {
     }
 
     // =========================================================================
-    // 4. FETCH QUESTIONS WITH FORUM_URL
+    // 6. FETCH PENDING QUESTIONS (forum_url exists, sync status is NULL)
     // =========================================================================
 
-    console.log(`[${requestId}] Fetching questions with forum_url...`);
+    console.log(`[${requestId}] Fetching pending questions...`);
 
     const { data: questions, error: dbError } = await supabase
       .from("questions")
       .select("id, display_name, forum_url")
       .not("forum_url", "is", null)
-      .order("display_name");
+      .is("discourse_sync_status", null)
+      .order("display_name")
+      .limit(batchSize);
 
     if (dbError) {
       throw new Error(`Database error: ${dbError.message}`);
     }
 
     const questionsList = (questions || []) as Question[];
-    console.log(`[${requestId}] Found ${questionsList.length} questions with forum_url`);
+    console.log(`[${requestId}] Found ${questionsList.length} pending questions`);
 
     if (questionsList.length === 0) {
+      // Get total counts for summary
+      const { count: syncedCount } = await supabase
+        .from("questions")
+        .select("*", { count: "exact", head: true })
+        .eq("discourse_sync_status", "synced");
+
+      const { count: errorCount } = await supabase
+        .from("questions")
+        .select("*", { count: "exact", head: true })
+        .eq("discourse_sync_status", "error");
+
       return new Response(
         JSON.stringify({
           success: true,
-          message: "No questions with forum_url found",
-          summary: { total: 0, needsMigration: 0, alreadyMigrated: 0 },
+          complete: true,
+          message: "No pending questions to migrate",
+          summary: {
+            synced: syncedCount || 0,
+            errors: errorCount || 0,
+          },
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // =========================================================================
-    // 5. CHECK WHICH TOPICS NEED MIGRATION (BATCHED)
+    // 7. MIGRATE: UPDATE TOPICS ONE BY ONE
     // =========================================================================
 
-    // Apply offset and batch limit to avoid timeouts
-    // With 1000 topics and 200ms delay each, checking all would take 200+ seconds
-    // Edge functions have a 60-second timeout, so we batch the checking phase too
-    const totalQuestions = questionsList.length;
-    const batchToCheck = questionsList.slice(offset, offset + batchSize);
-    const remainingAfterBatch = Math.max(0, totalQuestions - offset - batchSize);
-
-    console.log(
-      `[${requestId}] Checking topics ${offset + 1} to ${offset + batchToCheck.length} of ${totalQuestions} ` +
-        `(${remainingAfterBatch} remaining after this batch)`
-    );
-
-    const needsMigration: Question[] = [];
-    const alreadyMigrated: Question[] = [];
-    const errors: Array<{ question: Question; error: string }> = [];
-
-    // Process only the current batch with rate limiting
-    for (let i = 0; i < batchToCheck.length; i++) {
-      const question = batchToCheck[i];
-      const topicId = extractTopicId(question.forum_url);
-
-      if (!topicId) {
-        errors.push({ question, error: "Could not extract topic ID from forum_url" });
-        continue;
-      }
-
-      const result = await getTopicExternalId(discourseApiKey, discourseUsername, topicId);
-
-      if (!result.exists) {
-        errors.push({ question, error: result.error || "Topic not found" });
-      } else if (result.external_id === question.id) {
-        alreadyMigrated.push(question);
-      } else if (result.external_id) {
-        // Has a different external_id - skip to avoid conflicts
-        errors.push({
-          question,
-          error: `Topic already has different external_id: ${result.external_id}`,
-        });
-      } else {
-        needsMigration.push(question);
-      }
-
-      // Rate limiting for read operations
-      if (i < batchToCheck.length - 1) {
-        await new Promise((resolve) => setTimeout(resolve, CHECK_DELAY_MS));
-      }
-    }
-
-    console.log(
-      `[${requestId}] Batch status: ` +
-        `${needsMigration.length} need migration, ` +
-        `${alreadyMigrated.length} already migrated, ` +
-        `${errors.length} errors`
-    );
-
-    // =========================================================================
-    // 6. DRY-RUN: RETURN PREVIEW
-    // =========================================================================
-
-    if (action === "dry-run") {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          dryRun: true,
-          pagination: {
-            totalQuestions: totalQuestions,
-            offset: offset,
-            batchSize: batchSize,
-            checkedInThisBatch: batchToCheck.length,
-            remaining: remainingAfterBatch,
-            complete: remainingAfterBatch === 0,
-            nextOffset: remainingAfterBatch > 0 ? offset + batchSize : null,
-          },
-          batchSummary: {
-            needsMigration: needsMigration.length,
-            alreadyMigrated: alreadyMigrated.length,
-            errors: errors.length,
-          },
-          needsMigration: needsMigration.map((q) => ({
-            displayName: q.display_name,
-            questionId: q.id,
-          })),
-          alreadyMigrated: alreadyMigrated.map((q) => q.display_name),
-          errors: errors.map((e) => ({
-            displayName: e.question.display_name,
-            error: e.error,
-          })),
-          nextAction: remainingAfterBatch > 0
-            ? `Call again with offset: ${offset + batchSize} to check next batch`
-            : "All topics checked. Call with action: 'migrate' to apply changes.",
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // =========================================================================
-    // 7. MIGRATE: UPDATE TOPICS
-    // =========================================================================
-
-    console.log(`[${requestId}] Starting migration...`);
+    console.log(`[${requestId}] Starting migration of ${questionsList.length} questions...`);
 
     const results: MigrationResult[] = [];
     let updated = 0;
-    let migrationErrors = 0;
+    let errors = 0;
 
-    // Process only up to batchSize
-    const batch = needsMigration.slice(0, batchSize);
-    const remaining = needsMigration.length - batch.length;
+    for (const question of questionsList) {
+      // Security check: Ensure forum_url is from our Discourse instance
+      if (!isValidDiscourseUrl(question.forum_url)) {
+        const errorMsg = `Invalid forum_url: must start with ${DISCOURSE_URL}`;
+        await supabase
+          .from("questions")
+          .update({
+            discourse_sync_status: "error",
+            discourse_sync_error: errorMsg,
+            discourse_sync_at: new Date().toISOString(),
+          })
+          .eq("id", question.id);
 
-    for (const question of batch) {
-      const topicId = extractTopicId(question.forum_url)!;
-
-      // Re-check external_id before updating to handle race conditions
-      // (e.g., if another process set external_id between check and update)
-      const currentState = await getTopicExternalId(
-        discourseApiKey,
-        discourseUsername,
-        topicId
-      );
-
-      if (currentState.external_id && currentState.external_id !== question.id) {
-        // Topic's external_id was set by another process to a different value
         results.push({
           questionId: question.id,
           displayName: question.display_name,
-          topicId,
+          topicId: 0,
           status: "error",
-          reason: `Topic external_id changed during migration (now: ${currentState.external_id})`,
+          reason: errorMsg,
         });
-        migrationErrors++;
-        console.warn(
-          `[${requestId}] Skipping ${question.display_name}: external_id changed to ${currentState.external_id}`
-        );
-        await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY_MS));
+        errors++;
         continue;
       }
 
-      if (currentState.external_id === question.id) {
-        // Already migrated (possibly by concurrent process) - skip but count as success
+      const topicId = extractTopicId(question.forum_url);
+
+      if (!topicId) {
+        // Valid Discourse URL but couldn't extract topic ID
+        await supabase
+          .from("questions")
+          .update({
+            discourse_sync_status: "error",
+            discourse_sync_error: "Could not extract topic ID from forum_url pattern",
+            discourse_sync_at: new Date().toISOString(),
+          })
+          .eq("id", question.id);
+
         results.push({
           questionId: question.id,
           displayName: question.display_name,
-          topicId,
-          status: "skipped",
-          reason: "Already has correct external_id",
+          topicId: 0,
+          status: "error",
+          reason: "Could not extract topic ID",
         });
-        console.log(`[${requestId}] ${question.display_name} already migrated, skipping`);
-        await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY_MS));
+        errors++;
         continue;
       }
 
-      console.log(`[${requestId}] Updating topic ${topicId} with external_id ${question.id}...`);
+      // Try to update the topic
+      console.log(`[${requestId}] Updating ${question.display_name} (topic ${topicId})...`);
 
-      const updateResult = await updateTopicExternalId(
+      const updateResult = await updateTopicExternalIdWithRetry(
         discourseApiKey,
         discourseUsername,
         topicId,
-        question.id
+        question.id,
+        requestId,
+        question.display_name
       );
 
       if (updateResult.success) {
+        // Mark as synced immediately
+        await supabase
+          .from("questions")
+          .update({
+            discourse_sync_status: "synced",
+            discourse_sync_at: new Date().toISOString(),
+            discourse_sync_error: null,
+          })
+          .eq("id", question.id);
+
         results.push({
           questionId: question.id,
           displayName: question.display_name,
@@ -440,8 +477,18 @@ serve(async (req) => {
           status: "updated",
         });
         updated++;
-        console.log(`[${requestId}] Updated ${question.display_name}`);
+        console.log(`[${requestId}] ✓ ${question.display_name} synced`);
       } else {
+        // Mark as error
+        await supabase
+          .from("questions")
+          .update({
+            discourse_sync_status: "error",
+            discourse_sync_at: new Date().toISOString(),
+            discourse_sync_error: updateResult.error || "Unknown error",
+          })
+          .eq("id", question.id);
+
         results.push({
           questionId: question.id,
           displayName: question.display_name,
@@ -449,48 +496,46 @@ serve(async (req) => {
           status: "error",
           reason: updateResult.error,
         });
-        migrationErrors++;
-        console.error(`[${requestId}] Failed to update ${question.display_name}: ${updateResult.error}`);
+        errors++;
+        console.error(`[${requestId}] ✗ ${question.display_name}: ${updateResult.error}`);
       }
-
-      // Rate limiting
-      await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY_MS));
     }
 
+    // Get remaining count
+    const { count: remainingCount } = await supabase
+      .from("questions")
+      .select("*", { count: "exact", head: true })
+      .not("forum_url", "is", null)
+      .is("discourse_sync_status", null);
+
     console.log(
-      `[${requestId}] Migration batch complete. Updated: ${updated}, Errors: ${migrationErrors}, ` +
-        `Remaining in needsMigration: ${remaining}, Remaining topics overall: ${remainingAfterBatch}`
+      `[${requestId}] Batch complete. Updated: ${updated}, Errors: ${errors}, Remaining: ${remainingCount || 0}`
     );
+
+    // Aggregate errors by reason for easier debugging
+    const errorSummary = results
+      .filter((r) => r.status === "error")
+      .reduce((acc, r) => {
+        const reason = r.reason || "unknown";
+        acc[reason] = (acc[reason] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
 
     return new Response(
       JSON.stringify({
         success: true,
-        complete: remainingAfterBatch === 0 && remaining === 0,
-        pagination: {
-          totalQuestions: totalQuestions,
-          offset: offset,
-          batchSize: batchSize,
-          checkedInThisBatch: batchToCheck.length,
-          remainingTopicsToCheck: remainingAfterBatch,
-          nextOffset: remainingAfterBatch > 0 ? offset + batchSize : null,
-        },
-        batchSummary: {
-          needsMigration: needsMigration.length,
-          alreadyMigrated: alreadyMigrated.length,
-          checkErrors: errors.length,
-        },
-        migration: {
-          processed: batch.length,
+        complete: (remainingCount || 0) === 0,
+        batch: {
+          processed: questionsList.length,
           updated,
-          errors: migrationErrors,
-          remainingNeedingMigration: remaining,
+          errors,
         },
+        remaining: remainingCount || 0,
+        errorSummary: Object.keys(errorSummary).length > 0 ? errorSummary : undefined,
         results,
-        nextAction: remainingAfterBatch > 0
-          ? `Call again with offset: ${offset + batchSize} to process next batch of topics`
-          : remaining > 0
-            ? `Call again (same offset) to process remaining ${remaining} topics needing migration`
-            : null,
+        nextAction: (remainingCount || 0) > 0
+          ? `Run again to process remaining ${remainingCount} questions`
+          : "Migration complete!",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
