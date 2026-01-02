@@ -23,11 +23,18 @@ import {
  * - migrate: Update topics in Discourse with external_id, mark synced immediately
  *
  * Security: Requires admin role or service_role token.
+ *
+ * WARNING: Do not run multiple migrate actions concurrently - they will
+ * process the same pending questions and waste API calls.
+ *
+ * Expected runtime: ~1 second per question (sequential processing to respect
+ * rate limits). A batch of 100 questions takes ~2 minutes.
  */
 
 // Batch size - how many to fetch per invocation
+// Keep MAX at 100 to stay within Edge Function timeout (60s default)
 const DEFAULT_BATCH_SIZE = 100;
-const MAX_BATCH_SIZE = 500;
+const MAX_BATCH_SIZE = 100;
 
 interface Question {
   id: string;  // UUID
@@ -44,9 +51,23 @@ interface MigrationResult {
 }
 
 /**
+ * Validate that a forum_url is a trusted Discourse URL.
+ * Prevents SSRF attacks where malicious forum_url could point to internal servers.
+ */
+function isValidDiscourseUrl(forumUrl: string): boolean {
+  if (!forumUrl) return false;
+  return forumUrl.startsWith(DISCOURSE_URL);
+}
+
+/**
  * Extract topic ID from a Discourse forum URL.
+ * Returns null if URL is not from our Discourse instance (security check).
  */
 function extractTopicId(forumUrl: string): number | null {
+  // Security: Only process URLs from our Discourse instance
+  if (!isValidDiscourseUrl(forumUrl)) {
+    return null;
+  }
   const match = forumUrl.match(/\/t\/(?:[^/]+\/)?(\d+)/);
   return match ? parseInt(match[1], 10) : null;
 }
@@ -223,20 +244,26 @@ serve(async (req) => {
       // Set sync status to NULL for all questions with forum_url (marks as pending)
       console.log(`[${requestId}] Preparing migration - setting sync status to NULL for all questions with forum_url...`);
 
-      const { data: updated, error: updateError } = await supabase
+      // First get count of questions to update (more memory efficient than returning all IDs)
+      const { count: countToUpdate } = await supabase
+        .from("questions")
+        .select("*", { count: "exact", head: true })
+        .not("forum_url", "is", null);
+
+      // Then perform the update
+      const { error: updateError } = await supabase
         .from("questions")
         .update({
           discourse_sync_status: null,
           discourse_sync_error: null,
         })
-        .not("forum_url", "is", null)
-        .select("id");
+        .not("forum_url", "is", null);
 
       if (updateError) {
         throw new Error(`Failed to prepare migration: ${updateError.message}`);
       }
 
-      const count = updated?.length || 0;
+      const count = countToUpdate || 0;
       console.log(`[${requestId}] Reset ${count} questions to NULL (pending)`);
 
       return new Response(
@@ -373,15 +400,14 @@ serve(async (req) => {
     let errors = 0;
 
     for (const question of questionsList) {
-      const topicId = extractTopicId(question.forum_url);
-
-      if (!topicId) {
-        // Invalid forum_url - mark as error
+      // Security check: Ensure forum_url is from our Discourse instance
+      if (!isValidDiscourseUrl(question.forum_url)) {
+        const errorMsg = `Invalid forum_url: must start with ${DISCOURSE_URL}`;
         await supabase
           .from("questions")
           .update({
             discourse_sync_status: "error",
-            discourse_sync_error: "Could not extract topic ID from forum_url",
+            discourse_sync_error: errorMsg,
             discourse_sync_at: new Date().toISOString(),
           })
           .eq("id", question.id);
@@ -391,7 +417,31 @@ serve(async (req) => {
           displayName: question.display_name,
           topicId: 0,
           status: "error",
-          reason: "Invalid forum_url",
+          reason: errorMsg,
+        });
+        errors++;
+        continue;
+      }
+
+      const topicId = extractTopicId(question.forum_url);
+
+      if (!topicId) {
+        // Valid Discourse URL but couldn't extract topic ID
+        await supabase
+          .from("questions")
+          .update({
+            discourse_sync_status: "error",
+            discourse_sync_error: "Could not extract topic ID from forum_url pattern",
+            discourse_sync_at: new Date().toISOString(),
+          })
+          .eq("id", question.id);
+
+        results.push({
+          questionId: question.id,
+          displayName: question.display_name,
+          topicId: 0,
+          status: "error",
+          reason: "Could not extract topic ID",
         });
         errors++;
         continue;
@@ -462,6 +512,15 @@ serve(async (req) => {
       `[${requestId}] Batch complete. Updated: ${updated}, Errors: ${errors}, Remaining: ${remainingCount || 0}`
     );
 
+    // Aggregate errors by reason for easier debugging
+    const errorSummary = results
+      .filter((r) => r.status === "error")
+      .reduce((acc, r) => {
+        const reason = r.reason || "unknown";
+        acc[reason] = (acc[reason] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -472,6 +531,7 @@ serve(async (req) => {
           errors,
         },
         remaining: remainingCount || 0,
+        errorSummary: Object.keys(errorSummary).length > 0 ? errorSummary : undefined,
         results,
         nextAction: (remainingCount || 0) > 0
           ? `Run again to process remaining ${remainingCount} questions`
