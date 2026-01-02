@@ -4,9 +4,74 @@
 
 // Discourse API configuration
 export const DISCOURSE_URL = 'https://forum.openhamprep.com';
-export const PAGINATION_DELAY_MS = 200;
 export const MAX_PAGINATION_PAGES = 100;
 export const MAX_TITLE_LENGTH = 250;
+
+// Exponential backoff configuration for rate limiting
+export const BACKOFF_INITIAL_DELAY_MS = 100;  // Start with 100ms
+export const BACKOFF_MAX_DELAY_MS = 30000;    // Max 30 seconds
+export const BACKOFF_MAX_RETRIES = 5;
+export const BACKOFF_MULTIPLIER = 2;
+
+/**
+ * Fetch with exponential backoff for rate-limited APIs.
+ * Retries on 429 (rate limit) and 5xx errors with increasing delays.
+ * Returns response on success, throws on non-retryable errors or max retries exceeded.
+ */
+export async function fetchWithBackoff(
+  url: string,
+  options: RequestInit,
+  context?: string
+): Promise<Response> {
+  let delay = BACKOFF_INITIAL_DELAY_MS;
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= BACKOFF_MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(url, options);
+
+      // Success - return immediately
+      if (response.ok) {
+        return response;
+      }
+
+      // Rate limited (429) or server error (5xx) - retry with backoff
+      if (response.status === 429 || response.status >= 500) {
+        const retryAfter = response.headers.get('Retry-After');
+        const waitTime = retryAfter
+          ? parseInt(retryAfter, 10) * 1000
+          : delay;
+
+        if (attempt < BACKOFF_MAX_RETRIES) {
+          const logContext = context ? `[${context}] ` : '';
+          console.log(
+            `${logContext}Rate limited (${response.status}), retrying in ${waitTime}ms (attempt ${attempt + 1}/${BACKOFF_MAX_RETRIES})`
+          );
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          delay = Math.min(delay * BACKOFF_MULTIPLIER, BACKOFF_MAX_DELAY_MS);
+          continue;
+        }
+      }
+
+      // Non-retryable error - return the response for caller to handle
+      return response;
+    } catch (error) {
+      // Network error - retry with backoff
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (attempt < BACKOFF_MAX_RETRIES) {
+        const logContext = context ? `[${context}] ` : '';
+        console.log(
+          `${logContext}Network error, retrying in ${delay}ms (attempt ${attempt + 1}/${BACKOFF_MAX_RETRIES}): ${lastError.message}`
+        );
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay = Math.min(delay * BACKOFF_MULTIPLIER, BACKOFF_MAX_DELAY_MS);
+        continue;
+      }
+    }
+  }
+
+  throw lastError || new Error('Max retries exceeded');
+}
 
 // Category mappings for question prefixes
 export const CATEGORY_MAP: Record<string, string> = {
