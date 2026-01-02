@@ -28,6 +28,7 @@ import {
   clearGeocodeProgress,
   type GeocodeProgress,
 } from '@/hooks/useGeocoding';
+import { QUOTA_WARNING_THRESHOLD } from '@/lib/mapboxGeocoding';
 import type { ExamSession } from '@/hooks/useExamSessions';
 
 interface GeocodeModalProps {
@@ -49,7 +50,7 @@ export function GeocodeModal({
 
   const geocodeMutation = useClientGeocoding();
   const resumableProgress = useGeocodeResumableProgress();
-  const mapboxUsage = useMapboxUsage();
+  const mapboxUsage = useMapboxUsage(geocodeMutation.isPending);
 
   // All sessions with valid addresses
   const allGeocodeableSessions = sessions.filter(
@@ -73,7 +74,7 @@ export function GeocodeModal({
   // Check if this batch would use significant quota
   const wouldExceedQuota = remainingToProcess > mapboxUsage.remaining;
   const wouldUseSignificantQuota =
-    remainingToProcess > mapboxUsage.remaining * 0.5;
+    remainingToProcess > mapboxUsage.remaining * QUOTA_WARNING_THRESHOLD;
 
   const handleStart = () => {
     // Show warning if using significant quota

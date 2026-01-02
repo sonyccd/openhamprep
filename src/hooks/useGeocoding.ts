@@ -25,6 +25,9 @@ import type { ExamSession } from '@/hooks/useExamSessions';
 
 const PROGRESS_STORAGE_KEY = 'geocode_progress';
 
+/** Polling interval for usage updates during geocoding (ms) */
+const USAGE_POLL_INTERVAL_MS = 2000;
+
 export interface GeocodeProgressState {
   processedIds: string[];
   lastProcessedAt: string;
@@ -41,7 +44,8 @@ export interface GeocodeProgress {
 }
 
 /**
- * Load persisted progress from localStorage
+ * Load persisted progress from localStorage.
+ * Returns null if no progress exists or if data is corrupted.
  */
 function loadProgress(): GeocodeProgressState | null {
   const stored = localStorage.getItem(PROGRESS_STORAGE_KEY);
@@ -49,27 +53,31 @@ function loadProgress(): GeocodeProgressState | null {
 
   try {
     return JSON.parse(stored);
-  } catch {
+  } catch (error) {
+    // Log corrupted data for debugging
+    console.warn('Corrupted geocode progress in localStorage, starting fresh:', error);
     return null;
   }
 }
 
 /**
- * Save progress to localStorage
+ * Save progress to localStorage for resume capability.
  */
 function saveProgress(state: GeocodeProgressState): void {
   localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(state));
 }
 
 /**
- * Clear progress from localStorage
+ * Clear progress from localStorage.
  */
 function clearProgress(): void {
   localStorage.removeItem(PROGRESS_STORAGE_KEY);
 }
 
 /**
- * Hook to check if there's resumable geocoding progress
+ * Hook to check if there's resumable geocoding progress.
+ *
+ * @returns Saved progress state or null if none exists
  */
 export function useGeocodeResumableProgress(): GeocodeProgressState | null {
   const [progress, setProgress] = useState<GeocodeProgressState | null>(null);
@@ -82,9 +90,12 @@ export function useGeocodeResumableProgress(): GeocodeProgressState | null {
 }
 
 /**
- * Hook to get current Mapbox usage stats from database
+ * Hook to get current Mapbox usage stats from database.
+ *
+ * @param isGeocoding - Whether geocoding is currently active (enables polling)
+ * @returns Usage statistics including current count, remaining, and limit
  */
-export function useMapboxUsage() {
+export function useMapboxUsage(isGeocoding = false) {
   const queryClient = useQueryClient();
 
   const { data: usageData } = useQuery({
@@ -98,7 +109,8 @@ export function useMapboxUsage() {
         isConfigured: isMapboxConfigured(),
       };
     },
-    refetchInterval: 2000, // Refresh every 2 seconds
+    // Only poll when geocoding is active to reduce database load
+    refetchInterval: isGeocoding ? USAGE_POLL_INTERVAL_MS : false,
     staleTime: 1000,
   });
 
@@ -117,14 +129,23 @@ export function useMapboxUsage() {
 }
 
 /**
- * Clear any saved geocoding progress
+ * Clear any saved geocoding progress from localStorage.
+ * Call this when starting a fresh geocoding session or when user cancels.
  */
 export function clearGeocodeProgress(): void {
   clearProgress();
 }
 
 /**
- * Main geocoding mutation hook
+ * Main geocoding mutation hook.
+ *
+ * Handles batch geocoding of exam sessions with:
+ * - Resume capability via localStorage
+ * - Real-time progress updates
+ * - Quota checking before and during processing
+ * - Database updates for each geocoded session
+ *
+ * @returns TanStack Query mutation with geocoding functionality
  */
 export function useClientGeocoding() {
   const queryClient = useQueryClient();
@@ -174,6 +195,7 @@ export function useClientGeocoding() {
 
       let successCount = 0;
       let skippedCount = 0;
+      const errors: string[] = [];
       let currentUsage = await getMonthlyUsageFromDb();
 
       for (let i = 0; i < toProcess.length; i++) {
@@ -216,7 +238,9 @@ export function useClientGeocoding() {
             .eq('id', session.id);
 
           if (error) {
-            console.error(`Failed to update session ${session.id}:`, error);
+            const errorMsg = `Failed to update session ${session.id}: ${error.message}`;
+            console.error(errorMsg);
+            errors.push(errorMsg);
           } else {
             successCount++;
           }
@@ -249,6 +273,11 @@ export function useClientGeocoding() {
         monthlyUsage: currentUsage,
         monthlyLimit: MAPBOX_MONTHLY_LIMIT,
       });
+
+      // Log accumulated errors if any
+      if (errors.length > 0) {
+        console.warn(`Geocoding completed with ${errors.length} database update errors:`, errors);
+      }
 
       return { processed: successCount, skipped: skippedCount, total: toProcess.length };
     },
