@@ -157,18 +157,19 @@ CREATE POLICY "Admins can delete topic questions"
 -- ============================================
 -- EXAM_SESSIONS TABLE
 -- Issues: multiple_permissive_policies (SELECT)
--- The "Exam sessions are publicly readable" policy overlaps with "Admins can manage" FOR ALL
--- Solution: Keep public SELECT, use separate INSERT/UPDATE/DELETE for admin
+-- The previous migration (20251218) created "Admins can manage exam sessions" FOR ALL
+-- which overlaps with "Exam sessions are publicly readable" FOR SELECT from the original table
+-- Solution: Keep public SELECT, split admin FOR ALL into separate INSERT/UPDATE/DELETE
 -- ============================================
 DROP POLICY IF EXISTS "Exam sessions are publicly readable" ON public.exam_sessions;
 DROP POLICY IF EXISTS "Admins can manage exam sessions" ON public.exam_sessions;
 
--- Public read access
+-- Public read access (anyone can search for exam locations)
 CREATE POLICY "Exam sessions are publicly readable"
   ON public.exam_sessions FOR SELECT
   USING (true);
 
--- Separate admin policies for write operations
+-- Separate admin policies for write operations only
 CREATE POLICY "Admins can insert exam sessions"
   ON public.exam_sessions FOR INSERT
   WITH CHECK (has_role((select auth.uid()), 'admin'::app_role));
@@ -184,18 +185,25 @@ CREATE POLICY "Admins can delete exam sessions"
 -- ============================================
 -- EXPLANATION_FEEDBACK TABLE
 -- Issues: multiple_permissive_policies (SELECT)
--- User and Admin SELECT policies overlap
+-- The previous migration (20251218) created separate user + admin SELECT policies
+-- which triggers the multiple_permissive_policies warning
+-- Solution: Consolidate into single SELECT policy, keep other user policies intact
 -- ============================================
 DROP POLICY IF EXISTS "Users can view their own feedback" ON public.explanation_feedback;
 DROP POLICY IF EXISTS "Admins can view all feedback" ON public.explanation_feedback;
 
--- Consolidated SELECT policy: own feedback OR admin
+-- Consolidated SELECT policy: own feedback OR admin (fixes multiple_permissive_policies)
 CREATE POLICY "Users can view own feedback or admins can view all"
   ON public.explanation_feedback FOR SELECT
   USING (
     user_id = (select auth.uid())
     OR has_role((select auth.uid()), 'admin'::app_role)
   );
+
+-- Note: INSERT/UPDATE/DELETE policies remain from 20251218 migration:
+-- - "Users can insert their own feedback"
+-- - "Users can update their own feedback"
+-- - "Users can delete their own feedback"
 
 -- ============================================
 -- SYLLABUS TABLE
@@ -232,12 +240,14 @@ DROP POLICY IF EXISTS "Authenticated users can view mapbox usage" ON public.mapb
 DROP POLICY IF EXISTS "Admins can manage mapbox usage" ON public.mapbox_usage;
 
 -- Authenticated users can view usage (to check quota)
+-- Note: TO authenticated preserved from original policy to maintain same access scope
 CREATE POLICY "Authenticated users can view mapbox usage"
   ON public.mapbox_usage FOR SELECT
   TO authenticated
   USING (true);
 
 -- Separate admin policies for write operations
+-- Note: TO authenticated preserved from original policy
 CREATE POLICY "Admins can insert mapbox usage"
   ON public.mapbox_usage FOR INSERT
   TO authenticated
