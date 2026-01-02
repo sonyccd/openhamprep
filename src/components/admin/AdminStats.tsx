@@ -34,18 +34,21 @@ export function AdminStats({ testType, onAddLinkToQuestion }: AdminStatsProps) {
   const { data: feedbackStats = {} } = useExplanationFeedbackStats();
 
   // Fetch questions with their link status
+  // Note: After UUID migration, question IDs (e.g., "T1A01") are stored in display_name
   const { data: questions = [], isLoading: questionsLoading } = useQuery({
     queryKey: ['admin-stats-questions', testType],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
-        .select('id, question, subelement, question_group, links, explanation')
-        .ilike('id', `${prefix}*`)
-        .order('id');
-      
+        .select('id, display_name, question, subelement, question_group, links, explanation')
+        .ilike('display_name', `${prefix}*`)
+        .order('display_name');
+
       if (error) throw error;
       return data.map(q => ({
         ...q,
+        // Use display_name as the logical ID for display purposes
+        id: q.display_name,
         hasLinks: Array.isArray(q.links) && q.links.length > 0,
         hasExplanation: !!q.explanation
       }));
@@ -53,17 +56,22 @@ export function AdminStats({ testType, onAddLinkToQuestion }: AdminStatsProps) {
   });
 
   // Fetch all question attempts for statistics
+  // Note: After UUID migration, we need to join with questions to filter by display_name
   const { data: attempts = [], isLoading: attemptsLoading } = useQuery({
     queryKey: ['admin-stats-attempts', testType],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('question_attempts')
-        .select('question_id, is_correct, user_id, attempted_at')
-        .ilike('question_id', `${prefix}*`)
+        .select('question_id, is_correct, user_id, attempted_at, questions!inner(display_name)')
+        .ilike('questions.display_name', `${prefix}*`)
         .order('attempted_at', { ascending: true });
-      
+
       if (error) throw error;
-      return data;
+      // Map question_id to display_name for consistency with the rest of the stats logic
+      return data.map(a => ({
+        ...a,
+        question_id: (a.questions as { display_name: string }).display_name,
+      }));
     },
   });
 
