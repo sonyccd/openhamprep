@@ -36,6 +36,3 @@ verify_jwt = false
 
 [functions.delete-discourse-user]
 verify_jwt = false
-
-[functions.geocode-addresses]
-verify_jwt = false

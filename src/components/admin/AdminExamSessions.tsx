@@ -6,14 +6,23 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   useExamSessions,
   useExamSessionsCount,
   useExamSessionsLastUpdated,
   useBulkImportExamSessions,
-  useGeocodeExamSessions,
   type ExamSession,
-  type GeocodeProgress,
 } from '@/hooks/useExamSessions';
+import { GeocodeModal } from '@/components/admin/GeocodeModal';
 import { format, formatDistanceToNow } from 'date-fns';
 
 interface ParsedSession {
@@ -47,29 +56,17 @@ export const AdminExamSessions = () => {
   const [file, setFile] = useState<File | null>(null);
   const [parsing, setParsing] = useState(false);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
-  const [geocodeProgress, setGeocodeProgress] = useState<GeocodeProgress | null>(null);
+  const [showGeocodePrompt, setShowGeocodePrompt] = useState(false);
+  const [showGeocodeModal, setShowGeocodeModal] = useState(false);
 
-  const { data: sessionsData } = useExamSessions({ pageSize: 1000 });
+  const { data: sessionsData, refetch: refetchSessions } = useExamSessions({ pageSize: 1000 });
   const existingSessions = sessionsData?.sessions ?? [];
   const { data: totalCount = 0 } = useExamSessionsCount();
   const { data: lastUpdated, refetch: refetchLastUpdated } = useExamSessionsLastUpdated();
   const importMutation = useBulkImportExamSessions();
-  const geocodeMutation = useGeocodeExamSessions();
 
   // Calculate sessions needing geocoding
   const sessionsNeedingGeocode = existingSessions.filter((s) => !s.latitude || !s.longitude).length;
-
-  const handleGeocode = () => {
-    geocodeMutation.mutate(
-      {
-        initialCount: sessionsNeedingGeocode,
-        onProgress: setGeocodeProgress,
-      },
-      {
-        onSettled: () => setGeocodeProgress(null),
-      }
-    );
-  };
 
   const parseCSV = (content: string): ParsedSession[] => {
     const lines = content.split('\n').filter((line) => line.trim());
@@ -222,8 +219,15 @@ export const AdminExamSessions = () => {
           fileInputRef.current.value = '';
         }
         refetchLastUpdated();
+        // Show geocoding prompt after successful import
+        setShowGeocodePrompt(true);
       },
     });
+  };
+
+  const handleGeocodeComplete = () => {
+    refetchSessions();
+    refetchLastUpdated();
   };
 
   const downloadExampleCSV = () => {
@@ -376,41 +380,17 @@ export const AdminExamSessions = () => {
                 )}
               </CardDescription>
             </div>
-            {totalCount > 0 && existingSessions.some((s) => !s.latitude || !s.longitude) && (
+            {totalCount > 0 && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleGeocode}
-                disabled={geocodeMutation.isPending}
+                onClick={() => setShowGeocodeModal(true)}
               >
-                {geocodeMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <MapPin className="h-4 w-4 mr-2" />
-                )}
-                Geocode Addresses
+                <MapPin className="h-4 w-4 mr-2" />
+                Geocode Addresses{sessionsNeedingGeocode > 0 ? ` (${sessionsNeedingGeocode})` : ''}
               </Button>
             )}
           </div>
-          {geocodeProgress && (
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  Geocoding addresses... ({geocodeProgress.processed} of {geocodeProgress.total})
-                </span>
-                <span className="font-medium">
-                  {Math.round((geocodeProgress.processed / geocodeProgress.total) * 100)}%
-                </span>
-              </div>
-              <Progress 
-                value={(geocodeProgress.processed / geocodeProgress.total) * 100} 
-                className="h-2"
-              />
-              <p className="text-xs text-muted-foreground">
-                This may take a while due to rate limiting. Please don't close this page.
-              </p>
-            </div>
-          )}
         </CardHeader>
         <CardContent>
           {totalCount === 0 ? (
@@ -443,6 +423,42 @@ export const AdminExamSessions = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Post-import geocoding prompt */}
+      <AlertDialog open={showGeocodePrompt} onOpenChange={setShowGeocodePrompt}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Geocode Addresses?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Would you like to geocode the imported session addresses now? This
+              adds coordinates for map display. You can also do this later from
+              the "Geocode Addresses" button.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Later</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowGeocodePrompt(false);
+                setShowGeocodeModal(true);
+              }}
+            >
+              Geocode Now
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Geocoding modal */}
+      <GeocodeModal
+        open={showGeocodeModal}
+        onOpenChange={setShowGeocodeModal}
+        sessions={existingSessions}
+        onComplete={handleGeocodeComplete}
+      />
     </div>
   );
 };
