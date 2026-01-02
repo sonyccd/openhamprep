@@ -12,6 +12,8 @@ export interface ImportQuestion {
   question_group: string;
   explanation?: string;
   links?: unknown[];
+  fcc_reference?: string;      // FCC Part 97 rule reference, e.g., "97.1", "97.3(a)(22)"
+  figure_reference?: string;   // Figure reference for questions with diagrams, e.g., "T-1", "G7-1"
 }
 
 export interface ValidationResult {
@@ -125,6 +127,8 @@ export function parseJSON(content: string): ImportQuestion[] {
       question_group: String(q.question_group || q.group || ''),
       explanation: q.explanation ? String(q.explanation) : undefined,
       links: Array.isArray(q.links) ? q.links : undefined,
+      fcc_reference: q.fcc_reference ? String(q.fcc_reference) : undefined,
+      figure_reference: q.figure_reference ? String(q.figure_reference) : undefined,
     }));
   } catch {
     return [];

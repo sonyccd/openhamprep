@@ -140,12 +140,6 @@ describe('Admin', () => {
       expect(screen.getByText('Admin')).toBeInTheDocument();
     });
 
-    it('displays admin page description', () => {
-      renderAdmin();
-
-      expect(screen.getByText(/manage glossary terms/i)).toBeInTheDocument();
-    });
-
     it('renders AppLayout wrapper', () => {
       renderAdmin();
 
@@ -154,25 +148,26 @@ describe('Admin', () => {
   });
 
   describe('Section Navigation', () => {
-    it('displays Exam Content section button', () => {
+    it('displays Questions section button', () => {
       renderAdmin();
 
-      expect(screen.getByText('Exam Content')).toBeInTheDocument();
+      // The nav button has icon + text (text hidden on mobile)
+      expect(screen.getByRole('button', { name: /questions/i })).toBeInTheDocument();
     });
 
-    it('displays Glossary Terms section button', () => {
+    it('displays Glossary section button', () => {
       renderAdmin();
 
-      expect(screen.getByText('Glossary Terms')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /glossary/i })).toBeInTheDocument();
     });
 
-    it('displays Exam Sessions section button', () => {
+    it('displays Sessions section button', () => {
       renderAdmin();
 
-      expect(screen.getByText('Exam Sessions')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /sessions/i })).toBeInTheDocument();
     });
 
-    it('shows Exam Content section by default', () => {
+    it('shows Questions (Exam) section by default', () => {
       renderAdmin();
 
       expect(screen.getByTestId('admin-stats')).toBeInTheDocument();
@@ -182,16 +177,16 @@ describe('Admin', () => {
       const user = userEvent.setup();
       renderAdmin();
 
-      await user.click(screen.getByText('Glossary Terms'));
+      await user.click(screen.getByRole('button', { name: /glossary/i }));
 
       expect(screen.getByTestId('admin-glossary')).toBeInTheDocument();
     });
 
-    it('switches to Exam Sessions section when clicked', async () => {
+    it('switches to Sessions section when clicked', async () => {
       const user = userEvent.setup();
       renderAdmin();
 
-      await user.click(screen.getByText('Exam Sessions'));
+      await user.click(screen.getByRole('button', { name: /sessions/i }));
 
       expect(screen.getByTestId('admin-exam-sessions')).toBeInTheDocument();
     });

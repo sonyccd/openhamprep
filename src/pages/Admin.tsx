@@ -9,8 +9,7 @@ import { AdminStats } from "@/components/admin/AdminStats";
 import { AdminExamSessions } from "@/components/admin/AdminExamSessions";
 import { AdminTopics } from "@/components/admin/AdminTopics";
 import { DiscourseSyncDashboard } from "@/components/admin/DiscourseSyncDashboard";
-import { Loader2, ShieldAlert, BookOpen, MapPin, Library, MessageSquare } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, ShieldAlert, BookOpen, MapPin, Library, MessageSquare, BarChart3, FileQuestion } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { TestType } from "@/types/navigation";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -67,56 +66,68 @@ export default function Admin() {
   return <AppLayout currentView="dashboard" onViewChange={handleViewChange} selectedTest={sidebarTest} onTestChange={setSidebarTest}>
       <div className={`flex-1 p-6 md:p-8 flex flex-col ${needsFixedHeight ? 'h-full overflow-hidden' : 'overflow-y-auto'}`}>
         <div className={`max-w-6xl mx-auto w-full flex flex-col ${needsFixedHeight ? 'flex-1 min-h-0' : ''}`}>
-          <div className="mb-8 shrink-0">
-            <h1 className="text-3xl font-bold text-foreground">Admin</h1>
-            <p className="text-muted-foreground mt-2">Manage glossary terms, questions, and learning resources</p>
-          </div>
+          {/* Compact Header with Inline Navigation */}
+          <div className="flex items-center justify-between mb-6 shrink-0 flex-wrap gap-4">
+            <h1 className="text-2xl font-bold text-foreground">Admin</h1>
 
-          {/* Section Toggle */}
-          <div className="flex gap-4 mb-6 shrink-0 flex-wrap">
-            <button onClick={() => setActiveSection("exam")} className={`flex-1 min-w-[200px] p-4 rounded-lg border-2 transition-all text-left ${activeSection === "exam" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/50"}`}>
-              <div className="font-semibold text-foreground mb-1">Exam Content</div>
-              <p className="text-sm text-muted-foreground">
-                Statistics and questions for each license class
-              </p>
-            </button>
-            <button onClick={() => setActiveSection("glossary")} className={`flex-1 min-w-[200px] p-4 rounded-lg border-2 transition-all text-left ${activeSection === "glossary" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/50"}`}>
-              <div className="flex items-center gap-2 font-semibold text-foreground mb-1">
+            {/* Compact Section Navigation */}
+            <nav className="flex items-center bg-muted/50 rounded-lg p-1 gap-1">
+              <button
+                onClick={() => setActiveSection("exam")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  activeSection === "exam"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                }`}
+              >
+                <FileQuestion className="w-4 h-4" />
+                <span className="hidden sm:inline">Questions</span>
+              </button>
+              <button
+                onClick={() => setActiveSection("glossary")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  activeSection === "glossary"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                }`}
+              >
                 <BookOpen className="w-4 h-4" />
-                Glossary Terms
-                <span className="text-xs font-normal bg-muted px-2 py-0.5 rounded">All Exams</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Shared vocabulary terms across all license classes
-              </p>
-            </button>
-            <button onClick={() => setActiveSection("sessions")} className={`flex-1 min-w-[200px] p-4 rounded-lg border-2 transition-all text-left ${activeSection === "sessions" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/50"}`}>
-              <div className="flex items-center gap-2 font-semibold text-foreground mb-1">
+                <span className="hidden sm:inline">Glossary</span>
+              </button>
+              <button
+                onClick={() => setActiveSection("sessions")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  activeSection === "sessions"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                }`}
+              >
                 <MapPin className="w-4 h-4" />
-                Exam Sessions
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Import and manage VE exam session locations
-              </p>
-            </button>
-            <button onClick={() => setActiveSection("topics")} className={`flex-1 min-w-[200px] p-4 rounded-lg border-2 transition-all text-left ${activeSection === "topics" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/50"}`}>
-              <div className="flex items-center gap-2 font-semibold text-foreground mb-1">
+                <span className="hidden sm:inline">Sessions</span>
+              </button>
+              <button
+                onClick={() => setActiveSection("topics")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  activeSection === "topics"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                }`}
+              >
                 <Library className="w-4 h-4" />
-                Topics
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Create and manage learning topics with articles and resources
-              </p>
-            </button>
-            <button onClick={() => setActiveSection("discourse")} className={`flex-1 min-w-[200px] p-4 rounded-lg border-2 transition-all text-left ${activeSection === "discourse" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/50"}`}>
-              <div className="flex items-center gap-2 font-semibold text-foreground mb-1">
+                <span className="hidden sm:inline">Topics</span>
+              </button>
+              <button
+                onClick={() => setActiveSection("discourse")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  activeSection === "discourse"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                }`}
+              >
                 <MessageSquare className="w-4 h-4" />
-                Discourse Sync
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Monitor and repair forum topic synchronization
-              </p>
-            </button>
+                <span className="hidden sm:inline">Discourse</span>
+              </button>
+            </nav>
           </div>
 
           {activeSection === "exam" ? <Tabs value={activeTab} onValueChange={value => {
@@ -152,34 +163,23 @@ export default function Admin() {
               <TabsContent value="questions" className="flex-1 min-h-0 flex flex-col">
                 <AdminQuestions testType={adminExamType} highlightQuestionId={linkQuestionId} />
               </TabsContent>
-            </Tabs> : activeSection === "glossary" ? <div className="flex-1 flex flex-col min-h-0">
-              <div className="flex items-center gap-2 mb-6">
-                <BookOpen className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold text-foreground">Glossary Terms</h2>
-                <span className="text-xs bg-muted px-2 py-1 rounded text-muted-foreground">
-                  Shared across all exams
-                </span>
+            </Tabs> : activeSection === "glossary" ? (
+              <div className="flex-1 flex flex-col min-h-0">
+                <AdminGlossary />
               </div>
-              <AdminGlossary />
-            </div> : activeSection === "sessions" ? <div className="flex-1 flex flex-col min-h-0">
-              <div className="flex items-center gap-2 mb-6">
-                <MapPin className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold text-foreground">Exam Sessions</h2>
+            ) : activeSection === "sessions" ? (
+              <div className="flex-1 flex flex-col min-h-0">
+                <AdminExamSessions />
               </div>
-              <AdminExamSessions />
-            </div> : activeSection === "topics" ? <div className="flex-1 flex flex-col min-h-0">
-              <div className="flex items-center gap-2 mb-6">
-                <Library className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold text-foreground">Topics</h2>
+            ) : activeSection === "topics" ? (
+              <div className="flex-1 flex flex-col min-h-0">
+                <AdminTopics />
               </div>
-              <AdminTopics />
-            </div> : <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-              <div className="flex items-center gap-2 mb-6">
-                <MessageSquare className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold text-foreground">Discourse Sync</h2>
+            ) : (
+              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+                <DiscourseSyncDashboard />
               </div>
-              <DiscourseSyncDashboard />
-            </div>}
+            )}
         </div>
       </div>
     </AppLayout>;
