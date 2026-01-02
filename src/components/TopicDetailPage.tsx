@@ -11,6 +11,7 @@ import { ArrowLeft, BookOpen } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { PageContainer } from "@/components/ui/page-container";
 
 interface TopicDetailPageProps {
   slug: string;
@@ -30,44 +31,42 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   // Loading state
   if (topicLoading) {
     return (
-      <div className="flex-1 py-8 px-4 md:px-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Header skeleton */}
-          <div className="mb-8">
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-10 w-3/4 mb-4" />
-            <div className="flex gap-2">
-              <Skeleton className="h-6 w-16" />
-              <Skeleton className="h-6 w-16" />
-            </div>
-          </div>
-          {/* Content skeleton */}
-          <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_250px] gap-8">
-            <div className="hidden lg:block">
-              <Skeleton className="h-48 w-full" />
-            </div>
-            <div>
-              <Skeleton className="h-6 w-full mb-4" />
-              <Skeleton className="h-4 w-full mb-2" />
-              <Skeleton className="h-4 w-3/4 mb-2" />
-              <Skeleton className="h-4 w-5/6 mb-4" />
-              <Skeleton className="h-6 w-2/3 mb-4" />
-              <Skeleton className="h-4 w-full mb-2" />
-              <Skeleton className="h-4 w-4/5" />
-            </div>
-            <div className="hidden lg:block">
-              <Skeleton className="h-64 w-full" />
-            </div>
+      <PageContainer width="full">
+        {/* Header skeleton */}
+        <div className="mb-8">
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-10 w-3/4 mb-4" />
+          <div className="flex gap-2">
+            <Skeleton className="h-6 w-16" />
+            <Skeleton className="h-6 w-16" />
           </div>
         </div>
-      </div>
+        {/* Content skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_250px] gap-8">
+          <div className="hidden lg:block">
+            <Skeleton className="h-48 w-full" />
+          </div>
+          <div>
+            <Skeleton className="h-6 w-full mb-4" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-3/4 mb-2" />
+            <Skeleton className="h-4 w-5/6 mb-4" />
+            <Skeleton className="h-6 w-2/3 mb-4" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-4/5" />
+          </div>
+          <div className="hidden lg:block">
+            <Skeleton className="h-64 w-full" />
+          </div>
+        </div>
+      </PageContainer>
     );
   }
 
   // Error state
   if (topicError || !topic) {
     return (
-      <div className="flex-1 flex items-center justify-center py-12">
+      <PageContainer width="full" className="flex items-center justify-center">
         <div className="text-center">
           <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-lg font-medium text-foreground mb-2">Topic not found</h2>
@@ -79,7 +78,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
             Back to Topics
           </Button>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -87,7 +86,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   const displayContent = content || `# ${topic.title}\n\n${topic.description || "Content coming soon..."}\n\nThis topic is still being developed. Check back later for the full article.`;
 
   return (
-    <div className="flex-1">
+    <div className="flex-1 overflow-y-auto">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -136,7 +135,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
       </motion.div>
 
       {/* Main content area - three column layout */}
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_280px] gap-8">
           {/* Left sidebar - Table of Contents */}
           <motion.aside

@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { TopicLanding } from "@/components/TopicLanding";
 import { TestType } from "@/types/navigation";
+import { PageContainer } from "@/components/ui/page-container";
 
 interface HistoryEntry {
   question: Question;
@@ -297,27 +298,31 @@ export function SubelementPractice({
   useKeyboardShortcuts(shortcuts, { enabled: topicView === 'practice' });
 
   if (isLoading) {
-    return <div className="flex-1 bg-background flex items-center justify-center">
+    return (
+      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading questions...</p>
         </div>
-      </div>;
+      </PageContainer>
+    );
   }
 
   if (error || !allQuestions || allQuestions.length === 0) {
-    return <div className="flex-1 bg-background flex items-center justify-center">
+    return (
+      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
         <div className="text-center">
           <p className="text-destructive mb-4">Failed to load questions</p>
           <Button onClick={onBack}>Go Back</Button>
         </div>
-      </div>;
+      </PageContainer>
+    );
   }
 
   // Show subelement selection list
   if (topicView === 'list' || !selectedSubelement) {
-    return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
-      <div className="max-w-3xl mx-auto">
+    return (
+      <PageContainer width="standard" mobileNavPadding>
           <div className="flex items-center justify-end mb-8">
             
           </div>
@@ -368,8 +373,8 @@ export function SubelementPractice({
                 </motion.button>;
           })}
           </div>
-        </div>
-      </div>;
+      </PageContainer>
+    );
   }
 
   // Show topic landing page
@@ -379,18 +384,21 @@ export function SubelementPractice({
 
   // Show practice view
   if (!question) {
-    return <div className="flex-1 bg-background flex items-center justify-center">
+    return (
+      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>;
+      </PageContainer>
+    );
   }
 
   const isViewingHistory = historyIndex < questionHistory.length - 1;
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
   const progress = Math.round(askedIds.length / currentQuestions.length * 100);
 
-  return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
+  return (
+    <PageContainer width="standard" mobileNavPadding>
       {/* Header */}
-      <div className="max-w-3xl mx-auto mb-8">
+      <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <Button variant="ghost" onClick={handleBackToLanding} className="gap-2">
             <ArrowLeft className="w-4 h-4" />
@@ -458,7 +466,7 @@ export function SubelementPractice({
       <QuestionCard question={question} selectedAnswer={selectedAnswer} onSelectAnswer={handleSelectAnswer} showResult={showResult} enableGlossaryHighlight onTopicClick={navigateToTopic} />
 
       {/* Actions */}
-      <div className="max-w-3xl mx-auto mt-8 flex justify-center gap-4">
+      <div className="mt-8 flex justify-center gap-4">
         {canGoBack && (
           <Button variant="outline" onClick={handlePreviousQuestion} className="gap-2">
             <ChevronLeft className="w-4 h-4" />
@@ -480,13 +488,14 @@ export function SubelementPractice({
 
       {/* History indicator */}
       {questionHistory.length > 1 && (
-        <motion.p 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           className="text-center text-muted-foreground text-sm mt-4"
         >
           Question {historyIndex + 1} of {questionHistory.length}
         </motion.p>
       )}
-    </div>;
+    </PageContainer>
+  );
 }

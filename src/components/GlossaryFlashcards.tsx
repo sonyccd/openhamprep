@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
+import { PageContainer } from "@/components/ui/page-container";
 
 type FlashcardMode = 'term-to-definition' | 'definition-to-term';
 
@@ -124,16 +125,16 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <PageContainer width="narrow" className="flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
+      </PageContainer>
     );
   }
 
   // Start screen
   if (!hasStarted) {
     return (
-      <div className="flex flex-col h-full max-w-2xl mx-auto py-8 md:py-12 px-4 md:px-8">
+      <PageContainer width="narrow" className="flex flex-col h-full">
         <Button variant="ghost" onClick={onBack} className="self-start mb-6 gap-2">
           <ArrowLeft className="w-4 h-4" />
           Back to Glossary
@@ -149,7 +150,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
           <div className="w-full max-w-md mb-6">
             <h3 className="text-sm font-medium text-muted-foreground mb-3">Card Direction</h3>
             <div className="grid grid-cols-2 gap-3">
-              <Card 
+              <Card
                 className={cn(
                   "cursor-pointer transition-all hover:border-primary/50",
                   mode === 'term-to-definition' && "border-primary bg-primary/5"
@@ -161,7 +162,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
                 </CardContent>
               </Card>
 
-              <Card 
+              <Card
                 className={cn(
                   "cursor-pointer transition-all hover:border-primary/50",
                   mode === 'definition-to-term' && "border-primary bg-primary/5"
@@ -180,7 +181,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
             Start Studying
           </Button>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -192,7 +193,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
     const percentage = total > 0 ? Math.round((knownCount / total) * 100) : 0;
 
     return (
-      <div className="flex flex-col h-full max-w-2xl mx-auto py-8 md:py-12 px-4 md:px-8">
+      <PageContainer width="narrow" className="flex flex-col h-full">
         <Button variant="ghost" onClick={onBack} className="self-start mb-6 gap-2">
           <ArrowLeft className="w-4 h-4" />
           Back to Glossary
@@ -235,7 +236,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
             </Button>
           </div>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -246,7 +247,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
   const backLabel = mode === 'term-to-definition' ? 'Definition' : 'Term';
 
   return (
-    <div className="flex flex-col h-full max-w-2xl mx-auto py-8 md:py-12 px-4 md:px-8">
+    <PageContainer width="narrow" className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <Button variant="ghost" onClick={onBack} className="gap-2">
@@ -344,6 +345,6 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
           </Button>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

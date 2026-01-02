@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, ArrowRight, Trophy, XCircle, Loader2, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { PageContainer } from "@/components/ui/page-container";
 
 interface TestResultReviewProps {
   testResultId: string;
@@ -58,20 +59,20 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
 
   if (resultLoading || attemptsLoading || !allQuestions) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <PageContainer width="narrow" className="flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
+      </PageContainer>
     );
   }
 
   if (!testResult || !attempts) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <PageContainer width="narrow" className="flex items-center justify-center">
         <div className="text-center">
           <p className="text-destructive mb-4">Test result not found</p>
           <Button onClick={onBack}>Go Back</Button>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -96,8 +97,8 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
   if (reviewIndex !== null && questions[reviewIndex]) {
     const question = questions[reviewIndex];
     return (
-      <div className="min-h-screen bg-background py-8 px-4">
-        <div className="max-w-3xl mx-auto mb-8">
+      <PageContainer width="standard">
+        <div className="mb-8">
           <Button
             variant="ghost"
             onClick={() => setReviewIndex(null)}
@@ -119,7 +120,7 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
           onTopicClick={navigateToTopic}
         />
 
-        <div className="max-w-3xl mx-auto mt-8 flex justify-between">
+        <div className="mt-8 flex justify-between">
           <Button
             variant="outline"
             onClick={() => setReviewIndex(Math.max(0, reviewIndex - 1))}
@@ -141,14 +142,12 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-background radio-wave-bg">
-      <div className="flex-1 flex flex-col overflow-hidden py-6 px-4">
-        <div className="max-w-2xl mx-auto w-full flex flex-col flex-1 overflow-hidden">
+    <PageContainer width="narrow" radioWaveBg className="flex flex-col h-full" contentClassName="flex flex-col flex-1 overflow-hidden">
 
           {/* Result Header - Fixed */}
           <motion.div
@@ -265,8 +264,6 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
               })}
             </div>
           </motion.div>
-        </div>
-      </div>
-    </div>
+    </PageContainer>
   );
 }
