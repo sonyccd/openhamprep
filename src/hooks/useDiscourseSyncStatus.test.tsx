@@ -7,7 +7,7 @@ import { useDiscourseSyncStatus } from './useDiscourseSyncStatus';
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn(),
+    rpc: vi.fn(),
     functions: {
       invoke: vi.fn(),
     },
@@ -91,8 +91,8 @@ function createWrapper() {
 
 describe('useDiscourseSyncStatus', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let supabase: { from: any; functions: { invoke: any } };
-  let mockSelect: ReturnType<typeof vi.fn>;
+  let supabase: { rpc: any; functions: { invoke: any } };
+  let mockRpc: ReturnType<typeof vi.fn>;
   let mockInvoke: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
@@ -102,12 +102,10 @@ describe('useDiscourseSyncStatus', () => {
     supabase = module.supabase;
 
     // Setup the mock chain
-    mockSelect = vi.fn().mockResolvedValue({ data: mockOverviewData, error: null });
+    mockRpc = vi.fn().mockResolvedValue({ data: mockOverviewData, error: null });
     mockInvoke = vi.fn().mockResolvedValue({ data: mockVerifyResult, error: null });
 
-    vi.mocked(supabase.from).mockImplementation(() => ({
-      select: mockSelect,
-    }));
+    vi.mocked(supabase.rpc).mockImplementation(mockRpc);
     vi.mocked(supabase.functions.invoke).mockImplementation(mockInvoke);
   });
 
@@ -125,7 +123,7 @@ describe('useDiscourseSyncStatus', () => {
     });
 
     it('returns error state when query fails', async () => {
-      mockSelect.mockResolvedValueOnce({
+      mockRpc.mockResolvedValueOnce({
         data: null,
         error: new Error('Database error'),
       });
@@ -136,6 +134,20 @@ describe('useDiscourseSyncStatus', () => {
 
       await waitFor(() => expect(result.current.isError).toBe(true));
       expect(result.current.error).toBeDefined();
+    });
+
+    it('returns error when accessed by non-admin user', async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'Access denied: admin role required' },
+      });
+
+      const { result } = renderHook(() => useDiscourseSyncStatus(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
+      expect(result.current.error).toHaveProperty('message', 'Access denied: admin role required');
     });
   });
 
@@ -169,7 +181,7 @@ describe('useDiscourseSyncStatus', () => {
     });
 
     it('handles empty overview data', async () => {
-      mockSelect.mockResolvedValueOnce({ data: [], error: null });
+      mockRpc.mockResolvedValueOnce({ data: [], error: null });
 
       const { result } = renderHook(() => useDiscourseSyncStatus(), {
         wrapper: createWrapper(),
@@ -327,7 +339,7 @@ describe('useDiscourseSyncStatus', () => {
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
       // Clear mocks to track new calls
-      mockSelect.mockClear();
+      mockRpc.mockClear();
 
       act(() => {
         result.current.refreshOverview();
@@ -335,7 +347,7 @@ describe('useDiscourseSyncStatus', () => {
 
       // The query should be invalidated and refetched
       await waitFor(() => {
-        expect(mockSelect).toHaveBeenCalled();
+        expect(mockRpc).toHaveBeenCalled();
       });
     });
   });

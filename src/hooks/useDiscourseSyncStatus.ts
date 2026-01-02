@@ -72,8 +72,7 @@ export function useDiscourseSyncStatus() {
     queryKey: ['discourse-sync-overview'],
     queryFn: async (): Promise<SyncOverviewRow[]> => {
       const { data, error } = await supabase
-        .from('discourse_sync_overview')
-        .select('*');
+        .rpc('get_discourse_sync_overview');
 
       if (error) throw error;
       return data as SyncOverviewRow[];
