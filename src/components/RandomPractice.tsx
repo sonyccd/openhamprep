@@ -14,6 +14,7 @@ import { Zap, SkipForward, RotateCcw, Loader2, Flame, Trophy, Award, ChevronLeft
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { TestType } from "@/types/navigation";
+import { PageContainer } from "@/components/ui/page-container";
 
 interface HistoryEntry {
   question: Question;
@@ -329,30 +330,37 @@ export function RandomPractice({
   useKeyboardShortcuts(shortcuts, { enabled: !isLoading && !!question });
 
   if (isLoading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return (
+      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading questions...</p>
         </div>
-      </div>;
+      </PageContainer>
+    );
   }
   if (error || !allQuestions || allQuestions.length === 0) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return (
+      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
         <div className="text-center">
           <p className="text-destructive mb-4">Failed to load questions</p>
           <Button onClick={onBack}>Go Back</Button>
         </div>
-      </div>;
+      </PageContainer>
+    );
   }
   if (!question) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return (
+      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>;
+      </PageContainer>
+    );
   }
 
-  return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8">
+  return (
+    <PageContainer width="standard" mobileNavPadding>
       {/* Header */}
-      <div className="max-w-3xl mx-auto mb-8">
+      <div className="mb-8">
         <div className="flex items-center justify-end mb-6">
           <KeyboardShortcutsHelp />
         </div>
@@ -414,7 +422,7 @@ export function RandomPractice({
       <QuestionCard question={question} selectedAnswer={selectedAnswer} onSelectAnswer={handleSelectAnswer} showResult={showResult} enableGlossaryHighlight onTopicClick={navigateToTopic} />
 
       {/* Actions */}
-      <div className="max-w-3xl mx-auto mt-8 flex justify-center gap-4">
+      <div className="mt-8 flex justify-center gap-4">
         {canGoBack && <Button variant="outline" onClick={handlePreviousQuestion} className="gap-2">
             <ChevronLeft className="w-4 h-4" />
             Previous
@@ -438,6 +446,7 @@ export function RandomPractice({
         </motion.p>}
 
       {/* Keyboard Hint */}
-      
-    </div>;
+
+    </PageContainer>
+  );
 }

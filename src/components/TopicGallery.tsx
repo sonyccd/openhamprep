@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, BookOpen } from "lucide-react";
 import { TestType } from "@/types/navigation";
+import { PageContainer } from "@/components/ui/page-container";
 
 interface TopicGalleryProps {
   testType?: TestType;
@@ -46,8 +47,7 @@ export function TopicGallery({ testType }: TopicGalleryProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto py-8 md:py-12 px-4 md:px-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <PageContainer width="wide" contentClassName="space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -132,7 +132,6 @@ export function TopicGallery({ testType }: TopicGalleryProps) {
             )}
           </div>
         )}
-      </div>
-    </div>
+    </PageContainer>
   );
 }

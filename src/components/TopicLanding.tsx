@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Play, ExternalLink, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { PageContainer } from "@/components/ui/page-container";
 
 interface TopicLandingProps {
   subelement: string;
@@ -71,8 +72,7 @@ export function TopicLanding({
   const websiteLinks = topicLinks.filter(l => l.type === 'website');
 
   return (
-    <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
-      <div className="max-w-3xl mx-auto">
+    <PageContainer width="standard" mobileNavPadding>
         {/* Back to All Topics */}
         <div className="mb-6">
           <Button variant="ghost" onClick={onBack} className="gap-2">
@@ -213,7 +213,6 @@ export function TopicLanding({
             </p>
           </motion.div>
         )}
-      </div>
-    </div>
+    </PageContainer>
   );
 }

@@ -10,6 +10,7 @@ import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { Bookmark, Loader2, Trash2, MessageSquare, ArrowLeft, ChevronLeft, ChevronRight, Dices } from "lucide-react";
 import { motion } from "framer-motion";
 import { TestType } from "@/types/navigation";
+import { PageContainer } from "@/components/ui/page-container";
 
 
 interface BookmarkedQuestionsProps {
@@ -103,17 +104,20 @@ export function BookmarkedQuestions({
   useKeyboardShortcuts(shortcuts, { enabled: !!selectedQuestion });
 
   if (isLoading) {
-    return <div className="flex-1 bg-background flex items-center justify-center">
+    return (
+      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading bookmarks...</p>
         </div>
-      </div>;
+      </PageContainer>
+    );
   }
 
   if (selectedQuestion) {
-    return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
-        <div className="max-w-3xl mx-auto mb-8">
+    return (
+      <PageContainer width="standard" mobileNavPadding>
+        <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <Button variant="ghost" onClick={() => {
             setCurrentIndex(null);
@@ -156,7 +160,7 @@ export function BookmarkedQuestions({
       }} showResult={showResult} enableGlossaryHighlight onTopicClick={navigateToTopic} />
 
         {/* Navigation Actions */}
-        <div className="max-w-3xl mx-auto mt-8 flex justify-center gap-4">
+        <div className="mt-8 flex justify-center gap-4">
           <Button variant="outline" onClick={handlePrevQuestion} disabled={!canGoPrev} className="gap-2">
             <ChevronLeft className="w-4 h-4" />
             Previous
@@ -191,10 +195,11 @@ export function BookmarkedQuestions({
         }} className="text-center text-muted-foreground text-sm mt-4">
             Question {currentIndex + 1} of {bookmarkedQuestions.length}
           </motion.p>}
-      </div>;
+      </PageContainer>
+    );
   }
-  return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
-      <div className="max-w-3xl mx-auto">
+  return (
+    <PageContainer width="standard" mobileNavPadding>
         {bookmarkedQuestions.length === 0 ? (
           <Card>
             <CardContent className="pt-6">
@@ -255,6 +260,6 @@ export function BookmarkedQuestions({
             })}
           </motion.div>
         )}
-      </div>
-    </div>;
+    </PageContainer>
+  );
 }

@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TestType, testConfig } from "@/types/navigation";
+import { PageContainer } from "@/components/ui/page-container";
 interface PracticeTestProps {
   onBack: () => void;
   onTestStateChange?: (inProgress: boolean) => void;
@@ -153,26 +154,30 @@ export function PracticeTest({
   };
 
   if (isLoading) {
-    return <div className="flex-1 bg-background flex items-center justify-center">
+    return (
+      <PageContainer width="narrow" mobileNavPadding className="flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading questions...</p>
         </div>
-      </div>;
+      </PageContainer>
+    );
   }
   if (error || !allQuestions || allQuestions.length === 0) {
-    return <div className="flex-1 bg-background flex items-center justify-center">
+    return (
+      <PageContainer width="narrow" mobileNavPadding className="flex items-center justify-center">
         <div className="text-center">
           <p className="text-destructive mb-4">Failed to load questions</p>
           <Button onClick={onBack}>Go Back</Button>
         </div>
-      </div>;
+      </PageContainer>
+    );
   }
 
   // Start Screen
   if (!hasStarted) {
-    return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
-        <div className="max-w-2xl mx-auto">
+    return (
+      <PageContainer width="narrow" mobileNavPadding>
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             
@@ -235,16 +240,18 @@ export function PracticeTest({
               Start Test
             </Button>
           </motion.div>
-        </div>
-      </div>;
+      </PageContainer>
+    );
   }
   if (!currentQuestion) {
-    return <div className="flex-1 bg-background flex items-center justify-center">
+    return (
+      <PageContainer width="narrow" mobileNavPadding className="flex items-center justify-center">
         <div className="text-center">
           <p className="text-destructive mb-4">No questions available</p>
           <Button onClick={onBack}>Go Back</Button>
         </div>
-      </div>;
+      </PageContainer>
+    );
   }
 
   const handleFinishInternal = async () => {
@@ -295,9 +302,10 @@ export function PracticeTest({
     return <TestResults questions={questions} answers={answers} onRetake={handleRetake} onBack={onBack} testType={testType} />;
   }
 
-  return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
+  return (
+    <PageContainer width="standard" mobileNavPadding>
       {/* Header */}
-      <div className="max-w-3xl mx-auto mb-8">
+      <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div />
           <div className="flex items-center gap-2 text-foreground">
@@ -351,7 +359,7 @@ export function PracticeTest({
       <QuestionCard question={currentQuestion} selectedAnswer={answers[currentQuestion.id] || null} onSelectAnswer={handleSelectAnswer} showResult={false} questionNumber={currentIndex + 1} totalQuestions={questions.length} />
 
       {/* Navigation */}
-      <div className="max-w-3xl mx-auto mt-8">
+      <div className="mt-8">
         <div className="flex items-center justify-between gap-4">
           <Button variant="outline" onClick={handlePrevious} disabled={currentIndex === 0} className="gap-2">
             <ArrowLeft className="w-4 h-4" />
@@ -384,5 +392,6 @@ export function PracticeTest({
             You can still submit, but unanswered questions will be marked incorrect.
           </motion.p>}
       </div>
-    </div>;
+    </PageContainer>
+  );
 }

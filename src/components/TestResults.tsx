@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, RotateCcw, Home, Trophy, XCircle } from "lucide-
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { TestType, testConfig } from "@/types/navigation";
+import { PageContainer } from "@/components/ui/page-container";
 
 interface TestResultsProps {
   questions: Question[];
@@ -33,8 +34,8 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
   if (reviewIndex !== null) {
     const question = questions[reviewIndex];
     return (
-      <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
-        <div className="max-w-3xl mx-auto mb-8">
+      <PageContainer width="standard" mobileNavPadding>
+        <div className="mb-8">
           <Button
             variant="ghost"
             onClick={() => setReviewIndex(null)}
@@ -54,7 +55,7 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
           totalQuestions={totalQuestions}
         />
 
-        <div className="max-w-3xl mx-auto mt-8 flex justify-between">
+        <div className="mt-8 flex justify-between">
           <Button
             variant="outline"
             onClick={() => setReviewIndex(Math.max(0, reviewIndex - 1))}
@@ -76,13 +77,12 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto radio-wave-bg">
-      <div className="max-w-2xl mx-auto">
+    <PageContainer width="narrow" mobileNavPadding radioWaveBg>
         {/* Result Header */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -212,7 +212,6 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
             })}
           </div>
         </motion.div>
-      </div>
-    </div>
+    </PageContainer>
   );
 }

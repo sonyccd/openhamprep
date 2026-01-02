@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { TestType } from "@/types/navigation";
+import { PageContainer } from "@/components/ui/page-container";
 
 // Number of correct answers in a row needed to clear a weak question
 const STREAK_TO_CLEAR = 3;
@@ -203,18 +204,20 @@ export function WeakQuestionsReview({
   useKeyboardShortcuts(shortcuts, { enabled: !!currentQuestion });
 
   if (isLoading) {
-    return <div className="flex-1 bg-background flex items-center justify-center">
+    return (
+      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading questions...</p>
         </div>
-      </div>;
+      </PageContainer>
+    );
   }
   // Empty state - no weak questions or all cleared
   if (error || activeWeakQuestions.length === 0) {
     const allCleared = clearedQuestions.size > 0 && weakQuestions.length > 0;
-    return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
-      <div className="max-w-3xl mx-auto">
+    return (
+      <PageContainer width="standard" mobileNavPadding>
         <Card>
           <CardContent className="pt-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-8">
@@ -231,8 +234,8 @@ export function WeakQuestionsReview({
             </motion.div>
           </CardContent>
         </Card>
-      </div>
-    </div>;
+      </PageContainer>
+    );
   }
 
   // Question detail view
@@ -241,8 +244,9 @@ export function WeakQuestionsReview({
     const isJustCleared = justClearedQuestion !== null;
     const hasMoreQuestions = activeWeakQuestions.length > 0;
 
-    return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
-      <div className="max-w-3xl mx-auto mb-8">
+    return (
+      <PageContainer width="standard" mobileNavPadding>
+        <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <Button variant="ghost" onClick={handleBackToList} className="gap-2">
             <ArrowLeft className="w-4 h-4" />
@@ -313,7 +317,7 @@ export function WeakQuestionsReview({
       <QuestionCard question={currentQuestion} selectedAnswer={selectedAnswer} onSelectAnswer={handleSelectAnswer} showResult={showResult} enableGlossaryHighlight onTopicClick={navigateToTopic} />
 
       {/* Navigation Actions */}
-      <div className="max-w-3xl mx-auto mt-8 flex justify-center gap-4">
+      <div className="mt-8 flex justify-center gap-4">
         <Button variant="outline" onClick={handlePrevQuestion} disabled={!canGoPrev || isJustCleared} className="gap-2">
           <ChevronLeft className="w-4 h-4" />
           Previous
@@ -346,12 +350,13 @@ export function WeakQuestionsReview({
           <span className="text-success ml-2">({clearedQuestions.size} cleared)</span>
         )}
       </motion.p>}
-    </div>;
+      </PageContainer>
+    );
   }
 
   // List view - show all weak questions
-  return <div className="flex-1 bg-background py-8 px-4 pb-24 md:pb-8 overflow-y-auto">
-    <div className="max-w-3xl mx-auto">
+  return (
+    <PageContainer width="standard" mobileNavPadding>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
         <div className="flex flex-col gap-4 mb-4">
           <div className="flex items-center justify-between">
@@ -417,6 +422,6 @@ export function WeakQuestionsReview({
           );
         })}
       </motion.div>
-    </div>
-  </div>;
+    </PageContainer>
+  );
 }

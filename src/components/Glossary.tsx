@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { PageContainer } from "@/components/ui/page-container";
 
 interface GlossaryProps {
   onStartFlashcards: () => void;
@@ -56,14 +57,14 @@ export function Glossary({ onStartFlashcards }: GlossaryProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <PageContainer width="wide" className="flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="flex flex-col h-full w-full max-w-4xl mx-auto py-8 md:py-12 px-4 md:px-8">
+    <PageContainer width="wide" className="flex flex-col h-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div>
@@ -123,6 +124,6 @@ export function Glossary({ onStartFlashcards }: GlossaryProps) {
           </div>
         )}
       </ScrollArea>
-    </div>
+    </PageContainer>
   );
 }

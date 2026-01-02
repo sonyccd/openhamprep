@@ -11,6 +11,7 @@ import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Loader2, AlertTriangle } from 'lucide-react';
+import { PageContainer } from '@/components/ui/page-container';
 import {
   DashboardStats,
   DashboardWeeklyGoals,
@@ -296,8 +297,7 @@ export default function Dashboard() {
     };
 
     return (
-      <div className="flex-1 overflow-y-auto py-8 md:py-12 px-4 md:px-8 radio-wave-bg">
-        <div className="max-w-3xl mx-auto">
+      <PageContainer width="standard" radioWaveBg>
           <DashboardReadiness
             readinessLevel={readinessLevel}
             readinessTitle={readinessTitle}
@@ -342,8 +342,7 @@ export default function Dashboard() {
               onReviewWeakQuestions={() => changeView('weak-questions')}
             />
           </div>
-        </div>
-      </div>
+      </PageContainer>
     );
   };
   return <>

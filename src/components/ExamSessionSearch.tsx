@@ -15,6 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ExamSessionMap } from './ExamSessionMap';
 import { useExamSessions, useSaveTargetExam, useUserTargetExam, useRemoveTargetExam, type ExamSession } from '@/hooks/useExamSessions';
 import { useAuth } from '@/hooks/useAuth';
+import { PageContainer } from '@/components/ui/page-container';
 const US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 
 // Map US states to timezone abbreviations (simplified - uses primary timezone for each state)
@@ -179,7 +180,8 @@ export const ExamSessionSearch = () => {
       year: 'numeric'
     });
   };
-  return <div className="flex-1 flex flex-col p-4 md:p-6 gap-4 min-h-0">
+  return (
+    <PageContainer width="wide" className="flex flex-col" contentClassName="flex flex-col gap-4 min-h-0">
       {/* Current Target Display */}
       {userTarget && <Card className="border-primary/50 bg-primary/5">
           <CardHeader className="pb-3">
@@ -453,5 +455,6 @@ export const ExamSessionSearch = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>;
+    </PageContainer>
+  );
 };
