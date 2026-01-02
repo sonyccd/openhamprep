@@ -342,9 +342,9 @@ html {
   overflow: hidden;
 }
 
-.dark .pillar-card {
-  background: rgb(55, 65, 81);
-  border-color: rgb(75, 85, 99) !important;
+html.dark .pillar-card {
+  background-color: rgb(55, 65, 81);
+  border-color: rgb(75, 85, 99);
 }
 
 .pillar-card::before {
@@ -380,9 +380,9 @@ html {
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
-.dark .feature-card {
-  background: rgb(55, 65, 81) !important;
-  border-color: rgb(75, 85, 99) !important;
+html.dark .feature-card {
+  background-color: rgb(55, 65, 81);
+  border-color: rgb(75, 85, 99);
 }
 
 .feature-card::before {
