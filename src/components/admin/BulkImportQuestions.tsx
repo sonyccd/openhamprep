@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Upload, FileJson, FileSpreadsheet, Loader2, CheckCircle2, XCircle, AlertTriangle, Download, GitMerge } from "lucide-react";
+import { Upload, FileJson, FileSpreadsheet, FileText, Loader2, CheckCircle2, XCircle, AlertTriangle, Download, GitMerge } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,7 @@ import {
   parseJSON,
   validateQuestions,
 } from "@/lib/questionImportParser";
+import { parseNCVECDocument, SyllabusEntry } from "@/lib/ncvecParser";
 
 interface BulkImportQuestionsProps {
   testType: TestType;
@@ -46,22 +47,26 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
   const [step, setStep] = useState<ImportStep>('upload');
   const [conflicts, setConflicts] = useState<ConflictItem<ImportQuestion>[]>([]);
   const [newQuestions, setNewQuestions] = useState<ImportQuestion[]>([]);
+  const [parsedSyllabus, setParsedSyllabus] = useState<SyllabusEntry[]>([]);
+  const [ncvecWarnings, setNcvecWarnings] = useState<string[]>([]);
 
   const prefix = TEST_TYPE_PREFIXES[testType];
 
   const checkForConflicts = async (questions: ImportQuestion[]) => {
-    const ids = questions.map(q => q.id);
-    
+    // Note: After UUID migration, question IDs (e.g., "T1A01") are stored in display_name
+    const displayNames = questions.map(q => q.id);
+
     const { data: existingQuestions } = await supabase
       .from('questions')
       .select('*')
-      .in('id', ids);
+      .in('display_name', displayNames);
 
     if (!existingQuestions || existingQuestions.length === 0) {
       return { conflicts: [], newQuestions: questions };
     }
 
-    const existingMap = new Map(existingQuestions.map(q => [q.id, q]));
+    // Map by display_name (the question ID like "T1A01")
+    const existingMap = new Map(existingQuestions.map(q => [q.display_name, q]));
     const conflictList: ConflictItem<ImportQuestion>[] = [];
     const newList: ImportQuestion[] = [];
 
@@ -71,7 +76,7 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
         conflictList.push({
           id: q.id,
           existing: {
-            id: existing.id,
+            id: existing.display_name, // Use display_name as the logical ID
             question: existing.question,
             options: existing.options as string[],
             correct_answer: existing.correct_answer,
@@ -91,25 +96,70 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     return { conflicts: conflictList, newQuestions: newList };
   };
 
+  // File validation constants
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const ALLOWED_TYPES: Record<string, string> = {
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+    'text/csv': '.csv',
+    'application/json': '.json',
+    'text/plain': '.csv', // Some systems report CSV as text/plain
+  };
+
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // File size validation
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('File too large. Maximum size is 10MB');
+      return;
+    }
+
+    // File extension validation (required)
+    const allowedExtensions = ['.csv', '.json', '.docx'];
+    const hasValidExtension = allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+
+    if (!hasValidExtension) {
+      toast.error('Invalid file extension. Please upload a .csv, .json, or .docx file');
+      return;
+    }
+
+    // MIME type validation (required when browser provides it)
+    // Some browsers may return empty string for certain file types
+    const hasValidMimeType = Object.keys(ALLOWED_TYPES).includes(file.type);
+    if (file.type !== '' && !hasValidMimeType) {
+      toast.error('Invalid file type detected. Please upload a valid CSV, JSON, or DOCX file');
+      return;
+    }
 
     setIsProcessing(true);
     setValidationResult(null);
     setConflicts([]);
     setNewQuestions([]);
+    setParsedSyllabus([]);
+    setNcvecWarnings([]);
 
     try {
-      const content = await file.text();
       let questions: ImportQuestion[] = [];
 
-      if (file.name.endsWith('.json')) {
+      if (file.name.toLowerCase().endsWith('.docx')) {
+        // Parse NCVEC Word document
+        const { questions: ncvecQuestions, syllabus, warnings } = await parseNCVECDocument(file);
+        questions = ncvecQuestions;
+        setParsedSyllabus(syllabus);
+        setNcvecWarnings(warnings);
+
+        if (warnings.length > 0) {
+          toast.warning(`Parsed with ${warnings.length} warning(s)`);
+        }
+      } else if (file.name.toLowerCase().endsWith('.json')) {
+        const content = await file.text();
         questions = parseJSON(content);
-      } else if (file.name.endsWith('.csv')) {
+      } else if (file.name.toLowerCase().endsWith('.csv')) {
+        const content = await file.text();
         questions = parseCSV(content);
       } else {
-        toast.error('Please upload a CSV or JSON file');
+        toast.error('Please upload a CSV, JSON, or DOCX file');
         return;
       }
 
@@ -166,14 +216,14 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
 
   const handleImport = async (resolvedConflicts?: ConflictItem<ImportQuestion>[]) => {
     const conflictsToProcess = resolvedConflicts || conflicts;
-    
+
     setIsImporting(true);
     setImportProgress(0);
     setImportedCount(0);
     setSkippedCount(0);
 
     const questionsToImport: ImportQuestion[] = [...newQuestions];
-    
+
     // Process conflicts based on resolution
     for (const conflict of conflictsToProcess) {
       if (conflict.resolution === 'keep') {
@@ -189,6 +239,7 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     const total = questionsToImport.length;
     let imported = 0;
     let skipped = 0;
+    const failedQuestions: { id: string; error: string }[] = [];
 
     if (total === 0) {
       setIsImporting(false);
@@ -198,32 +249,49 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
       return;
     }
 
-    // Import in batches of 10
-    const batchSize = 10;
+    // Import in batches of 50 for better performance
+    const batchSize = 50;
     for (let i = 0; i < total; i += batchSize) {
       const batch = questionsToImport.slice(i, i + batchSize);
-      
+
       for (const q of batch) {
         try {
+          // Build the upsert object
+          // Note: After UUID migration, 'id' is UUID and 'display_name' is the question ID (e.g., "T1A01")
+          // We use onConflict: 'display_name' to handle updates to existing questions
+          const upsertData: Record<string, unknown> = {
+            display_name: q.id, // Question ID like "T1A01" goes in display_name
+            question: q.question,
+            options: q.options,
+            correct_answer: q.correct_answer,
+            subelement: q.subelement,
+            question_group: q.question_group,
+            explanation: q.explanation || null,
+            links: q.links || [],
+          };
+
+          // Add optional NCVEC fields if present
+          if (q.fcc_reference) {
+            upsertData.fcc_reference = q.fcc_reference;
+          }
+          if (q.figure_reference) {
+            upsertData.figure_reference = q.figure_reference;
+          }
+
           const { error } = await supabase
             .from('questions')
-            .upsert({
-              id: q.id,
-              question: q.question,
-              options: q.options,
-              correct_answer: q.correct_answer,
-              subelement: q.subelement,
-              question_group: q.question_group,
-              explanation: q.explanation || null,
-              links: q.links || []
-            }, { onConflict: 'id' });
+            .upsert(upsertData, { onConflict: 'display_name' });
 
           if (error) {
+            console.error('Upsert error for question', q.id, ':', error);
+            failedQuestions.push({ id: q.id, error: error.message });
             skipped++;
           } else {
             imported++;
           }
-        } catch {
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+          failedQuestions.push({ id: q.id, error: errorMessage });
           skipped++;
         }
       }
@@ -238,8 +306,16 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     queryClient.invalidateQueries({ queryKey: ['questions'] });
 
     setIsImporting(false);
-    
+
     const keptCount = conflictsToProcess.filter(c => c.resolution === 'keep').length;
+
+    // Show detailed error info if there were failures
+    if (failedQuestions.length > 0) {
+      const failedIds = failedQuestions.slice(0, 5).map(f => f.id).join(', ');
+      const moreCount = failedQuestions.length > 5 ? ` and ${failedQuestions.length - 5} more` : '';
+      toast.error(`Failed to import: ${failedIds}${moreCount}. Check console for details.`);
+    }
+
     toast.success(`Imported ${imported} questions${keptCount > 0 ? `, kept ${keptCount} existing` : ''}${skipped > 0 ? `, ${skipped} failed` : ''}`);
     
     resetState();
@@ -254,6 +330,8 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     setStep('upload');
     setConflicts([]);
     setNewQuestions([]);
+    setParsedSyllabus([]);
+    setNcvecWarnings([]);
   };
 
   const downloadExampleCSV = () => {
@@ -425,6 +503,15 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
                     </p>
                   </div>
                 </div>
+                <div className="flex items-start gap-2">
+                  <FileText className="w-4 h-4 mt-0.5 text-primary" />
+                  <div className="flex-1">
+                    <p className="font-medium">NCVEC Word Document (.docx)</p>
+                    <p className="text-muted-foreground text-xs">
+                      Official NCVEC question pool documents. Automatically extracts questions, FCC references, and syllabus info.
+                    </p>
+                  </div>
+                </div>
                 <p className="text-xs text-amber-500 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" />
                   Question IDs must start with "{prefix}" for {testType} exam
@@ -439,7 +526,7 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".csv,.json"
+                  accept=".csv,.json,.docx"
                   onChange={handleFileSelect}
                   className="hidden"
                   disabled={isProcessing || isImporting}
@@ -455,7 +542,7 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
                   ) : (
                     <div className="flex flex-col items-center gap-1">
                       <Upload className="w-5 h-5" />
-                      <span>Click to upload CSV or JSON</span>
+                      <span>Click to upload CSV, JSON, or DOCX</span>
                     </div>
                   )}
                 </Button>

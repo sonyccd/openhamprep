@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -350,7 +345,6 @@ export type Database = {
           glossary_current_streak: number
           glossary_last_study_date: string | null
           id: string
-          onboarding_completed: boolean
           updated_at: string
         }
         Insert: {
@@ -362,7 +356,6 @@ export type Database = {
           glossary_current_streak?: number
           glossary_last_study_date?: string | null
           id: string
-          onboarding_completed?: boolean
           updated_at?: string
         }
         Update: {
@@ -374,7 +367,6 @@ export type Database = {
           glossary_current_streak?: number
           glossary_last_study_date?: string | null
           id?: string
-          onboarding_completed?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -438,8 +430,14 @@ export type Database = {
         Row: {
           correct_answer: number
           created_at: string
+          discourse_sync_at: string | null
+          discourse_sync_error: string | null
+          discourse_sync_status: string | null
+          display_name: string
           edit_history: Json
           explanation: string | null
+          fcc_reference: string | null
+          figure_reference: string | null
           figure_url: string | null
           forum_url: string | null
           id: string
@@ -452,11 +450,17 @@ export type Database = {
         Insert: {
           correct_answer: number
           created_at?: string
+          discourse_sync_at?: string | null
+          discourse_sync_error?: string | null
+          discourse_sync_status?: string | null
+          display_name: string
           edit_history?: Json
           explanation?: string | null
+          fcc_reference?: string | null
+          figure_reference?: string | null
           figure_url?: string | null
           forum_url?: string | null
-          id: string
+          id?: string
           links?: Json
           options: Json
           question: string
@@ -466,8 +470,14 @@ export type Database = {
         Update: {
           correct_answer?: number
           created_at?: string
+          discourse_sync_at?: string | null
+          discourse_sync_error?: string | null
+          discourse_sync_status?: string | null
+          display_name?: string
           edit_history?: Json
           explanation?: string | null
+          fcc_reference?: string | null
+          figure_reference?: string | null
           figure_url?: string | null
           forum_url?: string | null
           id?: string
@@ -476,6 +486,228 @@ export type Database = {
           question?: string
           question_group?: string
           subelement?: string
+        }
+        Relationships: []
+      }
+      syllabus: {
+        Row: {
+          code: string
+          created_at: string | null
+          exam_questions: number | null
+          id: string
+          license_type: string
+          title: string
+          type: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          exam_questions?: number | null
+          id?: string
+          license_type: string
+          title: string
+          type: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          exam_questions?: number | null
+          id?: string
+          license_type?: string
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      topic_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          is_completed: boolean | null
+          topic_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          topic_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          topic_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_progress_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topic_questions: {
+        Row: {
+          created_at: string | null
+          id: string
+          question_id: string | null
+          topic_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          question_id?: string | null
+          topic_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          question_id?: string | null
+          topic_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_questions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topic_questions_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topic_resources: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          resource_type: string
+          storage_path: string | null
+          title: string
+          topic_id: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          resource_type: string
+          storage_path?: string | null
+          title: string
+          topic_id?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          resource_type?: string
+          storage_path?: string | null
+          title?: string
+          topic_id?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_resources_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topic_subelements: {
+        Row: {
+          created_at: string | null
+          id: string
+          subelement: string
+          topic_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          subelement: string
+          topic_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          subelement?: string
+          topic_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_subelements_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topics: {
+        Row: {
+          content_path: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          edit_history: Json | null
+          id: string
+          is_published: boolean | null
+          license_types: string[] | null
+          slug: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content_path?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          edit_history?: Json | null
+          id?: string
+          is_published?: boolean | null
+          license_types?: string[] | null
+          slug: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content_path?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          edit_history?: Json | null
+          id?: string
+          is_published?: boolean | null
+          license_types?: string[] | null
+          slug?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -587,7 +819,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      discourse_sync_overview: {
+        Row: {
+          errors: number | null
+          license_type: string | null
+          needs_verification: number | null
+          pending: number | null
+          synced: number | null
+          total_questions: number | null
+          with_forum_url: number | null
+          without_forum_url: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_own_account: { Args: never; Returns: Json }
@@ -735,3 +979,4 @@ export const Constants = {
     },
   },
 } as const
+
