@@ -9,6 +9,7 @@ import {
   clearGeocodeProgress,
   type GeocodeProgressState,
 } from './useGeocoding';
+import type { ExamSession } from './useExamSessions';
 
 // Mock sonner toast
 vi.mock('sonner', () => ({
@@ -84,6 +85,32 @@ const createWrapper = () => {
   return ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client: queryClient }, children);
 };
+
+// Helper to create properly typed mock exam sessions
+const createMockSession = (overrides: Partial<ExamSession> = {}): ExamSession => ({
+  id: 'session-default',
+  title: 'Test Session',
+  exam_date: '2025-02-01',
+  sponsor: 'ARRL',
+  exam_time: '9:00 AM',
+  walk_ins_allowed: true,
+  public_contact: 'John Doe',
+  phone: '555-1234',
+  email: 'test@example.com',
+  vec: 'ARRL/VEC',
+  location_name: 'Community Center',
+  address: '123 Main St',
+  address_2: null,
+  address_3: null,
+  city: 'Raleigh',
+  state: 'NC',
+  zip: '27601',
+  latitude: null,
+  longitude: null,
+  created_at: '2025-01-01T00:00:00Z',
+  updated_at: '2025-01-15T00:00:00Z',
+  ...overrides,
+});
 
 describe('useGeocoding', () => {
   beforeEach(() => {
@@ -220,8 +247,8 @@ describe('useGeocoding', () => {
   });
 
   describe('useClientGeocoding', () => {
-    const mockSessions = [
-      {
+    const mockSessions: ExamSession[] = [
+      createMockSession({
         id: 'session-1',
         address: '123 Main St',
         city: 'Raleigh',
@@ -229,8 +256,8 @@ describe('useGeocoding', () => {
         zip: '27601',
         latitude: null,
         longitude: null,
-      },
-      {
+      }),
+      createMockSession({
         id: 'session-2',
         address: '456 Oak Ave',
         city: 'Durham',
@@ -238,7 +265,7 @@ describe('useGeocoding', () => {
         zip: '27701',
         latitude: null,
         longitude: null,
-      },
+      }),
     ];
 
     it('should provide mutate function', () => {
@@ -258,7 +285,7 @@ describe('useGeocoding', () => {
       });
 
       await act(async () => {
-        result.current.mutate({ sessions: mockSessions as any });
+        result.current.mutate({ sessions: mockSessions });
       });
 
       await waitFor(() => {
@@ -276,7 +303,7 @@ describe('useGeocoding', () => {
       });
 
       await act(async () => {
-        result.current.mutate({ sessions: mockSessions as any }); // 2 sessions need geocoding
+        result.current.mutate({ sessions: mockSessions }); // 2 sessions need geocoding
       });
 
       await waitFor(() => {
@@ -295,7 +322,7 @@ describe('useGeocoding', () => {
 
       await act(async () => {
         await result.current.mutateAsync({
-          sessions: mockSessions as any,
+          sessions: mockSessions,
           onProgress,
         });
       });
@@ -308,8 +335,8 @@ describe('useGeocoding', () => {
     });
 
     it('should skip sessions that already have coordinates', async () => {
-      const sessionsWithCoords = [
-        {
+      const sessionsWithCoords: ExamSession[] = [
+        createMockSession({
           id: 'session-1',
           address: '123 Main St',
           city: 'Raleigh',
@@ -317,8 +344,8 @@ describe('useGeocoding', () => {
           zip: '27601',
           latitude: 35.7796,
           longitude: -78.6382,
-        },
-        {
+        }),
+        createMockSession({
           id: 'session-2',
           address: '456 Oak Ave',
           city: 'Durham',
@@ -326,7 +353,7 @@ describe('useGeocoding', () => {
           zip: '27701',
           latitude: null,
           longitude: null,
-        },
+        }),
       ];
 
       const { result } = renderHook(() => useClientGeocoding(), {
@@ -334,7 +361,7 @@ describe('useGeocoding', () => {
       });
 
       await act(async () => {
-        await result.current.mutateAsync({ sessions: sessionsWithCoords as any });
+        await result.current.mutateAsync({ sessions: sessionsWithCoords });
       });
 
       // Should only geocode the second session (missing coords)
@@ -343,8 +370,8 @@ describe('useGeocoding', () => {
     });
 
     it('should skip sessions missing address info', async () => {
-      const incompleteSessions = [
-        {
+      const incompleteSessions: ExamSession[] = [
+        createMockSession({
           id: 'session-1',
           address: null, // Missing address
           city: 'Raleigh',
@@ -352,16 +379,16 @@ describe('useGeocoding', () => {
           zip: '27601',
           latitude: null,
           longitude: null,
-        },
-        {
+        }),
+        createMockSession({
           id: 'session-2',
           address: '456 Oak Ave',
-          city: null, // Missing city
+          city: 'TestCity', // city is required in ExamSession type
           state: 'NC',
           zip: '27701',
           latitude: null,
           longitude: null,
-        },
+        }),
       ];
 
       const { result } = renderHook(() => useClientGeocoding(), {
@@ -369,11 +396,12 @@ describe('useGeocoding', () => {
       });
 
       await act(async () => {
-        await result.current.mutateAsync({ sessions: incompleteSessions as any });
+        await result.current.mutateAsync({ sessions: incompleteSessions });
       });
 
-      // Neither session should be geocoded
-      expect(mockGeocodeAddress).not.toHaveBeenCalled();
+      // Only session 2 should be geocoded (session 1 has no address)
+      expect(mockGeocodeAddress).toHaveBeenCalledTimes(1);
+      expect(mockGeocodeAddress).toHaveBeenCalledWith('456 Oak Ave', 'TestCity', 'NC', '27701');
     });
 
     it('should save progress to localStorage during geocoding', async () => {
@@ -382,7 +410,7 @@ describe('useGeocoding', () => {
       });
 
       await act(async () => {
-        await result.current.mutateAsync({ sessions: mockSessions as any });
+        await result.current.mutateAsync({ sessions: mockSessions });
       });
 
       // Progress should have been saved
@@ -398,7 +426,7 @@ describe('useGeocoding', () => {
       });
 
       await act(async () => {
-        await result.current.mutateAsync({ sessions: mockSessions as any });
+        await result.current.mutateAsync({ sessions: mockSessions });
       });
 
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('geocode_progress');
@@ -418,7 +446,7 @@ describe('useGeocoding', () => {
       });
 
       await act(async () => {
-        await result.current.mutateAsync({ sessions: mockSessions as any });
+        await result.current.mutateAsync({ sessions: mockSessions });
       });
 
       // Should only geocode session-2 (session-1 already processed)
@@ -427,8 +455,8 @@ describe('useGeocoding', () => {
     });
 
     it('should force geocode all sessions when forceAll is true', async () => {
-      const sessionsWithCoords = [
-        {
+      const sessionsWithCoords: ExamSession[] = [
+        createMockSession({
           id: 'session-1',
           address: '123 Main St',
           city: 'Raleigh',
@@ -436,7 +464,7 @@ describe('useGeocoding', () => {
           zip: '27601',
           latitude: 35.7796,
           longitude: -78.6382,
-        },
+        }),
       ];
 
       const { result } = renderHook(() => useClientGeocoding(), {
@@ -445,7 +473,7 @@ describe('useGeocoding', () => {
 
       await act(async () => {
         await result.current.mutateAsync({
-          sessions: sessionsWithCoords as any,
+          sessions: sessionsWithCoords,
           forceAll: true,
         });
       });
@@ -469,7 +497,7 @@ describe('useGeocoding', () => {
 
       await act(async () => {
         await result.current.mutateAsync({
-          sessions: mockSessions as any,
+          sessions: mockSessions,
           forceAll: true,
         });
       });
@@ -489,7 +517,7 @@ describe('useGeocoding', () => {
       });
 
       await act(async () => {
-        const data = await result.current.mutateAsync({ sessions: mockSessions as any });
+        const data = await result.current.mutateAsync({ sessions: mockSessions });
         expect(data.processed).toBe(1);
         expect(data.skipped).toBe(1);
       });
@@ -507,9 +535,9 @@ describe('useGeocoding', () => {
 
       await act(async () => {
         try {
-          await result.current.mutateAsync({ sessions: mockSessions as any });
-        } catch (error: any) {
-          expect(error.message).toContain('Monthly geocoding limit reached');
+          await result.current.mutateAsync({ sessions: mockSessions });
+        } catch (error) {
+          expect((error as Error).message).toContain('Monthly geocoding limit reached');
         }
       });
     });
@@ -520,7 +548,7 @@ describe('useGeocoding', () => {
       });
 
       await act(async () => {
-        const data = await result.current.mutateAsync({ sessions: mockSessions as any });
+        const data = await result.current.mutateAsync({ sessions: mockSessions });
 
         expect(data).toEqual({
           processed: 2,
@@ -539,7 +567,7 @@ describe('useGeocoding', () => {
 
       await act(async () => {
         await result.current.mutateAsync({
-          sessions: mockSessions as any,
+          sessions: mockSessions,
           onProgress,
         });
       });

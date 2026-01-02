@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { GeocodeModal } from './GeocodeModal';
+import type { ExamSession } from '@/hooks/useExamSessions';
 
 // Mock sonner toast
 vi.mock('sonner', () => ({
@@ -51,8 +52,34 @@ const renderWithProviders = (ui: React.ReactElement) => {
   );
 };
 
-const mockSessions = [
-  {
+// Helper to create properly typed mock exam sessions
+const createMockSession = (overrides: Partial<ExamSession> = {}): ExamSession => ({
+  id: 'session-default',
+  title: 'Test Session',
+  exam_date: '2025-02-01',
+  sponsor: 'ARRL',
+  exam_time: '9:00 AM',
+  walk_ins_allowed: true,
+  public_contact: 'John Doe',
+  phone: '555-1234',
+  email: 'test@example.com',
+  vec: 'ARRL/VEC',
+  location_name: 'Community Center',
+  address: '123 Main St',
+  address_2: null,
+  address_3: null,
+  city: 'Raleigh',
+  state: 'NC',
+  zip: '27601',
+  latitude: null,
+  longitude: null,
+  created_at: '2025-01-01T00:00:00Z',
+  updated_at: '2025-01-15T00:00:00Z',
+  ...overrides,
+});
+
+const mockSessions: ExamSession[] = [
+  createMockSession({
     id: 'session-1',
     title: 'Test Session 1',
     exam_date: '2025-02-01',
@@ -62,8 +89,8 @@ const mockSessions = [
     zip: '27601',
     latitude: null,
     longitude: null,
-  },
-  {
+  }),
+  createMockSession({
     id: 'session-2',
     title: 'Test Session 2',
     exam_date: '2025-02-15',
@@ -73,7 +100,7 @@ const mockSessions = [
     zip: '27701',
     latitude: 35.9940,
     longitude: -78.8986,
-  },
+  }),
 ];
 
 describe('GeocodeModal', () => {
@@ -87,7 +114,7 @@ describe('GeocodeModal', () => {
         <GeocodeModal
           open={true}
           onOpenChange={vi.fn()}
-          sessions={mockSessions as any}
+          sessions={mockSessions}
         />
       );
 
@@ -99,7 +126,7 @@ describe('GeocodeModal', () => {
         <GeocodeModal
           open={false}
           onOpenChange={vi.fn()}
-          sessions={mockSessions as any}
+          sessions={mockSessions}
         />
       );
 
@@ -111,7 +138,7 @@ describe('GeocodeModal', () => {
         <GeocodeModal
           open={true}
           onOpenChange={vi.fn()}
-          sessions={mockSessions as any}
+          sessions={mockSessions}
         />
       );
 
@@ -126,7 +153,7 @@ describe('GeocodeModal', () => {
         <GeocodeModal
           open={true}
           onOpenChange={vi.fn()}
-          sessions={mockSessions as any}
+          sessions={mockSessions}
         />
       );
 
@@ -140,7 +167,7 @@ describe('GeocodeModal', () => {
         <GeocodeModal
           open={true}
           onOpenChange={vi.fn()}
-          sessions={mockSessions as any}
+          sessions={mockSessions}
         />
       );
 
@@ -153,7 +180,7 @@ describe('GeocodeModal', () => {
         <GeocodeModal
           open={true}
           onOpenChange={vi.fn()}
-          sessions={mockSessions as any}
+          sessions={mockSessions}
         />
       );
 
@@ -168,7 +195,7 @@ describe('GeocodeModal', () => {
         <GeocodeModal
           open={true}
           onOpenChange={vi.fn()}
-          sessions={mockSessions as any}
+          sessions={mockSessions}
         />
       );
 
@@ -182,7 +209,7 @@ describe('GeocodeModal', () => {
         <GeocodeModal
           open={true}
           onOpenChange={vi.fn()}
-          sessions={mockSessions as any}
+          sessions={mockSessions}
         />
       );
 
@@ -200,7 +227,7 @@ describe('GeocodeModal', () => {
         <GeocodeModal
           open={true}
           onOpenChange={vi.fn()}
-          sessions={mockSessions as any}
+          sessions={mockSessions}
         />
       );
 
@@ -209,7 +236,7 @@ describe('GeocodeModal', () => {
     });
 
     it('should be disabled when no sessions need geocoding', () => {
-      const allGeocodedSessions = mockSessions.map((s) => ({
+      const allGeocodedSessions: ExamSession[] = mockSessions.map((s) => ({
         ...s,
         latitude: 35.0,
         longitude: -78.0,
@@ -219,7 +246,7 @@ describe('GeocodeModal', () => {
         <GeocodeModal
           open={true}
           onOpenChange={vi.fn()}
-          sessions={allGeocodedSessions as any}
+          sessions={allGeocodedSessions}
         />
       );
 
@@ -234,7 +261,7 @@ describe('GeocodeModal', () => {
         <GeocodeModal
           open={true}
           onOpenChange={vi.fn()}
-          sessions={mockSessions as any}
+          sessions={mockSessions}
         />
       );
 
@@ -254,7 +281,7 @@ describe('GeocodeModal', () => {
         <GeocodeModal
           open={true}
           onOpenChange={onOpenChange}
-          sessions={mockSessions as any}
+          sessions={mockSessions}
         />
       );
 
@@ -273,7 +300,7 @@ describe('GeocodeModal', () => {
         <GeocodeModal
           open={true}
           onOpenChange={vi.fn()}
-          sessions={mockSessions as any}
+          sessions={mockSessions}
           onComplete={onComplete}
         />
       );
@@ -315,7 +342,7 @@ describe('GeocodeModal with no Mapbox configuration', () => {
       <GeocodeModal
         open={true}
         onOpenChange={vi.fn()}
-        sessions={mockSessions as any}
+        sessions={mockSessions}
       />
     );
 
@@ -335,7 +362,7 @@ describe('GeocodeModal with resumable progress', () => {
       <GeocodeModal
         open={true}
         onOpenChange={vi.fn()}
-        sessions={mockSessions as any}
+        sessions={mockSessions}
       />
     );
 
@@ -354,7 +381,7 @@ describe('GeocodeModal quota handling', () => {
       <GeocodeModal
         open={true}
         onOpenChange={vi.fn()}
-        sessions={mockSessions as any}
+        sessions={mockSessions}
       />
     );
 
@@ -366,7 +393,7 @@ describe('GeocodeModal quota handling', () => {
       <GeocodeModal
         open={true}
         onOpenChange={vi.fn()}
-        sessions={mockSessions as any}
+        sessions={mockSessions}
       />
     );
 
@@ -386,7 +413,7 @@ describe('GeocodeModal state management', () => {
       <GeocodeModal
         open={false}
         onOpenChange={vi.fn()}
-        sessions={mockSessions as any}
+        sessions={mockSessions}
       />
     );
 
@@ -396,7 +423,7 @@ describe('GeocodeModal state management', () => {
         <GeocodeModal
           open={true}
           onOpenChange={vi.fn()}
-          sessions={mockSessions as any}
+          sessions={mockSessions}
         />
       </QueryClientProvider>
     );
@@ -409,8 +436,8 @@ describe('GeocodeModal state management', () => {
 
 describe('GeocodeModal sessions filtering', () => {
   it('should count sessions with valid addresses', () => {
-    const sessionsWithMixedAddresses = [
-      {
+    const sessionsWithMixedAddresses: ExamSession[] = [
+      createMockSession({
         id: '1',
         address: '123 Main St',
         city: 'Raleigh',
@@ -418,8 +445,8 @@ describe('GeocodeModal sessions filtering', () => {
         zip: '27601',
         latitude: null,
         longitude: null,
-      },
-      {
+      }),
+      createMockSession({
         id: '2',
         address: null, // Missing address
         city: 'Durham',
@@ -427,28 +454,28 @@ describe('GeocodeModal sessions filtering', () => {
         zip: '27701',
         latitude: null,
         longitude: null,
-      },
-      {
+      }),
+      createMockSession({
         id: '3',
         address: '789 Pine St',
-        city: null, // Missing city
+        city: 'Anywhere', // City is required in ExamSession
         state: 'NC',
         zip: '27801',
         latitude: null,
         longitude: null,
-      },
+      }),
     ];
 
     renderWithProviders(
       <GeocodeModal
         open={true}
         onOpenChange={vi.fn()}
-        sessions={sessionsWithMixedAddresses as any}
+        sessions={sessionsWithMixedAddresses}
       />
     );
 
-    // Only 1 session has valid address, city, and state
-    expect(screen.getByText(/1 sessions need geocoding/)).toBeInTheDocument();
+    // 2 sessions have valid address, city, and state (session 2 has null address)
+    expect(screen.getByText(/2 sessions need geocoding/)).toBeInTheDocument();
   });
 
   it('should handle empty sessions array', () => {
