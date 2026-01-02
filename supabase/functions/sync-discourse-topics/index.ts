@@ -598,10 +598,13 @@ serve(async (req) => {
         }
 
         // Use appropriate status - 'linked' for existing topics, 'created' for new ones
-        const status = result.wasExisting ? 'skipped' : 'created';
+        const status = result.wasExisting ? 'linked' : 'created';
         if (dbUpdateSuccess) {
           results.push({ questionId: question.display_name, status, topicId: result.topicId, topicUrl: result.topicUrl });
-          created++;
+          // Only increment created counter for actually new topics
+          if (!result.wasExisting) {
+            created++;
+          }
         } else {
           // Topic was created but DB update failed after retries - report as partial success
           results.push({
