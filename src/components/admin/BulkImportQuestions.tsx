@@ -96,9 +96,34 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     return { conflicts: conflictList, newQuestions: newList };
   };
 
+  // File validation constants
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const ALLOWED_TYPES: Record<string, string> = {
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+    'text/csv': '.csv',
+    'application/json': '.json',
+    'text/plain': '.csv', // Some systems report CSV as text/plain
+  };
+
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // File size validation
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('File too large. Maximum size is 10MB');
+      return;
+    }
+
+    // MIME type validation (with fallback to extension check for edge cases)
+    const allowedExtensions = ['.csv', '.json', '.docx'];
+    const hasValidExtension = allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+    const hasValidMimeType = Object.keys(ALLOWED_TYPES).includes(file.type);
+
+    if (!hasValidExtension && !hasValidMimeType) {
+      toast.error('Invalid file type. Please upload a CSV, JSON, or DOCX file');
+      return;
+    }
 
     setIsProcessing(true);
     setValidationResult(null);
@@ -110,7 +135,7 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     try {
       let questions: ImportQuestion[] = [];
 
-      if (file.name.endsWith('.docx')) {
+      if (file.name.toLowerCase().endsWith('.docx')) {
         // Parse NCVEC Word document
         const { questions: ncvecQuestions, syllabus, warnings } = await parseNCVECDocument(file);
         questions = ncvecQuestions;
@@ -120,10 +145,10 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
         if (warnings.length > 0) {
           toast.warning(`Parsed with ${warnings.length} warning(s)`);
         }
-      } else if (file.name.endsWith('.json')) {
+      } else if (file.name.toLowerCase().endsWith('.json')) {
         const content = await file.text();
         questions = parseJSON(content);
-      } else if (file.name.endsWith('.csv')) {
+      } else if (file.name.toLowerCase().endsWith('.csv')) {
         const content = await file.text();
         questions = parseCSV(content);
       } else {
@@ -184,14 +209,14 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
 
   const handleImport = async (resolvedConflicts?: ConflictItem<ImportQuestion>[]) => {
     const conflictsToProcess = resolvedConflicts || conflicts;
-    
+
     setIsImporting(true);
     setImportProgress(0);
     setImportedCount(0);
     setSkippedCount(0);
 
     const questionsToImport: ImportQuestion[] = [...newQuestions];
-    
+
     // Process conflicts based on resolution
     for (const conflict of conflictsToProcess) {
       if (conflict.resolution === 'keep') {
@@ -207,6 +232,7 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     const total = questionsToImport.length;
     let imported = 0;
     let skipped = 0;
+    const failedQuestions: { id: string; error: string }[] = [];
 
     if (total === 0) {
       setIsImporting(false);
@@ -216,11 +242,11 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
       return;
     }
 
-    // Import in batches of 10
-    const batchSize = 10;
+    // Import in batches of 50 for better performance
+    const batchSize = 50;
     for (let i = 0; i < total; i += batchSize) {
       const batch = questionsToImport.slice(i, i + batchSize);
-      
+
       for (const q of batch) {
         try {
           // Build the upsert object
@@ -251,11 +277,14 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
 
           if (error) {
             console.error('Upsert error for question', q.id, ':', error);
+            failedQuestions.push({ id: q.id, error: error.message });
             skipped++;
           } else {
             imported++;
           }
-        } catch {
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+          failedQuestions.push({ id: q.id, error: errorMessage });
           skipped++;
         }
       }
@@ -270,8 +299,16 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     queryClient.invalidateQueries({ queryKey: ['questions'] });
 
     setIsImporting(false);
-    
+
     const keptCount = conflictsToProcess.filter(c => c.resolution === 'keep').length;
+
+    // Show detailed error info if there were failures
+    if (failedQuestions.length > 0) {
+      const failedIds = failedQuestions.slice(0, 5).map(f => f.id).join(', ');
+      const moreCount = failedQuestions.length > 5 ? ` and ${failedQuestions.length - 5} more` : '';
+      toast.error(`Failed to import: ${failedIds}${moreCount}. Check console for details.`);
+    }
+
     toast.success(`Imported ${imported} questions${keptCount > 0 ? `, kept ${keptCount} existing` : ''}${skipped > 0 ? `, ${skipped} failed` : ''}`);
     
     resetState();

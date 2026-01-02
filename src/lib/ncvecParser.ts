@@ -75,10 +75,17 @@ function parseSyllabus(text: string): SyllabusEntry[] {
   const lines = text.split('\n');
 
   // Pattern for subelement headers: "SUBELEMENT T1 – COMMISSION'S RULES - [6 Exam Questions - 6 Groups]"
+  // Capture groups:
+  //   [1] = Subelement code (e.g., "T1", "G2", "E3")
+  //   [2] = Title/description text
+  //   [3] = Number of exam questions
   const subelementPattern = /^SUBELEMENT\s+([TGE]\d+)\s*[–-]\s*(.+?)\s*-?\s*\[(\d+)\s*Exam Questions?/i;
 
   // Pattern for group headers: "T1A - Purpose and permissible use..."
   // Supports both regular hyphen (-) and en-dash (–)
+  // Capture groups:
+  //   [1] = Group code (e.g., "T1A", "G2B", "E3C")
+  //   [2] = Group description text
   const groupPattern = /^([TGE]\d[A-Z])\s*[–-]\s*(.+)/;
 
   for (const line of lines) {
@@ -127,9 +134,16 @@ function parseQuestions(text: string): { questions: ImportQuestion[]; warnings: 
 
   // Pattern for question header: "T1A01 (C) [97.1]" or "T1A01 (C)"
   // Uses 'i' flag for case-insensitive matching of question IDs and answer letters
+  // Capture groups:
+  //   [1] = Question ID (e.g., "T1A01", "G2B03", "E3C12")
+  //   [2] = Correct answer letter (A, B, C, or D)
+  //   [3] = Optional FCC reference (e.g., "97.1", "97.3(a)(22)")
   const headerPattern = /^([TGE]\d[A-Z]\d{2})\s*\(([A-D])\)\s*(?:\[([^\]]+)\])?/i;
 
-  // Pattern for answer options
+  // Pattern for answer options: "A. Answer text here"
+  // Capture groups:
+  //   [1] = Option letter (A, B, C, or D)
+  //   [2] = Option text
   const optionPattern = /^([A-D])\.\s*(.+)/;
 
   for (const block of blocks) {
