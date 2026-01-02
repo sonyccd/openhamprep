@@ -1,13 +1,19 @@
-/* Custom styles for marketing site */
+/* Open Ham Prep Marketing Site Styles
+   Design Direction: "Radio Waves Meet Modern Tech"
+   A bold, confident aesthetic with subtle radio/signal motifs */
+
+/* ==========================================
+   TYPOGRAPHY
+   ========================================== */
+
 body {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
 h1, h2, h3, h4, h5, h6, .font-mono {
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Smooth scrolling */
 html {
   scroll-behavior: smooth;
 }
@@ -17,12 +23,8 @@ html {
    ========================================== */
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes fadeInUp {
@@ -81,38 +83,39 @@ html {
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
 @keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes wave {
+  0% { transform: translateX(0) translateY(0); }
+  50% { transform: translateX(-25px) translateY(5px); }
+  100% { transform: translateX(0) translateY(0); }
+}
+
+@keyframes signalPulse {
   0%, 100% {
-    background-position: 0% 50%;
+    opacity: 0.3;
+    transform: scale(1);
   }
   50% {
-    background-position: 100% 50%;
+    opacity: 0.6;
+    transform: scale(1.05);
   }
 }
 
@@ -156,6 +159,10 @@ html {
 
 .animate-pulse-slow {
   animation: pulse 3s ease-in-out infinite;
+}
+
+.animate-wave {
+  animation: wave 8s ease-in-out infinite;
 }
 
 /* Staggered animation delays */
@@ -217,29 +224,48 @@ html {
 }
 
 /* ==========================================
-   GRADIENT BACKGROUNDS
+   GRADIENT BACKGROUNDS & RADIO WAVE PATTERNS
    ========================================== */
 
 .gradient-hero {
+  position: relative;
   background: linear-gradient(135deg,
-    rgba(251, 191, 36, 0.1) 0%,
-    rgba(245, 158, 11, 0.05) 25%,
+    rgba(251, 191, 36, 0.08) 0%,
+    rgba(245, 158, 11, 0.04) 25%,
     transparent 50%,
-    rgba(20, 184, 166, 0.05) 75%,
-    rgba(13, 148, 136, 0.08) 100%
+    rgba(20, 184, 166, 0.04) 75%,
+    rgba(13, 148, 136, 0.06) 100%
   );
   background-size: 200% 200%;
   animation: gradientShift 15s ease infinite;
+  overflow: hidden;
+}
+
+.gradient-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 Q 25 40, 50 50 T 100 50' stroke='%23d97706' stroke-width='0.5' fill='none' opacity='0.1'/%3E%3Cpath d='M0 60 Q 25 50, 50 60 T 100 60' stroke='%23d97706' stroke-width='0.3' fill='none' opacity='0.08'/%3E%3Cpath d='M0 70 Q 25 60, 50 70 T 100 70' stroke='%2314b8a6' stroke-width='0.3' fill='none' opacity='0.08'/%3E%3C/svg%3E");
+  background-size: 200px 100px;
+  animation: wave 12s linear infinite;
+  pointer-events: none;
 }
 
 .dark .gradient-hero {
   background: linear-gradient(135deg,
-    rgba(251, 191, 36, 0.08) 0%,
-    rgba(245, 158, 11, 0.03) 25%,
+    rgba(251, 191, 36, 0.06) 0%,
+    rgba(245, 158, 11, 0.02) 25%,
     transparent 50%,
-    rgba(20, 184, 166, 0.03) 75%,
-    rgba(13, 148, 136, 0.05) 100%
+    rgba(20, 184, 166, 0.02) 75%,
+    rgba(13, 148, 136, 0.04) 100%
   );
+}
+
+.dark .gradient-hero::before {
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 Q 25 40, 50 50 T 100 50' stroke='%23fbbf24' stroke-width='0.5' fill='none' opacity='0.15'/%3E%3Cpath d='M0 60 Q 25 50, 50 60 T 100 60' stroke='%23fbbf24' stroke-width='0.3' fill='none' opacity='0.1'/%3E%3Cpath d='M0 70 Q 25 60, 50 70 T 100 70' stroke='%2314b8a6' stroke-width='0.3' fill='none' opacity='0.1'/%3E%3C/svg%3E");
 }
 
 .gradient-text {
@@ -263,13 +289,100 @@ html {
               linear-gradient(135deg, #d97706, #14b8a6) border-box;
 }
 
+/* Signal wave decoration */
+.signal-waves {
+  position: absolute;
+  right: -100px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 400px;
+  height: 400px;
+  pointer-events: none;
+  opacity: 0.1;
+}
+
+.signal-waves::before,
+.signal-waves::after {
+  content: '';
+  position: absolute;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  animation: signalPulse 3s ease-in-out infinite;
+}
+
+.signal-waves::before {
+  width: 200px;
+  height: 200px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #d97706;
+}
+
+.signal-waves::after {
+  width: 300px;
+  height: 300px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #14b8a6;
+  animation-delay: 0.5s;
+}
+
 /* ==========================================
-   ENHANCED CARDS & COMPONENTS
+   PILLAR CARDS (Value Proposition)
+   ========================================== */
+
+.pillar-card {
+  position: relative;
+  background: white;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+}
+
+html.dark .pillar-card {
+  background-color: rgb(55, 65, 81);
+  border-color: rgb(75, 85, 99);
+}
+
+.pillar-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--pillar-color, #d97706), transparent);
+}
+
+.pillar-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+}
+
+.dark .pillar-card:hover {
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4);
+}
+
+.pillar-card.pillar-free { --pillar-color: #10b981; }
+.pillar-card.pillar-learn { --pillar-color: #8b5cf6; }
+.pillar-card.pillar-community { --pillar-color: #06b6d4; }
+.pillar-card.pillar-smart { --pillar-color: #f59e0b; }
+
+/* ==========================================
+   ENHANCED FEATURE CARDS
    ========================================== */
 
 .feature-card {
   position: relative;
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark .feature-card {
+  background-color: rgb(55, 65, 81);
+  border-color: rgb(75, 85, 99);
 }
 
 .feature-card::before {
@@ -323,6 +436,40 @@ html {
 }
 
 /* ==========================================
+   COMMUNITY SECTION
+   ========================================== */
+
+.community-card {
+  position: relative;
+  background: linear-gradient(135deg,
+    rgba(6, 182, 212, 0.1) 0%,
+    rgba(20, 184, 166, 0.05) 100%
+  );
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-radius: 1.5rem;
+  overflow: hidden;
+}
+
+.dark .community-card {
+  background: linear-gradient(135deg,
+    rgba(6, 182, 212, 0.15) 0%,
+    rgba(20, 184, 166, 0.08) 100%
+  );
+  border-color: rgba(6, 182, 212, 0.3);
+}
+
+.community-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ==========================================
    ENHANCED BUTTONS
    ========================================== */
 
@@ -355,6 +502,16 @@ html {
 
 .btn-primary:hover::before {
   left: 100%;
+}
+
+.btn-secondary {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
 }
 
 /* ==========================================
@@ -406,7 +563,6 @@ html {
   transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
 }
 
-/* Icon rotation transition */
 [data-lucide="chevron-down"] {
   transition: transform 0.2s ease-out;
 }
@@ -461,6 +617,25 @@ html {
 }
 
 /* ==========================================
+   STAT CARDS
+   ========================================== */
+
+.stat-card {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.stat-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ==========================================
    RESPONSIVE ADJUSTMENTS
    ========================================== */
 
@@ -487,13 +662,11 @@ html {
    ========================================== */
 
 .nc-outline {
-  /* CSS filter to make black SVG amber-colored */
   filter: invert(47%) sepia(98%) saturate(456%) hue-rotate(2deg) brightness(98%) contrast(90%);
   transition: filter 0.3s ease;
 }
 
 .dark .nc-outline {
-  /* Lighter amber for dark mode */
   filter: invert(73%) sepia(31%) saturate(1060%) hue-rotate(355deg) brightness(103%) contrast(101%);
 }
 
@@ -511,4 +684,63 @@ html {
 
 .dark .shadow-glow-amber {
   box-shadow: 0 0 40px rgba(251, 191, 36, 0.1);
+}
+
+/* Checkmark list styling */
+.check-list li {
+  position: relative;
+  padding-left: 1.75rem;
+}
+
+.check-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.25rem;
+  width: 1rem;
+  height: 1rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+/* Badge styling */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.badge-amber {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+}
+
+.dark .badge-amber {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+.badge-teal {
+  background: rgba(20, 184, 166, 0.15);
+  color: #0d9488;
+}
+
+.dark .badge-teal {
+  background: rgba(20, 184, 166, 0.2);
+  color: #14b8a6;
+}
+
+.badge-purple {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7c3aed;
+}
+
+.dark .badge-purple {
+  background: rgba(139, 92, 246, 0.2);
+  color: #a78bfa;
 }
