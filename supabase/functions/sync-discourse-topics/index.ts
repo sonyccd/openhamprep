@@ -3,18 +3,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   corsHeaders,
   DISCOURSE_URL,
-  PAGINATION_DELAY_MS,
   MAX_PAGINATION_PAGES,
   MAX_TITLE_LENGTH,
   CATEGORY_MAP,
   getCategorySlug,
   isServiceRoleToken,
+  fetchWithBackoff,
 } from "../_shared/constants.ts";
 
 // Sync-specific configuration
 const DEFAULT_BATCH_SIZE = 50;
 const MAX_BATCH_SIZE = 100;
-const RATE_LIMIT_DELAY_MS = 1000;
 const MAX_QUESTION_IDS_IN_RESPONSE = 100;
 
 interface Question {
@@ -54,13 +53,65 @@ function getDiscourseConfig(): { apiKey: string; username: string } {
   return { apiKey, username };
 }
 
-async function fetchDiscourseCategories(apiKey: string, username: string): Promise<Map<string, number>> {
-  const response = await fetch(`${DISCOURSE_URL}/categories.json`, {
-    headers: {
-      'Api-Key': apiKey,
-      'Api-Username': username,
+/**
+ * Search Discourse for an existing topic by exact title match.
+ * Used when topic creation fails with "Title has already been used".
+ */
+async function searchDiscourseByTitle(
+  apiKey: string,
+  username: string,
+  title: string,
+  requestId: string
+): Promise<{ found: boolean; topicId?: number; topicUrl?: string; slug?: string }> {
+  try {
+    // Use Discourse search API to find topics with this title
+    const searchUrl = `${DISCOURSE_URL}/search.json?q=${encodeURIComponent(title)}`;
+    const response = await fetchWithBackoff(
+      searchUrl,
+      {
+        headers: {
+          'Api-Key': apiKey,
+          'Api-Username': username,
+        },
+      },
+      requestId
+    );
+
+    if (!response.ok) {
+      return { found: false };
+    }
+
+    const data = await response.json();
+
+    // Search results have topics array - find exact title match
+    const matchingTopic = data.topics?.find((t: { title: string }) => t.title === title);
+
+    if (matchingTopic) {
+      return {
+        found: true,
+        topicId: matchingTopic.id,
+        topicUrl: `${DISCOURSE_URL}/t/${matchingTopic.slug}/${matchingTopic.id}`,
+        slug: matchingTopic.slug,
+      };
+    }
+
+    return { found: false };
+  } catch {
+    return { found: false };
+  }
+}
+
+async function fetchDiscourseCategories(apiKey: string, username: string, requestId: string): Promise<Map<string, number>> {
+  const response = await fetchWithBackoff(
+    `${DISCOURSE_URL}/categories.json`,
+    {
+      headers: {
+        'Api-Key': apiKey,
+        'Api-Username': username,
+      },
     },
-  });
+    requestId
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch categories: ${response.status} ${response.statusText}`);
@@ -87,25 +138,27 @@ async function fetchExistingTopicsInCategory(
   apiKey: string,
   username: string,
   categoryId: number,
-  categorySlug: string
+  categorySlug: string,
+  requestId: string
 ): Promise<Set<string>> {
   const existingQuestionIds = new Set<string>();
   let page = 0;
   let hasMore = true;
 
   while (hasMore) {
-    const response = await fetch(
+    const response = await fetchWithBackoff(
       `${DISCOURSE_URL}/c/${categorySlug}/${categoryId}.json?page=${page}`,
       {
         headers: {
           'Api-Key': apiKey,
           'Api-Username': username,
         },
-      }
+      },
+      requestId
     );
 
     if (!response.ok) {
-      console.error(`Failed to fetch topics for category ${categoryId}: ${response.status}`);
+      console.error(`[${requestId}] Failed to fetch topics for category ${categoryId}: ${response.status}`);
       break;
     }
 
@@ -128,12 +181,10 @@ async function fetchExistingTopicsInCategory(
     page++;
     // Safety limit to prevent infinite loops
     if (page > MAX_PAGINATION_PAGES) {
-      console.warn('Reached page limit when fetching existing topics');
+      console.warn(`[${requestId}] Reached page limit when fetching existing topics`);
       break;
     }
-
-    // Small delay to respect rate limits
-    await new Promise(resolve => setTimeout(resolve, PAGINATION_DELAY_MS));
+    // No fixed delay - fetchWithBackoff handles rate limiting automatically
   }
 
   return existingQuestionIds;
@@ -172,8 +223,9 @@ async function createDiscourseTopic(
   apiKey: string,
   username: string,
   categoryId: number,
-  question: Question
-): Promise<{ success: boolean; topicId?: number; topicUrl?: string; error?: string }> {
+  question: Question,
+  requestId: string
+): Promise<{ success: boolean; topicId?: number; topicUrl?: string; error?: string; wasExisting?: boolean }> {
   // Truncate title if needed (Discourse has a 255 char limit)
   // Use display_name (e.g., T1A01) in the topic title for human readability
   let title = `${question.display_name} - ${question.question}`;
@@ -184,23 +236,42 @@ async function createDiscourseTopic(
   const body = formatTopicBody(question);
 
   try {
-    const response = await fetch(`${DISCOURSE_URL}/posts.json`, {
-      method: 'POST',
-      headers: {
-        'Api-Key': apiKey,
-        'Api-Username': username,
-        'Content-Type': 'application/json',
+    const response = await fetchWithBackoff(
+      `${DISCOURSE_URL}/posts.json`,
+      {
+        method: 'POST',
+        headers: {
+          'Api-Key': apiKey,
+          'Api-Username': username,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title,
+          raw: body,
+          category: categoryId,
+          external_id: question.id,  // Question UUID for reliable topic-to-question association
+        }),
       },
-      body: JSON.stringify({
-        title,
-        raw: body,
-        category: categoryId,
-        external_id: question.id,  // Question UUID for reliable topic-to-question association
-      }),
-    });
+      requestId
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
+
+      // Handle "Title has already been used" error by finding the existing topic
+      if (response.status === 422 && errorText.includes('Title has already been used')) {
+        const existing = await searchDiscourseByTitle(apiKey, username, title, requestId);
+        if (existing.found) {
+          return {
+            success: true,
+            topicId: existing.topicId,
+            topicUrl: existing.topicUrl,
+            wasExisting: true,  // Flag to indicate this was found, not created
+          };
+        }
+        // If we can't find the existing topic, return the original error
+      }
+
       return { success: false, error: `${response.status}: ${errorText}` };
     }
 
@@ -297,7 +368,7 @@ serve(async (req) => {
 
     // Fetch category IDs from Discourse
     console.log(`[${requestId}] Fetching Discourse categories...`);
-    const categoryIds = await fetchDiscourseCategories(apiKey, username);
+    const categoryIds = await fetchDiscourseCategories(apiKey, username, requestId);
 
     // Validate required categories exist
     const missingCategories: string[] = [];
@@ -345,7 +416,7 @@ serve(async (req) => {
       const categoryId = categoryIds.get(categoryName)!;
       const categorySlug = getCategorySlug(categoryName);
 
-      const topicsInCategory = await fetchExistingTopicsInCategory(apiKey, username, categoryId, categorySlug);
+      const topicsInCategory = await fetchExistingTopicsInCategory(apiKey, username, categoryId, categorySlug, requestId);
       for (const id of topicsInCategory) {
         existingTopics.add(id);
       }
@@ -364,13 +435,31 @@ serve(async (req) => {
       query = query.ilike('display_name', `${licenseFilter[0]}%`);
     }
 
-    const { data: questions, error: dbError } = await query;
+    // Fetch ALL questions using pagination to bypass PostgREST max_rows limit (default 1000)
+    const PAGE_SIZE = 1000;
+    const questions: Question[] = [];
+    let offset = 0;
+    let hasMore = true;
 
-    if (dbError) {
-      throw new Error(`Database error: ${dbError.message}`);
+    while (hasMore) {
+      const { data: pageData, error: pageError } = await query
+        .order('display_name')
+        .range(offset, offset + PAGE_SIZE - 1);
+
+      if (pageError) {
+        throw new Error(`Database error: ${pageError.message}`);
+      }
+
+      if (pageData && pageData.length > 0) {
+        questions.push(...(pageData as Question[]));
+        offset += pageData.length;
+        hasMore = pageData.length === PAGE_SIZE;
+      } else {
+        hasMore = false;
+      }
     }
 
-    if (!questions || questions.length === 0) {
+    if (questions.length === 0) {
       return new Response(
         JSON.stringify({ success: true, message: 'No questions found to sync', created: 0, skipped: 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -469,9 +558,14 @@ serve(async (req) => {
       const categoryId = categoryIds.get(categoryName)!;
 
       console.log(`[${requestId}] Creating topic for ${question.display_name}...`);
-      const result = await createDiscourseTopic(apiKey, username, categoryId, question as Question);
+      const result = await createDiscourseTopic(apiKey, username, categoryId, question as Question, requestId);
 
       if (result.success) {
+        // Log whether this was a new topic or an existing one we linked to
+        if (result.wasExisting) {
+          console.log(`[${requestId}] Found existing topic for ${question.display_name}: ${result.topicUrl}`);
+        }
+
         // Save the forum URL and sync status to the database with retry logic
         let dbUpdateSuccess = false;
         const maxRetries = 3;
@@ -503,8 +597,10 @@ serve(async (req) => {
           }
         }
 
+        // Use appropriate status - 'linked' for existing topics, 'created' for new ones
+        const status = result.wasExisting ? 'skipped' : 'created';
         if (dbUpdateSuccess) {
-          results.push({ questionId: question.display_name, status: 'created', topicId: result.topicId, topicUrl: result.topicUrl });
+          results.push({ questionId: question.display_name, status, topicId: result.topicId, topicUrl: result.topicUrl });
           created++;
         } else {
           // Topic was created but DB update failed after retries - report as partial success
@@ -522,9 +618,7 @@ serve(async (req) => {
         errors++;
         console.error(`[${requestId}] Failed to create topic for ${question.display_name}: ${result.error}`);
       }
-
-      // Rate limiting: wait between requests
-      await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY_MS));
+      // No fixed delay - fetchWithBackoff handles rate limiting automatically
     }
 
     const isComplete = remaining === 0;

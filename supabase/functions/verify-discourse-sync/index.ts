@@ -3,12 +3,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   corsHeaders,
   DISCOURSE_URL,
-  PAGINATION_DELAY_MS,
   MAX_PAGINATION_PAGES,
   QUESTION_ID_PATTERN,
   CATEGORY_MAP,
   getCategorySlug,
   isServiceRoleToken,
+  fetchWithBackoff,
 } from "../_shared/constants.ts";
 
 /**
@@ -112,14 +112,19 @@ function extractTopicId(forumUrl: string): number | null {
 
 async function fetchDiscourseCategories(
   apiKey: string,
-  username: string
+  username: string,
+  requestId: string
 ): Promise<Map<string, number>> {
-  const response = await fetch(`${DISCOURSE_URL}/categories.json`, {
-    headers: {
-      "Api-Key": apiKey,
-      "Api-Username": username,
+  const response = await fetchWithBackoff(
+    `${DISCOURSE_URL}/categories.json`,
+    {
+      headers: {
+        "Api-Key": apiKey,
+        "Api-Username": username,
+      },
     },
-  });
+    requestId
+  );
 
   if (!response.ok) {
     throw new Error(
@@ -162,14 +167,15 @@ async function fetchAllTopicsInCategory(
   let hasMore = true;
 
   while (hasMore) {
-    const response = await fetch(
+    const response = await fetchWithBackoff(
       `${DISCOURSE_URL}/c/${categorySlug}/${categoryId}.json?page=${page}`,
       {
         headers: {
           "Api-Key": apiKey,
           "Api-Username": username,
         },
-      }
+      },
+      requestId
     );
 
     if (!response.ok) {
@@ -212,8 +218,7 @@ async function fetchAllTopicsInCategory(
       console.warn(`[${requestId}] Reached page limit when fetching topics`);
       break;
     }
-
-    await new Promise((resolve) => setTimeout(resolve, PAGINATION_DELAY_MS));
+    // No fixed delay - fetchWithBackoff handles rate limiting automatically
   }
 
   return { byDisplayName, byExternalId };
@@ -228,15 +233,20 @@ interface TopicVerifyResult {
 async function verifyTopicDetails(
   apiKey: string,
   username: string,
-  topicId: number
+  topicId: number,
+  requestId: string
 ): Promise<TopicVerifyResult> {
   try {
-    const response = await fetch(`${DISCOURSE_URL}/t/${topicId}.json`, {
-      headers: {
-        "Api-Key": apiKey,
-        "Api-Username": username,
+    const response = await fetchWithBackoff(
+      `${DISCOURSE_URL}/t/${topicId}.json`,
+      {
+        headers: {
+          "Api-Key": apiKey,
+          "Api-Username": username,
+        },
       },
-    });
+      requestId
+    );
     if (!response.ok) {
       return { exists: false };
     }
@@ -376,11 +386,16 @@ serve(async (req) => {
     // 4. FETCH DATA FROM DATABASE
     // =========================================================================
 
-    console.log(`[${requestId}] Fetching questions from database...`);
+    console.log(`[${requestId}] Fetching questions with sync problems from database...`);
 
+    // Only fetch questions that need attention:
+    // 1. No forum_url (not synced yet)
+    // 2. Has sync errors
+    // This is much faster than fetching all 1442 questions
     let query = supabase
       .from("questions")
-      .select("id, display_name, forum_url, discourse_sync_status, explanation");
+      .select("id, display_name, forum_url, discourse_sync_status, explanation")
+      .or("forum_url.is.null,discourse_sync_status.eq.error");
 
     if (license) {
       const licenseMap: Record<string, string> = {
@@ -394,14 +409,16 @@ serve(async (req) => {
       }
     }
 
-    const { data: questions, error: dbError } = await query;
+    const { data: questionsWithProblems, error: dbError } = await query
+      .order("display_name")
+      .limit(500);  // Reasonable limit for questions needing sync
 
     if (dbError) {
       throw new Error(`Database error: ${dbError.message}`);
     }
 
-    const questionsList = (questions || []) as Question[];
-    console.log(`[${requestId}] Found ${questionsList.length} questions in DB`);
+    const questionsList = (questionsWithProblems || []) as Question[];
+    console.log(`[${requestId}] Found ${questionsList.length} questions needing sync`);
 
     // =========================================================================
     // 5. FETCH TOPICS FROM DISCOURSE
@@ -410,7 +427,8 @@ serve(async (req) => {
     console.log(`[${requestId}] Fetching Discourse categories...`);
     const categoryIds = await fetchDiscourseCategories(
       discourseApiKey,
-      discourseUsername
+      discourseUsername,
+      requestId
     );
 
     // Determine which categories to scan
@@ -474,52 +492,53 @@ serve(async (req) => {
     };
 
     // Build maps of questions for quick lookup
-    const questionsWithForumUrl = new Set<string>();  // display_names with forum_url
-    const questionIdSet = new Set<string>();  // UUIDs of all questions
     const questionsByDisplayName = new Map<string, Question>();
     const questionsById = new Map<string, Question>();
 
     for (const q of questionsList) {
       questionsByDisplayName.set(q.display_name, q);
       questionsById.set(q.id, q);
-      questionIdSet.add(q.id);
-      if (q.forum_url) {
-        questionsWithForumUrl.add(q.display_name);
-      }
     }
 
-    // Find orphaned topics (in Discourse but no forum_url in DB)
-    // Check by external_id first (primary), then by display_name (fallback)
-    const processedTopicIds = new Set<number>();
+    // Find questions that need to be linked to existing Discourse topics
+    // We have 138 questions without forum_url, and 1304 topics in Discourse
+    // Match each question to its topic by display_name or external_id
+    const unmatchedQuestions: string[] = [];
 
-    // Process topics with external_id first
-    for (const [externalId, topic] of allTopicsByExternalId) {
-      processedTopicIds.add(topic.id);
-      const question = questionsById.get(externalId);
-      if (question && !question.forum_url) {
-        // Question exists but has no forum_url - orphaned
+    for (const q of questionsList) {
+      if (q.forum_url) continue;  // Skip questions that already have forum_url
+
+      // Try to find matching topic by external_id (UUID) first
+      const topicByExternalId = allTopicsByExternalId.get(q.id);
+      if (topicByExternalId) {
         discrepancies.orphanedInDiscourse.push({
-          questionDisplayName: question.display_name,
-          topicId: topic.id,
-          topicUrl: `${DISCOURSE_URL}/t/${topic.slug}/${topic.id}`,
+          questionDisplayName: q.display_name,
+          topicId: topicByExternalId.id,
+          topicUrl: `${DISCOURSE_URL}/t/${topicByExternalId.slug}/${topicByExternalId.id}`,
         });
+        continue;
+      }
+
+      // Try to find matching topic by display_name in title
+      const topicByDisplayName = allTopicsByDisplayName.get(q.display_name);
+      if (topicByDisplayName) {
+        discrepancies.orphanedInDiscourse.push({
+          questionDisplayName: q.display_name,
+          topicId: topicByDisplayName.id,
+          topicUrl: `${DISCOURSE_URL}/t/${topicByDisplayName.slug}/${topicByDisplayName.id}`,
+        });
+      } else {
+        unmatchedQuestions.push(q.display_name);
       }
     }
 
-    // Process topics without external_id (match by display_name)
-    for (const [displayName, topic] of allTopicsByDisplayName) {
-      if (processedTopicIds.has(topic.id)) continue;  // Already processed via external_id
-      if (!questionsWithForumUrl.has(displayName)) {
-        const question = questionsByDisplayName.get(displayName);
-        if (question) {
-          // Question exists but has no forum_url
-          discrepancies.orphanedInDiscourse.push({
-            questionDisplayName: displayName,
-            topicId: topic.id,
-            topicUrl: `${DISCOURSE_URL}/t/${topic.slug}/${topic.id}`,
-          });
-        }
-      }
+    // Log sample of unmatched questions and available topics for debugging
+    if (unmatchedQuestions.length > 0) {
+      const sampleUnmatched = unmatchedQuestions.slice(0, 10);
+      const sampleTopics = Array.from(allTopicsByDisplayName.keys()).slice(0, 10);
+      console.log(`[${requestId}] Unmatched questions (sample): ${sampleUnmatched.join(', ')}`);
+      console.log(`[${requestId}] Available topic display_names (sample): ${sampleTopics.join(', ')}`);
+      console.log(`[${requestId}] Total unmatched: ${unmatchedQuestions.length}`);
     }
 
     // Find broken forum_urls and missing status
@@ -544,7 +563,8 @@ serve(async (req) => {
         const topicDetails = await verifyTopicDetails(
           discourseApiKey,
           discourseUsername,
-          topicId
+          topicId,
+          requestId
         );
 
         if (!topicDetails.exists) {
