@@ -135,6 +135,20 @@ describe('useDiscourseSyncStatus', () => {
       await waitFor(() => expect(result.current.isError).toBe(true));
       expect(result.current.error).toBeDefined();
     });
+
+    it('returns error when accessed by non-admin user', async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'Access denied: admin role required' },
+      });
+
+      const { result } = renderHook(() => useDiscourseSyncStatus(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
+      expect(result.current.error).toHaveProperty('message', 'Access denied: admin role required');
+    });
   });
 
   describe('totals computation', () => {
