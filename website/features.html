@@ -4,14 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Features - Open Ham Prep</title>
-  <meta name="description" content="Explore all the features Open Ham Prep offers to help you pass your US amateur radio license exam.">
+  <meta name="description" content="Explore all the features Open Ham Prep offers: Learning Library, practice tests, weak question tracking, community forum, exam finder, and more.">
 
   <!-- Analytics Configuration and Scripts -->
   <script src="/js/config.js"></script>
   <script src="/js/analytics.js"></script>
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
@@ -29,11 +36,15 @@
           <a href="/features.html" class="nav-link active text-sm font-medium text-gray-900 dark:text-gray-100">Features</a>
           <a href="/faq.html" class="nav-link text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">FAQ</a>
           <a href="/about.html" class="nav-link text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">About</a>
+          <a href="https://forum.openhamprep.com" target="_blank" rel="noopener noreferrer" class="nav-link text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors inline-flex items-center gap-1">
+            Community
+            <i data-lucide="external-link" class="w-3 h-3"></i>
+          </a>
           <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
             <i data-lucide="sun" class="w-5 h-5 dark:hidden"></i>
             <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
           </button>
-          <a href="https://app.openhamprep.com/auth" class="btn-primary px-4 py-2 bg-amber-600 dark:bg-amber-500 text-white rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 text-sm font-medium">Sign Up / Sign In</a>
+          <a href="https://app.openhamprep.com/auth" class="btn-primary px-4 py-2 bg-amber-600 dark:bg-amber-500 text-white rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 text-sm font-medium">Start Studying Free</a>
         </div>
         <div class="flex items-center gap-2 md:hidden">
           <button id="theme-toggle-mobile" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -51,7 +62,11 @@
           <a href="/features.html" class="text-sm font-medium text-gray-900 dark:text-gray-100 py-2">Features</a>
           <a href="/faq.html" class="text-sm font-medium text-gray-600 dark:text-gray-400 py-2">FAQ</a>
           <a href="/about.html" class="text-sm font-medium text-gray-600 dark:text-gray-400 py-2">About</a>
-          <a href="https://app.openhamprep.com/auth" class="px-4 py-2 bg-amber-600 dark:bg-amber-500 text-white rounded-lg text-sm font-medium text-center">Get Started</a>
+          <a href="https://forum.openhamprep.com" target="_blank" rel="noopener noreferrer" class="text-sm font-medium text-gray-600 dark:text-gray-400 py-2 inline-flex items-center gap-1">
+            Community
+            <i data-lucide="external-link" class="w-3 h-3"></i>
+          </a>
+          <a href="https://app.openhamprep.com/auth" class="px-4 py-2 bg-amber-600 dark:bg-amber-500 text-white rounded-lg text-sm font-medium text-center">Start Studying Free</a>
         </div>
       </div>
     </div>
@@ -61,152 +76,395 @@
     <!-- Hero -->
     <section class="py-20 px-4 gradient-hero">
       <div class="max-w-4xl mx-auto text-center">
-        <span class="inline-block px-4 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-sm font-medium rounded-full mb-6 animate-fade-in">
+        <span class="badge badge-amber mb-6 animate-fade-in">
           Feature Overview
         </span>
-        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in-up delay-100">
-          Everything You Need to <span class="gradient-text">Pass Your Exam</span>
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-mono font-bold mb-6 animate-fade-in-up delay-100">
+          Built to Help You <span class="gradient-text">Actually Pass</span>
         </h1>
         <p class="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto animate-fade-in-up delay-200">
-          Open Ham Prep is packed with features designed to help you study efficiently, track your progress, and pass the US amateur radio license exam on your first try.
+          Not just another question bank. A complete study system with lessons, community support, and intelligent tracking.
         </p>
       </div>
     </section>
 
-    <!-- Core Features -->
+    <!-- Problem/Solution: Learning -->
     <section class="py-20 px-4">
       <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="reveal-left">
+            <span class="badge badge-purple mb-4">The Problem</span>
+            <h2 class="text-3xl md:text-4xl font-mono font-bold mb-4">
+              "I'm just memorizing answers, not learning"
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400 text-lg mb-6">
+              Most study tools throw questions at you without explaining the concepts. You pass the test but don't understand the material—and that's not great for actually using your radio.
+            </p>
+            <div class="space-y-4">
+              <div class="flex items-start gap-3">
+                <div class="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <i data-lucide="x" class="w-4 h-4 text-red-500"></i>
+                </div>
+                <span class="text-gray-600 dark:text-gray-400">Question drills without context</span>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <i data-lucide="x" class="w-4 h-4 text-red-500"></i>
+                </div>
+                <span class="text-gray-600 dark:text-gray-400">No explanation of the "why"</span>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <i data-lucide="x" class="w-4 h-4 text-red-500"></i>
+                </div>
+                <span class="text-gray-600 dark:text-gray-400">Pattern memorization doesn't stick</span>
+              </div>
+            </div>
+          </div>
+          <div class="reveal-right">
+            <div class="feature-card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl p-8">
+              <span class="badge badge-teal mb-4">The Solution</span>
+              <div class="flex items-start gap-4 mb-6">
+                <div class="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="library" class="w-7 h-7 text-purple-600 dark:text-purple-400"></i>
+                </div>
+                <div>
+                  <h3 class="text-2xl font-bold mb-2">Learning Library</h3>
+                  <p class="text-gray-600 dark:text-gray-400">Real lessons organized by topic—not just question drills.</p>
+                </div>
+              </div>
+              <ul class="space-y-3 text-gray-600 dark:text-gray-400">
+                <li class="flex items-center gap-3">
+                  <i data-lucide="check" class="w-5 h-5 text-green-500"></i>
+                  Educational content with table of contents
+                </li>
+                <li class="flex items-center gap-3">
+                  <i data-lucide="check" class="w-5 h-5 text-green-500"></i>
+                  External resources for deeper learning
+                </li>
+                <li class="flex items-center gap-3">
+                  <i data-lucide="check" class="w-5 h-5 text-green-500"></i>
+                  Related questions linked to each topic
+                </li>
+                <li class="flex items-center gap-3">
+                  <i data-lucide="check" class="w-5 h-5 text-green-500"></i>
+                  Progress tracking per topic
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Problem/Solution: Weak Areas -->
+    <section class="py-20 px-4 bg-gray-100 dark:bg-gray-800/30">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="reveal-right lg:order-2">
+            <span class="badge badge-purple mb-4">The Problem</span>
+            <h2 class="text-3xl md:text-4xl font-mono font-bold mb-4">
+              "I don't know what I don't know"
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400 text-lg mb-6">
+              You're spending hours studying, but are you focusing on the right things? Most people waste 60% of their study time on questions they already know.
+            </p>
+            <div class="space-y-4">
+              <div class="flex items-start gap-3">
+                <div class="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <i data-lucide="x" class="w-4 h-4 text-red-500"></i>
+                </div>
+                <span class="text-gray-600 dark:text-gray-400">No visibility into weak areas</span>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <i data-lucide="x" class="w-4 h-4 text-red-500"></i>
+                </div>
+                <span class="text-gray-600 dark:text-gray-400">Re-studying what you've already mastered</span>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <i data-lucide="x" class="w-4 h-4 text-red-500"></i>
+                </div>
+                <span class="text-gray-600 dark:text-gray-400">No way to know if you're ready</span>
+              </div>
+            </div>
+          </div>
+          <div class="reveal-left lg:order-1">
+            <div class="feature-card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl p-8">
+              <span class="badge badge-teal mb-4">The Solution</span>
+              <div class="flex items-start gap-4 mb-6">
+                <div class="w-14 h-14 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="crosshair" class="w-7 h-7 text-red-600 dark:text-red-400"></i>
+                </div>
+                <div>
+                  <h3 class="text-2xl font-bold mb-2">Weak Question Tracking</h3>
+                  <p class="text-gray-600 dark:text-gray-400">We identify your problem areas so you don't waste time.</p>
+                </div>
+              </div>
+              <ul class="space-y-3 text-gray-600 dark:text-gray-400">
+                <li class="flex items-center gap-3">
+                  <i data-lucide="check" class="w-5 h-5 text-green-500"></i>
+                  Tracks every question you miss
+                </li>
+                <li class="flex items-center gap-3">
+                  <i data-lucide="check" class="w-5 h-5 text-green-500"></i>
+                  Streak-based drills to master weak areas
+                </li>
+                <li class="flex items-center gap-3">
+                  <i data-lucide="check" class="w-5 h-5 text-green-500"></i>
+                  Readiness scoring shows when you're prepared
+                </li>
+                <li class="flex items-center gap-3">
+                  <i data-lucide="check" class="w-5 h-5 text-green-500"></i>
+                  Dashboard highlights areas needing work
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Problem/Solution: Alone -->
+    <section class="py-20 px-4">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <div class="reveal-left">
+            <span class="badge badge-purple mb-4">The Problem</span>
+            <h2 class="text-3xl md:text-4xl font-mono font-bold mb-4">
+              "I'm stuck and have no one to ask"
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400 text-lg mb-6">
+              You hit a confusing topic and the explanation doesn't help. Who do you ask? Searching online gives conflicting answers. You need real help from real hams.
+            </p>
+            <div class="space-y-4">
+              <div class="flex items-start gap-3">
+                <div class="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <i data-lucide="x" class="w-4 h-4 text-red-500"></i>
+                </div>
+                <span class="text-gray-600 dark:text-gray-400">Studying in isolation</span>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <i data-lucide="x" class="w-4 h-4 text-red-500"></i>
+                </div>
+                <span class="text-gray-600 dark:text-gray-400">No one to ask when you're stuck</span>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <i data-lucide="x" class="w-4 h-4 text-red-500"></i>
+                </div>
+                <span class="text-gray-600 dark:text-gray-400">Missing the ham radio community</span>
+              </div>
+            </div>
+          </div>
+          <div class="reveal-right">
+            <div class="community-card p-8">
+              <span class="badge badge-teal mb-4">The Solution</span>
+              <div class="flex items-start gap-4 mb-6">
+                <div class="w-14 h-14 rounded-2xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="users" class="w-7 h-7 text-cyan-600 dark:text-cyan-400"></i>
+                </div>
+                <div>
+                  <h3 class="text-2xl font-bold mb-2">Community Forum</h3>
+                  <p class="text-gray-600 dark:text-gray-400">Active Discourse community of hams helping hams.</p>
+                </div>
+              </div>
+              <ul class="space-y-3 text-gray-600 dark:text-gray-400 mb-6">
+                <li class="flex items-center gap-3">
+                  <i data-lucide="check" class="w-5 h-5 text-green-500"></i>
+                  Ask questions, get real answers
+                </li>
+                <li class="flex items-center gap-3">
+                  <i data-lucide="check" class="w-5 h-5 text-green-500"></i>
+                  Study tips from people who've passed
+                </li>
+                <li class="flex items-center gap-3">
+                  <i data-lucide="check" class="w-5 h-5 text-green-500"></i>
+                  Connect with the ham community early
+                </li>
+                <li class="flex items-center gap-3">
+                  <i data-lucide="check" class="w-5 h-5 text-green-500"></i>
+                  Linked to your Open Ham Prep account
+                </li>
+              </ul>
+              <a href="https://forum.openhamprep.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-cyan-600 dark:text-cyan-400 font-medium hover:underline">
+                Visit forum.openhamprep.com
+                <i data-lucide="external-link" class="w-4 h-4"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- All Study Modes -->
+    <section class="py-20 px-4 bg-gray-100 dark:bg-gray-800/30">
+      <div class="max-w-6xl mx-auto">
         <div class="text-center mb-16 reveal">
-          <span class="inline-block px-4 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-sm font-medium rounded-full mb-4">
+          <span class="badge badge-amber mb-4">
             Study Modes
           </span>
-          <h2 class="text-3xl md:text-4xl font-bold mb-4">Core Study Modes</h2>
-          <p class="text-gray-600 dark:text-gray-400 max-w-xl mx-auto">Multiple ways to practice and master the material</p>
+          <h2 class="text-3xl md:text-4xl font-mono font-bold mb-4">Multiple Ways to Practice</h2>
+          <p class="text-gray-600 dark:text-gray-400 max-w-xl mx-auto text-lg">Choose the study mode that fits your learning style</p>
         </div>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8" style="transition-delay: 0.1s;">
-            <div class="icon-glow w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-6">
-              <i data-lucide="shuffle" class="w-8 h-8 text-blue-600 dark:text-blue-400"></i>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6" style="transition-delay: 0.1s;">
+            <div class="icon-glow w-14 h-14 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center mb-5">
+              <i data-lucide="clipboard-check" class="w-7 h-7 text-teal-600 dark:text-teal-400"></i>
             </div>
-            <h3 class="text-2xl font-bold mb-3">Random Practice</h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-6">Practice questions in random order to build well-rounded knowledge.</p>
-            <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-blue-500"></div>Prevents pattern memorization</li>
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-blue-500"></div>Simulates real exam randomness</li>
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-blue-500"></div>Track your streak</li>
+            <h3 class="text-xl font-semibold mb-2">Practice Tests</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">Full-length exams that mirror the real test format. Includes optional timer for exam simulation.</p>
+            <ul class="space-y-2 text-sm text-gray-500 dark:text-gray-500">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> 35 or 50 questions per test</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Immediate scoring</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Detailed review after</li>
             </ul>
           </div>
 
-          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8" style="transition-delay: 0.2s;">
-            <div class="icon-glow w-16 h-16 rounded-2xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-6">
-              <i data-lucide="clipboard-check" class="w-8 h-8 text-green-600 dark:text-green-400"></i>
+          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6" style="transition-delay: 0.2s;">
+            <div class="icon-glow w-14 h-14 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-5">
+              <i data-lucide="shuffle" class="w-7 h-7 text-blue-600 dark:text-blue-400"></i>
             </div>
-            <h3 class="text-2xl font-bold mb-3">Practice Tests</h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-6">Take full-length practice exams that mirror the real US test experience.</p>
-            <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-green-500"></div>Realistic exam simulation</li>
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-green-500"></div>Optional 2-hour timer</li>
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-green-500"></div>Immediate scoring</li>
+            <h3 class="text-xl font-semibold mb-2">Random Practice</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">Quick question drills in random order. Build confidence without pattern memorization.</p>
+            <ul class="space-y-2 text-sm text-gray-500 dark:text-gray-500">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Instant feedback</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Streak tracking</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Study at your pace</li>
             </ul>
           </div>
 
-          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8" style="transition-delay: 0.3s;">
-            <div class="icon-glow w-16 h-16 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-6">
-              <i data-lucide="book-open" class="w-8 h-8 text-purple-600 dark:text-purple-400"></i>
+          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6" style="transition-delay: 0.3s;">
+            <div class="icon-glow w-14 h-14 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-5">
+              <i data-lucide="book-open" class="w-7 h-7 text-purple-600 dark:text-purple-400"></i>
             </div>
-            <h3 class="text-2xl font-bold mb-3">Study by Topics</h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-6">Focus your study on specific subelements and topics.</p>
-            <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-purple-500"></div>Targeted learning</li>
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-purple-500"></div>Topic overviews</li>
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-purple-500"></div>Curated resources</li>
+            <h3 class="text-xl font-semibold mb-2">Study by Topics</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">Focus on specific subelements. Great for targeting weak areas or reviewing specific subjects.</p>
+            <ul class="space-y-2 text-sm text-gray-500 dark:text-gray-500">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Organized by subelement</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Topic overviews</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Progress per topic</li>
             </ul>
           </div>
 
-          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8" style="transition-delay: 0.4s;">
-            <div class="icon-glow w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-6">
-              <i data-lucide="target" class="w-8 h-8 text-red-600 dark:text-red-400"></i>
+          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6" style="transition-delay: 0.4s;">
+            <div class="icon-glow w-14 h-14 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-5">
+              <i data-lucide="crosshair" class="w-7 h-7 text-red-600 dark:text-red-400"></i>
             </div>
-            <h3 class="text-2xl font-bold mb-3">Weak Questions Review</h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-6">Track questions you frequently get wrong and review them.</p>
-            <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-red-500"></div>Adaptive learning</li>
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-red-500"></div>Focus on problem areas</li>
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-red-500"></div>Efficient study time</li>
+            <h3 class="text-xl font-semibold mb-2">Weak Questions</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">Review questions you've missed. Streak mode requires 3 correct in a row to clear.</p>
+            <ul class="space-y-2 text-sm text-gray-500 dark:text-gray-500">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Auto-identified weak areas</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Streak-based mastery</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Visual progress tracking</li>
             </ul>
           </div>
 
-          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8" style="transition-delay: 0.5s;">
-            <div class="icon-glow w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-6">
-              <i data-lucide="map-pin" class="w-8 h-8 text-amber-600 dark:text-amber-400"></i>
+          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6" style="transition-delay: 0.5s;">
+            <div class="icon-glow w-14 h-14 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center mb-5">
+              <i data-lucide="book-text" class="w-7 h-7 text-cyan-600 dark:text-cyan-400"></i>
             </div>
-            <h3 class="text-2xl font-bold mb-3">Find Exam Sessions</h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-6">Search for US exam sessions near you by ZIP code or state.</p>
-            <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-amber-500"></div>Search by location</li>
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-amber-500"></div>Filter for walk-ins</li>
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-amber-500"></div>Set target exam</li>
+            <h3 class="text-xl font-semibold mb-2">Glossary Flashcards</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">Master ham radio terminology with spaced-repetition flashcards. Study term→definition or reverse.</p>
+            <ul class="space-y-2 text-sm text-gray-500 dark:text-gray-500">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> 100+ essential terms</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Two-way flashcards</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Mastery tracking</li>
             </ul>
           </div>
 
-          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8" style="transition-delay: 0.6s;">
-            <div class="icon-glow w-16 h-16 rounded-2xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center mb-6">
-              <i data-lucide="book-text" class="w-8 h-8 text-cyan-600 dark:text-cyan-400"></i>
+          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6" style="transition-delay: 0.6s;">
+            <div class="icon-glow w-14 h-14 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-5">
+              <i data-lucide="bookmark" class="w-7 h-7 text-amber-600 dark:text-amber-400"></i>
             </div>
-            <h3 class="text-2xl font-bold mb-3">Glossary & Flashcards</h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-6">Learn essential ham radio terminology with our comprehensive glossary.</p>
-            <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-cyan-500"></div>Essential terms defined</li>
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-cyan-500"></div>Interactive flashcards</li>
-              <li class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-cyan-500"></div>Track mastery</li>
+            <h3 class="text-xl font-semibold mb-2">Bookmarks & Notes</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">Save questions for later review. Add personal notes to remember key insights.</p>
+            <ul class="space-y-2 text-sm text-gray-500 dark:text-gray-500">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Save any question</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Personal notes</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-green-500"></i> Separate review mode</li>
             </ul>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Additional Features -->
-    <section class="py-20 px-4 bg-gray-100 dark:bg-gray-800/30">
+    <!-- Additional Tools -->
+    <section class="py-20 px-4">
       <div class="max-w-6xl mx-auto">
         <div class="text-center mb-16 reveal">
-          <span class="inline-block px-4 py-1.5 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 text-sm font-medium rounded-full mb-4">
-            More Features
+          <span class="badge badge-teal mb-4">
+            More Tools
           </span>
-          <h2 class="text-3xl md:text-4xl font-bold mb-4">Everything Else You Get</h2>
+          <h2 class="text-3xl md:text-4xl font-mono font-bold mb-4">Everything Else You Get</h2>
         </div>
 
         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center" style="transition-delay: 0.1s;">
-            <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
-              <i data-lucide="bar-chart-3" class="w-6 h-6 text-gray-600 dark:text-gray-400"></i>
+            <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-4">
+              <i data-lucide="map-pin" class="w-6 h-6 text-blue-600 dark:text-blue-400"></i>
             </div>
-            <h3 class="font-semibold mb-2">Progress Tracking</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">See your improvement over time</p>
+            <h3 class="font-semibold mb-2">Exam Session Finder</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">Interactive map to find exams near you. Set a target date.</p>
           </div>
 
           <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center" style="transition-delay: 0.2s;">
             <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
-              <i data-lucide="bookmark" class="w-6 h-6 text-gray-600 dark:text-gray-400"></i>
+              <i data-lucide="calculator" class="w-6 h-6 text-gray-600 dark:text-gray-400"></i>
             </div>
-            <h3 class="font-semibold mb-2">Bookmarks</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">Save questions for later review</p>
+            <h3 class="font-semibold mb-2">Built-in Calculator</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">Scientific calculator for technical questions. No app switching.</p>
           </div>
 
           <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center" style="transition-delay: 0.3s;">
-            <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
-              <i data-lucide="moon" class="w-6 h-6 text-gray-600 dark:text-gray-400"></i>
+            <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4">
+              <i data-lucide="bar-chart-3" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i>
             </div>
-            <h3 class="font-semibold mb-2">Dark Mode</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">Easy on your eyes at night</p>
+            <h3 class="font-semibold mb-2">Progress Dashboard</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">Track readiness, streaks, weekly goals, and recent performance.</p>
           </div>
 
           <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center" style="transition-delay: 0.4s;">
-            <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
-              <i data-lucide="smartphone" class="w-6 h-6 text-gray-600 dark:text-gray-400"></i>
+            <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mx-auto mb-4">
+              <i data-lucide="moon" class="w-6 h-6 text-purple-600 dark:text-purple-400"></i>
+            </div>
+            <h3 class="font-semibold mb-2">Dark Mode</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">Easy on your eyes for late-night study sessions.</p>
+          </div>
+
+          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center" style="transition-delay: 0.5s;">
+            <div class="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
+              <i data-lucide="smartphone" class="w-6 h-6 text-green-600 dark:text-green-400"></i>
             </div>
             <h3 class="font-semibold mb-2">Mobile Friendly</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">Study on any device</p>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">Study on any device. Responsive design works everywhere.</p>
+          </div>
+
+          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center" style="transition-delay: 0.6s;">
+            <div class="w-12 h-12 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center mx-auto mb-4">
+              <i data-lucide="keyboard" class="w-6 h-6 text-teal-600 dark:text-teal-400"></i>
+            </div>
+            <h3 class="font-semibold mb-2">Keyboard Shortcuts</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">Quick navigation for power users. Speed through questions.</p>
+          </div>
+
+          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center" style="transition-delay: 0.7s;">
+            <div class="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+              <i data-lucide="target" class="w-6 h-6 text-red-600 dark:text-red-400"></i>
+            </div>
+            <h3 class="font-semibold mb-2">Weekly Goals</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">Set targets for questions and tests. Stay accountable.</p>
+          </div>
+
+          <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center" style="transition-delay: 0.8s;">
+            <div class="w-12 h-12 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center mx-auto mb-4">
+              <i data-lucide="git-branch" class="w-6 h-6 text-cyan-600 dark:text-cyan-400"></i>
+            </div>
+            <h3 class="font-semibold mb-2">Open Source</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">100% transparent. See the code, contribute, or fork.</p>
           </div>
         </div>
       </div>
@@ -217,12 +475,12 @@
       <div class="max-w-2xl mx-auto text-center">
         <div class="cta-card reveal-scale bg-white dark:bg-gray-800 border-2 border-amber-200 dark:border-amber-700 rounded-3xl p-10 md:p-14 shadow-2xl shadow-amber-600/10">
           <i data-lucide="zap" class="w-14 h-14 text-amber-600 dark:text-amber-400 mx-auto mb-6 animate-float"></i>
-          <h2 class="text-3xl md:text-4xl font-bold mb-4">Ready to Get Started?</h2>
+          <h2 class="text-3xl md:text-4xl font-mono font-bold mb-4">Ready to Get Started?</h2>
           <p class="text-gray-600 dark:text-gray-400 mb-8 text-lg">
-            Join thousands of aspiring ham radio operators who have used Open Ham Prep to pass their exams.
+            All these features, completely free. No credit card, no hidden costs.
           </p>
           <a href="https://app.openhamprep.com/auth" class="btn-primary inline-flex items-center gap-3 px-8 py-4 bg-amber-600 dark:bg-amber-500 text-white text-lg font-medium rounded-xl hover:bg-amber-700 dark:hover:bg-amber-600 group shadow-lg shadow-amber-600/20">
-            Start Studying For Free
+            Start Studying Free
             <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
           </a>
         </div>
@@ -242,6 +500,10 @@
           <a href="/features.html" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Features</a>
           <a href="/faq.html" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">FAQ</a>
           <a href="/about.html" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">About</a>
+          <a href="https://forum.openhamprep.com" target="_blank" rel="noopener noreferrer" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors inline-flex items-center gap-1">
+            Community
+            <i data-lucide="external-link" class="w-3 h-3"></i>
+          </a>
           <a href="https://github.com/sonyccd/openhamprep" target="_blank" rel="noopener noreferrer" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors inline-flex items-center gap-1">
             <i data-lucide="github" class="w-4 h-4"></i>
             GitHub
@@ -249,7 +511,7 @@
         </div>
       </div>
       <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800 text-center text-gray-600 dark:text-gray-400 space-y-2">
-        <p class="text-sm">Official NCVEC question pools • Free to use • Open Source</p>
+        <p class="text-sm">Official NCVEC question pools • Free forever • Open Source</p>
         <p class="text-sm">Made with love in North Carolina</p>
         <p class="text-xs mt-4">© 2025 Brad Bazemore. All rights reserved.</p>
       </div>
@@ -271,7 +533,6 @@
       closeIcon.classList.toggle('hidden');
     });
 
-    // Scroll reveal animation
     function reveal() {
       const reveals = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
       reveals.forEach(element => {
