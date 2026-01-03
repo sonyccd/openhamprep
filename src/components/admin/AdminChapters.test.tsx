@@ -335,7 +335,7 @@ describe('AdminChapters', () => {
       );
       await user.click(editButtons[0]);
 
-      expect(screen.getByText('Edit Chapter')).toBeInTheDocument();
+      expect(screen.getByText(/Edit Chapter 1:/)).toBeInTheDocument();
     });
 
     it('pre-fills form with chapter data', async () => {
@@ -374,6 +374,58 @@ describe('AdminChapters', () => {
         }),
         expect.any(Object)
       );
+    });
+
+    it('shows Details and Questions tabs', async () => {
+      const user = userEvent.setup();
+      renderAdminChapters();
+
+      const editButtons = screen.getAllByRole('button', { name: '' }).filter(
+        (btn) => btn.querySelector('svg.lucide-pencil')
+      );
+      await user.click(editButtons[0]);
+
+      expect(screen.getByRole('tab', { name: /details/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /questions/i })).toBeInTheDocument();
+    });
+
+    it('shows question count badge on Questions tab', async () => {
+      const user = userEvent.setup();
+      renderAdminChapters();
+
+      const editButtons = screen.getAllByRole('button', { name: '' }).filter(
+        (btn) => btn.querySelector('svg.lucide-pencil')
+      );
+      await user.click(editButtons[0]);
+
+      // The Questions tab should show the question count (15 for chapter-1)
+      const questionsTab = screen.getByRole('tab', { name: /questions/i });
+      expect(questionsTab).toHaveTextContent('15');
+    });
+
+    it('defaults to Details tab', async () => {
+      const user = userEvent.setup();
+      renderAdminChapters();
+
+      const editButtons = screen.getAllByRole('button', { name: '' }).filter(
+        (btn) => btn.querySelector('svg.lucide-pencil')
+      );
+      await user.click(editButtons[0]);
+
+      const detailsTab = screen.getByRole('tab', { name: /details/i });
+      expect(detailsTab).toHaveAttribute('data-state', 'active');
+    });
+
+    it('shows chapter title in dialog header', async () => {
+      const user = userEvent.setup();
+      renderAdminChapters();
+
+      const editButtons = screen.getAllByRole('button', { name: '' }).filter(
+        (btn) => btn.querySelector('svg.lucide-pencil')
+      );
+      await user.click(editButtons[0]);
+
+      expect(screen.getByText(/Edit Chapter 1: Welcome to Amateur Radio/)).toBeInTheDocument();
     });
   });
 

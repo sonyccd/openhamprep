@@ -233,3 +233,158 @@ export function useChapterMutations() {
     deleteChapter,
   };
 }
+
+/**
+ * Question data for chapter linking
+ */
+export interface ChapterQuestion {
+  id: string;
+  display_name: string;
+  question: string;
+  arrl_page_reference: string | null;
+}
+
+/**
+ * Fetch questions linked to a specific chapter
+ */
+export function useChapterQuestions(chapterId: string | undefined) {
+  return useQuery({
+    queryKey: ['chapter-questions', chapterId],
+    queryFn: async () => {
+      if (!chapterId) return [];
+
+      const { data, error } = await supabase
+        .from('questions')
+        .select('id, display_name, question, arrl_page_reference')
+        .eq('arrl_chapter_id', chapterId)
+        .order('display_name', { ascending: true });
+
+      if (error) throw error;
+      return data as ChapterQuestion[];
+    },
+    enabled: !!chapterId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
+ * Fetch all questions for a license type (for linking UI)
+ */
+export function useQuestionsForLicense(licenseType: LicenseType | undefined) {
+  return useQuery({
+    queryKey: ['questions-for-license', licenseType],
+    queryFn: async () => {
+      if (!licenseType) return [];
+
+      // Map license type to question prefix
+      const prefix = licenseType; // T, G, or E
+
+      const { data, error } = await supabase
+        .from('questions')
+        .select('id, display_name, question, arrl_chapter_id, arrl_page_reference')
+        .like('display_name', `${prefix}%`)
+        .order('display_name', { ascending: true })
+        .range(0, 1999); // Fetch up to 2000 questions
+
+      if (error) throw error;
+      return data as (ChapterQuestion & { arrl_chapter_id: string | null })[];
+    },
+    enabled: !!licenseType,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
+ * Mutations for linking/unlinking questions to chapters
+ */
+export function useChapterQuestionMutations() {
+  const queryClient = useQueryClient();
+
+  const invalidateQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['chapter-questions'] });
+    queryClient.invalidateQueries({ queryKey: ['questions-for-license'] });
+    queryClient.invalidateQueries({ queryKey: ['arrl-chapters-with-counts'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
+  };
+
+  const linkQuestion = useMutation({
+    mutationFn: async ({
+      questionId,
+      chapterId,
+      pageReference,
+    }: {
+      questionId: string;
+      chapterId: string;
+      pageReference?: string | null;
+    }) => {
+      const { error } = await supabase
+        .from('questions')
+        .update({
+          arrl_chapter_id: chapterId,
+          arrl_page_reference: pageReference?.trim() || null,
+        })
+        .eq('id', questionId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateQueries();
+      toast.success('Question linked to chapter');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to link question: ${error.message}`);
+    },
+  });
+
+  const unlinkQuestion = useMutation({
+    mutationFn: async (questionId: string) => {
+      const { error } = await supabase
+        .from('questions')
+        .update({
+          arrl_chapter_id: null,
+          arrl_page_reference: null,
+        })
+        .eq('id', questionId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateQueries();
+      toast.success('Question unlinked from chapter');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to unlink question: ${error.message}`);
+    },
+  });
+
+  const updatePageReference = useMutation({
+    mutationFn: async ({
+      questionId,
+      pageReference,
+    }: {
+      questionId: string;
+      pageReference: string | null;
+    }) => {
+      const { error } = await supabase
+        .from('questions')
+        .update({
+          arrl_page_reference: pageReference?.trim() || null,
+        })
+        .eq('id', questionId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateQueries();
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update page reference: ${error.message}`);
+    },
+  });
+
+  return {
+    linkQuestion,
+    unlinkQuestion,
+    updatePageReference,
+  };
+}
