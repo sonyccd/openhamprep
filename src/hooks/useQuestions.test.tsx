@@ -5,7 +5,8 @@ import { ReactNode } from 'react';
 import { useQuestions, useQuestion } from './useQuestions';
 
 // Mock Supabase
-const mockSelect = vi.fn();
+const mockRange = vi.fn();
+const mockSelect = vi.fn(() => ({ range: mockRange }));
 const mockSingleQuery = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -46,7 +47,7 @@ function createWrapper() {
 describe('useQuestions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSelect.mockResolvedValue({ data: mockDbQuestions, error: null });
+    mockRange.mockResolvedValue({ data: mockDbQuestions, error: null });
   });
 
   describe('without testType filter', () => {
@@ -151,7 +152,7 @@ describe('useQuestions', () => {
 
   describe('correct answer mapping', () => {
     it('maps correct_answer 0 to A', async () => {
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: [{ id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null }],
         error: null,
       });
@@ -163,7 +164,7 @@ describe('useQuestions', () => {
     });
 
     it('maps correct_answer 1 to B', async () => {
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: [{ id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 1, subelement: 'T1', question_group: 'T1A', links: [], explanation: null }],
         error: null,
       });
@@ -175,7 +176,7 @@ describe('useQuestions', () => {
     });
 
     it('maps correct_answer 2 to C', async () => {
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: [{ id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 2, subelement: 'T1', question_group: 'T1A', links: [], explanation: null }],
         error: null,
       });
@@ -187,7 +188,7 @@ describe('useQuestions', () => {
     });
 
     it('maps correct_answer 3 to D', async () => {
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: [{ id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 3, subelement: 'T1', question_group: 'T1A', links: [], explanation: null }],
         error: null,
       });
@@ -201,7 +202,7 @@ describe('useQuestions', () => {
 
   describe('error handling', () => {
     it('returns error state when query fails', async () => {
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: null,
         error: new Error('Database error'),
       });
@@ -218,7 +219,7 @@ describe('useQuestions', () => {
   describe('empty results', () => {
     it('returns empty array when no questions match filter', async () => {
       // Only return Technician questions from the database
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: [
           { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Tech Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null },
         ],
@@ -238,7 +239,7 @@ describe('useQuestions', () => {
 
   describe('forum_url handling', () => {
     it('transforms forum_url to forumUrl in camelCase', async () => {
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: [
           { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: 'https://forum.openhamprep.com/t/test/123' },
         ],
@@ -252,7 +253,7 @@ describe('useQuestions', () => {
     });
 
     it('handles null forum_url', async () => {
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: [
           { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null },
         ],
@@ -282,7 +283,7 @@ describe('useQuestions', () => {
     });
 
     it('includes forumUrl in Question interface', async () => {
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: [
           { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: 'Test explanation', forum_url: 'https://forum.openhamprep.com/t/test/456', figure_url: null },
         ],
@@ -309,7 +310,7 @@ describe('useQuestions', () => {
 
   describe('figure_url handling', () => {
     it('transforms figure_url to figureUrl in camelCase', async () => {
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: [
           { id: 'uuid-e9b05', display_name: 'E9B05', question: 'What is shown in Figure E9-2?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: null, forum_url: null, figure_url: 'https://storage.example.com/question-figures/E9B05.png' },
         ],
@@ -323,7 +324,7 @@ describe('useQuestions', () => {
     });
 
     it('handles null figure_url', async () => {
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: [
           { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null, figure_url: null },
         ],
@@ -353,7 +354,7 @@ describe('useQuestions', () => {
     });
 
     it('includes figureUrl in Question interface', async () => {
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: [
           { id: 'uuid-e9b05', display_name: 'E9B05', question: 'What is shown in Figure E9-2?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: 'Antenna pattern explanation', forum_url: null, figure_url: 'https://storage.example.com/question-figures/E9B05.png' },
         ],
@@ -374,7 +375,7 @@ describe('useQuestions', () => {
     });
 
     it('handles question with both forumUrl and figureUrl', async () => {
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: [
           {
             id: 'uuid-e9b05',
@@ -403,7 +404,7 @@ describe('useQuestions', () => {
 
     it('handles Supabase storage URLs correctly', async () => {
       const storageUrl = 'https://xyz.supabase.co/storage/v1/object/public/question-figures/E9B05.png';
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: [
           { id: 'uuid-e9b05', display_name: 'E9B05', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: null, forum_url: null, figure_url: storageUrl },
         ],
@@ -418,7 +419,7 @@ describe('useQuestions', () => {
 
     it('handles figure URLs with cache-busting query parameters', async () => {
       const urlWithParams = 'https://storage.example.com/question-figures/E9B05.png?t=1234567890';
-      mockSelect.mockResolvedValueOnce({
+      mockRange.mockResolvedValueOnce({
         data: [
           { id: 'uuid-e9b05', display_name: 'E9B05', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: null, forum_url: null, figure_url: urlWithParams },
         ],
@@ -436,7 +437,7 @@ describe('useQuestions', () => {
 describe('useQuestion', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSelect.mockResolvedValue({ data: mockDbQuestions, error: null });
+    mockRange.mockResolvedValue({ data: mockDbQuestions, error: null });
   });
 
   // Helper to first load questions into cache, then test useQuestion

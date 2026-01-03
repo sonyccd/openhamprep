@@ -25,14 +25,15 @@ export function TopicQuestionManager({ topicId }: TopicQuestionManagerProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [testTypeFilter, setTestTypeFilter] = useState<string>("all");
 
-  // Fetch all questions
+  // Fetch all questions (using range to bypass Supabase's default 1000 row limit)
   const { data: allQuestions = [], isLoading: questionsLoading } = useQuery({
     queryKey: ["all-questions-for-linking"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("questions")
         .select("id, display_name, question")
-        .order("display_name", { ascending: true });
+        .order("display_name", { ascending: true })
+        .range(0, 1999); // Fetch up to 2000 questions to cover all license types
 
       if (error) throw error;
       return data as Question[];
