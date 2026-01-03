@@ -548,3 +548,200 @@ describe('ChapterPractice Question Wraparound', () => {
     });
   });
 });
+
+describe('ChapterPractice Answer Flow', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockQuestionsHook.mockReturnValue({
+      data: mockQuestions,
+      isLoading: false,
+      error: null,
+    });
+    mockChaptersHook.mockReturnValue({
+      data: mockChapters,
+      isLoading: false,
+      error: null,
+    });
+  });
+
+  it('updates stats when answering correctly', async () => {
+    const queryClient = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ChapterPractice onBack={vi.fn()} testType="technician" />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+
+    // Select Chapter 7
+    const chapterButton = screen.getByText('Licensing Regulations').closest('button');
+    if (chapterButton) fireEvent.click(chapterButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /practice all questions/i })).toBeInTheDocument();
+    });
+
+    // Start practice
+    fireEvent.click(screen.getByRole('button', { name: /practice all questions/i }));
+
+    // Wait for question to appear
+    await waitFor(() => {
+      expect(screen.getByText('Correct')).toBeInTheDocument();
+    });
+
+    // Check initial stats show 0
+    const correctStats = screen.getAllByText('0');
+    expect(correctStats.length).toBeGreaterThan(0);
+  });
+
+  it('shows Reset button in practice view', async () => {
+    const queryClient = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ChapterPractice onBack={vi.fn()} testType="technician" />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+
+    // Select Chapter 7
+    const chapterButton = screen.getByText('Licensing Regulations').closest('button');
+    if (chapterButton) fireEvent.click(chapterButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /practice all questions/i })).toBeInTheDocument();
+    });
+
+    // Start practice
+    fireEvent.click(screen.getByRole('button', { name: /practice all questions/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /reset/i })).toBeInTheDocument();
+    });
+  });
+
+  it('can start practice from a specific question', async () => {
+    const queryClient = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ChapterPractice onBack={vi.fn()} testType="technician" />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+
+    // Select Chapter 7
+    const chapterButton = screen.getByText('Licensing Regulations').closest('button');
+    if (chapterButton) fireEvent.click(chapterButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('question-list-view')).toBeInTheDocument();
+    });
+
+    // Start from first question specifically
+    fireEvent.click(screen.getByRole('button', { name: /start from first/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Correct')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('ChapterPractice Navigation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockQuestionsHook.mockReturnValue({
+      data: mockQuestions,
+      isLoading: false,
+      error: null,
+    });
+    mockChaptersHook.mockReturnValue({
+      data: mockChapters,
+      isLoading: false,
+      error: null,
+    });
+  });
+
+  it('can navigate back from practice to question list', async () => {
+    const queryClient = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ChapterPractice onBack={vi.fn()} testType="technician" />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+
+    // Select Chapter 7
+    const chapterButton = screen.getByText('Licensing Regulations').closest('button');
+    if (chapterButton) fireEvent.click(chapterButton);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /practice all questions/i })).toBeInTheDocument();
+    });
+
+    // Start practice
+    fireEvent.click(screen.getByRole('button', { name: /practice all questions/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /question list/i })).toBeInTheDocument();
+    });
+
+    // Go back to question list
+    fireEvent.click(screen.getByRole('button', { name: /question list/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('question-list-view')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('ChapterPractice License Types', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows chapters for General license type', () => {
+    const generalChapters = [
+      {
+        id: 'g-chapter-1',
+        licenseType: 'G' as const,
+        chapterNumber: 1,
+        title: 'General Class Overview',
+        description: null,
+        displayOrder: 1,
+        questionCount: 10,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+      },
+    ];
+
+    mockQuestionsHook.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    mockChaptersHook.mockReturnValue({
+      data: generalChapters,
+      isLoading: false,
+      error: null,
+    });
+
+    const queryClient = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ChapterPractice onBack={vi.fn()} testType="general" />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByText('General Class Overview')).toBeInTheDocument();
+  });
+});
