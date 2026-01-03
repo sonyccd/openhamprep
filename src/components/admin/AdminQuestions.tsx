@@ -9,6 +9,8 @@ import { BulkExport, escapeCSVField } from './BulkExport';
 import { useExplanationFeedbackStats } from '@/hooks/useExplanationFeedback';
 import { useAdminTopics } from '@/hooks/useTopics';
 import { useQuestionMutations } from '@/hooks/useQuestionMutations';
+import { useArrlChapters } from '@/hooks/useArrlChapters';
+import type { LicenseType } from '@/types/chapters';
 import {
   QuestionEditDialog,
   QuestionAddDialog,
@@ -21,11 +23,22 @@ import {
 } from './questions';
 import type { EditHistoryEntry } from './EditHistoryViewer';
 
+// Map test type to license type prefix
+const TEST_TYPE_TO_LICENSE: Record<AdminQuestionsProps['testType'], LicenseType> = {
+  technician: 'T',
+  general: 'G',
+  extra: 'E',
+};
+
 export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestionsProps) {
   const { data: feedbackStats = {} } = useExplanationFeedbackStats();
   const { data: allTopics = [] } = useAdminTopics();
   const { addQuestion, updateQuestion, deleteQuestion, retrySync } =
     useQuestionMutations(testType);
+
+  // Fetch chapters for the current license type
+  const licenseType = TEST_TYPE_TO_LICENSE[testType];
+  const { data: chapters = [] } = useArrlChapters(licenseType);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showNegativeFeedbackOnly, setShowNegativeFeedbackOnly] = useState(false);
@@ -47,6 +60,8 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
   const [editExplanation, setEditExplanation] = useState('');
   const [editFigureUrl, setEditFigureUrl] = useState<string | null>(null);
   const [editForumUrl, setEditForumUrl] = useState<string | null>(null);
+  const [editChapterId, setEditChapterId] = useState<string | null>(null);
+  const [editPageReference, setEditPageReference] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const prefix = TEST_TYPE_PREFIXES[testType];
@@ -61,6 +76,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
           id, display_name, question, options, correct_answer,
           links, explanation, edit_history, figure_url, forum_url,
           discourse_sync_status, discourse_sync_at, discourse_sync_error,
+          arrl_chapter_id, arrl_page_reference,
           topic_questions(topic_id)
         `
         )
@@ -81,6 +97,8 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
         discourse_sync_status: q.discourse_sync_status,
         discourse_sync_at: q.discourse_sync_at,
         discourse_sync_error: q.discourse_sync_error,
+        arrl_chapter_id: q.arrl_chapter_id,
+        arrl_page_reference: q.arrl_page_reference,
         linked_topic_ids: (
           (q.topic_questions as { topic_id: string }[]) || []
         ).map((tq) => tq.topic_id),
@@ -152,6 +170,8 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
     setEditExplanation(q.explanation || '');
     setEditFigureUrl(q.figure_url || null);
     setEditForumUrl(q.forum_url || null);
+    setEditChapterId(q.arrl_chapter_id || null);
+    setEditPageReference(q.arrl_page_reference || null);
   };
 
   const getLinkedTopicNames = (topicIds: string[] | undefined) => {
@@ -175,6 +195,8 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
           explanation: editExplanation,
           figure_url: editFigureUrl,
           forum_url: editForumUrl?.trim() || null,
+          arrl_chapter_id: editChapterId,
+          arrl_page_reference: editPageReference?.trim() || null,
         },
         originalQuestion: editingQuestion,
       },
@@ -210,6 +232,9 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
         editExplanation={editExplanation}
         editFigureUrl={editFigureUrl}
         editForumUrl={editForumUrl}
+        editChapterId={editChapterId}
+        editPageReference={editPageReference}
+        chapters={chapters}
         linkedTopicNames={getLinkedTopicNames(editingQuestion?.linked_topic_ids)}
         isDeleteDialogOpen={isDeleteDialogOpen}
         isUpdatePending={updateQuestion.isPending}
@@ -224,6 +249,8 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
         onExplanationChange={setEditExplanation}
         onFigureUrlChange={setEditFigureUrl}
         onForumUrlChange={setEditForumUrl}
+        onChapterIdChange={setEditChapterId}
+        onPageReferenceChange={setEditPageReference}
         onDeleteDialogOpenChange={setIsDeleteDialogOpen}
         onUpdate={handleUpdateQuestion}
         onDelete={handleDeleteQuestion}

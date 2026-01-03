@@ -25,6 +25,7 @@ import { RandomPractice } from '@/components/RandomPractice';
 import { WeakQuestionsReview } from '@/components/WeakQuestionsReview';
 import { BookmarkedQuestions } from '@/components/BookmarkedQuestions';
 import { SubelementPractice } from '@/components/SubelementPractice';
+import { ChapterPractice } from '@/components/ChapterPractice';
 import { TestResultReview } from '@/components/TestResultReview';
 import { AppLayout } from '@/components/AppLayout';
 import { Glossary } from '@/components/Glossary';
@@ -252,6 +253,9 @@ export default function Dashboard() {
     }
     if (currentView === 'subelement-practice') {
       return <SubelementPractice onBack={() => changeView('dashboard')} testType={selectedTest} />;
+    }
+    if (currentView === 'chapter-practice') {
+      return <ChapterPractice onBack={() => changeView('dashboard')} testType={selectedTest} />;
     }
     if (currentView === 'review-test' && reviewingTestId) {
       return <TestResultReview testResultId={reviewingTestId} onBack={() => {

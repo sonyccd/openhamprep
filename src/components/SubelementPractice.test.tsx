@@ -10,31 +10,37 @@ import '@/test/mocks/supabase';
 const mockQuestions = [
   {
     id: 'T1A01',
+    displayName: 'T1A01',
     question: 'Question about T1?',
     options: { A: 'A1', B: 'B1', C: 'C1', D: 'D1' },
     correctAnswer: 'A',
     subelement: 'T1',
     group: 'T1A',
+    questionGroup: 'T1A',
     explanation: 'Explanation 1',
     links: [],
   },
   {
     id: 'T1A02',
+    displayName: 'T1A02',
     question: 'Another T1 question?',
     options: { A: 'A2', B: 'B2', C: 'C2', D: 'D2' },
     correctAnswer: 'B',
     subelement: 'T1',
     group: 'T1A',
+    questionGroup: 'T1A',
     explanation: 'Explanation 2',
     links: [],
   },
   {
     id: 'T2A01',
+    displayName: 'T2A01',
     question: 'Question about T2?',
     options: { A: 'A3', B: 'B3', C: 'C3', D: 'D3' },
     correctAnswer: 'C',
     subelement: 'T2',
     group: 'T2A',
+    questionGroup: 'T2A',
     explanation: 'Explanation 3',
     links: [],
   },
@@ -108,10 +114,13 @@ vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('@/components/TopicLanding', () => ({
-  TopicLanding: ({ onStartPractice }: { onStartPractice: () => void }) => (
-    <div data-testid="topic-landing">
-      <button onClick={onStartPractice}>Start Practice</button>
+vi.mock('@/components/QuestionListView', () => ({
+  QuestionListView: ({ onStartPractice, onBack, title }: { onStartPractice: (index?: number) => void; onBack: () => void; title: string }) => (
+    <div data-testid="question-list-view">
+      <h2>{title}</h2>
+      <button onClick={onBack}>Back to Topics</button>
+      <button onClick={() => onStartPractice()}>Practice All Questions</button>
+      <button onClick={() => onStartPractice(0)}>Start from first</button>
     </div>
   ),
 }));
@@ -151,16 +160,12 @@ describe('SubelementPractice', () => {
       expect(screen.getByText('Focus on specific areas to strengthen your knowledge')).toBeInTheDocument();
     });
 
-    it('displays available subelements with question counts', () => {
+    it('displays available subelements', () => {
       renderSubelementPractice();
-      
-      // Should show T1 with 2 questions
+
+      // Should show T1 and T2 (question counts were removed from the UI)
       expect(screen.getByText('T1')).toBeInTheDocument();
-      expect(screen.getByText('2 questions')).toBeInTheDocument();
-      
-      // Should show T2 with 1 question
       expect(screen.getByText('T2')).toBeInTheDocument();
-      expect(screen.getByText('1 questions')).toBeInTheDocument();
     });
 
     it('shows subelement names', () => {
@@ -174,7 +179,7 @@ describe('SubelementPractice', () => {
   });
 
   describe('Topic Selection', () => {
-    it('navigates to topic landing when clicking a subelement', async () => {
+    it('navigates to question list view when clicking a subelement', async () => {
       renderSubelementPractice();
 
       // Click on T1 topic (Commission's Rules)
@@ -182,10 +187,47 @@ describe('SubelementPractice', () => {
       if (t1Button) {
         fireEvent.click(t1Button);
       }
-      
+
       await waitFor(() => {
-        // Should show the topic landing page with start practice button
-        expect(screen.getByRole('button', { name: /start practice/i })).toBeInTheDocument();
+        // Should show the question list view with Practice All button
+        expect(screen.getByTestId('question-list-view')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /practice all questions/i })).toBeInTheDocument();
+      });
+    });
+
+    it('shows the topic name in question list view', async () => {
+      renderSubelementPractice();
+
+      // Click on T1 topic (Commission's Rules)
+      const t1Button = screen.getByText("Commission's Rules").closest('button');
+      if (t1Button) {
+        fireEvent.click(t1Button);
+      }
+
+      await waitFor(() => {
+        expect(screen.getByText("Commission's Rules")).toBeInTheDocument();
+      });
+    });
+
+    it('can navigate back to topic list from question list', async () => {
+      renderSubelementPractice();
+
+      // Click on T1 topic
+      const t1Button = screen.getByText("Commission's Rules").closest('button');
+      if (t1Button) {
+        fireEvent.click(t1Button);
+      }
+
+      await waitFor(() => {
+        expect(screen.getByTestId('question-list-view')).toBeInTheDocument();
+      });
+
+      // Click back button
+      fireEvent.click(screen.getByRole('button', { name: /back to topics/i }));
+
+      await waitFor(() => {
+        // Should be back at topic list
+        expect(screen.getByText('Choose a Topic')).toBeInTheDocument();
       });
     });
   });
@@ -257,11 +299,11 @@ describe('SubelementPractice Stats', () => {
     if (t1Button) fireEvent.click(t1Button);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /start practice/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /practice all questions/i })).toBeInTheDocument();
     });
 
-    // Start practice
-    fireEvent.click(screen.getByRole('button', { name: /start practice/i }));
+    // Start practice (click "Practice All Questions")
+    fireEvent.click(screen.getByRole('button', { name: /practice all questions/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Correct')).toBeInTheDocument();
@@ -292,11 +334,11 @@ describe('SubelementPractice Question Wraparound', () => {
     if (t1Button) fireEvent.click(t1Button);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /start practice/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /practice all questions/i })).toBeInTheDocument();
     });
 
-    // Start practice
-    fireEvent.click(screen.getByRole('button', { name: /start practice/i }));
+    // Start practice (click "Practice All Questions")
+    fireEvent.click(screen.getByRole('button', { name: /practice all questions/i }));
 
     // Wait for first question
     await waitFor(() => {

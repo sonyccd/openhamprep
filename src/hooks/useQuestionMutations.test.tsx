@@ -61,6 +61,8 @@ const createMockQuestion = (): Question => ({
   discourse_sync_at: null,
   discourse_sync_error: null,
   linked_topic_ids: [],
+  arrl_chapter_id: null,
+  arrl_page_reference: null,
 });
 
 describe('useQuestionMutations', () => {
@@ -482,6 +484,146 @@ describe('useQuestionMutations', () => {
             questionId: originalQuestion.id,
           },
         });
+      });
+    });
+
+    it('tracks changes for arrl_chapter_id and arrl_page_reference', async () => {
+      const mockEq = vi.fn().mockResolvedValue({ error: null });
+      const mockUpdate = vi.fn(() => ({ eq: mockEq }));
+      (supabase.from as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+        update: mockUpdate,
+      }));
+
+      const { result } = renderHook(() => useQuestionMutations('technician'), {
+        wrapper: createWrapper(),
+      });
+
+      const originalQuestion = createMockQuestion();
+      result.current.updateQuestion.mutate({
+        question: {
+          ...originalQuestion,
+          arrl_chapter_id: 'chapter-1-uuid',
+          arrl_page_reference: '45-48',
+        },
+        originalQuestion,
+      });
+
+      await waitFor(() => {
+        expect(mockUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            arrl_chapter_id: 'chapter-1-uuid',
+            arrl_page_reference: '45-48',
+          })
+        );
+      });
+    });
+
+    it('clears arrl_chapter_id when set to null', async () => {
+      const mockEq = vi.fn().mockResolvedValue({ error: null });
+      const mockUpdate = vi.fn(() => ({ eq: mockEq }));
+      (supabase.from as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+        update: mockUpdate,
+      }));
+
+      const { result } = renderHook(() => useQuestionMutations('technician'), {
+        wrapper: createWrapper(),
+      });
+
+      const originalQuestion = createMockQuestion();
+      originalQuestion.arrl_chapter_id = 'chapter-1-uuid';
+      result.current.updateQuestion.mutate({
+        question: {
+          ...originalQuestion,
+          arrl_chapter_id: null,
+        },
+        originalQuestion,
+      });
+
+      await waitFor(() => {
+        expect(mockUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            arrl_chapter_id: null,
+          })
+        );
+      });
+    });
+
+    it('records arrl_chapter_id change in edit history', async () => {
+      const mockEq = vi.fn().mockResolvedValue({ error: null });
+      const mockUpdate = vi.fn(() => ({ eq: mockEq }));
+      (supabase.from as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+        update: mockUpdate,
+      }));
+
+      const { result } = renderHook(() => useQuestionMutations('technician'), {
+        wrapper: createWrapper(),
+      });
+
+      const originalQuestion = createMockQuestion();
+      result.current.updateQuestion.mutate({
+        question: {
+          ...originalQuestion,
+          arrl_chapter_id: 'new-chapter-uuid',
+        },
+        originalQuestion,
+      });
+
+      await waitFor(() => {
+        expect(mockUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            edit_history: expect.arrayContaining([
+              expect.objectContaining({
+                action: 'updated',
+                changes: expect.objectContaining({
+                  arrl_chapter_id: {
+                    from: '',
+                    to: 'new-chapter-uuid',
+                  },
+                }),
+              }),
+            ]),
+          })
+        );
+      });
+    });
+
+    it('records arrl_page_reference change in edit history', async () => {
+      const mockEq = vi.fn().mockResolvedValue({ error: null });
+      const mockUpdate = vi.fn(() => ({ eq: mockEq }));
+      (supabase.from as ReturnType<typeof vi.fn>).mockImplementation(() => ({
+        update: mockUpdate,
+      }));
+
+      const { result } = renderHook(() => useQuestionMutations('technician'), {
+        wrapper: createWrapper(),
+      });
+
+      const originalQuestion = createMockQuestion();
+      originalQuestion.arrl_page_reference = '45';
+      result.current.updateQuestion.mutate({
+        question: {
+          ...originalQuestion,
+          arrl_page_reference: '45-48',
+        },
+        originalQuestion,
+      });
+
+      await waitFor(() => {
+        expect(mockUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            edit_history: expect.arrayContaining([
+              expect.objectContaining({
+                action: 'updated',
+                changes: expect.objectContaining({
+                  arrl_page_reference: {
+                    from: '45',
+                    to: '45-48',
+                  },
+                }),
+              }),
+            ]),
+          })
+        );
       });
     });
   });

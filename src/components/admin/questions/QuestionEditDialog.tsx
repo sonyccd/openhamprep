@@ -35,12 +35,14 @@ import {
   ExternalLink,
   Image,
   BookOpen,
+  Book,
 } from 'lucide-react';
 import { FigureUpload } from '../FigureUpload';
 import { EditHistoryViewer } from '../EditHistoryViewer';
 import { getSafeUrl } from '@/lib/utils';
 import { LINK_TYPE_CONFIG, type LinkType } from '@/lib/resourceTypes';
 import type { Question } from './types';
+import type { ArrlChapter } from '@/types/chapters';
 
 interface QuestionEditDialogProps {
   question: Question | null;
@@ -51,6 +53,9 @@ interface QuestionEditDialogProps {
   editExplanation: string;
   editFigureUrl: string | null;
   editForumUrl: string | null;
+  editChapterId: string | null;
+  editPageReference: string | null;
+  chapters: ArrlChapter[];
   linkedTopicNames: string[];
   isDeleteDialogOpen: boolean;
   isUpdatePending: boolean;
@@ -61,6 +66,8 @@ interface QuestionEditDialogProps {
   onExplanationChange: (value: string) => void;
   onFigureUrlChange: (url: string | null) => void;
   onForumUrlChange: (url: string | null) => void;
+  onChapterIdChange: (id: string | null) => void;
+  onPageReferenceChange: (value: string | null) => void;
   onDeleteDialogOpenChange: (open: boolean) => void;
   onUpdate: () => void;
   onDelete: () => void;
@@ -75,6 +82,9 @@ export function QuestionEditDialog({
   editExplanation,
   editFigureUrl,
   editForumUrl,
+  editChapterId,
+  editPageReference,
+  chapters,
   linkedTopicNames,
   isDeleteDialogOpen,
   isUpdatePending,
@@ -85,6 +95,8 @@ export function QuestionEditDialog({
   onExplanationChange,
   onFigureUrlChange,
   onForumUrlChange,
+  onChapterIdChange,
+  onPageReferenceChange,
   onDeleteDialogOpenChange,
   onUpdate,
   onDelete,
@@ -283,6 +295,49 @@ export function QuestionEditDialog({
               )}
             </div>
           )}
+
+          <Separator />
+
+          {/* ARRL Textbook Reference */}
+          <div className="space-y-4">
+            <Label className="flex items-center gap-2">
+              <Book className="w-4 h-4" />
+              ARRL Textbook Reference
+            </Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm text-muted-foreground">Chapter</Label>
+                <Select
+                  value={editChapterId || 'none'}
+                  onValueChange={(value) => onChapterIdChange(value === 'none' ? null : value)}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select chapter..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No chapter</SelectItem>
+                    {chapters.map((chapter) => (
+                      <SelectItem key={chapter.id} value={chapter.id}>
+                        Ch. {chapter.chapterNumber}: {chapter.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm text-muted-foreground">Page Reference</Label>
+                <Input
+                  placeholder="e.g., 45 or 45-48"
+                  value={editPageReference || ''}
+                  onChange={(e) => onPageReferenceChange(e.target.value || null)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Reference to the ARRL textbook for users who want to study from the book.
+            </p>
+          </div>
 
           <Separator />
 
