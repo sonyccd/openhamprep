@@ -30,6 +30,9 @@ import {
   useArrlChaptersWithCounts,
   useArrlChapter,
   useChapterMutations,
+  useChapterQuestions,
+  useQuestionsForLicense,
+  useChapterQuestionMutations,
 } from './useArrlChapters';
 
 const mockChaptersData = [
@@ -58,6 +61,30 @@ const mockChaptersData = [
 const mockQuestionCounts = [
   { chapter_id: 'chapter-1', question_count: 15 },
   { chapter_id: 'chapter-2', question_count: 20 },
+];
+
+const mockQuestionsData = [
+  {
+    id: 'q-1',
+    display_name: 'T1A01',
+    question: 'What is amateur radio?',
+    arrl_chapter_id: 'chapter-1',
+    arrl_page_reference: '15-16',
+  },
+  {
+    id: 'q-2',
+    display_name: 'T1A02',
+    question: 'What frequencies can Technician use?',
+    arrl_chapter_id: 'chapter-1',
+    arrl_page_reference: null,
+  },
+  {
+    id: 'q-3',
+    display_name: 'T1B01',
+    question: 'What is the purpose of the FCC rules?',
+    arrl_chapter_id: null,
+    arrl_page_reference: null,
+  },
 ];
 
 function createWrapper() {
@@ -646,6 +673,392 @@ describe('useArrlChapters', () => {
         expect(invalidateSpy).toHaveBeenCalledWith({
           queryKey: ['arrl-chapter'],
         });
+      });
+    });
+  });
+
+  describe('useChapterQuestions hook', () => {
+    beforeEach(() => {
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({
+              data: mockQuestionsData.filter(q => q.arrl_chapter_id === 'chapter-1'),
+              error: null,
+            }),
+          }),
+        }),
+      });
+    });
+
+    it('fetches questions for a chapter', async () => {
+      const { result } = renderHook(() => useChapterQuestions('chapter-1'), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data).toHaveLength(2);
+      expect(result.current.data?.[0]).toMatchObject({
+        id: 'q-1',
+        display_name: 'T1A01',
+      });
+    });
+
+    it('returns empty array when chapterId is undefined', async () => {
+      const { result } = renderHook(() => useChapterQuestions(undefined), {
+        wrapper: createWrapper(),
+      });
+
+      // Query should be disabled
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.data).toBeUndefined();
+    });
+
+    it('handles fetch error', async () => {
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({
+              data: null,
+              error: new Error('Database error'),
+            }),
+          }),
+        }),
+      });
+
+      const { result } = renderHook(() => useChapterQuestions('chapter-1'), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
+    });
+  });
+
+  describe('useQuestionsForLicense hook', () => {
+    beforeEach(() => {
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          like: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              range: vi.fn().mockResolvedValue({
+                data: mockQuestionsData,
+                error: null,
+              }),
+            }),
+          }),
+        }),
+      });
+    });
+
+    it('fetches questions for a license type', async () => {
+      const { result } = renderHook(() => useQuestionsForLicense('T'), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data).toHaveLength(3);
+    });
+
+    it('filters by license type prefix', async () => {
+      const mockLike = vi.fn().mockReturnValue({
+        order: vi.fn().mockReturnValue({
+          range: vi.fn().mockResolvedValue({
+            data: mockQuestionsData,
+            error: null,
+          }),
+        }),
+      });
+
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          like: mockLike,
+        }),
+      });
+
+      const { result } = renderHook(() => useQuestionsForLicense('T'), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(mockLike).toHaveBeenCalledWith('display_name', 'T%');
+    });
+
+    it('returns empty array when licenseType is undefined', async () => {
+      const { result } = renderHook(() => useQuestionsForLicense(undefined), {
+        wrapper: createWrapper(),
+      });
+
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.data).toBeUndefined();
+    });
+
+    it('handles fetch error', async () => {
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          like: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              range: vi.fn().mockResolvedValue({
+                data: null,
+                error: new Error('Database error'),
+              }),
+            }),
+          }),
+        }),
+      });
+
+      const { result } = renderHook(() => useQuestionsForLicense('T'), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
+    });
+  });
+
+  describe('useChapterQuestionMutations', () => {
+    let queryClient: QueryClient;
+    let wrapper: ({ children }: { children: ReactNode }) => JSX.Element;
+
+    beforeEach(async () => {
+      queryClient = createTestQueryClient();
+      wrapper = ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      );
+
+      const { toast } = await import('sonner');
+      vi.mocked(toast.success).mockClear();
+      vi.mocked(toast.error).mockClear();
+    });
+
+    describe('linkQuestion mutation', () => {
+      it('links a question to a chapter', async () => {
+        const mockUpdate = vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        });
+        mockFrom.mockReturnValue({ update: mockUpdate });
+
+        const { result } = renderHook(() => useChapterQuestionMutations(), { wrapper });
+
+        await act(async () => {
+          result.current.linkQuestion.mutate({
+            questionId: 'q-3',
+            chapterId: 'chapter-1',
+            pageReference: '20-21',
+          });
+        });
+
+        await waitFor(() => expect(result.current.linkQuestion.isSuccess).toBe(true));
+
+        expect(mockUpdate).toHaveBeenCalledWith({
+          arrl_chapter_id: 'chapter-1',
+          arrl_page_reference: '20-21',
+        });
+
+        const { toast } = await import('sonner');
+        expect(toast.success).toHaveBeenCalledWith('Question linked to chapter');
+      });
+
+      it('links without page reference', async () => {
+        const mockUpdate = vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        });
+        mockFrom.mockReturnValue({ update: mockUpdate });
+
+        const { result } = renderHook(() => useChapterQuestionMutations(), { wrapper });
+
+        await act(async () => {
+          result.current.linkQuestion.mutate({
+            questionId: 'q-3',
+            chapterId: 'chapter-1',
+          });
+        });
+
+        await waitFor(() => expect(result.current.linkQuestion.isSuccess).toBe(true));
+
+        expect(mockUpdate).toHaveBeenCalledWith({
+          arrl_chapter_id: 'chapter-1',
+          arrl_page_reference: null,
+        });
+      });
+
+      it('handles link error', async () => {
+        const mockUpdate = vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: { message: 'Update failed' } }),
+        });
+        mockFrom.mockReturnValue({ update: mockUpdate });
+
+        const { result } = renderHook(() => useChapterQuestionMutations(), { wrapper });
+
+        await act(async () => {
+          result.current.linkQuestion.mutate({
+            questionId: 'q-3',
+            chapterId: 'chapter-1',
+          });
+        });
+
+        await waitFor(() => expect(result.current.linkQuestion.isError).toBe(true));
+
+        const { toast } = await import('sonner');
+        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Failed to link question'));
+      });
+    });
+
+    describe('unlinkQuestion mutation', () => {
+      it('unlinks a question from a chapter', async () => {
+        const mockUpdate = vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        });
+        mockFrom.mockReturnValue({ update: mockUpdate });
+
+        const { result } = renderHook(() => useChapterQuestionMutations(), { wrapper });
+
+        await act(async () => {
+          result.current.unlinkQuestion.mutate('q-1');
+        });
+
+        await waitFor(() => expect(result.current.unlinkQuestion.isSuccess).toBe(true));
+
+        expect(mockUpdate).toHaveBeenCalledWith({
+          arrl_chapter_id: null,
+          arrl_page_reference: null,
+        });
+
+        const { toast } = await import('sonner');
+        expect(toast.success).toHaveBeenCalledWith('Question unlinked from chapter');
+      });
+
+      it('handles unlink error', async () => {
+        const mockUpdate = vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: { message: 'Update failed' } }),
+        });
+        mockFrom.mockReturnValue({ update: mockUpdate });
+
+        const { result } = renderHook(() => useChapterQuestionMutations(), { wrapper });
+
+        await act(async () => {
+          result.current.unlinkQuestion.mutate('q-1');
+        });
+
+        await waitFor(() => expect(result.current.unlinkQuestion.isError).toBe(true));
+
+        const { toast } = await import('sonner');
+        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Failed to unlink question'));
+      });
+    });
+
+    describe('updatePageReference mutation', () => {
+      it('updates page reference', async () => {
+        const mockUpdate = vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        });
+        mockFrom.mockReturnValue({ update: mockUpdate });
+
+        const { result } = renderHook(() => useChapterQuestionMutations(), { wrapper });
+
+        await act(async () => {
+          result.current.updatePageReference.mutate({
+            questionId: 'q-1',
+            pageReference: '30-35',
+          });
+        });
+
+        await waitFor(() => expect(result.current.updatePageReference.isSuccess).toBe(true));
+
+        expect(mockUpdate).toHaveBeenCalledWith({
+          arrl_page_reference: '30-35',
+        });
+      });
+
+      it('clears page reference when null', async () => {
+        const mockUpdate = vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        });
+        mockFrom.mockReturnValue({ update: mockUpdate });
+
+        const { result } = renderHook(() => useChapterQuestionMutations(), { wrapper });
+
+        await act(async () => {
+          result.current.updatePageReference.mutate({
+            questionId: 'q-1',
+            pageReference: null,
+          });
+        });
+
+        await waitFor(() => expect(result.current.updatePageReference.isSuccess).toBe(true));
+
+        expect(mockUpdate).toHaveBeenCalledWith({
+          arrl_page_reference: null,
+        });
+      });
+
+      it('handles update error', async () => {
+        const mockUpdate = vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: { message: 'Update failed' } }),
+        });
+        mockFrom.mockReturnValue({ update: mockUpdate });
+
+        const { result } = renderHook(() => useChapterQuestionMutations(), { wrapper });
+
+        await act(async () => {
+          result.current.updatePageReference.mutate({
+            questionId: 'q-1',
+            pageReference: '30-35',
+          });
+        });
+
+        await waitFor(() => expect(result.current.updatePageReference.isError).toBe(true));
+
+        const { toast } = await import('sonner');
+        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Failed to update page reference'));
+      });
+    });
+
+    describe('cache invalidation', () => {
+      it('invalidates related queries on successful link', async () => {
+        const mockUpdate = vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        });
+        mockFrom.mockReturnValue({ update: mockUpdate });
+
+        const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+        const { result } = renderHook(() => useChapterQuestionMutations(), { wrapper });
+
+        await act(async () => {
+          result.current.linkQuestion.mutate({
+            questionId: 'q-3',
+            chapterId: 'chapter-1',
+          });
+        });
+
+        await waitFor(() => expect(result.current.linkQuestion.isSuccess).toBe(true));
+
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['chapter-questions'] });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['questions-for-license'] });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['arrl-chapters-with-counts'] });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['admin-questions'] });
+      });
+
+      it('invalidates related queries on successful unlink', async () => {
+        const mockUpdate = vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        });
+        mockFrom.mockReturnValue({ update: mockUpdate });
+
+        const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+        const { result } = renderHook(() => useChapterQuestionMutations(), { wrapper });
+
+        await act(async () => {
+          result.current.unlinkQuestion.mutate('q-1');
+        });
+
+        await waitFor(() => expect(result.current.unlinkQuestion.isSuccess).toBe(true));
+
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['chapter-questions'] });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['arrl-chapters-with-counts'] });
       });
     });
   });

@@ -30,6 +30,7 @@ import {
   useChapterMutations,
 } from "@/hooks/useArrlChapters";
 import type { ArrlChapterWithCount, LicenseType } from "@/types/chapters";
+import { ChapterQuestionManager } from "./ChapterQuestionManager";
 
 const LICENSE_TABS: { value: LicenseType; label: string }[] = [
   { value: "T", label: "Technician" },
@@ -204,92 +205,115 @@ export function AdminChapters() {
 
       {/* Edit Chapter Dialog */}
       <Dialog open={!!editingChapter} onOpenChange={(open) => !open && setEditingChapter(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Pencil className="w-5 h-5" />
-              Edit Chapter
+              Edit Chapter {editingChapter?.chapterNumber}: {editingChapter?.title}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label>Chapter Number</Label>
-              <Input
-                type="number"
-                min="1"
-                value={editChapterNumber}
-                onChange={(e) => setEditChapterNumber(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Title</Label>
-              <Input
-                placeholder="Chapter title..."
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Description (optional)</Label>
-              <Textarea
-                placeholder="Brief description..."
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <div className="flex justify-between gap-2">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Chapter</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete Chapter {editingChapter?.chapterNumber}:{" "}
-                      {editingChapter?.title}? Questions linked to this chapter will have their
-                      chapter reference removed.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => {
-                        if (editingChapter) {
-                          handleDeleteChapter(editingChapter.id);
-                          setEditingChapter(null);
-                        }
-                      }}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
+            <TabsList className="shrink-0">
+              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="questions">
+                Questions
+                {editingChapter && (
+                  <Badge variant="secondary" className="ml-2">
+                    {editingChapter.questionCount}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="details" className="flex-1 overflow-y-auto mt-4">
+              <div className="space-y-4">
+                <div>
+                  <Label>Chapter Number</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={editChapterNumber}
+                    onChange={(e) => setEditChapterNumber(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Title</Label>
+                  <Input
+                    placeholder="Chapter title..."
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Description (optional)</Label>
+                  <Textarea
+                    placeholder="Brief description..."
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+                <div className="flex justify-between gap-2 pt-4">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Chapter</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete Chapter {editingChapter?.chapterNumber}:{" "}
+                          {editingChapter?.title}? Questions linked to this chapter will have their
+                          chapter reference removed.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            if (editingChapter) {
+                              handleDeleteChapter(editingChapter.id);
+                              setEditingChapter(null);
+                            }
+                          }}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setEditingChapter(null)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleUpdateChapter}
+                      disabled={updateChapter.isPending || !editChapterNumber || !editTitle.trim()}
                     >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setEditingChapter(null)}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleUpdateChapter}
-                  disabled={updateChapter.isPending || !editChapterNumber || !editTitle.trim()}
-                >
-                  {updateChapter.isPending ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : null}
-                  Save Changes
-                </Button>
+                      {updateChapter.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : null}
+                      Save Changes
+                    </Button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </TabsContent>
+            <TabsContent value="questions" className="flex-1 overflow-y-auto mt-4">
+              {editingChapter && (
+                <ChapterQuestionManager
+                  chapterId={editingChapter.id}
+                  licenseType={editingChapter.licenseType}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
