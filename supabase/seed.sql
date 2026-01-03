@@ -1332,6 +1332,182 @@ ON CONFLICT (license_type, chapter_number) DO UPDATE SET
   display_order = EXCLUDED.display_order;
 
 -- =============================================================================
+-- LINK QUESTIONS TO ARRL CHAPTERS (with page references)
+-- =============================================================================
+
+-- Link Technician T1 questions to Chapter 7 (Licensing Regulations) with page refs
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 7),
+  arrl_page_reference = '7-1 to 7-8'
+WHERE display_name IN ('T1A01', 'T1A02', 'T1A03', 'T1A04', 'T1A05');
+
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 7),
+  arrl_page_reference = '7-9 to 7-15'
+WHERE display_name IN ('T1B01', 'T1B02', 'T1B03', 'T1B04', 'T1B05');
+
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 7),
+  arrl_page_reference = '7-16 to 7-22'
+WHERE display_name IN ('T1C01', 'T1C02', 'T1C03');
+
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 8),
+  arrl_page_reference = '8-1 to 8-10'
+WHERE display_name IN ('T1D01', 'T1D02');
+
+-- Link T2 questions to Chapter 6 (Communicating With Other Hams)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 6),
+  arrl_page_reference = '6-1 to 6-12'
+WHERE display_name IN ('T2A01', 'T2A02', 'T2A03', 'T2A04', 'T2A05');
+
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 6),
+  arrl_page_reference = '6-13 to 6-20'
+WHERE display_name IN ('T2B01', 'T2B02', 'T2B03');
+
+-- Link T3 questions to Chapter 2 (Radio and Signals Fundamentals)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 2),
+  arrl_page_reference = '2-5 to 2-15'
+WHERE display_name IN ('T3A01', 'T3A02', 'T3A03');
+
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 2),
+  arrl_page_reference = '2-16 to 2-25'
+WHERE display_name IN ('T3B01', 'T3B02');
+
+-- Link T4 questions to Chapter 5 (Amateur Radio Equipment)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 5),
+  arrl_page_reference = '5-1 to 5-10'
+WHERE display_name IN ('T4A01', 'T4A02');
+
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 5),
+  arrl_page_reference = '5-11 to 5-20'
+WHERE display_name IN ('T4B01', 'T4B02');
+
+-- Link T5 questions to Chapter 3 (Electricity, Components, and Circuits)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 3),
+  arrl_page_reference = '3-1 to 3-12'
+WHERE display_name LIKE 'T5A%';
+
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 3),
+  arrl_page_reference = '3-13 to 3-22'
+WHERE display_name LIKE 'T5B%';
+
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 3),
+  arrl_page_reference = '3-23 to 3-30'
+WHERE display_name LIKE 'T5C%';
+
+-- Link T6 questions to Chapter 3 as well (Electronic Components)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 3),
+  arrl_page_reference = '3-31 to 3-42'
+WHERE display_name LIKE 'T6%';
+
+-- Link T7 questions to Chapter 5 (Amateur Radio Equipment)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 5),
+  arrl_page_reference = '5-21 to 5-35'
+WHERE display_name LIKE 'T7%';
+
+-- Link T8 questions to Chapter 6 (Communicating With Other Hams)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 6),
+  arrl_page_reference = '6-21 to 6-35'
+WHERE display_name LIKE 'T8%';
+
+-- Link T9 questions to Chapter 4 (Propagation, Antennas, and Feed Lines)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 4),
+  arrl_page_reference = '4-1 to 4-20'
+WHERE display_name LIKE 'T9%';
+
+-- Link T0 (Safety) questions to Chapter 9 (Safety)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'T' AND chapter_number = 9),
+  arrl_page_reference = '9-1 to 9-15'
+WHERE display_name LIKE 'T0%';
+
+-- Link General G1 questions to Chapter 2 (Rules and Regulations)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'G' AND chapter_number = 2),
+  arrl_page_reference = '2-1 to 2-20'
+WHERE display_name LIKE 'G1%';
+
+-- Link General G2 questions to Chapter 1 (Procedures and Practices)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'G' AND chapter_number = 1),
+  arrl_page_reference = '1-1 to 1-25'
+WHERE display_name LIKE 'G2%';
+
+-- Link General G3 questions to Chapter 7 (Propagation)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'G' AND chapter_number = 7),
+  arrl_page_reference = '7-1 to 7-18'
+WHERE display_name LIKE 'G3%';
+
+-- Link General G4 questions to Chapter 4 (Radio Signals and Equipment)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'G' AND chapter_number = 4),
+  arrl_page_reference = '4-1 to 4-25'
+WHERE display_name LIKE 'G4%';
+
+-- Link General G5 questions to Chapter 3 (Components and Circuits)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'G' AND chapter_number = 3),
+  arrl_page_reference = '3-1 to 3-30'
+WHERE display_name LIKE 'G5%';
+
+-- Link General G9 questions to Chapter 6 (Antennas and Feed Lines)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'G' AND chapter_number = 6),
+  arrl_page_reference = '6-1 to 6-25'
+WHERE display_name LIKE 'G9%';
+
+-- Link General G0 (Safety) questions to Chapter 5 (Electrical and RF Safety)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'G' AND chapter_number = 5),
+  arrl_page_reference = '5-1 to 5-15'
+WHERE display_name LIKE 'G0%';
+
+-- Link Extra E1 questions to Chapter 2 (Rules and Regulations)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'E' AND chapter_number = 2),
+  arrl_page_reference = '2-1 to 2-25'
+WHERE display_name LIKE 'E1%';
+
+-- Link Extra E2 questions to Chapter 1 (Operating Standards and Practices)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'E' AND chapter_number = 1),
+  arrl_page_reference = '1-1 to 1-30'
+WHERE display_name LIKE 'E2%';
+
+-- Link Extra E5 questions to Chapter 5 (Radio Circuits)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'E' AND chapter_number = 5),
+  arrl_page_reference = '5-1 to 5-35'
+WHERE display_name LIKE 'E5%';
+
+-- Link Extra E9 questions to Chapter 6 (Antennas)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'E' AND chapter_number = 6),
+  arrl_page_reference = '6-1 to 6-30'
+WHERE display_name LIKE 'E9%';
+
+-- Link Extra E0 (Safety) questions to Chapter 9 (Safety)
+UPDATE public.questions SET
+  arrl_chapter_id = (SELECT id FROM public.arrl_chapters WHERE license_type = 'E' AND chapter_number = 9),
+  arrl_page_reference = '9-1 to 9-20'
+WHERE display_name LIKE 'E0%';
+
+-- =============================================================================
 -- SUMMARY
 -- =============================================================================
 
@@ -1353,5 +1529,6 @@ BEGIN
   RAISE NOTICE 'Topics: %', (SELECT COUNT(*) FROM public.topics);
   RAISE NOTICE 'Topic-Question Links: %', (SELECT COUNT(*) FROM public.topic_questions);
   RAISE NOTICE 'ARRL Chapters: %', (SELECT COUNT(*) FROM public.arrl_chapters);
+  RAISE NOTICE 'Questions with Chapter Links: %', (SELECT COUNT(*) FROM public.questions WHERE arrl_chapter_id IS NOT NULL);
   RAISE NOTICE '========================================';
 END $$;

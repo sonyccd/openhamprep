@@ -7,8 +7,8 @@ import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
+import { QuestionListView } from "@/components/QuestionListView";
 import { useArrlChaptersWithCounts } from "@/hooks/useArrlChapters";
-import { ChapterLanding } from "@/components/ChapterLanding";
 import { SkipForward, RotateCcw, Loader2, ChevronRight, CheckCircle, ArrowLeft, ChevronLeft, Book } from "lucide-react";
 import { motion } from "framer-motion";
 import { TestType } from "@/types/navigation";
@@ -26,7 +26,7 @@ interface ChapterPracticeProps {
   testType: TestType;
 }
 
-type ChapterView = 'list' | 'landing' | 'practice';
+type ChapterView = 'list' | 'questions' | 'practice';
 
 // Map test type to license type
 const TEST_TYPE_TO_LICENSE: Record<TestType, LicenseType> = {
@@ -119,7 +119,7 @@ export function ChapterPractice({
 
   const handleSelectChapter = (chapter: ArrlChapterWithCount) => {
     setSelectedChapter(chapter);
-    setChapterView('landing');
+    setChapterView('questions');
     setQuestionHistory([]);
     setHistoryIndex(-1);
     setStats({
@@ -135,13 +135,24 @@ export function ChapterPractice({
     });
   };
 
-  const handleStartPractice = () => {
+  const handleStartPractice = (startIndex?: number) => {
     setChapterView('practice');
-    const result = getRandomQuestion();
-    if (result) {
-      setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
+
+    if (startIndex !== undefined && currentQuestions[startIndex]) {
+      // Start from a specific question
+      setQuestionHistory([{ question: currentQuestions[startIndex], selectedAnswer: null, showResult: false }]);
       setHistoryIndex(0);
+      setAskedIds([currentQuestions[startIndex].id]);
+    } else {
+      // Random start
+      const result = getRandomQuestion();
+      if (result) {
+        setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
+        setHistoryIndex(0);
+        setAskedIds([result.question.id]);
+      }
     }
+
     capture(ANALYTICS_EVENTS.SUBELEMENT_PRACTICE_STARTED, {
       chapter_id: selectedChapter?.id,
       chapter_number: selectedChapter?.chapterNumber,
@@ -149,8 +160,8 @@ export function ChapterPractice({
     });
   };
 
-  const handleBackToLanding = () => {
-    setChapterView('landing');
+  const handleBackToQuestions = () => {
+    setChapterView('questions');
     setQuestionHistory([]);
     setHistoryIndex(-1);
   };
@@ -334,9 +345,6 @@ export function ChapterPractice({
                           <h3 className="font-semibold text-foreground">
                             {chapter.title}
                           </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {chapter.questionCount} questions
-                          </p>
                         </div>
                       </div>
                       <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -370,14 +378,17 @@ export function ChapterPractice({
     );
   }
 
-  // Show chapter landing page
-  if (chapterView === 'landing') {
+  // Show question list view
+  if (chapterView === 'questions') {
     return (
-      <ChapterLanding
-        chapter={selectedChapter}
+      <QuestionListView
+        title={selectedChapter.title}
+        subtitle={`Chapter ${selectedChapter.chapterNumber} from the ARRL textbook`}
+        badge={`Ch. ${selectedChapter.chapterNumber}`}
         questions={currentQuestions}
         onBack={handleBackToList}
         onStartPractice={handleStartPractice}
+        description={selectedChapter.description || undefined}
       />
     );
   }
@@ -400,9 +411,9 @@ export function ChapterPractice({
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={handleBackToLanding} className="gap-2">
+          <Button variant="ghost" onClick={handleBackToQuestions} className="gap-2">
             <ArrowLeft className="w-4 h-4" />
-            Chapter Overview
+            Question List
           </Button>
           <div className="flex items-center gap-2">
             <KeyboardShortcutsHelp />

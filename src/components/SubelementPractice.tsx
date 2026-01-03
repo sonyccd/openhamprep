@@ -7,10 +7,10 @@ import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
+import { QuestionListView } from "@/components/QuestionListView";
 import { SkipForward, RotateCcw, Loader2, ChevronRight, CheckCircle, ArrowLeft, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { TopicLanding } from "@/components/TopicLanding";
 import { TestType } from "@/types/navigation";
 import { PageContainer } from "@/components/ui/page-container";
 
@@ -25,7 +25,7 @@ interface SubelementPracticeProps {
   testType: TestType;
 }
 
-type TopicView = 'list' | 'landing' | 'practice';
+type TopicView = 'list' | 'questions' | 'practice';
 
 const SUBELEMENT_NAMES: Record<string, Record<string, string>> = {
   technician: {
@@ -66,6 +66,20 @@ const SUBELEMENT_NAMES: Record<string, Record<string, string>> = {
   }
 };
 
+// Topic descriptions for each subelement
+const TOPIC_DESCRIPTIONS: Record<string, string> = {
+  T0: "Understanding FCC rules and regulations is fundamental to becoming a licensed amateur radio operator. This section covers the Commission's rules regarding station identification, authorized frequencies, power limits, and proper operating procedures.",
+  T1: "Operating procedures form the backbone of effective amateur radio communication. This topic covers standard practices for making contacts, handling emergency communications, and participating in nets.",
+  T2: "Radio waves are the foundation of all wireless communication. This section explores how radio signals behave, including concepts like frequency, wavelength, and the electromagnetic spectrum.",
+  T3: "Propagation determines how far and how reliably your signal travels. This topic covers the various ways radio waves travel from transmitter to receiver.",
+  T4: "Good amateur radio practices ensure safe, effective, and courteous operation. This section covers topics like RF safety, grounding, interference prevention, and station setup.",
+  T5: "Electrical principles are essential for understanding how radio equipment works. This topic covers fundamental concepts like Ohm's Law, power calculations, and basic circuit theory.",
+  T6: "Electronic components are the building blocks of all radio equipment. This section introduces resistors, capacitors, inductors, diodes, transistors, and integrated circuits.",
+  T7: "Station equipment knowledge helps you select, operate, and maintain your radio gear. This topic covers transceivers, antennas, feed lines, and accessories.",
+  T8: "Operating activities showcase the diverse world of amateur radio. This section covers various modes and activities including voice, digital modes, satellite communication, and emergency operations.",
+  T9: "Antennas and feed lines are critical to your station's performance. This topic covers antenna types, feed line characteristics, and matching systems.",
+};
+
 export function SubelementPractice({
   onBack,
   testType
@@ -92,7 +106,7 @@ export function SubelementPractice({
     total: 0
   });
   const [askedIds, setAskedIds] = useState<string[]>([]);
-  
+
   // Session history for back navigation
   const [questionHistory, setQuestionHistory] = useState<HistoryEntry[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -160,7 +174,7 @@ export function SubelementPractice({
 
   const handleSelectSubelement = (sub: string) => {
     setSelectedSubelement(sub);
-    setTopicView('landing');
+    setTopicView('questions');
     setQuestionHistory([]);
     setHistoryIndex(-1);
     setStats({
@@ -168,28 +182,39 @@ export function SubelementPractice({
       total: 0
     });
     setAskedIds([]);
-    
+
     capture(ANALYTICS_EVENTS.TOPIC_SELECTED, {
       subelement: sub,
       topic_name: getSubelementName(sub)
     });
   };
 
-  const handleStartPractice = () => {
+  const handleStartPractice = (startIndex?: number) => {
     setTopicView('practice');
-    const result = getRandomQuestion();
-    if (result) {
-      setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
+
+    if (startIndex !== undefined && currentQuestions[startIndex]) {
+      // Start from a specific question
+      setQuestionHistory([{ question: currentQuestions[startIndex], selectedAnswer: null, showResult: false }]);
       setHistoryIndex(0);
+      setAskedIds([currentQuestions[startIndex].id]);
+    } else {
+      // Random start
+      const result = getRandomQuestion();
+      if (result) {
+        setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
+        setHistoryIndex(0);
+        setAskedIds([result.question.id]);
+      }
     }
+
     capture(ANALYTICS_EVENTS.SUBELEMENT_PRACTICE_STARTED, {
       subelement: selectedSubelement,
       topic_name: getSubelementName(selectedSubelement || '')
     });
   };
 
-  const handleBackToLanding = () => {
-    setTopicView('landing');
+  const handleBackToQuestions = () => {
+    setTopicView('questions');
     setQuestionHistory([]);
     setHistoryIndex(-1);
   };
@@ -211,9 +236,9 @@ export function SubelementPractice({
 
   const handleSelectAnswer = async (answer: 'A' | 'B' | 'C' | 'D') => {
     if (showResult || !question) return;
-    
+
     updateCurrentEntry({ selectedAnswer: answer, showResult: true });
-    
+
     const isCorrect = answer === question.correctAnswer;
     setStats(prev => ({
       correct: prev.correct + (isCorrect ? 1 : 0),
@@ -323,28 +348,26 @@ export function SubelementPractice({
   if (topicView === 'list' || !selectedSubelement) {
     return (
       <PageContainer width="standard" mobileNavPadding>
-          <div className="flex items-center justify-end mb-8">
-            
-          </div>
+        <div className="flex items-center justify-end mb-8">
+        </div>
 
-          <motion.div initial={{
+        <motion.div initial={{
           opacity: 0,
           y: 10
         }} animate={{
           opacity: 1,
           y: 0
         }} className="mb-6">
-            <h1 className="text-2xl font-mono font-bold text-foreground mb-2">
-              Choose a Topic
-            </h1>
-            <p className="text-muted-foreground">
-              Focus on specific areas to strengthen your knowledge
-            </p>
-          </motion.div>
+          <h1 className="text-2xl font-mono font-bold text-foreground mb-2">
+            Choose a Topic
+          </h1>
+          <p className="text-muted-foreground">
+            Focus on specific areas to strengthen your knowledge
+          </p>
+        </motion.div>
 
-          <div className="grid gap-3">
-            {subelements.map((sub, index) => {
-            const count = questionsBySubelement[sub]?.length || 0;
+        <div className="grid gap-3">
+          {subelements.map((sub, index) => {
             return <motion.button key={sub} initial={{
               opacity: 0,
               x: -20
@@ -354,32 +377,39 @@ export function SubelementPractice({
             }} transition={{
               delay: index * 0.05
             }} onClick={() => handleSelectSubelement(sub)} className={cn("w-full p-4 rounded-xl border bg-card text-left", "hover:bg-secondary hover:border-foreground/20 hover:shadow-lg", "transition-all duration-200 group")}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center font-mono font-bold text-foreground">
-                        {sub}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground">
-                          {getSubelementName(sub)}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {count} questions
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center font-mono font-bold text-foreground">
+                    {sub}
                   </div>
-                </motion.button>;
+                  <div>
+                    <h3 className="font-semibold text-foreground">
+                      {getSubelementName(sub)}
+                    </h3>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </div>
+            </motion.button>;
           })}
-          </div>
+        </div>
       </PageContainer>
     );
   }
 
-  // Show topic landing page
-  if (topicView === 'landing') {
-    return <TopicLanding subelement={selectedSubelement} subelementName={getSubelementName(selectedSubelement || '')} questions={currentQuestions} onBack={handleBackToList} onStartPractice={handleStartPractice} />;
+  // Show question list view
+  if (topicView === 'questions') {
+    return (
+      <QuestionListView
+        title={getSubelementName(selectedSubelement)}
+        subtitle={`Subelement ${selectedSubelement}`}
+        badge={selectedSubelement}
+        questions={currentQuestions}
+        onBack={handleBackToList}
+        onStartPractice={handleStartPractice}
+        description={TOPIC_DESCRIPTIONS[selectedSubelement] || undefined}
+      />
+    );
   }
 
   // Show practice view
@@ -400,15 +430,15 @@ export function SubelementPractice({
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={handleBackToLanding} className="gap-2">
+          <Button variant="ghost" onClick={handleBackToQuestions} className="gap-2">
             <ArrowLeft className="w-4 h-4" />
-            Topic Overview
+            Question List
           </Button>
           <div className="flex items-center gap-2">
             <KeyboardShortcutsHelp />
             <div className="flex items-center gap-2 text-primary">
               <span className="font-mono font-bold">{selectedSubelement}</span>
-              <span className="text-muted-foreground">•</span>
+              <span className="text-muted-foreground">-</span>
               <span className="text-sm text-muted-foreground">
                 {getSubelementName(selectedSubelement || '')}
               </span>
@@ -418,12 +448,12 @@ export function SubelementPractice({
 
         {/* Progress & Stats Bar */}
         <motion.div initial={{
-        opacity: 0,
-        y: -10
-      }} animate={{
-        opacity: 1,
-        y: 0
-      }} className="bg-card border border-border rounded-lg p-4">
+          opacity: 0,
+          y: -10
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-6">
               <div className="text-center">
@@ -444,15 +474,15 @@ export function SubelementPractice({
               Reset
             </Button>
           </div>
-          
+
           {/* Topic progress bar */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
               <motion.div initial={{
-              width: 0
-            }} animate={{
-              width: `${progress}%`
-            }} className="h-full bg-primary rounded-full" />
+                width: 0
+              }} animate={{
+                width: `${progress}%`
+              }} className="h-full bg-primary rounded-full" />
             </div>
             <span className="text-xs text-muted-foreground font-mono">
               {askedIds.length}/{currentQuestions.length}
