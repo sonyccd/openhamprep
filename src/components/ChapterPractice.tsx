@@ -21,6 +21,9 @@ interface HistoryEntry {
   showResult: boolean;
 }
 
+// Limit question history to prevent unbounded memory growth
+const MAX_HISTORY_SIZE = 50;
+
 interface ChapterPracticeProps {
   onBack: () => void;
   testType: TestType;
@@ -115,6 +118,22 @@ export function ChapterPractice({
       }
       return newHistory;
     });
+  };
+
+  // Add entry to history with size limit to prevent unbounded memory growth
+  const addToHistory = (entry: HistoryEntry) => {
+    setQuestionHistory(prev => {
+      const newHistory = [...prev, entry];
+      // Trim oldest entries if exceeding limit
+      if (newHistory.length > MAX_HISTORY_SIZE) {
+        const trimmed = newHistory.slice(newHistory.length - MAX_HISTORY_SIZE);
+        // Adjust historyIndex to account for removed entries
+        setHistoryIndex(idx => Math.max(0, idx - (newHistory.length - MAX_HISTORY_SIZE)));
+        return trimmed;
+      }
+      return newHistory;
+    });
+    setHistoryIndex(prev => Math.min(prev + 1, MAX_HISTORY_SIZE - 1));
   };
 
   const handleSelectChapter = (chapter: ArrlChapterWithCount) => {
@@ -213,8 +232,7 @@ export function ChapterPractice({
         setHistoryIndex(0);
       } else {
         setAskedIds(newAskedIds);
-        setQuestionHistory(prev => [...prev, { question: result.question, selectedAnswer: null, showResult: false }]);
-        setHistoryIndex(prev => prev + 1);
+        addToHistory({ question: result.question, selectedAnswer: null, showResult: false });
       }
     }
   };
@@ -231,8 +249,7 @@ export function ChapterPractice({
         setHistoryIndex(0);
       } else {
         setAskedIds(newAskedIds);
-        setQuestionHistory(prev => [...prev, { question: result.question, selectedAnswer: null, showResult: false }]);
-        setHistoryIndex(prev => prev + 1);
+        addToHistory({ question: result.question, selectedAnswer: null, showResult: false });
       }
     }
   };

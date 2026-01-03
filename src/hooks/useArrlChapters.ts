@@ -148,8 +148,10 @@ export function useChapterMutations() {
       return transformChapter(data as ArrlChapterRow);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['arrl-chapters'] });
+      // Invalidate both queries - arrl-chapters-with-counts fetches chapters internally
+      // but we still need to invalidate arrl-chapters for other consumers
       queryClient.invalidateQueries({ queryKey: ['arrl-chapters-with-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['arrl-chapters'] });
       toast.success('Chapter added successfully');
     },
     onError: (error: Error) => {
@@ -190,8 +192,9 @@ export function useChapterMutations() {
       return transformChapter(data as ArrlChapterRow);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['arrl-chapters'] });
+      // Invalidate in order of importance - with-counts is primary UI consumer
       queryClient.invalidateQueries({ queryKey: ['arrl-chapters-with-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['arrl-chapters'] });
       queryClient.invalidateQueries({ queryKey: ['arrl-chapter'] });
       toast.success('Chapter updated successfully');
     },
@@ -214,8 +217,9 @@ export function useChapterMutations() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['arrl-chapters'] });
+      // Invalidate in order of importance - with-counts is primary UI consumer
       queryClient.invalidateQueries({ queryKey: ['arrl-chapters-with-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['arrl-chapters'] });
       toast.success('Chapter deleted successfully');
     },
     onError: (error: Error) => {

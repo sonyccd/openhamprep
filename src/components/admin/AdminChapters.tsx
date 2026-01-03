@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Search, Loader2, Pencil, Trash2, Book, FileText } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -64,9 +65,11 @@ export function AdminChapters() {
   const handleAddChapter = () => {
     const chapterNum = parseInt(newChapterNumber, 10);
     if (isNaN(chapterNum) || chapterNum < 1) {
+      toast.error("Please enter a valid chapter number (1 or greater)");
       return;
     }
     if (!newTitle.trim()) {
+      toast.error("Please enter a chapter title");
       return;
     }
 
@@ -75,7 +78,7 @@ export function AdminChapters() {
         licenseType: selectedLicense,
         chapterNumber: chapterNum,
         title: newTitle.trim(),
-        description: newDescription.trim() || undefined,
+        description: newDescription.trim() || null,
         displayOrder: chapterNum,
       },
       {
@@ -99,9 +102,11 @@ export function AdminChapters() {
 
     const chapterNum = parseInt(editChapterNumber, 10);
     if (isNaN(chapterNum) || chapterNum < 1) {
+      toast.error("Please enter a valid chapter number (1 or greater)");
       return;
     }
     if (!editTitle.trim()) {
+      toast.error("Please enter a chapter title");
       return;
     }
 
