@@ -16,6 +16,8 @@ interface UpdateQuestionParams {
     explanation?: string | null;
     figure_url?: string | null;
     forum_url?: string | null;
+    arrl_chapter_id?: string | null;
+    arrl_page_reference?: string | null;
   };
   originalQuestion: Question;
 }
@@ -113,6 +115,18 @@ export function useQuestionMutations(testType: 'technician' | 'general' | 'extra
           to: question.forum_url || '',
         };
       }
+      if ((originalQuestion.arrl_chapter_id || '') !== (question.arrl_chapter_id || '')) {
+        changes.arrl_chapter_id = {
+          from: originalQuestion.arrl_chapter_id || '',
+          to: question.arrl_chapter_id || '',
+        };
+      }
+      if ((originalQuestion.arrl_page_reference || '') !== (question.arrl_page_reference || '')) {
+        changes.arrl_page_reference = {
+          from: originalQuestion.arrl_page_reference || '',
+          to: question.arrl_page_reference || '',
+        };
+      }
 
       const historyEntry: EditHistoryEntry = {
         user_id: user?.id || '',
@@ -133,6 +147,8 @@ export function useQuestionMutations(testType: 'technician' | 'general' | 'extra
           explanation: question.explanation?.trim() || null,
           figure_url: question.figure_url || null,
           forum_url: question.forum_url || null,
+          arrl_chapter_id: question.arrl_chapter_id || null,
+          arrl_page_reference: question.arrl_page_reference || null,
           edit_history: JSON.parse(JSON.stringify([...existingHistory, historyEntry])),
         })
         .eq('id', question.id);

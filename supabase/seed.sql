@@ -1281,6 +1281,57 @@ WHERE t.slug = 'station-setup'
 ON CONFLICT DO NOTHING;
 
 -- =============================================================================
+-- ARRL TEXTBOOK CHAPTERS (Sample chapters for each license type)
+-- =============================================================================
+
+-- Technician ARRL Ham Radio License Manual chapters
+INSERT INTO public.arrl_chapters (license_type, chapter_number, title, description, display_order) VALUES
+  ('T', 1, 'Welcome to Amateur Radio', 'Introduction to ham radio, its history, and the amateur radio community', 1),
+  ('T', 2, 'Radio and Signals Fundamentals', 'Basic concepts of radio waves, frequencies, and signal propagation', 2),
+  ('T', 3, 'Electricity, Components, and Circuits', 'Electrical principles, components like resistors and capacitors, and basic circuits', 3),
+  ('T', 4, 'Propagation, Antennas, and Feed Lines', 'How radio signals travel and antenna basics', 4),
+  ('T', 5, 'Amateur Radio Equipment', 'Transceivers, receivers, and station accessories', 5),
+  ('T', 6, 'Communicating With Other Hams', 'Operating procedures, phonetics, and making contacts', 6),
+  ('T', 7, 'Licensing Regulations', 'FCC rules, privileges, and license classes', 7),
+  ('T', 8, 'Operating Regulations', 'Band plans, identification requirements, and prohibited practices', 8),
+  ('T', 9, 'Safety', 'RF safety, electrical safety, and tower safety', 9)
+ON CONFLICT (license_type, chapter_number) DO UPDATE SET
+  title = EXCLUDED.title,
+  description = EXCLUDED.description,
+  display_order = EXCLUDED.display_order;
+
+-- General ARRL Ham Radio License Manual chapters
+INSERT INTO public.arrl_chapters (license_type, chapter_number, title, description, display_order) VALUES
+  ('G', 1, 'Procedures and Practices', 'General operating procedures and best practices', 1),
+  ('G', 2, 'Rules and Regulations', 'FCC rules specific to General class privileges', 2),
+  ('G', 3, 'Components and Circuits', 'Advanced component theory and circuit design', 3),
+  ('G', 4, 'Radio Signals and Equipment', 'Receivers, transmitters, and transceivers', 4),
+  ('G', 5, 'Electrical and RF Safety', 'Advanced safety considerations', 5),
+  ('G', 6, 'Antennas and Feed Lines', 'Antenna design, construction, and transmission lines', 6),
+  ('G', 7, 'Propagation', 'HF propagation modes, skip, and ionospheric effects', 7),
+  ('G', 8, 'Digital Modes', 'Digital communication modes and protocols', 8)
+ON CONFLICT (license_type, chapter_number) DO UPDATE SET
+  title = EXCLUDED.title,
+  description = EXCLUDED.description,
+  display_order = EXCLUDED.display_order;
+
+-- Extra ARRL Ham Radio License Manual chapters
+INSERT INTO public.arrl_chapters (license_type, chapter_number, title, description, display_order) VALUES
+  ('E', 1, 'Operating Standards and Practices', 'Advanced operating techniques and DXing', 1),
+  ('E', 2, 'Rules and Regulations', 'International regulations and advanced FCC rules', 2),
+  ('E', 3, 'Radio Signals and Measurements', 'Modulation, signal analysis, and test equipment', 3),
+  ('E', 4, 'Components and Building Blocks', 'Advanced components, semiconductors, and ICs', 4),
+  ('E', 5, 'Radio Circuits', 'Oscillators, filters, and amplifier design', 5),
+  ('E', 6, 'Antennas', 'Advanced antenna theory and design', 6),
+  ('E', 7, 'Transmission Lines', 'Transmission line theory and matching', 7),
+  ('E', 8, 'Topics in Radio Propagation', 'Advanced propagation analysis and prediction', 8),
+  ('E', 9, 'Safety', 'RF exposure evaluation and compliance', 9)
+ON CONFLICT (license_type, chapter_number) DO UPDATE SET
+  title = EXCLUDED.title,
+  description = EXCLUDED.description,
+  display_order = EXCLUDED.display_order;
+
+-- =============================================================================
 -- SUMMARY
 -- =============================================================================
 
@@ -1301,5 +1352,6 @@ BEGIN
   RAISE NOTICE 'Exam Sessions: %', (SELECT COUNT(*) FROM public.exam_sessions);
   RAISE NOTICE 'Topics: %', (SELECT COUNT(*) FROM public.topics);
   RAISE NOTICE 'Topic-Question Links: %', (SELECT COUNT(*) FROM public.topic_questions);
+  RAISE NOTICE 'ARRL Chapters: %', (SELECT COUNT(*) FROM public.arrl_chapters);
   RAISE NOTICE '========================================';
 END $$;

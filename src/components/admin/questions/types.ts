@@ -25,6 +25,8 @@ export interface Question {
   discourse_sync_at?: string | null;
   discourse_sync_error?: string | null;
   linked_topic_ids?: string[];
+  arrl_chapter_id?: string | null;  // ARRL textbook chapter reference
+  arrl_page_reference?: string | null;  // Page number or range in ARRL textbook
 }
 
 export interface AdminQuestionsProps {

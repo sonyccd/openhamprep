@@ -37,6 +37,8 @@ export interface Question {
   forumUrl?: string | null;
   figureUrl?: string | null;
   topics?: QuestionTopic[];  // Related topics for this question
+  arrlChapterId?: string | null;  // ARRL textbook chapter reference
+  arrlPageReference?: string | null;  // Page number or range in ARRL textbook
 }
 
 interface DbTopicQuestion {
@@ -61,6 +63,8 @@ interface DbQuestion {
   forum_url: string | null;
   figure_url: string | null;
   topic_questions?: DbTopicQuestion[];
+  arrl_chapter_id: string | null;
+  arrl_page_reference: string | null;
 }
 
 const answerMap: Record<number, 'A' | 'B' | 'C' | 'D'> = {
@@ -101,6 +105,8 @@ function transformQuestion(dbQuestion: DbQuestion): Question {
     forumUrl: dbQuestion.forum_url,
     figureUrl: dbQuestion.figure_url,
     topics: topics.length > 0 ? topics : undefined,
+    arrlChapterId: dbQuestion.arrl_chapter_id,
+    arrlPageReference: dbQuestion.arrl_page_reference,
   };
 }
 

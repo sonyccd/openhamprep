@@ -10,6 +10,7 @@ import {
   MapPin,
   GraduationCap,
   Library,
+  Book,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -87,6 +88,12 @@ export function DashboardSidebar({
         id: 'subelement-practice',
         label: 'By Subelement',
         icon: BookOpen,
+        disabled: !isTestAvailable,
+      },
+      {
+        id: 'chapter-practice',
+        label: 'By Chapter',
+        icon: Book,
         disabled: !isTestAvailable,
       },
       {

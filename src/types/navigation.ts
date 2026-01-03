@@ -5,6 +5,7 @@ export type View =
   | 'weak-questions'
   | 'bookmarks'
   | 'subelement-practice'
+  | 'chapter-practice'
   | 'review-test'
   | 'glossary'
   | 'glossary-flashcards'
