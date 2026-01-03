@@ -120,7 +120,8 @@ export function useQuestions(testType?: TestType) {
           topic_questions(
             topic:topics(id, slug, title, is_published)
           )
-        `);
+        `)
+        .range(0, 1999); // Bypass Supabase's default 1000 row limit
 
       if (error) throw error;
       let questions = (data as DbQuestion[]).map(transformQuestion);

@@ -64,9 +64,11 @@ describe('TopicQuestionManager', () => {
       if (table === 'questions') {
         return {
           select: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: mockQuestions,
-              error: null,
+            order: vi.fn().mockReturnValue({
+              range: vi.fn().mockResolvedValue({
+                data: mockQuestions,
+                error: null,
+              }),
             }),
           }),
         };
@@ -90,7 +92,9 @@ describe('TopicQuestionManager', () => {
       return {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({ data: [], error: null }),
-          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+          order: vi.fn().mockReturnValue({
+            range: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }),
         }),
       };
     });
@@ -308,9 +312,11 @@ describe('TopicQuestionManager', () => {
         if (table === 'questions') {
           return {
             select: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: mockQuestions,
-                error: null,
+              order: vi.fn().mockReturnValue({
+                range: vi.fn().mockResolvedValue({
+                  data: mockQuestions,
+                  error: null,
+                }),
               }),
             }),
           };
@@ -359,9 +365,11 @@ describe('TopicQuestionManager', () => {
         if (table === 'questions') {
           return {
             select: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: mockQuestions,
-                error: null,
+              order: vi.fn().mockReturnValue({
+                range: vi.fn().mockResolvedValue({
+                  data: mockQuestions,
+                  error: null,
+                }),
               }),
             }),
           };
@@ -406,9 +414,11 @@ describe('TopicQuestionManager', () => {
         if (table === 'questions') {
           return {
             select: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: mockQuestions,
-                error: null,
+              order: vi.fn().mockReturnValue({
+                range: vi.fn().mockResolvedValue({
+                  data: mockQuestions,
+                  error: null,
+                }),
               }),
             }),
           };
@@ -455,9 +465,11 @@ describe('TopicQuestionManager', () => {
         if (table === 'questions') {
           return {
             select: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: mockQuestions,
-                error: null,
+              order: vi.fn().mockReturnValue({
+                range: vi.fn().mockResolvedValue({
+                  data: mockQuestions,
+                  error: null,
+                }),
               }),
             }),
           };
@@ -503,9 +515,11 @@ describe('TopicQuestionManager', () => {
         if (table === 'questions') {
           return {
             select: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: mockQuestions,
-                error: null,
+              order: vi.fn().mockReturnValue({
+                range: vi.fn().mockResolvedValue({
+                  data: mockQuestions,
+                  error: null,
+                }),
               }),
             }),
           };
@@ -572,9 +586,11 @@ describe('TopicQuestionManager', () => {
         if (table === 'questions') {
           return {
             select: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: mockQuestions,
-                error: null,
+              order: vi.fn().mockReturnValue({
+                range: vi.fn().mockResolvedValue({
+                  data: mockQuestions,
+                  error: null,
+                }),
               }),
             }),
           };
