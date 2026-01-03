@@ -53,7 +53,9 @@ export function useArrlChapters(licenseType?: LicenseType) {
 }
 
 /**
- * Fetch ARRL chapters with question counts for display
+ * Fetch ARRL chapters with question counts for display.
+ * Uses a server-side RPC function for efficient aggregation instead of
+ * fetching all questions client-side.
  */
 export function useArrlChaptersWithCounts(licenseType?: LicenseType) {
   return useQuery({
@@ -73,19 +75,18 @@ export function useArrlChaptersWithCounts(licenseType?: LicenseType) {
       const { data: chapters, error: chaptersError } = await chapterQuery;
       if (chaptersError) throw chaptersError;
 
-      // Then fetch question counts per chapter
+      // Fetch question counts using efficient server-side aggregation
       const { data: counts, error: countsError } = await supabase
-        .from('questions')
-        .select('arrl_chapter_id')
-        .not('arrl_chapter_id', 'is', null);
+        .rpc('get_chapter_question_counts', {
+          license_prefix: licenseType || null,
+        });
 
       if (countsError) throw countsError;
 
-      // Build count map
+      // Build count map from RPC results
       const countMap = new Map<string, number>();
-      (counts || []).forEach((q) => {
-        const chapterId = q.arrl_chapter_id as string;
-        countMap.set(chapterId, (countMap.get(chapterId) || 0) + 1);
+      (counts || []).forEach((row: { chapter_id: string; question_count: number }) => {
+        countMap.set(row.chapter_id, row.question_count);
       });
 
       // Transform and add counts

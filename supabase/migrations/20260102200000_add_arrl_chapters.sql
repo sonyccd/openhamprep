@@ -1,6 +1,18 @@
 -- Migration: Add ARRL textbook chapters and question references
 -- This enables admins to assign ARRL book chapter and page references to questions,
 -- and allows users to study by book chapter.
+--
+-- Rollback instructions:
+-- 1. DROP INDEX IF EXISTS idx_arrl_chapters_display_order;
+-- 2. DROP INDEX IF EXISTS idx_arrl_chapters_license_type;
+-- 3. DROP INDEX IF EXISTS idx_questions_arrl_chapter_id;
+-- 4. DROP POLICY IF EXISTS "Admin delete access for arrl_chapters" ON public.arrl_chapters;
+-- 5. DROP POLICY IF EXISTS "Admin update access for arrl_chapters" ON public.arrl_chapters;
+-- 6. DROP POLICY IF EXISTS "Admin insert access for arrl_chapters" ON public.arrl_chapters;
+-- 7. DROP POLICY IF EXISTS "Public read access for arrl_chapters" ON public.arrl_chapters;
+-- 8. ALTER TABLE public.questions DROP COLUMN IF EXISTS arrl_page_reference;
+-- 9. ALTER TABLE public.questions DROP COLUMN IF EXISTS arrl_chapter_id;
+-- 10. DROP TABLE IF EXISTS public.arrl_chapters;
 
 -- Create arrl_chapters table for textbook chapter definitions
 CREATE TABLE IF NOT EXISTS public.arrl_chapters (
