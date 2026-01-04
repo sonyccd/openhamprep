@@ -306,9 +306,10 @@ describe('SubelementPractice Stats', () => {
     fireEvent.click(screen.getByRole('button', { name: /practice all questions/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Correct')).toBeInTheDocument();
-      expect(screen.getByText('Incorrect')).toBeInTheDocument();
-      expect(screen.getByText('Score')).toBeInTheDocument();
+      // Stats are now displayed inline as numbers without labels
+      // Look for the correct/incorrect count display (0 / 0 format)
+      const statsContainer = screen.getByText('0', { selector: '.text-success' });
+      expect(statsContainer).toBeInTheDocument();
     });
   });
 });
