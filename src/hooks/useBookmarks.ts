@@ -14,12 +14,16 @@ export function useBookmarks() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bookmarked_questions')
-        .select('*')
+        .select('*, questions!inner(display_name)')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
-      return data;
+      // Flatten the joined data to include display_name at the top level
+      return data?.map(bookmark => ({
+        ...bookmark,
+        display_name: bookmark.questions?.display_name
+      })) || [];
     },
     enabled: !!user,
     staleTime: 1000 * 60 * 2, // Cache for 2 minutes
