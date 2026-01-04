@@ -1,0 +1,3 @@
+-- This migration was previously applied to production.
+-- Empty placeholder to maintain migration history consistency.
+-- The onboarding_completed column was dropped in migration 20251231100000.
