@@ -1,18 +1,13 @@
 import { useState, useMemo } from "react";
-import { Search, BookText, Layers, Loader2 } from "lucide-react";
+import { Search, BookText, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageContainer } from "@/components/ui/page-container";
 
-interface GlossaryProps {
-  onStartFlashcards: () => void;
-}
-
-export function Glossary({ onStartFlashcards }: GlossaryProps) {
+export function Glossary() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: terms = [], isLoading } = useQuery({
@@ -66,20 +61,14 @@ export function Glossary({ onStartFlashcards }: GlossaryProps) {
   return (
     <PageContainer width="wide" className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <BookText className="w-6 h-6 text-primary" />
-            Glossary
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {terms.length} terms • Search or browse ham radio terminology
-          </p>
-        </div>
-        <Button onClick={onStartFlashcards} className="gap-2">
-          <Layers className="w-4 h-4" />
-          Study Flashcards
-        </Button>
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <BookText className="w-6 h-6 text-primary" />
+          Glossary
+        </h1>
+        <p className="text-muted-foreground text-base mt-1">
+          {terms.length} terms • Search or browse ham radio terminology
+        </p>
       </div>
 
       {/* Search */}
@@ -113,8 +102,8 @@ export function Glossary({ onStartFlashcards }: GlossaryProps) {
                       className="bg-card/50 border-border/50 hover:border-primary/30 transition-colors"
                     >
                       <CardContent className="py-3 px-4">
-                        <h3 className="font-semibold text-foreground">{term.term}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{term.definition}</p>
+                        <h3 className="font-semibold text-foreground text-lg">{term.term}</h3>
+                        <p className="text-base text-muted-foreground mt-1">{term.definition}</p>
                       </CardContent>
                     </Card>
                   ))}

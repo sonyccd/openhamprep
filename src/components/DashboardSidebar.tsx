@@ -11,6 +11,7 @@ import {
   GraduationCap,
   Library,
   Book,
+  Layers,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -104,6 +105,7 @@ export function DashboardSidebar({
         disabled: !isTestAvailable || weakQuestionCount === 0,
       },
       { id: 'bookmarks', label: 'Bookmarked', icon: Bookmark, badge: bookmarkCount },
+      { id: 'glossary-flashcards', label: 'Study Terms', icon: Layers },
     ],
   };
 

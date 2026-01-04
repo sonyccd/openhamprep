@@ -37,10 +37,6 @@ function createWrapper() {
 }
 
 describe('Glossary', () => {
-  const defaultProps = {
-    onStartFlashcards: vi.fn(),
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -54,7 +50,7 @@ describe('Glossary', () => {
       // Make the query never resolve
       mockOrder.mockReturnValue(new Promise(() => {}));
 
-      render(<Glossary {...defaultProps} />, { wrapper: createWrapper() });
+      render(<Glossary />, { wrapper: createWrapper() });
 
       // Check for the loading spinner by its class (Loader2 from lucide-react)
       const spinner = document.querySelector('.animate-spin');
@@ -64,7 +60,7 @@ describe('Glossary', () => {
 
   describe('Header', () => {
     it('displays glossary title', async () => {
-      render(<Glossary {...defaultProps} />, { wrapper: createWrapper() });
+      render(<Glossary />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByText('Glossary')).toBeInTheDocument();
@@ -72,40 +68,17 @@ describe('Glossary', () => {
     });
 
     it('displays term count', async () => {
-      render(<Glossary {...defaultProps} />, { wrapper: createWrapper() });
+      render(<Glossary />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByText(/5 terms/)).toBeInTheDocument();
       });
     });
-
-    it('displays Study Flashcards button', async () => {
-      render(<Glossary {...defaultProps} />, { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /study flashcards/i })).toBeInTheDocument();
-      });
-    });
-
-    it('calls onStartFlashcards when button is clicked', async () => {
-      const user = userEvent.setup();
-      const onStartFlashcards = vi.fn();
-
-      render(<Glossary onStartFlashcards={onStartFlashcards} />, { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /study flashcards/i })).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByRole('button', { name: /study flashcards/i }));
-
-      expect(onStartFlashcards).toHaveBeenCalledTimes(1);
-    });
   });
 
   describe('Search', () => {
     it('displays search input', async () => {
-      render(<Glossary {...defaultProps} />, { wrapper: createWrapper() });
+      render(<Glossary />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByPlaceholderText(/search terms or definitions/i)).toBeInTheDocument();
@@ -115,7 +88,7 @@ describe('Glossary', () => {
     it('filters terms by search query in term name', async () => {
       const user = userEvent.setup();
 
-      render(<Glossary {...defaultProps} />, { wrapper: createWrapper() });
+      render(<Glossary />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByText('Amateur Radio')).toBeInTheDocument();
@@ -133,7 +106,7 @@ describe('Glossary', () => {
     it('filters terms by search query in definition', async () => {
       const user = userEvent.setup();
 
-      render(<Glossary {...defaultProps} />, { wrapper: createWrapper() });
+      render(<Glossary />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByText('Amateur Radio')).toBeInTheDocument();
@@ -151,7 +124,7 @@ describe('Glossary', () => {
     it('shows no results message when search has no matches', async () => {
       const user = userEvent.setup();
 
-      render(<Glossary {...defaultProps} />, { wrapper: createWrapper() });
+      render(<Glossary />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByText('Amateur Radio')).toBeInTheDocument();
@@ -167,7 +140,7 @@ describe('Glossary', () => {
     it('is case insensitive', async () => {
       const user = userEvent.setup();
 
-      render(<Glossary {...defaultProps} />, { wrapper: createWrapper() });
+      render(<Glossary />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByText('Amateur Radio')).toBeInTheDocument();
@@ -183,7 +156,7 @@ describe('Glossary', () => {
 
   describe('Term Display', () => {
     it('displays all terms', async () => {
-      render(<Glossary {...defaultProps} />, { wrapper: createWrapper() });
+      render(<Glossary />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByText('Amateur Radio')).toBeInTheDocument();
@@ -195,7 +168,7 @@ describe('Glossary', () => {
     });
 
     it('displays term definitions', async () => {
-      render(<Glossary {...defaultProps} />, { wrapper: createWrapper() });
+      render(<Glossary />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByText('Non-commercial radio communication')).toBeInTheDocument();
@@ -207,7 +180,7 @@ describe('Glossary', () => {
 
   describe('Alphabetical Grouping', () => {
     it('groups terms by first letter', async () => {
-      render(<Glossary {...defaultProps} />, { wrapper: createWrapper() });
+      render(<Glossary />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         // Should have letter headers A, B, C, #
@@ -219,7 +192,7 @@ describe('Glossary', () => {
     });
 
     it('places non-alphabetic terms under #', async () => {
-      render(<Glossary {...defaultProps} />, { wrapper: createWrapper() });
+      render(<Glossary />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         // '73' should be grouped under '#'
@@ -233,7 +206,7 @@ describe('Glossary', () => {
     it('handles empty terms list', async () => {
       mockOrder.mockResolvedValueOnce({ data: [], error: null });
 
-      render(<Glossary {...defaultProps} />, { wrapper: createWrapper() });
+      render(<Glossary />, { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(screen.getByText(/0 terms/)).toBeInTheDocument();

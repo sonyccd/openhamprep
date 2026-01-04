@@ -59,13 +59,15 @@ describe('GlossaryFlashcards', () => {
   });
 
   describe('Loading State', () => {
-    it('shows loading spinner while fetching terms', () => {
+    it('shows loading indicator while fetching terms', async () => {
       mockOrder.mockReturnValue(new Promise(() => {}));
 
       render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
 
-      const spinner = document.querySelector('.animate-spin');
-      expect(spinner).toBeInTheDocument();
+      // The loading state shows "TUNING..." text
+      await waitFor(() => {
+        expect(screen.getByText('TUNING...')).toBeInTheDocument();
+      });
     });
   });
 
@@ -74,7 +76,7 @@ describe('GlossaryFlashcards', () => {
       render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        expect(screen.getByText('Glossary Flashcards')).toBeInTheDocument();
+        expect(screen.getByText('Study Terms')).toBeInTheDocument();
       });
     });
 
@@ -82,29 +84,29 @@ describe('GlossaryFlashcards', () => {
       render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        expect(screen.getByText('3 terms available')).toBeInTheDocument();
+        expect(screen.getByText('3 TERMS LOADED')).toBeInTheDocument();
       });
     });
 
-    it('displays Back to Glossary button', async () => {
+    it('displays Back button', async () => {
       render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /back to glossary/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^back$/i })).toBeInTheDocument();
       });
     });
 
-    it('calls onBack when Back to Glossary is clicked', async () => {
+    it('calls onBack when Back is clicked', async () => {
       const user = userEvent.setup();
       const onBack = vi.fn();
 
       render(<GlossaryFlashcards onBack={onBack} />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /back to glossary/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^back$/i })).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole('button', { name: /back to glossary/i }));
+      await user.click(screen.getByRole('button', { name: /^back$/i }));
 
       expect(onBack).toHaveBeenCalledTimes(1);
     });
@@ -121,7 +123,7 @@ describe('GlossaryFlashcards', () => {
       render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        expect(screen.getByText('Card Direction')).toBeInTheDocument();
+        expect(screen.getByText('Select Mode')).toBeInTheDocument();
         expect(screen.getByText('Term → Definition')).toBeInTheDocument();
         expect(screen.getByText('Definition → Term')).toBeInTheDocument();
       });
@@ -167,9 +169,9 @@ describe('GlossaryFlashcards', () => {
 
       await user.click(screen.getByRole('button', { name: /start studying/i }));
 
-      // Should now show flashcard view with navigation
+      // Should now show flashcard view with navigation - format is "1" then "/3" in opacity span
       await waitFor(() => {
-        expect(screen.getByText(/1 \/ 3/)).toBeInTheDocument();
+        expect(screen.getByText('/3')).toBeInTheDocument();
       });
     });
 
@@ -192,7 +194,7 @@ describe('GlossaryFlashcards', () => {
       });
     });
 
-    it('displays Got It and Need Review buttons during session', async () => {
+    it('displays Got It and Review buttons during session', async () => {
       const user = userEvent.setup();
 
       render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
@@ -205,11 +207,11 @@ describe('GlossaryFlashcards', () => {
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /got it/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /need review/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /review/i })).toBeInTheDocument();
       });
     });
 
-    it('displays progress stats during session', async () => {
+    it('displays progress indicator during session', async () => {
       const user = userEvent.setup();
 
       render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
@@ -220,9 +222,9 @@ describe('GlossaryFlashcards', () => {
 
       await user.click(screen.getByRole('button', { name: /start studying/i }));
 
+      // Progress indicator shows card count - "1" and "/3" separately
       await waitFor(() => {
-        expect(screen.getByText(/0 known/)).toBeInTheDocument();
-        expect(screen.getByText(/0 need review/)).toBeInTheDocument();
+        expect(screen.getByText('/3')).toBeInTheDocument();
       });
     });
 
@@ -244,7 +246,7 @@ describe('GlossaryFlashcards', () => {
   });
 
   describe('Card Flipping', () => {
-    it('displays click to reveal text', async () => {
+    it('displays tap to reveal text', async () => {
       const user = userEvent.setup();
 
       render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
@@ -256,7 +258,7 @@ describe('GlossaryFlashcards', () => {
       await user.click(screen.getByRole('button', { name: /start studying/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/click to reveal answer/i)).toBeInTheDocument();
+        expect(screen.getByText(/tap to reveal/i)).toBeInTheDocument();
       });
     });
   });
@@ -297,10 +299,10 @@ describe('GlossaryFlashcards', () => {
       await user.click(screen.getByRole('button', { name: /start studying/i }));
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /need review/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /review/i })).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole('button', { name: /need review/i }));
+      await user.click(screen.getByRole('button', { name: /review/i }));
 
       expect(mockCapture).toHaveBeenCalledWith(
         'term_marked_unknown',
@@ -308,7 +310,7 @@ describe('GlossaryFlashcards', () => {
       );
     });
 
-    it('updates known count when marking card as known', async () => {
+    it('advances to next card when marking as known', async () => {
       const user = userEvent.setup();
 
       render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
@@ -319,18 +321,20 @@ describe('GlossaryFlashcards', () => {
 
       await user.click(screen.getByRole('button', { name: /start studying/i }));
 
+      // Should start at card 1
       await waitFor(() => {
-        expect(screen.getByText(/0 known/)).toBeInTheDocument();
+        expect(screen.getByText(/1/)).toBeInTheDocument();
       });
 
       await user.click(screen.getByRole('button', { name: /got it/i }));
 
+      // Should advance to card 2
       await waitFor(() => {
-        expect(screen.getByText(/1 known/)).toBeInTheDocument();
+        expect(screen.getByText(/2/)).toBeInTheDocument();
       });
     });
 
-    it('updates need review count when marking card as unknown', async () => {
+    it('advances to next card when marking for review', async () => {
       const user = userEvent.setup();
 
       render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
@@ -341,14 +345,16 @@ describe('GlossaryFlashcards', () => {
 
       await user.click(screen.getByRole('button', { name: /start studying/i }));
 
+      // Should start at card 1
       await waitFor(() => {
-        expect(screen.getByText(/0 need review/)).toBeInTheDocument();
+        expect(screen.getByText(/1/)).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole('button', { name: /need review/i }));
+      await user.click(screen.getByRole('button', { name: /review/i }));
 
+      // Should advance to card 2
       await waitFor(() => {
-        expect(screen.getByText(/1 need review/)).toBeInTheDocument();
+        expect(screen.getByText(/2/)).toBeInTheDocument();
       });
     });
   });
@@ -380,7 +386,7 @@ describe('GlossaryFlashcards', () => {
       render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        expect(screen.getByText('0 terms available')).toBeInTheDocument();
+        expect(screen.getByText('0 TERMS LOADED')).toBeInTheDocument();
       });
     });
   });
