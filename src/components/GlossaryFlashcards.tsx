@@ -1,9 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
-import { ArrowLeft, RotateCcw, Shuffle, ChevronLeft, ChevronRight, Eye, EyeOff, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, RotateCcw, Shuffle, ChevronLeft, ChevronRight, Zap, Radio, Waves } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -45,14 +42,13 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
         .from('glossary_terms')
         .select('*')
         .order('term', { ascending: true });
-      
+
       if (error) throw error;
       return data as GlossaryTerm[];
     }
   });
 
   const startStudy = useCallback(() => {
-    // Random shuffle all terms
     const termsToStudy = [...terms];
     for (let i = termsToStudy.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -64,10 +60,10 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
     setIsFlipped(false);
     setStats({ known: new Set(), unknown: new Set() });
     setHasStarted(true);
-    
-    capture(ANALYTICS_EVENTS.FLASHCARD_SESSION_STARTED, { 
+
+    capture(ANALYTICS_EVENTS.FLASHCARD_SESSION_STARTED, {
       term_count: termsToStudy.length,
-      mode 
+      mode
     });
   }, [terms, capture, mode]);
 
@@ -116,17 +112,32 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
     handleNext();
   };
 
-  const sessionProgress = orderedTerms.length > 0 
-    ? ((stats.known.size + stats.unknown.size) / orderedTerms.length) * 100 
+  const sessionProgress = orderedTerms.length > 0
+    ? ((stats.known.size + stats.unknown.size) / orderedTerms.length) * 100
     : 0;
 
-  const isComplete = hasStarted && currentIndex === orderedTerms.length - 1 && 
+  const isComplete = hasStarted && currentIndex === orderedTerms.length - 1 &&
     (stats.known.has(currentTerm?.id || '') || stats.unknown.has(currentTerm?.id || ''));
 
+  // Loading state
   if (isLoading) {
     return (
       <PageContainer width="narrow" className="flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <motion.div
+          className="flex flex-col items-center gap-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <div className="relative">
+            <Radio className="w-12 h-12 text-primary" />
+            <motion.div
+              className="absolute inset-0 rounded-full border-2 border-primary/50"
+              animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
+          </div>
+          <span className="text-base text-muted-foreground font-mono">TUNING...</span>
+        </motion.div>
       </PageContainer>
     );
   }
@@ -135,51 +146,91 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
   if (!hasStarted) {
     return (
       <PageContainer width="narrow" className="flex flex-col h-full">
-        <Button variant="ghost" onClick={onBack} className="self-start mb-6 gap-2">
+        <Button variant="ghost" onClick={onBack} className="self-start mb-8 gap-2 text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4" />
-          Back to Glossary
+          Back
         </Button>
 
         <div className="flex-1 flex flex-col items-center justify-center">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Glossary Flashcards</h1>
-          <p className="text-muted-foreground mb-8 text-center">
-            {terms.length} terms available
-          </p>
-
-          {/* Card Mode Selection */}
-          <div className="w-full max-w-md mb-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-3">Card Direction</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <Card
-                className={cn(
-                  "cursor-pointer transition-all hover:border-primary/50",
-                  mode === 'term-to-definition' && "border-primary bg-primary/5"
-                )}
-                onClick={() => setMode('term-to-definition')}
-              >
-                <CardContent className="py-3 px-4 text-center">
-                  <h3 className="font-semibold text-sm">Term → Definition</h3>
-                </CardContent>
-              </Card>
-
-              <Card
-                className={cn(
-                  "cursor-pointer transition-all hover:border-primary/50",
-                  mode === 'definition-to-term' && "border-primary bg-primary/5"
-                )}
-                onClick={() => setMode('definition-to-term')}
-              >
-                <CardContent className="py-3 px-4 text-center">
-                  <h3 className="font-semibold text-sm">Definition → Term</h3>
-                </CardContent>
-              </Card>
+          {/* Title with radio aesthetic */}
+          <motion.div
+            className="text-center mb-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="inline-flex items-center gap-3 mb-3">
+              <Waves className="w-6 h-6 text-primary" />
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">Study Terms</h1>
+              <Waves className="w-6 h-6 text-primary" />
             </div>
-          </div>
+            <p className="text-muted-foreground font-mono text-base">
+              {terms.length} TERMS LOADED
+            </p>
+          </motion.div>
 
-          <Button size="lg" onClick={startStudy} className="gap-2">
-            <Shuffle className="w-4 h-4" />
-            Start Studying
-          </Button>
+          {/* Mode Selection - styled like radio frequency selector */}
+          <motion.div
+            className="w-full max-w-sm mb-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <div className="text-sm font-mono text-muted-foreground mb-3 text-center uppercase tracking-wider">
+              Select Mode
+            </div>
+            <div className="relative bg-secondary/50 rounded-xl p-1.5 border border-border">
+              <motion.div
+                className="absolute top-1.5 bottom-1.5 bg-primary rounded-lg shadow-lg"
+                initial={false}
+                animate={{
+                  left: mode === 'term-to-definition' ? '6px' : '50%',
+                  right: mode === 'term-to-definition' ? '50%' : '6px',
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
+              <div className="relative grid grid-cols-2 gap-1">
+                <button
+                  onClick={() => setMode('term-to-definition')}
+                  className={cn(
+                    "py-3 px-4 rounded-lg text-sm font-medium transition-colors relative z-10",
+                    mode === 'term-to-definition'
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Term → Definition
+                </button>
+                <button
+                  onClick={() => setMode('definition-to-term')}
+                  className={cn(
+                    "py-3 px-4 rounded-lg text-sm font-medium transition-colors relative z-10",
+                    mode === 'definition-to-term'
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Definition → Term
+                </button>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Start button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Button
+              size="lg"
+              onClick={startStudy}
+              className="gap-3 px-8 py-6 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <Shuffle className="w-5 h-5" />
+              Start Studying
+            </Button>
+          </motion.div>
         </div>
       </PageContainer>
     );
@@ -194,47 +245,105 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
 
     return (
       <PageContainer width="narrow" className="flex flex-col h-full">
-        <Button variant="ghost" onClick={onBack} className="self-start mb-6 gap-2">
+        <Button variant="ghost" onClick={onBack} className="self-start mb-8 gap-2 text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4" />
-          Back to Glossary
+          Back
         </Button>
 
         <div className="flex-1 flex flex-col items-center justify-center">
-          <div className="text-6xl mb-4">🎉</div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Session Complete!</h1>
-          <p className="text-muted-foreground mb-8">
-            You reviewed {total} cards
-          </p>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            className="mb-6"
+          >
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-success/20 to-success/5 flex items-center justify-center border-2 border-success/30">
+                <Zap className="w-10 h-10 text-success" />
+              </div>
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-success/50"
+                animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+            </div>
+          </motion.div>
 
-          <div className="grid grid-cols-2 gap-4 w-full max-w-xs mb-6">
-            <Card className="bg-success/10 border-success/30">
-              <CardContent className="py-4 text-center">
-                <div className="text-3xl font-bold text-success">{knownCount}</div>
-                <div className="text-sm text-muted-foreground">Known</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-destructive/10 border-destructive/30">
-              <CardContent className="py-4 text-center">
-                <div className="text-3xl font-bold text-destructive">{unknownCount}</div>
-                <div className="text-sm text-muted-foreground">Need Review</div>
-              </CardContent>
-            </Card>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-center"
+          >
+            <h1 className="text-2xl font-bold text-foreground mb-2">Session Complete</h1>
+            <p className="text-muted-foreground font-mono text-base mb-8">
+              {total} CARDS REVIEWED
+            </p>
+          </motion.div>
 
-          <p className="text-lg font-semibold text-foreground mb-6">
-            Session Score: {percentage}%
-          </p>
+          {/* Stats display - VU meter style */}
+          <motion.div
+            className="w-full max-w-xs mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+              {/* Score */}
+              <div className="text-center mb-4">
+                <div className="text-4xl font-bold text-foreground font-mono">{percentage}%</div>
+                <div className="text-sm text-muted-foreground uppercase tracking-wider">Mastery</div>
+              </div>
 
-          <div className="flex gap-3">
+              {/* Known bar */}
+              <div>
+                <div className="flex justify-between text-sm mb-1.5">
+                  <span className="text-success font-medium">Known</span>
+                  <span className="font-mono text-muted-foreground">{knownCount}</span>
+                </div>
+                <div className="h-3 bg-secondary rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-success to-success/80 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${total > 0 ? (knownCount / total) * 100 : 0}%` }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                  />
+                </div>
+              </div>
+
+              {/* Need review bar */}
+              <div>
+                <div className="flex justify-between text-sm mb-1.5">
+                  <span className="text-destructive font-medium">Need Review</span>
+                  <span className="font-mono text-muted-foreground">{unknownCount}</span>
+                </div>
+                <div className="h-3 bg-secondary rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-destructive to-destructive/80 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${total > 0 ? (unknownCount / total) * 100 : 0}%` }}
+                    transition={{ duration: 0.8, delay: 0.5 }}
+                  />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="flex gap-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
             <Button variant="outline" onClick={onBack} className="gap-2">
               <ArrowLeft className="w-4 h-4" />
-              Back to Glossary
+              Back
             </Button>
             <Button onClick={() => setHasStarted(false)} className="gap-2">
               <RotateCcw className="w-4 h-4" />
               New Session
             </Button>
-          </div>
+          </motion.div>
         </div>
       </PageContainer>
     );
@@ -243,76 +352,124 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
   // Flashcard view
   const frontContent = mode === 'term-to-definition' ? currentTerm?.term : currentTerm?.definition;
   const backContent = mode === 'term-to-definition' ? currentTerm?.definition : currentTerm?.term;
-  const frontLabel = mode === 'term-to-definition' ? 'Term' : 'Definition';
-  const backLabel = mode === 'term-to-definition' ? 'Definition' : 'Term';
+  const isTerm = (mode === 'term-to-definition' && !isFlipped) || (mode === 'definition-to-term' && isFlipped);
 
   return (
     <PageContainer width="narrow" className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <Button variant="ghost" onClick={onBack} className="gap-2">
+      {/* Minimal header */}
+      <div className="flex items-center justify-between mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="gap-2 text-muted-foreground hover:text-foreground -ml-2"
+        >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          <span className="hidden sm:inline">Back</span>
         </Button>
-        <Badge variant="outline" className="font-mono">
-          {currentIndex + 1} / {orderedTerms.length}
-        </Badge>
+
+        {/* Progress indicator */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 text-sm">
+            <span className="text-success font-mono">{stats.known.size}</span>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-destructive font-mono">{stats.unknown.size}</span>
+          </div>
+          <div className="font-mono text-base text-muted-foreground">
+            {currentIndex + 1}<span className="opacity-50">/{orderedTerms.length}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Progress */}
-      <div className="mb-6">
-        <div className="flex justify-between text-xs text-muted-foreground mb-1">
-          <span className="text-success">{stats.known.size} known</span>
-          <span className="text-destructive">{stats.unknown.size} need review</span>
+      {/* Progress bar */}
+      <div className="mb-8">
+        <div className="h-1 bg-secondary rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-primary rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${sessionProgress}%` }}
+            transition={{ duration: 0.3 }}
+          />
         </div>
-        <Progress value={sessionProgress} className="h-2" />
       </div>
 
       {/* Flashcard */}
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <div 
-          className="w-full aspect-[3/2] max-h-[400px] cursor-pointer perspective-1000"
+      <div className="flex-1 flex flex-col items-center justify-center min-h-0 w-full">
+        {/* Fixed width card wrapper - 448px (28rem) on desktop, full width minus padding on mobile */}
+        <div
+          className="w-full sm:w-[448px] px-4 sm:px-0 cursor-pointer group"
           onClick={() => setIsFlipped(!isFlipped)}
         >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={isFlipped ? 'back' : 'front'}
-              initial={{ rotateY: isFlipped ? -90 : 90, opacity: 0 }}
-              animate={{ rotateY: 0, opacity: 1 }}
-              exit={{ rotateY: isFlipped ? 90 : -90, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="w-full h-full"
-            >
-              <Card className="w-full h-full flex flex-col items-center justify-center p-6 border-2 hover:border-primary/30 transition-colors">
-                <Badge variant="secondary" className="mb-4">
-                  {isFlipped ? backLabel : frontLabel}
-                </Badge>
-                <CardContent className="flex-1 flex items-center justify-center p-0">
+          {/* Fixed dimensions card container */}
+          <div className={cn(
+            "relative rounded-2xl p-6 sm:p-8 h-[300px] sm:h-[320px] w-full flex flex-col transition-colors duration-300",
+            "bg-card border-2 shadow-lg",
+            isFlipped
+              ? "border-primary/40 shadow-primary/5"
+              : "border-border hover:border-primary/30",
+            "group-hover:shadow-xl"
+          )}>
+            {/* Card type indicator */}
+            <div className="flex items-center justify-center mb-4 h-7">
+              <div className={cn(
+                "px-3 py-1 rounded-full text-sm font-mono uppercase tracking-wider transition-colors",
+                isFlipped
+                  ? "bg-primary/10 text-primary"
+                  : "bg-secondary text-muted-foreground"
+              )}>
+                {isFlipped
+                  ? (mode === 'term-to-definition' ? 'Definition' : 'Term')
+                  : (mode === 'term-to-definition' ? 'Term' : 'Definition')
+                }
+              </div>
+            </div>
+
+            {/* Content area - fixed size container, text adapts */}
+            <div className="flex-1 flex items-center justify-center overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${currentIndex}-${isFlipped}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="w-full h-full flex items-center justify-center overflow-y-auto px-2"
+                >
                   <p className={cn(
-                    "text-center",
-                    ((isFlipped ? backContent : frontContent) || '').length > 100
-                      ? "text-lg"
-                      : "text-2xl font-semibold"
+                    "text-center leading-relaxed",
+                    isTerm
+                      ? "text-xl sm:text-2xl font-bold text-foreground"
+                      : "text-base sm:text-lg text-foreground/90"
                   )}>
                     {isFlipped ? backContent : frontContent}
                   </p>
-                </CardContent>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-4">
-                  {isFlipped ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                  <span>Click to {isFlipped ? 'hide' : 'reveal'} answer</span>
-                </div>
-              </Card>
-            </motion.div>
-          </AnimatePresence>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Tap hint */}
+            <div className="flex items-center justify-center mt-4 h-5">
+              <span className="text-sm text-muted-foreground/70">
+                {isFlipped ? 'tap to hide' : 'tap to reveal'}
+              </span>
+            </div>
+
+            {/* Corner accent */}
+            <div className={cn(
+              "absolute top-4 right-4 w-2 h-2 rounded-full transition-colors",
+              isFlipped ? "bg-primary" : "bg-muted-foreground/20"
+            )} />
+          </div>
         </div>
 
-        {/* Navigation & Actions */}
-        <div className="flex items-center justify-center gap-3 mt-6 w-full">
-          <Button 
-            variant="outline" 
+        {/* Action buttons */}
+        <div className="flex items-center justify-center gap-4 mt-8 w-full max-w-md">
+          <Button
+            variant="ghost"
             size="icon"
             onClick={handlePrevious}
             disabled={currentIndex === 0}
+            className="rounded-full w-10 h-10 text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="w-5 h-5" />
           </Button>
@@ -320,26 +477,26 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
           <Button
             variant="outline"
             onClick={handleMarkUnknown}
-            className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+            className="flex-1 max-w-[140px] gap-2 py-5 rounded-xl border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
           >
-            <XCircle className="w-4 h-4" />
-            Need Review
+            <span className="text-lg">✗</span>
+            <span>Review</span>
           </Button>
 
           <Button
-            variant="outline"
             onClick={handleMarkKnown}
-            className="gap-2 text-success hover:text-success hover:bg-success/10 border-success/30"
+            className="flex-1 max-w-[140px] gap-2 py-5 rounded-xl bg-success hover:bg-success/90 text-success-foreground"
           >
-            <CheckCircle2 className="w-4 h-4" />
-            Got It
+            <span className="text-lg">✓</span>
+            <span>Got It</span>
           </Button>
 
-          <Button 
-            variant="outline" 
+          <Button
+            variant="ghost"
             size="icon"
             onClick={handleNext}
             disabled={currentIndex === orderedTerms.length - 1}
+            className="rounded-full w-10 h-10 text-muted-foreground hover:text-foreground"
           >
             <ChevronRight className="w-5 h-5" />
           </Button>

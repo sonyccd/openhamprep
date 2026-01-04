@@ -32,7 +32,7 @@ export function SidebarLicenseSelector({
     >
       {showExpanded ? (
         <div>
-          <label className="text-xs text-muted-foreground font-medium mb-1.5 block">
+          <label className="text-sm text-muted-foreground font-medium mb-1.5 block">
             License Class
           </label>
           <button
@@ -43,7 +43,7 @@ export function SidebarLicenseSelector({
               <CurrentLicenseIcon className="w-4 h-4 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <span className="text-sm font-medium text-foreground">
+              <span className="text-base font-medium text-foreground">
                 {currentTest?.name}
               </span>
             </div>

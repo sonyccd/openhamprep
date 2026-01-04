@@ -59,7 +59,7 @@ export function SidebarFooter({
         <Users className="w-5 h-5" />
       </div>
       {showExpanded && (
-        <span className="text-sm font-medium truncate flex items-center gap-1">
+        <span className="text-base font-medium truncate flex items-center gap-1">
           Forum
           <ExternalLink className="w-3 h-3" />
         </span>
@@ -104,7 +104,7 @@ export function SidebarFooter({
               <p className="text-sm font-medium text-foreground truncate">
                 {userInfo?.displayName || 'User'}
               </p>
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="text-sm text-muted-foreground truncate">
                 {userInfo?.email || ''}
               </p>
             </div>
@@ -172,7 +172,7 @@ export function SidebarFooter({
               )}
             >
               <Shield className="w-5 h-5" />
-              <span className="text-sm font-medium">Admin</span>
+              <span className="text-base font-medium">Admin</span>
             </Button>
           )}
         </div>
@@ -203,7 +203,7 @@ export function SidebarFooter({
             className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
           >
             <LogOut className="w-5 h-5" />
-            <span className="text-sm font-medium">Sign Out</span>
+            <span className="text-base font-medium">Sign Out</span>
           </Button>
         )}
       </div>

@@ -35,7 +35,7 @@ export function SidebarNavItem({
         <Icon className="w-5 h-5" />
       </div>
       {showExpanded && (
-        <span className="text-sm font-medium truncate">{item.label}</span>
+        <span className="text-base font-medium truncate">{item.label}</span>
       )}
     </button>
   );

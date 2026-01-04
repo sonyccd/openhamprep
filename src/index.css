@@ -7,8 +7,8 @@
 
 @layer base {
   :root {
-    /* Light theme - high contrast for accessibility */
-    --background: 45 20% 96%;
+    /* Light theme - warm amber aesthetic matching dark mode */
+    --background: 45 25% 97%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -17,49 +17,49 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 35 90% 28%;
+    --primary: 38 92% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 90%;
+    --secondary: 38 30% 92%;
     --secondary-foreground: 222 47% 15%;
 
-    --muted: 220 14% 92%;
-    --muted-foreground: 220 15% 40%;
+    --muted: 38 20% 94%;
+    --muted-foreground: 222 20% 35%;
 
-    --accent: 160 60% 30%;
+    --accent: 160 60% 35%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 42%;
+    --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 150 70% 28%;
+    --success: 150 70% 35%;
     --success-foreground: 0 0% 100%;
 
-    --info: 210 80% 45%;
+    --info: 210 80% 50%;
     --info-foreground: 0 0% 100%;
 
-    --warning: 25 90% 48%;
+    --warning: 25 90% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 220 13% 82%;
-    --input: 220 13% 85%;
-    --ring: 35 90% 45%;
+    --border: 38 15% 80%;
+    --input: 38 15% 88%;
+    --ring: 38 92% 50%;
 
     --radius: 0.75rem;
 
     /* Custom tokens */
-    --glow-primary: 0 0 20px hsl(35 90% 45% / 0.2);
-    --glow-accent: 0 0 20px hsl(160 60% 35% / 0.2);
+    --glow-primary: 0 0 20px hsl(38 92% 50% / 0.25);
+    --glow-accent: 0 0 20px hsl(160 60% 40% / 0.2);
     --glow-destructive: 0 0 20px hsl(0 72% 50% / 0.2);
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 38 20% 98%;
     --sidebar-foreground: 222 47% 15%;
-    --sidebar-primary: 35 90% 45%;
+    --sidebar-primary: 38 92% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 92%;
+    --sidebar-accent: 38 20% 94%;
     --sidebar-accent-foreground: 222 47% 15%;
-    --sidebar-border: 220 13% 82%;
-    --sidebar-ring: 35 90% 45%;
+    --sidebar-border: 38 15% 80%;
+    --sidebar-ring: 38 92% 50%;
   }
 
   .dark {
@@ -289,7 +289,7 @@
 .shepherd-element.shepherd-theme-custom .shepherd-text {
   padding: 0.5rem 1rem 1rem 1rem;
   color: hsl(var(--muted-foreground));
-  font-size: 0.9375rem;
+  font-size: 1rem;
   line-height: 1.6;
 }
 
@@ -303,7 +303,7 @@
 
 .shepherd-element.shepherd-theme-custom .shepherd-button {
   border-radius: calc(var(--radius) - 2px);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   padding: 0.5rem 1rem;
   transition: all 0.2s;
@@ -361,8 +361,8 @@
 
   .shepherd-element.shepherd-theme-custom .shepherd-text {
     padding: 0.25rem 0.625rem 0.625rem 0.625rem;
-    font-size: 0.8125rem;
-    line-height: 1.4;
+    font-size: 0.875rem;
+    line-height: 1.5;
   }
 
   .shepherd-element.shepherd-theme-custom .shepherd-footer {
@@ -370,7 +370,7 @@
   }
 
   .shepherd-element.shepherd-theme-custom .shepherd-button {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     padding: 0.35rem 0.625rem;
   }
 

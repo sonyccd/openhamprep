@@ -260,10 +260,10 @@ export default function Dashboard() {
       }} />;
     }
     if (currentView === 'glossary') {
-      return <Glossary onStartFlashcards={() => changeView('glossary-flashcards')} />;
+      return <Glossary />;
     }
     if (currentView === 'glossary-flashcards') {
-      return <GlossaryFlashcards onBack={() => changeView('glossary')} />;
+      return <GlossaryFlashcards onBack={() => changeView('dashboard')} />;
     }
     if (currentView === 'find-test-site') {
       return <ExamSessionSearch />;
