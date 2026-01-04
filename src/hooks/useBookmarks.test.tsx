@@ -54,9 +54,16 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+// Raw data from Supabase (with joined questions table)
+const mockRawBookmarks = [
+  { id: '1', user_id: 'test-user-id', question_id: 'T1A01', note: 'Test note', created_at: '2024-01-01', questions: { display_name: 'T1A01' } },
+  { id: '2', user_id: 'test-user-id', question_id: 'T1A02', note: null, created_at: '2024-01-02', questions: { display_name: 'T1A02' } },
+];
+
+// Flattened data (what the hook returns after mapping)
 const mockBookmarks = [
-  { id: '1', user_id: 'test-user-id', question_id: 'T1A01', note: 'Test note', created_at: '2024-01-01' },
-  { id: '2', user_id: 'test-user-id', question_id: 'T1A02', note: null, created_at: '2024-01-02' },
+  { id: '1', user_id: 'test-user-id', question_id: 'T1A01', note: 'Test note', created_at: '2024-01-01', questions: { display_name: 'T1A01' }, display_name: 'T1A01' },
+  { id: '2', user_id: 'test-user-id', question_id: 'T1A02', note: null, created_at: '2024-01-02', questions: { display_name: 'T1A02' }, display_name: 'T1A02' },
 ];
 
 function createWrapper() {
@@ -74,8 +81,8 @@ describe('useBookmarks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Set up default mock chain for select
-    mockOrder.mockResolvedValue({ data: mockBookmarks, error: null });
+    // Set up default mock chain for select (returns raw data with joined questions)
+    mockOrder.mockResolvedValue({ data: mockRawBookmarks, error: null });
     mockEq.mockReturnValue({ order: mockOrder });
     mockSelect.mockReturnValue({ eq: mockEq });
 
@@ -117,6 +124,18 @@ describe('useBookmarks', () => {
       });
 
       expect(result.current.isLoading).toBe(true);
+    });
+
+    it('flattens display_name from joined questions table', async () => {
+      const { result } = renderHook(() => useBookmarks(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      // Each bookmark should have display_name at top level (for filtering by test type)
+      expect(result.current.bookmarks?.[0]).toHaveProperty('display_name', 'T1A01');
+      expect(result.current.bookmarks?.[1]).toHaveProperty('display_name', 'T1A02');
     });
   });
 

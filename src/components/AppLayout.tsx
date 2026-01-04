@@ -70,6 +70,13 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
     ? calculateWeakQuestionIds(filteredAttempts)
     : [];
 
+  // Filter bookmarks by selected test type
+  const filteredBookmarks = filterByTestType(
+    bookmarks || [],
+    selectedTest,
+    (b) => b.display_name
+  );
+
   const handleSignOut = async () => {
     // Navigate first to ensure we redirect before state changes trigger re-renders
     navigate('/auth');
@@ -111,7 +118,7 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
           isCollapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           weakQuestionCount={weakQuestionIds.length}
-          bookmarkCount={bookmarks?.length || 0}
+          bookmarkCount={filteredBookmarks.length}
           isTestAvailable={isTestAvailable}
           userInfo={userInfo}
           userId={user.id}

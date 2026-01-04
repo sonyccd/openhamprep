@@ -23,7 +23,10 @@ vi.mock('@/hooks/useAuth', () => ({
 
 vi.mock('@/hooks/useBookmarks', () => ({
   useBookmarks: () => ({
-    bookmarks: [{ question_id: 'T1A01' }, { question_id: 'T1A02' }],
+    bookmarks: [
+      { question_id: 'T1A01', display_name: 'T1A01' },
+      { question_id: 'T1A02', display_name: 'T1A02' },
+    ],
     isLoading: false,
   }),
 }));
