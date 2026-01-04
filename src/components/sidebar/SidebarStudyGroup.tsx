@@ -128,8 +128,8 @@ export function SidebarStudyGroup({
                   )}
                 </div>
                 <span className="font-medium truncate">{item.label}</span>
-                {item.badgeAriaLabel && (
-                  <span className="sr-only">, {item.badgeAriaLabel}</span>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="sr-only">, {item.badgeAriaLabel || `${item.badge} items`}</span>
                 )}
               </button>
             );
