@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Search, Loader2, X, HelpCircle } from "lucide-react";
+import { Search, Loader2, X, HelpCircle, ListPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   useQuestionsForLicense,
@@ -22,11 +24,12 @@ export function ChapterQuestionManager({
   licenseType,
 }: ChapterQuestionManagerProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [bulkInput, setBulkInput] = useState("");
 
   // Fetch all questions for this license type
   const { data: allQuestions = [], isLoading } = useQuestionsForLicense(licenseType);
 
-  const { linkQuestion, unlinkQuestion, updatePageReference } =
+  const { linkQuestion, unlinkQuestion, updatePageReference, bulkLinkQuestions } =
     useChapterQuestionMutations();
 
   // Filter questions by search term
@@ -52,6 +55,33 @@ export function ChapterQuestionManager({
     unlinkQuestion.mutate(questionId);
   };
 
+  const handleBulkLink = async () => {
+    if (!bulkInput.trim()) return;
+
+    // Parse comma-separated input
+    const displayNames = bulkInput
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+      .map((s) => s.toUpperCase());
+
+    if (displayNames.length === 0) {
+      toast.error('Please enter at least one question ID');
+      return;
+    }
+
+    try {
+      await bulkLinkQuestions.mutateAsync({
+        chapterId,
+        displayNames,
+        allQuestions,
+      });
+      setBulkInput(''); // Clear input on success
+    } catch {
+      // Error is handled by the mutation's onError
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -63,6 +93,38 @@ export function ChapterQuestionManager({
         <p className="text-sm text-muted-foreground mt-1">
           Link exam questions to this chapter. You can optionally add page references for each question.
         </p>
+      </div>
+
+      {/* Bulk Link Section */}
+      <div className="space-y-2 p-4 border border-border rounded-lg bg-secondary/20">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <ListPlus className="w-4 h-4" />
+          Bulk Link Questions
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Enter question IDs separated by commas (e.g., T1A01, T1A02, T1A03)
+        </p>
+        <Textarea
+          placeholder="T1A01, T1A02, T1A03..."
+          value={bulkInput}
+          onChange={(e) => setBulkInput(e.target.value)}
+          className="min-h-[60px] resize-none"
+          disabled={bulkLinkQuestions.isPending}
+        />
+        <div className="flex justify-end">
+          <Button
+            onClick={handleBulkLink}
+            disabled={bulkLinkQuestions.isPending || !bulkInput.trim()}
+            size="sm"
+          >
+            {bulkLinkQuestions.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <ListPlus className="w-4 h-4 mr-2" />
+            )}
+            Link Questions
+          </Button>
+        </div>
       </div>
 
       {/* Search */}

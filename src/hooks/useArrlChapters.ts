@@ -245,6 +245,15 @@ export interface ChapterQuestion {
 }
 
 /**
+ * Result of a bulk link operation
+ */
+export interface BulkLinkResult {
+  linked: number;
+  alreadyLinked: number;
+  notFound: string[];
+}
+
+/**
  * Fetch questions linked to a specific chapter
  */
 export function useChapterQuestions(chapterId: string | undefined) {
@@ -382,9 +391,88 @@ export function useChapterQuestionMutations() {
     },
   });
 
+  const bulkLinkQuestions = useMutation({
+    mutationFn: async ({
+      chapterId,
+      displayNames,
+      allQuestions,
+    }: {
+      chapterId: string;
+      displayNames: string[];
+      allQuestions: (ChapterQuestion & { arrl_chapter_id: string | null })[];
+    }): Promise<BulkLinkResult> => {
+      // Build a map for quick lookup
+      const questionMap = new Map(
+        allQuestions.map((q) => [q.display_name.toUpperCase(), q])
+      );
+
+      const toLink: string[] = [];
+      const notFound: string[] = [];
+      let alreadyLinked = 0;
+
+      for (const name of displayNames) {
+        const normalizedName = name.toUpperCase();
+        const question = questionMap.get(normalizedName);
+
+        if (!question) {
+          notFound.push(name);
+        } else if (question.arrl_chapter_id === chapterId) {
+          alreadyLinked++;
+        } else {
+          toLink.push(question.id);
+        }
+      }
+
+      // Perform bulk update if there are questions to link
+      if (toLink.length > 0) {
+        const { error } = await supabase
+          .from('questions')
+          .update({ arrl_chapter_id: chapterId })
+          .in('id', toLink);
+
+        if (error) throw error;
+      }
+
+      return {
+        linked: toLink.length,
+        alreadyLinked,
+        notFound,
+      };
+    },
+    onSuccess: (result) => {
+      invalidateQueries();
+
+      // Build toast message
+      const parts: string[] = [];
+      if (result.linked > 0) {
+        parts.push(
+          `Linked ${result.linked} question${result.linked !== 1 ? 's' : ''}`
+        );
+      }
+      if (result.alreadyLinked > 0) {
+        parts.push(`${result.alreadyLinked} already linked`);
+      }
+      if (result.notFound.length > 0) {
+        parts.push(`Not found: ${result.notFound.join(', ')}`);
+      }
+
+      if (result.linked > 0) {
+        toast.success(parts.join('. '));
+      } else if (result.notFound.length > 0) {
+        toast.warning(parts.join('. '));
+      } else {
+        toast.info('All questions were already linked to this chapter');
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to link questions: ${error.message}`);
+    },
+  });
+
   return {
     linkQuestion,
     unlinkQuestion,
     updatePageReference,
+    bulkLinkQuestions,
   };
 }
