@@ -20,6 +20,8 @@ vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
   },
 }));
 
@@ -611,6 +613,336 @@ describe('ChapterQuestionManager', () => {
       const unlinkedQuestionRow = screen.getByText('What is the purpose of the FCC rules?').closest('button');
       const checkbox = unlinkedQuestionRow?.querySelector('[role="checkbox"]');
       expect(checkbox).toHaveAttribute('data-state', 'unchecked');
+    });
+  });
+
+  describe('Bulk Link Questions', () => {
+    it('should render bulk link section', async () => {
+      renderComponent();
+
+      await waitFor(() => {
+        expect(screen.getByText('Bulk Link Questions')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('T1A01, T1A02, T1A03...')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Link Questions/i })).toBeInTheDocument();
+      });
+    });
+
+    it('should disable button when input is empty', async () => {
+      renderComponent();
+
+      await waitFor(() => {
+        const button = screen.getByRole('button', { name: /Link Questions/i });
+        expect(button).toBeDisabled();
+      });
+    });
+
+    it('should enable button when input has content', async () => {
+      const user = userEvent.setup();
+      renderComponent();
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('T1A01, T1A02, T1A03...')).toBeInTheDocument();
+      });
+
+      const textarea = screen.getByPlaceholderText('T1A01, T1A02, T1A03...');
+      await user.type(textarea, 'T1B01, T1B02');
+
+      const button = screen.getByRole('button', { name: /Link Questions/i });
+      expect(button).not.toBeDisabled();
+    });
+
+    it('should call bulk update when submitting valid IDs', async () => {
+      const user = userEvent.setup();
+      const mockUpdateIn = vi.fn().mockResolvedValue({ error: null });
+      const mockUpdateFn = vi.fn().mockReturnValue({ in: mockUpdateIn });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'questions') {
+          return {
+            select: vi.fn().mockReturnValue({
+              like: vi.fn().mockReturnValue({
+                order: vi.fn().mockReturnValue({
+                  range: vi.fn().mockResolvedValue({
+                    data: mockQuestions,
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+            update: mockUpdateFn,
+          };
+        }
+        return { select: vi.fn() };
+      });
+
+      renderComponent('chapter-1');
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('T1A01, T1A02, T1A03...')).toBeInTheDocument();
+      });
+
+      const textarea = screen.getByPlaceholderText('T1A01, T1A02, T1A03...');
+      await user.type(textarea, 'T1B01');
+
+      const button = screen.getByRole('button', { name: /Link Questions/i });
+      await user.click(button);
+
+      await waitFor(() => {
+        expect(mockUpdateFn).toHaveBeenCalledWith({ arrl_chapter_id: 'chapter-1' });
+        expect(mockUpdateIn).toHaveBeenCalledWith('id', ['uuid-3']);
+      });
+    });
+
+    it('should clear input after successful bulk link', async () => {
+      const user = userEvent.setup();
+      const mockUpdateIn = vi.fn().mockResolvedValue({ error: null });
+      const mockUpdateFn = vi.fn().mockReturnValue({ in: mockUpdateIn });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'questions') {
+          return {
+            select: vi.fn().mockReturnValue({
+              like: vi.fn().mockReturnValue({
+                order: vi.fn().mockReturnValue({
+                  range: vi.fn().mockResolvedValue({
+                    data: mockQuestions,
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+            update: mockUpdateFn,
+          };
+        }
+        return { select: vi.fn() };
+      });
+
+      renderComponent('chapter-1');
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('T1A01, T1A02, T1A03...')).toBeInTheDocument();
+      });
+
+      const textarea = screen.getByPlaceholderText('T1A01, T1A02, T1A03...') as HTMLTextAreaElement;
+      await user.type(textarea, 'T1B01');
+
+      const button = screen.getByRole('button', { name: /Link Questions/i });
+      await user.click(button);
+
+      await waitFor(() => {
+        expect(textarea.value).toBe('');
+      });
+    });
+
+    it('should show success toast with count', async () => {
+      const user = userEvent.setup();
+      const mockUpdateIn = vi.fn().mockResolvedValue({ error: null });
+      const mockUpdateFn = vi.fn().mockReturnValue({ in: mockUpdateIn });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'questions') {
+          return {
+            select: vi.fn().mockReturnValue({
+              like: vi.fn().mockReturnValue({
+                order: vi.fn().mockReturnValue({
+                  range: vi.fn().mockResolvedValue({
+                    data: mockQuestions,
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+            update: mockUpdateFn,
+          };
+        }
+        return { select: vi.fn() };
+      });
+
+      renderComponent('chapter-1');
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('T1A01, T1A02, T1A03...')).toBeInTheDocument();
+      });
+
+      const textarea = screen.getByPlaceholderText('T1A01, T1A02, T1A03...');
+      await user.type(textarea, 'T1B01');
+
+      const button = screen.getByRole('button', { name: /Link Questions/i });
+      await user.click(button);
+
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('Linked 1 question'));
+      });
+    });
+
+    it('should show warning toast for not found IDs', async () => {
+      const user = userEvent.setup();
+      const mockUpdateIn = vi.fn().mockResolvedValue({ error: null });
+      const mockUpdateFn = vi.fn().mockReturnValue({ in: mockUpdateIn });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'questions') {
+          return {
+            select: vi.fn().mockReturnValue({
+              like: vi.fn().mockReturnValue({
+                order: vi.fn().mockReturnValue({
+                  range: vi.fn().mockResolvedValue({
+                    data: mockQuestions,
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+            update: mockUpdateFn,
+          };
+        }
+        return { select: vi.fn() };
+      });
+
+      renderComponent('chapter-1');
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('T1A01, T1A02, T1A03...')).toBeInTheDocument();
+      });
+
+      const textarea = screen.getByPlaceholderText('T1A01, T1A02, T1A03...');
+      // X1Z99 doesn't exist in mockQuestions
+      await user.type(textarea, 'X1Z99');
+
+      const button = screen.getByRole('button', { name: /Link Questions/i });
+      await user.click(button);
+
+      await waitFor(() => {
+        expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('Not found: X1Z99'));
+      });
+    });
+
+    it('should skip already linked questions and report count', async () => {
+      const user = userEvent.setup();
+      const mockUpdateIn = vi.fn().mockResolvedValue({ error: null });
+      const mockUpdateFn = vi.fn().mockReturnValue({ in: mockUpdateIn });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'questions') {
+          return {
+            select: vi.fn().mockReturnValue({
+              like: vi.fn().mockReturnValue({
+                order: vi.fn().mockReturnValue({
+                  range: vi.fn().mockResolvedValue({
+                    data: mockQuestions,
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+            update: mockUpdateFn,
+          };
+        }
+        return { select: vi.fn() };
+      });
+
+      renderComponent('chapter-1');
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('T1A01, T1A02, T1A03...')).toBeInTheDocument();
+      });
+
+      const textarea = screen.getByPlaceholderText('T1A01, T1A02, T1A03...');
+      // T1A01 is already linked to chapter-1
+      await user.type(textarea, 'T1A01');
+
+      const button = screen.getByRole('button', { name: /Link Questions/i });
+      await user.click(button);
+
+      await waitFor(() => {
+        expect(toast.info).toHaveBeenCalledWith('All questions were already linked to this chapter');
+      });
+    });
+
+    it('should handle case insensitive input', async () => {
+      const user = userEvent.setup();
+      const mockUpdateIn = vi.fn().mockResolvedValue({ error: null });
+      const mockUpdateFn = vi.fn().mockReturnValue({ in: mockUpdateIn });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'questions') {
+          return {
+            select: vi.fn().mockReturnValue({
+              like: vi.fn().mockReturnValue({
+                order: vi.fn().mockReturnValue({
+                  range: vi.fn().mockResolvedValue({
+                    data: mockQuestions,
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+            update: mockUpdateFn,
+          };
+        }
+        return { select: vi.fn() };
+      });
+
+      renderComponent('chapter-1');
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('T1A01, T1A02, T1A03...')).toBeInTheDocument();
+      });
+
+      const textarea = screen.getByPlaceholderText('T1A01, T1A02, T1A03...');
+      // Use lowercase - should still match T1B01
+      await user.type(textarea, 't1b01');
+
+      const button = screen.getByRole('button', { name: /Link Questions/i });
+      await user.click(button);
+
+      await waitFor(() => {
+        expect(mockUpdateFn).toHaveBeenCalledWith({ arrl_chapter_id: 'chapter-1' });
+        expect(mockUpdateIn).toHaveBeenCalledWith('id', ['uuid-3']);
+      });
+    });
+
+    it('should handle multiple IDs with spaces and extra commas', async () => {
+      const user = userEvent.setup();
+      const mockUpdateIn = vi.fn().mockResolvedValue({ error: null });
+      const mockUpdateFn = vi.fn().mockReturnValue({ in: mockUpdateIn });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'questions') {
+          return {
+            select: vi.fn().mockReturnValue({
+              like: vi.fn().mockReturnValue({
+                order: vi.fn().mockReturnValue({
+                  range: vi.fn().mockResolvedValue({
+                    data: mockQuestions,
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+            update: mockUpdateFn,
+          };
+        }
+        return { select: vi.fn() };
+      });
+
+      renderComponent('chapter-1');
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('T1A01, T1A02, T1A03...')).toBeInTheDocument();
+      });
+
+      const textarea = screen.getByPlaceholderText('T1A01, T1A02, T1A03...');
+      // Input with extra spaces and commas
+      await user.type(textarea, ' T1B01 ,  T1B02, , ');
+
+      const button = screen.getByRole('button', { name: /Link Questions/i });
+      await user.click(button);
+
+      await waitFor(() => {
+        // Should link both T1B01 (uuid-3) and T1B02 (uuid-4, currently in chapter-2)
+        expect(mockUpdateIn).toHaveBeenCalledWith('id', expect.arrayContaining(['uuid-3', 'uuid-4']));
+      });
     });
   });
 });
