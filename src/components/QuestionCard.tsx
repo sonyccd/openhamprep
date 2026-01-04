@@ -139,122 +139,129 @@ export function QuestionCard({
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-3xl mx-auto"
     >
-      <div className="bg-card border border-border rounded-xl p-6 md:p-8 shadow-xl">
-        {/* Question Header */}
-        <div className="flex items-center justify-between mb-4">
-          <span className="font-mono text-sm text-muted-foreground bg-secondary px-3 py-1 rounded-md">
+      <div className="relative bg-card border border-border rounded-2xl p-8 md:p-10 lg:p-12 shadow-lg">
+        {/* Question Header - Simplified */}
+        <div className="flex items-center justify-between mb-8">
+          <span className="font-mono text-sm text-muted-foreground/80 tracking-wide">
             {question.displayName}
           </span>
-          <div className="flex items-center gap-2">
+          {questionNumber && totalQuestions && (
+            <span className="font-mono text-sm text-muted-foreground">
+              {questionNumber} / {totalQuestions}
+            </span>
+          )}
+        </div>
+
+        {/* Floating Action Buttons */}
+        {user && (
+          <div className="absolute top-4 right-4 flex items-center gap-1 opacity-40 hover:opacity-100 transition-opacity duration-200">
             <Calculator />
-            {questionNumber && totalQuestions && (
-              <span className="font-mono text-sm text-primary">
-                {questionNumber} / {totalQuestions}
-              </span>
-            )}
-            {user && (
-              <div className="flex items-center gap-1">
-                <Popover open={isNoteOpen} onOpenChange={(open) => {
-                  setIsNoteOpen(open);
-                  if (open) {
-                    setNoteText(existingNote || '');
-                  }
-                }}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <PopoverTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className={cn(
-                            "h-8 w-8",
-                            existingNote && "text-accent"
-                          )}
-                          aria-label={existingNote ? "Edit note" : "Add note"}
-                        >
-                          <MessageSquare className="w-4 h-4" aria-hidden="true" />
-                        </Button>
-                      </PopoverTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{existingNote ? "Edit note" : "Add note"}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  <PopoverContent className="w-80 bg-card border-border" align="end">
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium text-foreground">Add a note</p>
-                      <Textarea
-                        placeholder="Write your notes about this question..."
-                        value={noteText}
-                        onChange={(e) => setNoteText(e.target.value)}
-                        className="min-h-[100px] resize-none"
-                      />
-                      <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setIsNoteOpen(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          size="sm"
-                          onClick={handleSaveNote}
-                        >
-                          Save Note
-                        </Button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+            <Popover open={isNoteOpen} onOpenChange={(open) => {
+              setIsNoteOpen(open);
+              if (open) {
+                setNoteText(existingNote || '');
+              }
+            }}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
                       className={cn(
-                        "h-8 w-8",
-                        bookmarked && "text-primary"
+                        "h-7 w-7",
+                        existingNote && "text-accent opacity-100"
                       )}
-                      onClick={handleBookmarkClick}
-                      aria-label={bookmarked ? "Remove bookmark" : "Add bookmark"}
-                      aria-pressed={bookmarked}
+                      aria-label={existingNote ? "Edit note" : "Add note"}
                     >
-                      {bookmarked ? (
-                        <BookmarkCheck className="w-4 h-4" aria-hidden="true" />
-                      ) : (
-                        <Bookmark className="w-4 h-4" aria-hidden="true" />
-                      )}
+                      <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{bookmarked ? "Remove bookmark" : "Bookmark this question"}</p>
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{existingNote ? "Edit note" : "Add note"}</p>
+                </TooltipContent>
+              </Tooltip>
+              <PopoverContent className="w-80 bg-card border-border" align="end">
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-foreground">Add a note</p>
+                  <Textarea
+                    placeholder="Write your notes about this question..."
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    className="min-h-[100px] resize-none"
+                  />
+                  <div className="flex justify-end gap-2">
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={handleCopyLink}
-                      aria-label="Copy shareable link"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsNoteOpen(false)}
                     >
-                      <Link className="w-4 h-4" aria-hidden="true" />
+                      Cancel
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Copy shareable link</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            )}
+                    <Button
+                      size="sm"
+                      onClick={handleSaveNote}
+                    >
+                      Save Note
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-7 w-7",
+                    bookmarked && "text-primary opacity-100"
+                  )}
+                  onClick={handleBookmarkClick}
+                  aria-label={bookmarked ? "Remove bookmark" : "Add bookmark"}
+                  aria-pressed={bookmarked}
+                >
+                  {bookmarked ? (
+                    <BookmarkCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                  ) : (
+                    <Bookmark className="w-3.5 h-3.5" aria-hidden="true" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{bookmarked ? "Remove bookmark" : "Bookmark this question"}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={handleCopyLink}
+                  aria-label="Copy shareable link"
+                >
+                  <Link className="w-3.5 h-3.5" aria-hidden="true" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Copy shareable link</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
-        </div>
+        )}
+
+        {/* Calculator for non-logged-in users */}
+        {!user && (
+          <div className="absolute top-4 right-4 opacity-40 hover:opacity-100 transition-opacity duration-200">
+            <Calculator />
+          </div>
+        )}
 
         {/* Question Text */}
-        <div className="min-h-[4.5rem] mb-6">
-          <h2 className="text-lg md:text-xl font-semibold text-foreground leading-relaxed">
+        <div className="min-h-[5rem] mb-10">
+          <h2 className="text-lg md:text-xl lg:text-2xl font-medium text-foreground leading-relaxed tracking-tight">
             {enableGlossaryHighlight ? (
               <GlossaryHighlightedText text={question.question} />
             ) : (
@@ -270,14 +277,14 @@ export function QuestionCard({
         />
 
         {/* Options */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           {options.map((option) => (
             <button
               key={option}
               onClick={() => !showResult && onSelectAnswer(option)}
               disabled={showResult}
               className={cn(
-                "w-full text-left p-4 rounded-lg border-2 transition-all duration-200",
+                "w-full text-left p-5 rounded-xl border transition-all duration-200",
                 "flex items-start gap-4",
                 getOptionStyles(option),
                 !showResult && "cursor-pointer"
@@ -285,7 +292,7 @@ export function QuestionCard({
             >
               <span
                 className={cn(
-                  "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-mono font-bold text-sm",
+                  "flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-mono font-semibold text-sm",
                   selectedAnswer === option && !showResult
                     ? "bg-primary text-primary-foreground"
                     : showResult && option === question.correctAnswer
@@ -297,31 +304,34 @@ export function QuestionCard({
               >
                 {option}
               </span>
-              <span className="flex-1 pt-1">{question.options[option]}</span>
+              <span className="flex-1 pt-1.5 text-base leading-relaxed">{question.options[option]}</span>
             </button>
           ))}
         </div>
 
-        {/* Result Indicator */}
+        {/* Result Indicator - Elegant inline pill */}
         {showResult && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className={cn(
-              "mt-6 p-4 rounded-lg text-center font-semibold",
-              selectedAnswer === question.correctAnswer
-                ? "bg-success/10 text-success border border-success/30"
-                : "bg-destructive/10 text-destructive border border-destructive/30"
-            )}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 flex items-center justify-center"
           >
-            {selectedAnswer === question.correctAnswer ? (
-              <span>✓ Correct!</span>
-            ) : (
-              <span>
-                ✗ Incorrect. The correct answer is {question.correctAnswer}:{" "}
-                {question.options[question.correctAnswer]}
-              </span>
-            )}
+            <div
+              className={cn(
+                "inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium",
+                selectedAnswer === question.correctAnswer
+                  ? "bg-success/10 text-success"
+                  : "bg-destructive/10 text-destructive"
+              )}
+            >
+              {selectedAnswer === question.correctAnswer ? (
+                <span>Correct</span>
+              ) : (
+                <span>
+                  The answer is {question.correctAnswer}: {question.options[question.correctAnswer]}
+                </span>
+              )}
+            </div>
           </motion.div>
         )}
 
@@ -331,17 +341,17 @@ export function QuestionCard({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="mt-6"
+            className="mt-10 pt-8 border-t border-border/50"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Explanation */}
               {question.explanation && (
                 <div className={cn(
-                  "p-4 rounded-lg bg-secondary/50 border border-border",
+                  "p-6 rounded-xl bg-muted/30",
                   (!question.links || question.links.length === 0) && "md:col-span-2"
                 )}>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium text-foreground">Explanation</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-medium text-foreground/80">Explanation</h3>
                     {user && (
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-muted-foreground mr-1">Helpful?</span>
@@ -388,14 +398,16 @@ export function QuestionCard({
                       </div>
                     )}
                   </div>
-                  <MarkdownText text={question.explanation} />
+                  <div className="text-sm leading-relaxed text-muted-foreground">
+                    <MarkdownText text={question.explanation} />
+                  </div>
                 </div>
               )}
-              
+
               {/* Links */}
               {question.links && question.links.length > 0 && (
                 <div className={cn(!question.explanation && "md:col-span-2")}>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Learn more:</h3>
+                  <h3 className="text-sm font-medium text-muted-foreground/80 mb-3">Learn more:</h3>
                   <div className="space-y-3">
                     {question.links.map((link, index) => (
                       <LinkPreview key={index} link={link} />
@@ -409,7 +421,7 @@ export function QuestionCard({
             {(() => {
               const authUrl = question.forumUrl ? getForumAuthUrl(question.forumUrl) : null;
               return authUrl ? (
-                <div className="mt-4 pt-4 border-t border-border">
+                <div className="mt-8">
                   <Button
                     variant="outline"
                     className="w-full sm:w-auto gap-2"
@@ -434,10 +446,10 @@ export function QuestionCard({
 
             {/* Related Topics */}
             {question.topics && question.topics.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <div className="flex items-center gap-2 mb-2">
-                  <BookOpen className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
-                  <span className="text-sm font-medium text-foreground">Study this topic:</span>
+              <div className="mt-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <BookOpen className="w-4 h-4 text-muted-foreground/80" aria-hidden="true" />
+                  <span className="text-sm font-medium text-foreground/80">Study this topic:</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {question.topics.map((topic) => (

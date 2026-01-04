@@ -134,11 +134,12 @@ describe('RandomPractice', () => {
 
     it('shows initial stats at zero', async () => {
       renderRandomPractice();
-      
+
       await waitFor(() => {
-        expect(screen.getByText('Correct')).toBeInTheDocument();
-        expect(screen.getByText('Incorrect')).toBeInTheDocument();
-        expect(screen.getByText('Streak')).toBeInTheDocument();
+        // Stats are now displayed inline as numbers without labels
+        // Look for the correct/incorrect count display (0 / 0 format)
+        const statsContainer = screen.getByText('0', { selector: '.text-success' });
+        expect(statsContainer).toBeInTheDocument();
       });
     });
 
@@ -264,9 +265,10 @@ describe('RandomPractice', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /reset/i }));
 
-      // Stats should be reset (still showing zero)
+      // Stats should be reset (still showing zero in inline format)
       await waitFor(() => {
-        expect(screen.getByText('Correct')).toBeInTheDocument();
+        const statsContainer = screen.getByText('0', { selector: '.text-success' });
+        expect(statsContainer).toBeInTheDocument();
       });
     });
   });

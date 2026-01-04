@@ -158,13 +158,12 @@ describe('QuestionCard', () => {
   describe('Result Display', () => {
     it('shows correct indicator when answer is correct', () => {
       renderQuestionCard({ selectedAnswer: 'A', showResult: true });
-      expect(screen.getByText('✓ Correct!')).toBeInTheDocument();
+      expect(screen.getByText('Correct')).toBeInTheDocument();
     });
 
     it('shows incorrect indicator when answer is wrong', () => {
       renderQuestionCard({ selectedAnswer: 'B', showResult: true });
-      expect(screen.getByText(/✗ Incorrect/)).toBeInTheDocument();
-      expect(screen.getByText(/The correct answer is A/)).toBeInTheDocument();
+      expect(screen.getByText(/The answer is A/)).toBeInTheDocument();
     });
 
     it('displays explanation when showResult is true and not hideLinks', () => {

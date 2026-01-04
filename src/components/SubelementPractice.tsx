@@ -427,67 +427,64 @@ export function SubelementPractice({
 
   return (
     <PageContainer width="standard" mobileNavPadding>
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={handleBackToQuestions} className="gap-2">
+      {/* Header - Refined Minimal */}
+      <div className="mb-12">
+        {/* Top row: Back button and topic name */}
+        <div className="flex items-center justify-between mb-8">
+          <Button variant="ghost" onClick={handleBackToQuestions} className="gap-2 -ml-2">
             <ArrowLeft className="w-4 h-4" />
             Question List
           </Button>
           <div className="flex items-center gap-2">
             <KeyboardShortcutsHelp />
-            <div className="flex items-center gap-2 text-primary">
-              <span className="font-mono font-bold">{selectedSubelement}</span>
-              <span className="text-muted-foreground">-</span>
-              <span className="text-sm text-muted-foreground">
-                {getSubelementName(selectedSubelement || '')}
-              </span>
-            </div>
+            <span className="font-mono text-sm text-muted-foreground">
+              {selectedSubelement}
+            </span>
           </div>
         </div>
 
-        {/* Progress & Stats Bar */}
-        <motion.div initial={{
-          opacity: 0,
-          y: -10
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-6">
-              <div className="text-center">
-                <p className="text-2xl font-mono font-bold text-success">{stats.correct}</p>
-                <p className="text-xs text-muted-foreground">Correct</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-mono font-bold text-destructive">{stats.total - stats.correct}</p>
-                <p className="text-xs text-muted-foreground">Incorrect</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-mono font-bold text-primary">{percentage}%</p>
-                <p className="text-xs text-muted-foreground">Score</p>
-              </div>
+        {/* Progress & Stats - Unified Minimal */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4"
+        >
+          {/* Progress bar - primary visual element */}
+          <div className="relative">
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                className="h-full bg-primary rounded-full transition-all duration-300"
+              />
             </div>
-            <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
-              <RotateCcw className="w-4 h-4" />
-              Reset
-            </Button>
           </div>
 
-          {/* Topic progress bar */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
-              <motion.div initial={{
-                width: 0
-              }} animate={{
-                width: `${progress}%`
-              }} className="h-full bg-primary rounded-full" />
+          {/* Inline stats below progress */}
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-3 font-mono text-muted-foreground">
+              <span className="text-success font-medium">{stats.correct}</span>
+              <span className="text-muted-foreground/40">/</span>
+              <span className="text-destructive font-medium">{stats.total - stats.correct}</span>
+              <span className="text-muted-foreground/30 mx-1">|</span>
+              <span className="text-primary font-medium">{percentage}%</span>
+              <span className="text-muted-foreground/30 mx-1">|</span>
+              <span className="text-muted-foreground">
+                {askedIds.length}/{currentQuestions.length}
+              </span>
+              {askedIds.length === currentQuestions.length && (
+                <CheckCircle className="w-3.5 h-3.5 text-success" />
+              )}
             </div>
-            <span className="text-xs text-muted-foreground font-mono">
-              {askedIds.length}/{currentQuestions.length}
-            </span>
-            {askedIds.length === currentQuestions.length && <CheckCircle className="w-4 h-4 text-success" />}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span className="sr-only">Reset</span>
+            </Button>
           </div>
         </motion.div>
       </div>
@@ -496,7 +493,7 @@ export function SubelementPractice({
       <QuestionCard question={question} selectedAnswer={selectedAnswer} onSelectAnswer={handleSelectAnswer} showResult={showResult} enableGlossaryHighlight onTopicClick={navigateToTopic} />
 
       {/* Actions */}
-      <div className="mt-8 flex justify-center gap-4">
+      <div className="mt-10 flex justify-center gap-4">
         {canGoBack && (
           <Button variant="outline" onClick={handlePreviousQuestion} className="gap-2">
             <ChevronLeft className="w-4 h-4" />
