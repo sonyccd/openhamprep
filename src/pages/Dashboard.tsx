@@ -10,16 +10,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle, Zap, Brain, Target, MapPin } from 'lucide-react';
 import { PageContainer } from '@/components/ui/page-container';
 import {
-  DashboardStats,
-  DashboardWeeklyGoals,
-  DashboardRecentPerformance,
-  DashboardWeakAreas,
-  DashboardTargetExam,
-  DashboardReadiness,
+  DashboardHero,
+  DashboardNextSteps,
+  DashboardProgress,
 } from '@/components/dashboard';
+import type { NextStep } from '@/components/dashboard/DashboardNextSteps';
 import { PracticeTest } from '@/components/PracticeTest';
 import { RandomPractice } from '@/components/RandomPractice';
 import { WeakQuestionsReview } from '@/components/WeakQuestionsReview';
@@ -206,10 +204,8 @@ export default function Dashboard() {
     readinessLevel,
     readinessMessage,
     readinessTitle,
-    readinessProgress,
     recentAvgScore,
-    totalTests,
-    passedTests,
+    nextAction,
   } = useTestReadiness({
     testResults,
     weakQuestionCount: weakQuestionIds.length,
@@ -285,67 +281,112 @@ export default function Dashboard() {
     }
     if (!user) return null;
 
-    // Calculate stats (using filtered attempts for the selected test type)
-    const totalAttempts = filteredAttempts.length;
-    const correctAttempts = filteredAttempts.filter(a => a.is_correct).length;
-    const overallAccuracy = totalAttempts > 0 ? Math.round(correctAttempts / totalAttempts * 100) : 0;
-    const recentTests = testResults?.slice(0, 3) || [];
-
     // Calculate weekly goal progress
     const questionsGoal = weeklyGoals?.questions_goal || 50;
     const testsGoal = weeklyGoals?.tests_goal || 2;
 
-    const handleReviewTest = (testId: string) => {
-      setReviewingTestId(testId);
-      changeView('review-test');
+    // Handle primary action from hero based on nextAction priority
+    const handlePrimaryAction = () => {
+      switch (nextAction.priority) {
+        case 'start':
+        case 'practice':
+        case 'ready':
+          changeView('practice-test');
+          break;
+        case 'weak':
+          changeView('weak-questions');
+          break;
+        default:
+          changeView('random-practice');
+          break;
+      }
+    };
+
+    // Build smart next steps based on user state
+    const getNextSteps = (): NextStep[] => {
+      const steps: NextStep[] = [];
+
+      // If weak questions > 5, show review weak questions
+      if (weakQuestionIds.length > 5) {
+        steps.push({
+          id: 'weak',
+          title: 'Review Weak Areas',
+          description: `${weakQuestionIds.length} questions need attention`,
+          icon: Zap,
+          onClick: () => changeView('weak-questions'),
+          badge: String(weakQuestionIds.length),
+          variant: 'warning',
+        });
+      }
+
+      // If haven't hit question goal, show random practice
+      if (thisWeekQuestions < questionsGoal) {
+        const remaining = questionsGoal - thisWeekQuestions;
+        steps.push({
+          id: 'practice',
+          title: 'Practice Questions',
+          description: `${remaining} more to reach your weekly goal`,
+          icon: Brain,
+          onClick: () => changeView('random-practice'),
+          variant: 'secondary',
+        });
+      }
+
+      // If haven't hit test goal, show practice test
+      if (thisWeekTests < testsGoal) {
+        steps.push({
+          id: 'test',
+          title: 'Take a Practice Test',
+          description: 'Test your knowledge with a full 35-question exam',
+          icon: Target,
+          onClick: () => changeView('practice-test'),
+          variant: 'primary',
+        });
+      }
+
+      // If exam ready but no target exam, suggest finding one
+      if (readinessLevel === 'ready' && !userTarget?.exam_session) {
+        steps.push({
+          id: 'find-exam',
+          title: 'Find an Exam Session',
+          description: "You're ready! Schedule your real exam",
+          icon: MapPin,
+          onClick: () => changeView('find-test-site'),
+          variant: 'primary',
+        });
+      }
+
+      // Limit to 3 steps max
+      return steps.slice(0, 3);
     };
 
     return (
       <PageContainer width="standard" radioWaveBg>
-          <DashboardReadiness
-            readinessLevel={readinessLevel}
-            readinessTitle={readinessTitle}
-            readinessMessage={readinessMessage}
-            readinessProgress={readinessProgress}
-            recentAvgScore={recentAvgScore}
-            passedTests={passedTests}
-            totalTests={totalTests}
-            onStartPracticeTest={() => changeView('practice-test')}
-          />
+        <DashboardHero
+          readinessLevel={readinessLevel}
+          readinessTitle={readinessTitle}
+          readinessMessage={readinessMessage}
+          recentAvgScore={recentAvgScore}
+          nextAction={nextAction}
+          onAction={handlePrimaryAction}
+        />
 
-          <DashboardWeeklyGoals
-            thisWeekQuestions={thisWeekQuestions}
-            thisWeekTests={thisWeekTests}
-            questionsGoal={questionsGoal}
-            testsGoal={testsGoal}
-            onOpenGoalsModal={() => setShowGoalsModal(true)}
-            onStartRandomPractice={() => changeView('random-practice')}
-            onStartPracticeTest={() => changeView('practice-test')}
-          />
+        <DashboardNextSteps steps={getNextSteps()} />
 
-          <DashboardTargetExam
-            userTarget={userTarget}
-            onFindTestSite={() => changeView('find-test-site')}
-          />
-
-          <DashboardStats
-            overallAccuracy={overallAccuracy}
-            passedTests={passedTests}
-            totalTests={totalTests}
-            weakQuestionCount={weakQuestionIds.length}
-            bestStreak={profile?.best_streak || 0}
-          />
-
-          <div className="grid md:grid-cols-2 gap-4 mb-6">
-            <DashboardRecentPerformance
-              recentTests={recentTests}
-              onReviewTest={handleReviewTest}
-            />
-            <DashboardWeakAreas
-              weakQuestionCount={weakQuestionIds.length}
-              onReviewWeakQuestions={() => changeView('weak-questions')}
-            />
-          </div>
+        <DashboardProgress
+          thisWeekQuestions={thisWeekQuestions}
+          questionsGoal={questionsGoal}
+          thisWeekTests={thisWeekTests}
+          testsGoal={testsGoal}
+          examDate={userTarget?.exam_session?.exam_date}
+          examLocation={
+            userTarget?.exam_session
+              ? `${userTarget.exam_session.city}, ${userTarget.exam_session.state}`
+              : undefined
+          }
+          onOpenGoalsModal={() => setShowGoalsModal(true)}
+          onFindTestSite={() => changeView('find-test-site')}
+        />
       </PageContainer>
     );
   };
