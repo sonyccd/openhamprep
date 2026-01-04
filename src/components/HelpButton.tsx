@@ -124,6 +124,7 @@ export function HelpButton() {
                       </div>
                     </div>
                     <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <span className="sr-only">(opens in new window)</span>
                   </a>
 
                   <a href="https://openhamprep.statuspage.io/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
@@ -137,6 +138,7 @@ export function HelpButton() {
                       </div>
                     </div>
                     <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <span className="sr-only">(opens in new window)</span>
                   </a>
                 </div>
               </TabsContent>

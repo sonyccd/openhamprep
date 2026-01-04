@@ -36,6 +36,8 @@ export function SidebarStudyGroup({
         <TooltipTrigger asChild>
           <button
             onClick={onToggle}
+            aria-label={`Study menu${totalBadge > 0 ? `, ${totalBadge} items need attention` : ''}`}
+            aria-expanded={isExpanded}
             className={cn(
               'w-full flex items-center justify-center px-2 py-2.5 rounded-lg transition-colors',
               isStudyItemActive
@@ -44,9 +46,9 @@ export function SidebarStudyGroup({
             )}
           >
             <div className="relative shrink-0">
-              <StudyIcon className="w-5 h-5" />
+              <StudyIcon className="w-5 h-5" aria-hidden="true" />
               {totalBadge > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center" aria-hidden="true">
                   {totalBadge > 9 ? '9+' : totalBadge}
                 </span>
               )}
@@ -68,6 +70,8 @@ export function SidebarStudyGroup({
       {/* Study header - clickable to expand/collapse */}
       <button
         onClick={onToggle}
+        aria-expanded={isExpanded}
+        aria-controls="study-group-items"
         className={cn(
           'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
           isStudyItemActive
@@ -76,24 +80,27 @@ export function SidebarStudyGroup({
         )}
       >
         <div className="relative shrink-0">
-          <StudyIcon className="w-5 h-5" />
+          <StudyIcon className="w-5 h-5" aria-hidden="true" />
           {totalBadge > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+            <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center" aria-hidden="true">
               {totalBadge > 9 ? '9+' : totalBadge}
             </span>
           )}
         </div>
         <span className="text-sm font-medium truncate flex-1 text-left">{group.label}</span>
         {isExpanded ? (
-          <ChevronDown className="w-4 h-4" />
+          <ChevronDown className="w-4 h-4" aria-hidden="true" />
         ) : (
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-4 h-4" aria-hidden="true" />
+        )}
+        {totalBadge > 0 && (
+          <span className="sr-only">, {totalBadge} items need attention</span>
         )}
       </button>
 
       {/* Study items - shown when expanded */}
       {isExpanded && (
-        <div className="ml-4 pl-2 border-l border-border space-y-1">
+        <div id="study-group-items" className="ml-4 pl-2 border-l border-border space-y-1">
           {group.items.map((item) => {
             const isActive = !isOnAdminPage && currentView === item.id;
             const Icon = item.icon;
@@ -102,6 +109,7 @@ export function SidebarStudyGroup({
                 key={item.id}
                 onClick={() => onNavClick(item.id, item.disabled)}
                 disabled={item.disabled}
+                aria-current={isActive ? 'page' : undefined}
                 className={cn(
                   'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm',
                   isActive
@@ -112,14 +120,17 @@ export function SidebarStudyGroup({
                 )}
               >
                 <div className="relative shrink-0">
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4" aria-hidden="true" />
                   {item.badge !== undefined && item.badge > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center" aria-hidden="true">
                       {item.badge > 9 ? '9+' : item.badge}
                     </span>
                   )}
                 </div>
                 <span className="font-medium truncate">{item.label}</span>
+                {item.badgeAriaLabel && (
+                  <span className="sr-only">, {item.badgeAriaLabel}</span>
+                )}
               </button>
             );
           })}

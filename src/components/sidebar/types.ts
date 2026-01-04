@@ -5,6 +5,7 @@ export interface NavItem {
   label: string;
   icon: React.ElementType;
   badge?: number;
+  badgeAriaLabel?: string;
   disabled?: boolean;
 }
 

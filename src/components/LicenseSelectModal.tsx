@@ -81,6 +81,8 @@ export function LicenseSelectModal({
                 key={test.id}
                 onClick={() => test.available && setPendingSelection(test.id)}
                 disabled={!test.available}
+                aria-label={`${test.name} license: ${licenseDescriptions[test.id]}${isCurrent ? ' (currently selected)' : ''}${!test.available ? ' (coming soon)' : ''}`}
+                aria-pressed={isSelected}
                 className={cn(
                   "relative flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left",
                   isSelected

@@ -11,6 +11,7 @@ import { Loader2 } from 'lucide-react';
 import { HelpButton } from '@/components/HelpButton';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
+import { SkipLink } from '@/components/SkipLink';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -110,6 +111,7 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
 
   return (
     <TooltipProvider>
+      <SkipLink />
       <div className="h-screen bg-background flex w-full overflow-hidden">
         <DashboardSidebar
           currentView={currentView}
@@ -126,9 +128,9 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
           selectedTest={selectedTest}
           onTestChange={onTestChange}
         />
-        <div className="flex-1 overflow-y-auto pt-16 md:pt-0 flex flex-col">
+        <main id="main-content" className="flex-1 overflow-y-auto pt-16 md:pt-0 flex flex-col">
           {children}
-        </div>
+        </main>
         <HelpButton />
       </div>
     </TooltipProvider>

@@ -62,6 +62,7 @@ export function PracticeTest({
   // Timer state
   const [timerEnabled, setTimerEnabled] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(120 * 60); // 120 minutes in seconds
+  const [timerAnnouncement, setTimerAnnouncement] = useState<string>('');
 
   const currentQuestion = questions.length > 0 ? questions[currentIndex] : null;
   const answeredCount = Object.keys(answers).length;
@@ -110,6 +111,19 @@ export function PracticeTest({
       });
     }
   }, [timeRemaining, timerEnabled, isFinished, hasStarted, questions, answers, saveTestResult, testType]);
+
+  // Announce timer warnings at key moments for screen readers
+  useEffect(() => {
+    if (!timerEnabled || isFinished || !hasStarted) return;
+
+    if (timeRemaining === 5 * 60) {
+      setTimerAnnouncement('5 minutes remaining');
+    } else if (timeRemaining === 60) {
+      setTimerAnnouncement('1 minute remaining');
+    } else if (timeRemaining === 0) {
+      setTimerAnnouncement('Time is up. Test submitted.');
+    }
+  }, [timeRemaining, timerEnabled, isFinished, hasStarted]);
 
   // Handlers defined before useKeyboardShortcuts to avoid hooks ordering issues
   const handleSelectAnswer = (answer: 'A' | 'B' | 'C' | 'D') => {
@@ -330,17 +344,26 @@ export function PracticeTest({
 
           <div className="flex items-center gap-4">
             {timerEnabled && (
-              <div className={cn(
-                "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-mono",
-                timeRemaining < 300
-                  ? "bg-destructive/10 text-destructive"
-                  : "text-muted-foreground"
-              )}>
-                <Clock className="w-3.5 h-3.5" />
+              <div
+                role="timer"
+                aria-label={`Time remaining: ${formatTime(timeRemaining)}`}
+                className={cn(
+                  "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-mono",
+                  timeRemaining < 300
+                    ? "bg-destructive/10 text-destructive"
+                    : "text-muted-foreground"
+                )}
+              >
+                <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                 {formatTime(timeRemaining)}
               </div>
             )}
             <KeyboardShortcutsHelp />
+          </div>
+
+          {/* Screen reader announcement for timer warnings */}
+          <div aria-live="assertive" aria-atomic="true" className="sr-only">
+            {timerAnnouncement}
           </div>
         </div>
 
@@ -372,10 +395,18 @@ export function PracticeTest({
           </Button>
 
           {/* Question Navigator */}
-          <div className="hidden md:flex flex-wrap justify-center gap-1 max-w-md">
-            {questions.map((q, idx) => <button key={q.id} onClick={() => setCurrentIndex(idx)} className={`w-8 h-8 rounded text-xs font-mono transition-colors ${idx === currentIndex ? "bg-primary text-primary-foreground" : answers[q.id] ? "bg-secondary text-secondary-foreground" : "bg-muted text-muted-foreground hover:bg-secondary"}`}>
+          <div className="hidden md:flex flex-wrap justify-center gap-1 max-w-md" role="navigation" aria-label="Question navigator">
+            {questions.map((q, idx) => (
+              <button
+                key={q.id}
+                onClick={() => setCurrentIndex(idx)}
+                aria-label={`Question ${idx + 1}${answers[q.id] ? ', answered' : ', unanswered'}${idx === currentIndex ? ', current' : ''}`}
+                aria-current={idx === currentIndex ? 'step' : undefined}
+                className={`w-8 h-8 rounded text-xs font-mono transition-colors ${idx === currentIndex ? "bg-primary text-primary-foreground" : answers[q.id] ? "bg-secondary text-secondary-foreground" : "bg-muted text-muted-foreground hover:bg-secondary"}`}
+              >
                 {idx + 1}
-              </button>)}
+              </button>
+            ))}
           </div>
 
           {currentIndex === questions.length - 1 ? <Button onClick={handleFinish} className="gap-2" variant={answeredCount === questions.length ? "default" : "secondary"}>
