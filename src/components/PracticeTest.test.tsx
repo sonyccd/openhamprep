@@ -214,14 +214,15 @@ describe('PracticeTest', () => {
 
     it('shows progress bar', async () => {
       await startTest();
-      
-      expect(screen.getByText(/answered/)).toBeInTheDocument();
+
+      // Progress is now shown as "Progress" label with count
+      expect(screen.getByText('Progress')).toBeInTheDocument();
     });
 
     it('shows timer toggle', async () => {
       await startTest();
-      
-      expect(screen.getByText('Exam Timer')).toBeInTheDocument();
+
+      expect(screen.getByText('Timer')).toBeInTheDocument();
     });
 
     it('enables timer when toggled', async () => {
@@ -265,10 +266,10 @@ describe('PracticeTest', () => {
     it('shows timer info tooltip', async () => {
       renderPracticeTest();
       fireEvent.click(screen.getByRole('button', { name: /start test/i }));
-      
+
       await waitFor(() => {
-        // Info icon should be present for timer explanation
-        expect(screen.getByText('Exam Timer')).toBeInTheDocument();
+        // Timer label should be present
+        expect(screen.getByText('Timer')).toBeInTheDocument();
       });
     });
   });
@@ -277,21 +278,22 @@ describe('PracticeTest', () => {
     it('updates progress when answer is selected', async () => {
       renderPracticeTest();
       fireEvent.click(screen.getByRole('button', { name: /start test/i }));
-      
+
       await waitFor(() => {
         expect(screen.getByText('Progress')).toBeInTheDocument();
       });
-      
+
       // Click on an answer option
       const buttons = screen.getAllByRole('button');
       const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
       if (optionA) {
         fireEvent.click(optionA);
       }
-      
+
       await waitFor(() => {
-        // Progress should update
-        expect(screen.getByText(/1.*answered/i)).toBeInTheDocument();
+        // Progress is now shown in "X / Y" format - may match multiple elements
+        const progressElements = screen.getAllByText(/1 \/ /);
+        expect(progressElements.length).toBeGreaterThan(0);
       });
     });
   });

@@ -177,6 +177,23 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-5px); }
   }
+
+  /* Refined minimal utilities */
+  .stat-inline {
+    @apply flex items-center gap-1.5 font-mono text-sm;
+  }
+
+  .stat-value {
+    @apply font-medium tabular-nums;
+  }
+
+  .action-group-float {
+    @apply flex items-center gap-1 opacity-50 hover:opacity-100 transition-opacity duration-200;
+  }
+
+  .separator-subtle {
+    @apply h-px bg-gradient-to-r from-transparent via-border/50 to-transparent;
+  }
 }
 
 /* Shepherd.js Custom Theme */

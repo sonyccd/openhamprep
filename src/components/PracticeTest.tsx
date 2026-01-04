@@ -11,6 +11,7 @@ import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Clock, Info, Play, AlertTr
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -304,54 +305,58 @@ export function PracticeTest({
 
   return (
     <PageContainer width="standard" mobileNavPadding>
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <div />
-          <div className="flex items-center gap-2 text-foreground">
+      {/* Header - Refined Minimal */}
+      <div className="mb-12">
+        {/* Top row: Timer toggle and keyboard help */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Switch id="timer-toggle" checked={timerEnabled} onCheckedChange={handleTimerToggle} />
+              <Label htmlFor="timer-toggle" className="text-sm text-muted-foreground cursor-pointer">
+                Timer
+              </Label>
+            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p className="text-sm">
+                  The real exam has no official time limit—only how long your Volunteer Examiners are willing to wait (typically around 2 hours). This timer is optional for practice.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {timerEnabled && (
+              <div className={cn(
+                "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-mono",
+                timeRemaining < 300
+                  ? "bg-destructive/10 text-destructive"
+                  : "text-muted-foreground"
+              )}>
+                <Clock className="w-3.5 h-3.5" />
+                {formatTime(timeRemaining)}
+              </div>
+            )}
             <KeyboardShortcutsHelp />
           </div>
         </div>
 
-        {/* Timer Control */}
-        <div className="bg-card border border-border rounded-lg p-4 mb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Switch id="timer-toggle" checked={timerEnabled} onCheckedChange={handleTimerToggle} />
-                <Label htmlFor="timer-toggle" className="text-sm font-medium cursor-pointer">
-                  Exam Timer
-                </Label>
-              </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p className="text-sm">
-                    The real exam has no official time limit—only how long your Volunteer Examiners are willing to wait (typically around 2 hours). This timer is optional for practice.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            {timerEnabled && <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span className={`font-mono text-lg ${timeRemaining < 300 ? 'text-destructive' : 'text-foreground'}`}>
-                  {formatTime(timeRemaining)}
-                </span>
-              </div>}
+        {/* Progress - Minimal bar with count */}
+        <div className="space-y-3">
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              className="h-full bg-primary rounded-full transition-all duration-300"
+            />
           </div>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Progress</span>
-            <span className="text-sm font-mono text-primary">
-              {answeredCount} / {questions.length} answered
-            </span>
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Progress</span>
+            <span className="font-mono">{answeredCount} / {questions.length}</span>
           </div>
-          <Progress value={progress} className="h-2" />
         </div>
       </div>
 
@@ -359,7 +364,7 @@ export function PracticeTest({
       <QuestionCard question={currentQuestion} selectedAnswer={answers[currentQuestion.id] || null} onSelectAnswer={handleSelectAnswer} showResult={false} questionNumber={currentIndex + 1} totalQuestions={questions.length} />
 
       {/* Navigation */}
-      <div className="mt-8">
+      <div className="mt-10">
         <div className="flex items-center justify-between gap-4">
           <Button variant="outline" onClick={handlePrevious} disabled={currentIndex === 0} className="gap-2">
             <ArrowLeft className="w-4 h-4" />
