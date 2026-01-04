@@ -117,8 +117,10 @@ export function QuestionListView({
         </Button>
 
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <label htmlFor="question-search" className="sr-only">Search questions</label>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
           <input
+            id="question-search"
             type="text"
             placeholder="Search questions..."
             value={searchQuery}
@@ -127,6 +129,11 @@ export function QuestionListView({
           />
         </div>
       </motion.div>
+
+      {/* Screen reader announcement for search results */}
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {searchQuery && `${filteredQuestions.length} question${filteredQuestions.length !== 1 ? 's' : ''} found`}
+      </div>
 
       {/* Question List */}
       <motion.div

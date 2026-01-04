@@ -24,36 +24,40 @@
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans antialiased">
 
+  <!-- Skip link for keyboard navigation -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
   <!-- Navigation -->
-  <nav class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+  <nav aria-label="Main navigation" class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
     <div class="max-w-6xl mx-auto px-4">
       <div class="flex items-center justify-between h-16">
         <a href="/" class="flex items-center gap-2 group">
-          <i data-lucide="radio" class="w-7 h-7 text-amber-600 dark:text-amber-400 group-hover:animate-pulse-slow"></i>
+          <i data-lucide="radio" aria-hidden="true" class="w-7 h-7 text-amber-600 dark:text-amber-400 group-hover:animate-pulse-slow"></i>
           <span class="font-mono font-bold text-lg">Open Ham Prep</span>
         </a>
         <div class="hidden md:flex items-center gap-6">
           <a href="/features.html" class="nav-link text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Features</a>
-          <a href="/faq.html" class="nav-link active text-sm font-medium text-gray-900 dark:text-gray-100">FAQ</a>
+          <a href="/faq.html" aria-current="page" class="nav-link active text-sm font-medium text-gray-900 dark:text-gray-100">FAQ</a>
           <a href="/about.html" class="nav-link text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">About</a>
           <a href="https://forum.openhamprep.com" target="_blank" rel="noopener noreferrer" class="nav-link text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors inline-flex items-center gap-1">
             Community
-            <i data-lucide="external-link" class="w-3 h-3"></i>
+            <i data-lucide="external-link" aria-hidden="true" class="w-3 h-3"></i>
+            <span class="sr-only">(opens in new window)</span>
           </a>
-          <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <i data-lucide="sun" class="w-5 h-5 dark:hidden"></i>
-            <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+          <button id="theme-toggle" aria-label="Toggle dark mode" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <i data-lucide="sun" aria-hidden="true" class="w-5 h-5 dark:hidden"></i>
+            <i data-lucide="moon" aria-hidden="true" class="w-5 h-5 hidden dark:block"></i>
           </button>
           <a href="https://app.openhamprep.com/auth" class="btn-primary px-4 py-2 bg-amber-600 dark:bg-amber-500 text-white rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors text-sm font-medium">Start Studying Free</a>
         </div>
         <div class="flex items-center gap-2 md:hidden">
-          <button id="theme-toggle-mobile" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-            <i data-lucide="sun" class="w-5 h-5 dark:hidden"></i>
-            <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+          <button id="theme-toggle-mobile" aria-label="Toggle dark mode" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+            <i data-lucide="sun" aria-hidden="true" class="w-5 h-5 dark:hidden"></i>
+            <i data-lucide="moon" aria-hidden="true" class="w-5 h-5 hidden dark:block"></i>
           </button>
-          <button id="mobile-menu-button" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-            <i data-lucide="menu" class="w-5 h-5" id="menu-icon"></i>
-            <i data-lucide="x" class="w-5 h-5 hidden" id="close-icon"></i>
+          <button id="mobile-menu-button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobile-menu" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+            <i data-lucide="menu" aria-hidden="true" class="w-5 h-5" id="menu-icon"></i>
+            <i data-lucide="x" aria-hidden="true" class="w-5 h-5 hidden" id="close-icon"></i>
           </button>
         </div>
       </div>
@@ -64,7 +68,8 @@
           <a href="/about.html" class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors py-2">About</a>
           <a href="https://forum.openhamprep.com" target="_blank" rel="noopener noreferrer" class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors py-2 inline-flex items-center gap-1">
             Community
-            <i data-lucide="external-link" class="w-3 h-3"></i>
+            <i data-lucide="external-link" aria-hidden="true" class="w-3 h-3"></i>
+            <span class="sr-only">(opens in new window)</span>
           </a>
           <a href="https://app.openhamprep.com/auth" class="px-4 py-2 bg-amber-600 dark:bg-amber-500 text-white rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors text-sm font-medium text-center">Start Studying Free</a>
         </div>
@@ -72,11 +77,11 @@
     </div>
   </nav>
 
-  <main>
+  <main id="main-content">
     <!-- Hero -->
     <section class="py-20 px-4 gradient-hero">
       <div class="max-w-4xl mx-auto text-center">
-        <i data-lucide="help-circle" class="w-16 h-16 text-amber-600 dark:text-amber-400 mx-auto mb-6"></i>
+        <i data-lucide="help-circle" aria-hidden="true" class="w-16 h-16 text-amber-600 dark:text-amber-400 mx-auto mb-6"></i>
         <h1 class="text-4xl md:text-5xl lg:text-6xl font-mono font-bold mb-6 animate-fade-in-up">
           Frequently Asked <span class="gradient-text">Questions</span>
         </h1>
@@ -92,22 +97,22 @@
         <div class="space-y-4">
           <!-- FAQ Item 1 -->
           <div class="faq-item reveal border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden" style="transition-delay: 0.1s;">
-            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors" id="faq-btn-1" aria-expanded="false" aria-controls="faq-answer-1">
               <span class="font-semibold text-lg pr-4">Is Open Ham Prep really free?</span>
-              <i data-lucide="chevron-down" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
+              <i data-lucide="chevron-down" aria-hidden="true" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
             </button>
-            <div class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
+            <div id="faq-answer-1" class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
               Yes, completely free with no hidden costs, subscriptions, or premium features locked behind a paywall. This app was built by ham radio enthusiasts in North Carolina to help people get licensed.
             </div>
           </div>
 
           <!-- FAQ Item 2 -->
           <div class="faq-item reveal border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden" style="transition-delay: 0.2s;">
-            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors" id="faq-btn-2" aria-expanded="false" aria-controls="faq-answer-2">
               <span class="font-semibold text-lg pr-4">What are the different license classes?</span>
-              <i data-lucide="chevron-down" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
+              <i data-lucide="chevron-down" aria-hidden="true" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
             </button>
-            <div class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
+            <div id="faq-answer-2" class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
               <p class="mb-4">There are three license classes:</p>
               <ul class="space-y-2">
                 <li class="flex items-start gap-3">
@@ -128,55 +133,55 @@
 
           <!-- FAQ Item 3 -->
           <div class="faq-item reveal border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden" style="transition-delay: 0.3s;">
-            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors" id="faq-btn-3" aria-expanded="false" aria-controls="faq-answer-3">
               <span class="font-semibold text-lg pr-4">Are the questions the actual exam questions?</span>
-              <i data-lucide="chevron-down" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
+              <i data-lucide="chevron-down" aria-hidden="true" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
             </button>
-            <div class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
+            <div id="faq-answer-3" class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
               Yes! We use the official National Conference of Volunteer Examiner Coordinators, NCVEC's question pools, which are the exact questions used on the real exam. The NCVEC publishes these pools publicly, and all exam questions come directly from them. When you study with us, you're seeing the same questions you'll see on test day.
             </div>
           </div>
 
           <!-- FAQ Item 4 -->
           <div class="faq-item reveal border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden" style="transition-delay: 0.4s;">
-            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors" id="faq-btn-4" aria-expanded="false" aria-controls="faq-answer-4">
               <span class="font-semibold text-lg pr-4">How long does it take to prepare for the Technician exam?</span>
-              <i data-lucide="chevron-down" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
+              <i data-lucide="chevron-down" aria-hidden="true" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
             </button>
-            <div class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
+            <div id="faq-answer-4" class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
               Most people can prepare in 1-4 weeks with regular study. If you study 30-60 minutes daily, you should be ready within 2-3 weeks. Some people with technical backgrounds pass after just a few days of focused study.
             </div>
           </div>
 
           <!-- FAQ Item 5 -->
           <div class="faq-item reveal border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden" style="transition-delay: 0.5s;">
-            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors" id="faq-btn-5" aria-expanded="false" aria-controls="faq-answer-5">
               <span class="font-semibold text-lg pr-4">How do I find an exam session near me?</span>
-              <i data-lucide="chevron-down" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
+              <i data-lucide="chevron-down" aria-hidden="true" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
             </button>
-            <div class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
+            <div id="faq-answer-5" class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
               Open Ham Prep has a built-in exam session finder! Simply enter your ZIP code or state, and we'll show you upcoming exam sessions nearby. You can filter by date, distance, and whether walk-ins are allowed.
             </div>
           </div>
 
           <!-- FAQ Item 6 -->
           <div class="faq-item reveal border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden" style="transition-delay: 0.6s;">
-            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors" id="faq-btn-6" aria-expanded="false" aria-controls="faq-answer-6">
               <span class="font-semibold text-lg pr-4">What score do I need to pass?</span>
-              <i data-lucide="chevron-down" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
+              <i data-lucide="chevron-down" aria-hidden="true" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
             </button>
-            <div class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
+            <div id="faq-answer-6" class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
               You need to score at least 74% to pass. For the Technician and General exams (35 questions), that means getting 26 or more correct. For the Amateur Extra exam (50 questions), you need 37 or more correct.
             </div>
           </div>
 
           <!-- FAQ Item 7 - Learning Library -->
           <div class="faq-item reveal border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden" style="transition-delay: 0.7s;">
-            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors" id="faq-btn-7" aria-expanded="false" aria-controls="faq-answer-7">
               <span class="font-semibold text-lg pr-4">What is the Learning Library?</span>
-              <i data-lucide="chevron-down" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
+              <i data-lucide="chevron-down" aria-hidden="true" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
             </button>
-            <div class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
+            <div id="faq-answer-7" class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
               <p class="mb-3">The Learning Library is our educational content organized by topic—not just practice questions, but actual lessons that help you understand the material.</p>
               <p class="mb-3">Each topic includes:</p>
               <ul class="space-y-2 mb-3">
@@ -199,11 +204,11 @@
 
           <!-- FAQ Item 8 - Community Forum -->
           <div class="faq-item reveal border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden" style="transition-delay: 0.8s;">
-            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors" id="faq-btn-8" aria-expanded="false" aria-controls="faq-answer-8">
               <span class="font-semibold text-lg pr-4">How does the community forum work?</span>
-              <i data-lucide="chevron-down" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
+              <i data-lucide="chevron-down" aria-hidden="true" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
             </button>
-            <div class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
+            <div id="faq-answer-8" class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
               <p class="mb-3">Our community forum at <a href="https://forum.openhamprep.com" target="_blank" rel="noopener noreferrer" class="text-amber-600 dark:text-amber-400 hover:underline">forum.openhamprep.com</a> is powered by Discourse—the same software used by major tech communities.</p>
               <p class="mb-3">Here's how it helps you:</p>
               <ul class="space-y-2 mb-3">
@@ -226,11 +231,11 @@
 
           <!-- FAQ Item 9 - Exam Readiness -->
           <div class="faq-item reveal border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden" style="transition-delay: 0.9s;">
-            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors" id="faq-btn-9" aria-expanded="false" aria-controls="faq-answer-9">
               <span class="font-semibold text-lg pr-4">What is "exam readiness" and how does it work?</span>
-              <i data-lucide="chevron-down" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
+              <i data-lucide="chevron-down" aria-hidden="true" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
             </button>
-            <div class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
+            <div id="faq-answer-9" class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
               <p class="mb-3">Exam readiness is your personalized score that predicts how likely you are to pass the real exam based on your practice performance.</p>
               <p class="mb-3">Here's how we calculate it:</p>
               <ul class="space-y-2 mb-3">
@@ -253,11 +258,11 @@
 
           <!-- FAQ Item 10 - Calculator -->
           <div class="faq-item reveal border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden" style="transition-delay: 1.0s;">
-            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+            <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors" id="faq-btn-10" aria-expanded="false" aria-controls="faq-answer-10">
               <span class="font-semibold text-lg pr-4">Is there a calculator for math questions?</span>
-              <i data-lucide="chevron-down" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
+              <i data-lucide="chevron-down" aria-hidden="true" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
             </button>
-            <div class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
+            <div id="faq-answer-10" class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
               Yes! We have a built-in scientific calculator available during study sessions. Some exam questions involve calculations (like Ohm's Law or frequency calculations), and our calculator is right there when you need it—no switching apps required.
             </div>
           </div>
@@ -269,12 +274,12 @@
     <section class="py-20 px-4 gradient-hero">
       <div class="max-w-2xl mx-auto text-center">
         <div class="cta-card reveal-scale bg-white dark:bg-gray-800 border-2 border-amber-200 dark:border-amber-700 rounded-3xl p-10 md:p-14 shadow-2xl shadow-amber-600/10">
-          <i data-lucide="radio" class="w-14 h-14 text-amber-600 dark:text-amber-400 mx-auto mb-6 animate-float"></i>
+          <i data-lucide="radio" aria-hidden="true" class="w-14 h-14 text-amber-600 dark:text-amber-400 mx-auto mb-6 animate-float"></i>
           <h2 class="text-3xl md:text-4xl font-mono font-bold mb-4">Ready to Get Your License?</h2>
           <p class="text-gray-600 dark:text-gray-400 mb-8 text-lg">Start studying today with our free practice tests, Learning Library, and supportive community.</p>
           <a href="https://app.openhamprep.com/auth" class="btn-primary inline-flex items-center gap-3 px-8 py-4 bg-amber-600 dark:bg-amber-500 text-white text-lg font-medium rounded-xl hover:bg-amber-700 dark:hover:bg-amber-600 transition-all group shadow-lg shadow-amber-600/20">
             Start Studying Free
-            <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+            <i data-lucide="arrow-right" aria-hidden="true" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
           </a>
         </div>
       </div>
@@ -283,25 +288,28 @@
 
   <!-- Footer -->
   <footer class="py-10 px-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+    <h2 class="sr-only">Site footer</h2>
     <div class="max-w-6xl mx-auto">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div class="flex items-center gap-2">
-          <i data-lucide="radio" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i>
+          <i data-lucide="radio" aria-hidden="true" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i>
           <span class="font-mono font-bold">Open Ham Prep</span>
         </div>
-        <div class="flex flex-wrap items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
+        <nav aria-label="Footer navigation" class="flex flex-wrap items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
           <a href="/features.html" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Features</a>
           <a href="/faq.html" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">FAQ</a>
           <a href="/about.html" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">About</a>
           <a href="https://forum.openhamprep.com" target="_blank" rel="noopener noreferrer" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors inline-flex items-center gap-1">
-            <i data-lucide="message-circle" class="w-4 h-4"></i>
+            <i data-lucide="message-circle" aria-hidden="true" class="w-4 h-4"></i>
             Community
+            <span class="sr-only">(opens in new window)</span>
           </a>
           <a href="https://github.com/sonyccd/openhamprep" target="_blank" rel="noopener noreferrer" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors inline-flex items-center gap-1">
-            <i data-lucide="github" class="w-4 h-4"></i>
+            <i data-lucide="github" aria-hidden="true" class="w-4 h-4"></i>
             GitHub
+            <span class="sr-only">(opens in new window)</span>
           </a>
-        </div>
+        </nav>
       </div>
       <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800 text-center text-gray-600 dark:text-gray-400 space-y-2">
         <p class="text-sm">Official NCVEC question pools • Free to use • Open Source</p>
@@ -321,14 +329,19 @@
     const closeIcon = document.getElementById('close-icon');
 
     mobileMenuButton.addEventListener('click', () => {
+      const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+      mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
+      mobileMenuButton.setAttribute('aria-label', isExpanded ? 'Open navigation menu' : 'Close navigation menu');
       mobileMenu.classList.toggle('hidden');
       menuIcon.classList.toggle('hidden');
       closeIcon.classList.toggle('hidden');
     });
 
-    // FAQ accordion
+    // FAQ accordion with accessibility
     document.querySelectorAll('.faq-button').forEach(button => {
       button.addEventListener('click', () => {
+        const isExpanded = button.getAttribute('aria-expanded') === 'true';
+        button.setAttribute('aria-expanded', !isExpanded);
         const answer = button.nextElementSibling;
         const icon = button.querySelector('[data-lucide="chevron-down"]');
         answer.classList.toggle('hidden');

@@ -102,9 +102,10 @@ export function DashboardSidebar({
         label: 'Weak Areas',
         icon: AlertTriangle,
         badge: weakQuestionCount,
+        badgeAriaLabel: weakQuestionCount === 1 ? '1 weak question' : `${weakQuestionCount} weak questions`,
         disabled: !isTestAvailable || weakQuestionCount === 0,
       },
-      { id: 'bookmarks', label: 'Bookmarked', icon: Bookmark, badge: bookmarkCount },
+      { id: 'bookmarks', label: 'Bookmarked', icon: Bookmark, badge: bookmarkCount, badgeAriaLabel: bookmarkCount === 1 ? '1 bookmark' : `${bookmarkCount} bookmarks` },
       { id: 'glossary-flashcards', label: 'Study Terms', icon: Layers },
     ],
   };

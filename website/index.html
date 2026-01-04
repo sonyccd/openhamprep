@@ -30,13 +30,16 @@
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans antialiased">
 
+  <!-- Skip link for keyboard navigation -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
   <!-- Navigation -->
-  <nav class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+  <nav aria-label="Main navigation" class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
     <div class="max-w-6xl mx-auto px-4">
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
         <a href="/" class="flex items-center gap-2 group">
-          <i data-lucide="radio" class="w-7 h-7 text-amber-600 dark:text-amber-400 group-hover:animate-pulse-slow"></i>
+          <i data-lucide="radio" aria-hidden="true" class="w-7 h-7 text-amber-600 dark:text-amber-400 group-hover:animate-pulse-slow"></i>
           <span class="font-mono font-bold text-lg">Open Ham Prep</span>
         </a>
 
@@ -47,11 +50,12 @@
           <a href="/about.html" class="nav-link text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">About</a>
           <a href="https://forum.openhamprep.com" target="_blank" rel="noopener noreferrer" class="nav-link text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors inline-flex items-center gap-1">
             Community
-            <i data-lucide="external-link" class="w-3 h-3"></i>
+            <i data-lucide="external-link" aria-hidden="true" class="w-3 h-3"></i>
+            <span class="sr-only">(opens in new window)</span>
           </a>
-          <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <i data-lucide="sun" class="w-5 h-5 dark:hidden"></i>
-            <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+          <button id="theme-toggle" aria-label="Toggle dark mode" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <i data-lucide="sun" aria-hidden="true" class="w-5 h-5 dark:hidden"></i>
+            <i data-lucide="moon" aria-hidden="true" class="w-5 h-5 hidden dark:block"></i>
           </button>
           <a href="https://app.openhamprep.com/auth" class="btn-primary px-4 py-2 bg-amber-600 dark:bg-amber-500 text-white rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors text-sm font-medium">
             Start Studying Free
@@ -60,13 +64,13 @@
 
         <!-- Mobile Menu Button -->
         <div class="flex items-center gap-2 md:hidden">
-          <button id="theme-toggle-mobile" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <i data-lucide="sun" class="w-5 h-5 dark:hidden"></i>
-            <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+          <button id="theme-toggle-mobile" aria-label="Toggle dark mode" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <i data-lucide="sun" aria-hidden="true" class="w-5 h-5 dark:hidden"></i>
+            <i data-lucide="moon" aria-hidden="true" class="w-5 h-5 hidden dark:block"></i>
           </button>
-          <button id="mobile-menu-button" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-            <i data-lucide="menu" class="w-5 h-5" id="menu-icon"></i>
-            <i data-lucide="x" class="w-5 h-5 hidden" id="close-icon"></i>
+          <button id="mobile-menu-button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobile-menu" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+            <i data-lucide="menu" aria-hidden="true" class="w-5 h-5" id="menu-icon"></i>
+            <i data-lucide="x" aria-hidden="true" class="w-5 h-5 hidden" id="close-icon"></i>
           </button>
         </div>
       </div>
@@ -79,7 +83,8 @@
           <a href="/about.html" class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors py-2">About</a>
           <a href="https://forum.openhamprep.com" target="_blank" rel="noopener noreferrer" class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors py-2 inline-flex items-center gap-1">
             Community
-            <i data-lucide="external-link" class="w-3 h-3"></i>
+            <i data-lucide="external-link" aria-hidden="true" class="w-3 h-3"></i>
+            <span class="sr-only">(opens in new window)</span>
           </a>
           <a href="https://app.openhamprep.com/auth" class="px-4 py-2 bg-amber-600 dark:bg-amber-500 text-white rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors text-sm font-medium text-center">
             Start Studying Free
@@ -90,14 +95,14 @@
   </nav>
 
   <!-- Main Content -->
-  <main>
+  <main id="main-content">
     <!-- Hero Section -->
     <section class="flex flex-col items-center justify-center px-4 pt-16 pb-20 md:pt-24 md:pb-28 gradient-hero">
       <div class="text-center max-w-4xl">
         <!-- Badge -->
         <div class="animate-fade-in mb-6">
           <span class="badge badge-amber">
-            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            <i data-lucide="sparkles" aria-hidden="true" class="w-4 h-4"></i>
             100% Free, Forever
           </span>
         </div>
@@ -117,11 +122,12 @@
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-300">
           <a href="https://app.openhamprep.com/auth" class="btn-primary inline-flex items-center gap-3 px-8 py-4 bg-amber-600 dark:bg-amber-500 text-white text-lg font-medium rounded-xl hover:bg-amber-700 dark:hover:bg-amber-600 transition-all group shadow-lg shadow-amber-600/20 dark:shadow-amber-500/20">
             Start Studying Free
-            <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+            <i data-lucide="arrow-right" aria-hidden="true" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
           </a>
           <a href="https://forum.openhamprep.com" target="_blank" rel="noopener noreferrer" class="btn-secondary inline-flex items-center gap-2 px-6 py-4 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
-            <i data-lucide="users" class="w-5 h-5 text-cyan-600 dark:text-cyan-400"></i>
+            <i data-lucide="users" aria-hidden="true" class="w-5 h-5 text-cyan-600 dark:text-cyan-400"></i>
             Join Our Community
+            <span class="sr-only">(opens in new window)</span>
           </a>
         </div>
 
@@ -130,15 +136,15 @@
           <p class="text-sm text-gray-500 dark:text-gray-500 mb-3">No credit card. No hidden costs. Just free.</p>
           <div class="flex flex-wrap items-center justify-center gap-4 text-sm text-gray-500 dark:text-gray-500">
             <span class="inline-flex items-center gap-1.5">
-              <i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i>
+              <i data-lucide="check-circle" aria-hidden="true" class="w-4 h-4 text-green-500"></i>
               Official Question Pools
             </span>
             <span class="inline-flex items-center gap-1.5">
-              <i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i>
+              <i data-lucide="check-circle" aria-hidden="true" class="w-4 h-4 text-green-500"></i>
               All 3 License Classes
             </span>
             <span class="inline-flex items-center gap-1.5">
-              <i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i>
+              <i data-lucide="check-circle" aria-hidden="true" class="w-4 h-4 text-green-500"></i>
               Open Source
             </span>
           </div>
@@ -161,11 +167,11 @@
           </p>
         </div>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           <!-- Pillar 1: Free -->
           <div class="pillar-card pillar-free reveal border border-gray-200 dark:border-gray-700" style="transition-delay: 0.1s;">
             <div class="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
-              <i data-lucide="badge-dollar-sign" class="w-6 h-6 text-green-600 dark:text-green-400"></i>
+              <i data-lucide="badge-dollar-sign" aria-hidden="true" class="w-6 h-6 text-green-600 dark:text-green-400"></i>
             </div>
             <h3 class="text-lg font-bold mb-2">Completely Free</h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
@@ -176,7 +182,7 @@
           <!-- Pillar 2: Learn -->
           <div class="pillar-card pillar-learn reveal border border-gray-200 dark:border-gray-700" style="transition-delay: 0.2s;">
             <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
-              <i data-lucide="library" class="w-6 h-6 text-purple-600 dark:text-purple-400"></i>
+              <i data-lucide="library" aria-hidden="true" class="w-6 h-6 text-purple-600 dark:text-purple-400"></i>
             </div>
             <h3 class="text-lg font-bold mb-2">Learn, Don't Memorize</h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
@@ -187,7 +193,7 @@
           <!-- Pillar 3: Community -->
           <div class="pillar-card pillar-community reveal border border-gray-200 dark:border-gray-700" style="transition-delay: 0.3s;">
             <div class="w-12 h-12 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center mb-4">
-              <i data-lucide="message-circle" class="w-6 h-6 text-cyan-600 dark:text-cyan-400"></i>
+              <i data-lucide="message-circle" aria-hidden="true" class="w-6 h-6 text-cyan-600 dark:text-cyan-400"></i>
             </div>
             <h3 class="text-lg font-bold mb-2">Never Study Alone</h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
@@ -198,11 +204,22 @@
           <!-- Pillar 4: Smart -->
           <div class="pillar-card pillar-smart reveal border border-gray-200 dark:border-gray-700" style="transition-delay: 0.4s;">
             <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
-              <i data-lucide="brain" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i>
+              <i data-lucide="brain" aria-hidden="true" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i>
             </div>
             <h3 class="text-lg font-bold mb-2">Actually Intelligent</h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
               Know exactly when you're ready with readiness scoring. We track your weak areas so you don't waste time.
+            </p>
+          </div>
+
+          <!-- Pillar 5: Accessible -->
+          <div class="pillar-card reveal border border-gray-200 dark:border-gray-700" style="transition-delay: 0.5s;">
+            <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
+              <i data-lucide="accessibility" aria-hidden="true" class="w-6 h-6 text-blue-600 dark:text-blue-400"></i>
+            </div>
+            <h3 class="text-lg font-bold mb-2">Fully Accessible</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">
+              Screen reader friendly, keyboard navigable, and designed for everyone. Study comfortably with assistive technology.
             </p>
           </div>
         </div>
@@ -228,7 +245,7 @@
           <!-- Feature: Learning Library -->
           <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6" style="transition-delay: 0.1s;">
             <div class="icon-glow w-14 h-14 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-5">
-              <i data-lucide="library" class="w-7 h-7 text-purple-600 dark:text-purple-400"></i>
+              <i data-lucide="library" aria-hidden="true" class="w-7 h-7 text-purple-600 dark:text-purple-400"></i>
             </div>
             <h3 class="text-xl font-semibold mb-2">Learning Library</h3>
             <p class="text-gray-600 dark:text-gray-400">Organized lessons by topic with table of contents, resources, and related questions. Learn the material, not just the answers.</p>
@@ -237,7 +254,7 @@
           <!-- Feature: Practice Tests -->
           <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6" style="transition-delay: 0.2s;">
             <div class="icon-glow w-14 h-14 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center mb-5">
-              <i data-lucide="clipboard-check" class="w-7 h-7 text-teal-600 dark:text-teal-400"></i>
+              <i data-lucide="clipboard-check" aria-hidden="true" class="w-7 h-7 text-teal-600 dark:text-teal-400"></i>
             </div>
             <h3 class="text-xl font-semibold mb-2">Practice Tests</h3>
             <p class="text-gray-600 dark:text-gray-400">Full 35-question exams that mirror the real test. Know exactly when you're ready to pass with our readiness scoring.</p>
@@ -246,7 +263,7 @@
           <!-- Feature: Weak Question Tracking -->
           <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6" style="transition-delay: 0.3s;">
             <div class="icon-glow w-14 h-14 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-5">
-              <i data-lucide="crosshair" class="w-7 h-7 text-red-600 dark:text-red-400"></i>
+              <i data-lucide="crosshair" aria-hidden="true" class="w-7 h-7 text-red-600 dark:text-red-400"></i>
             </div>
             <h3 class="text-xl font-semibold mb-2">Weak Question Tracking</h3>
             <p class="text-gray-600 dark:text-gray-400">Stop wasting time on questions you know. We identify your problem areas and help you master them with streak-based drills.</p>
@@ -255,7 +272,7 @@
           <!-- Feature: Exam Session Finder -->
           <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6" style="transition-delay: 0.4s;">
             <div class="icon-glow w-14 h-14 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-5">
-              <i data-lucide="map-pin" class="w-7 h-7 text-blue-600 dark:text-blue-400"></i>
+              <i data-lucide="map-pin" aria-hidden="true" class="w-7 h-7 text-blue-600 dark:text-blue-400"></i>
             </div>
             <h3 class="text-xl font-semibold mb-2">Find Exam Sessions</h3>
             <p class="text-gray-600 dark:text-gray-400">Search for exams near you on our interactive map. Set a target date and track your countdown to test day.</p>
@@ -264,7 +281,7 @@
           <!-- Feature: Glossary & Flashcards -->
           <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6" style="transition-delay: 0.5s;">
             <div class="icon-glow w-14 h-14 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center mb-5">
-              <i data-lucide="book-text" class="w-7 h-7 text-cyan-600 dark:text-cyan-400"></i>
+              <i data-lucide="book-text" aria-hidden="true" class="w-7 h-7 text-cyan-600 dark:text-cyan-400"></i>
             </div>
             <h3 class="text-xl font-semibold mb-2">Glossary & Flashcards</h3>
             <p class="text-gray-600 dark:text-gray-400">Master ham radio terminology with spaced-repetition flashcards. Track which terms you know and which need review.</p>
@@ -273,7 +290,7 @@
           <!-- Feature: Built-in Calculator -->
           <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6" style="transition-delay: 0.6s;">
             <div class="icon-glow w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-5">
-              <i data-lucide="calculator" class="w-7 h-7 text-gray-600 dark:text-gray-400"></i>
+              <i data-lucide="calculator" aria-hidden="true" class="w-7 h-7 text-gray-600 dark:text-gray-400"></i>
             </div>
             <h3 class="text-xl font-semibold mb-2">Built-in Calculator</h3>
             <p class="text-gray-600 dark:text-gray-400">Scientific calculator available during study for technical questions. No switching apps when you need to do the math.</p>
@@ -283,7 +300,7 @@
         <div class="text-center mt-10 reveal">
           <a href="/features.html" class="inline-flex items-center gap-2 text-amber-600 dark:text-amber-400 font-medium hover:underline">
             See all features
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            <i data-lucide="arrow-right" aria-hidden="true" class="w-4 h-4"></i>
           </a>
         </div>
       </div>
@@ -295,7 +312,7 @@
         <div class="community-card p-8 md:p-12 reveal-scale">
           <div class="flex flex-col md:flex-row items-start gap-8">
             <div class="w-20 h-20 rounded-2xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center flex-shrink-0">
-              <i data-lucide="users" class="w-10 h-10 text-cyan-600 dark:text-cyan-400"></i>
+              <i data-lucide="users" aria-hidden="true" class="w-10 h-10 text-cyan-600 dark:text-cyan-400"></i>
             </div>
             <div class="flex-1">
               <span class="badge badge-teal mb-4">Community Forum</span>
@@ -307,21 +324,22 @@
               </p>
               <ul class="space-y-3 text-gray-600 dark:text-gray-400 mb-8">
                 <li class="flex items-center gap-3">
-                  <i data-lucide="message-square" class="w-5 h-5 text-cyan-600 dark:text-cyan-400"></i>
+                  <i data-lucide="message-square" aria-hidden="true" class="w-5 h-5 text-cyan-600 dark:text-cyan-400"></i>
                   Ask questions about topics you don't understand
                 </li>
                 <li class="flex items-center gap-3">
-                  <i data-lucide="lightbulb" class="w-5 h-5 text-cyan-600 dark:text-cyan-400"></i>
+                  <i data-lucide="lightbulb" aria-hidden="true" class="w-5 h-5 text-cyan-600 dark:text-cyan-400"></i>
                   Get study tips from people who've passed
                 </li>
                 <li class="flex items-center gap-3">
-                  <i data-lucide="radio" class="w-5 h-5 text-cyan-600 dark:text-cyan-400"></i>
+                  <i data-lucide="radio" aria-hidden="true" class="w-5 h-5 text-cyan-600 dark:text-cyan-400"></i>
                   Connect with the ham radio community
                 </li>
               </ul>
               <a href="https://forum.openhamprep.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-6 py-3 bg-cyan-600 dark:bg-cyan-500 text-white font-medium rounded-xl hover:bg-cyan-700 dark:hover:bg-cyan-600 transition-colors">
                 Visit the Forum
-                <i data-lucide="external-link" class="w-4 h-4"></i>
+                <i data-lucide="external-link" aria-hidden="true" class="w-4 h-4"></i>
+                <span class="sr-only">(opens in new window)</span>
               </a>
             </div>
           </div>
@@ -421,7 +439,7 @@
         <div class="reveal-scale feature-card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl p-8 md:p-10">
           <div class="flex flex-col md:flex-row items-start gap-6">
             <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-              <i data-lucide="git-branch" class="w-8 h-8 text-gray-600 dark:text-gray-400"></i>
+              <i data-lucide="git-branch" aria-hidden="true" class="w-8 h-8 text-gray-600 dark:text-gray-400"></i>
             </div>
             <div class="flex-1">
               <h2 class="text-2xl font-mono font-bold mb-3">Open Source & Transparent</h2>
@@ -429,9 +447,10 @@
                 Open Ham Prep is 100% open source. Our code is public, our development is transparent, and contributions are welcome. No hidden agendas, no rug pulls—just honest tools built by people who care.
               </p>
               <a href="https://github.com/sonyccd/openhamprep" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-gray-700 dark:text-gray-300 font-medium hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
-                <i data-lucide="github" class="w-5 h-5"></i>
+                <i data-lucide="github" aria-hidden="true" class="w-5 h-5"></i>
                 View on GitHub
-                <i data-lucide="external-link" class="w-4 h-4"></i>
+                <i data-lucide="external-link" aria-hidden="true" class="w-4 h-4"></i>
+                <span class="sr-only">(opens in new window)</span>
               </a>
             </div>
           </div>
@@ -443,14 +462,14 @@
     <section class="py-20 px-4 gradient-hero">
       <div class="max-w-2xl mx-auto text-center">
         <div class="cta-card reveal-scale bg-white dark:bg-gray-800 border-2 border-amber-200 dark:border-amber-700 rounded-3xl p-10 md:p-14 shadow-2xl shadow-amber-600/10 dark:shadow-amber-500/5">
-          <i data-lucide="radio" class="w-16 h-16 text-amber-600 dark:text-amber-400 mx-auto mb-6 animate-float"></i>
+          <i data-lucide="radio" aria-hidden="true" class="w-16 h-16 text-amber-600 dark:text-amber-400 mx-auto mb-6 animate-float"></i>
           <h2 class="text-3xl md:text-4xl font-mono font-bold mb-4">Ready to Get Licensed?</h2>
           <p class="text-gray-600 dark:text-gray-400 mb-8 text-lg">
             Join aspiring hams who've used Open Ham Prep to pass their exams. Your amateur radio journey starts here.
           </p>
           <a href="https://app.openhamprep.com/auth" class="btn-primary inline-flex items-center gap-3 px-10 py-5 bg-amber-600 dark:bg-amber-500 text-white text-lg font-medium rounded-xl hover:bg-amber-700 dark:hover:bg-amber-600 transition-all group shadow-lg shadow-amber-600/20">
             Start Studying Free
-            <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+            <i data-lucide="arrow-right" aria-hidden="true" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
           </a>
           <p class="mt-6 text-sm text-gray-500 dark:text-gray-500">No credit card required. No premium tiers. Just free.</p>
         </div>
@@ -460,28 +479,31 @@
 
   <!-- Footer -->
   <footer class="py-10 px-4 border-t border-gray-200 dark:border-gray-800 mt-auto bg-white dark:bg-gray-900">
+    <h2 class="sr-only">Site footer</h2>
     <div class="max-w-6xl mx-auto">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <!-- Logo & Description -->
         <div class="flex items-center gap-2">
-          <i data-lucide="radio" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i>
+          <i data-lucide="radio" aria-hidden="true" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i>
           <span class="font-mono font-bold">Open Ham Prep</span>
         </div>
 
         <!-- Links -->
-        <div class="flex flex-wrap items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
+        <nav aria-label="Footer navigation" class="flex flex-wrap items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
           <a href="/features.html" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Features</a>
           <a href="/faq.html" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">FAQ</a>
           <a href="/about.html" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">About</a>
           <a href="https://forum.openhamprep.com" target="_blank" rel="noopener noreferrer" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors inline-flex items-center gap-1">
             Community
-            <i data-lucide="external-link" class="w-3 h-3"></i>
+            <i data-lucide="external-link" aria-hidden="true" class="w-3 h-3"></i>
+            <span class="sr-only">(opens in new window)</span>
           </a>
           <a href="https://github.com/sonyccd/openhamprep" target="_blank" rel="noopener noreferrer" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors inline-flex items-center gap-1">
-            <i data-lucide="github" class="w-4 h-4"></i>
+            <i data-lucide="github" aria-hidden="true" class="w-4 h-4"></i>
             GitHub
+            <span class="sr-only">(opens in new window)</span>
           </a>
-        </div>
+        </nav>
       </div>
 
       <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800 text-center text-gray-600 dark:text-gray-400 space-y-2">
@@ -504,6 +526,9 @@
     const closeIcon = document.getElementById('close-icon');
 
     mobileMenuButton.addEventListener('click', () => {
+      const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+      mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
+      mobileMenuButton.setAttribute('aria-label', isExpanded ? 'Open navigation menu' : 'Close navigation menu');
       mobileMenu.classList.toggle('hidden');
       menuIcon.classList.toggle('hidden');
       closeIcon.classList.toggle('hidden');
