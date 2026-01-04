@@ -60,7 +60,7 @@ describe('LicenseSelectModal', () => {
     it('shows "Current" badge on the currently selected license', () => {
       render(<LicenseSelectModal {...defaultProps} selectedTest="general" />);
 
-      const generalCard = screen.getByText('General').closest('button');
+      const generalCard = screen.getByText('General').closest('[role="option"]');
       expect(generalCard).toContainElement(screen.getByText('Current'));
     });
   });
@@ -69,7 +69,7 @@ describe('LicenseSelectModal', () => {
     it('highlights the currently selected license card', () => {
       render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />);
 
-      const technicianCard = screen.getByText('Technician').closest('button');
+      const technicianCard = screen.getByText('Technician').closest('[role="option"]');
       expect(technicianCard).toHaveClass('border-primary');
     });
 
@@ -77,7 +77,7 @@ describe('LicenseSelectModal', () => {
       const user = userEvent.setup();
       render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />);
 
-      const generalCard = screen.getByText('General').closest('button');
+      const generalCard = screen.getByText('General').closest('[role="option"]');
       await user.click(generalCard!);
 
       // The General card should now be highlighted
@@ -89,7 +89,7 @@ describe('LicenseSelectModal', () => {
       render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />);
 
       // Click on Extra
-      const extraCard = screen.getByText('Amateur Extra').closest('button');
+      const extraCard = screen.getByText('Amateur Extra').closest('[role="option"]');
       await user.click(extraCard!);
 
       // Change button should be enabled since selection differs
@@ -110,7 +110,7 @@ describe('LicenseSelectModal', () => {
       render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />);
 
       // Select General
-      const generalCard = screen.getByText('General').closest('button');
+      const generalCard = screen.getByText('General').closest('[role="option"]');
       await user.click(generalCard!);
 
       expect(screen.getByRole('button', { name: /change license/i })).toBeInTheDocument();
@@ -123,7 +123,7 @@ describe('LicenseSelectModal', () => {
       render(<LicenseSelectModal {...defaultProps} onTestChange={onTestChange} selectedTest="technician" />);
 
       // Select General
-      const generalCard = screen.getByText('General').closest('button');
+      const generalCard = screen.getByText('General').closest('[role="option"]');
       await user.click(generalCard!);
 
       // Click Change License
@@ -138,7 +138,7 @@ describe('LicenseSelectModal', () => {
       render(<LicenseSelectModal {...defaultProps} onOpenChange={onOpenChange} selectedTest="technician" />);
 
       // Select General
-      const generalCard = screen.getByText('General').closest('button');
+      const generalCard = screen.getByText('General').closest('[role="option"]');
       await user.click(generalCard!);
 
       // Click Change License
@@ -153,7 +153,7 @@ describe('LicenseSelectModal', () => {
       render(<LicenseSelectModal {...defaultProps} onTestChange={onTestChange} selectedTest="technician" />);
 
       // Select General
-      const generalCard = screen.getByText('General').closest('button');
+      const generalCard = screen.getByText('General').closest('[role="option"]');
       await user.click(generalCard!);
 
       // Click Cancel
@@ -180,7 +180,7 @@ describe('LicenseSelectModal', () => {
       render(<LicenseSelectModal {...defaultProps} selectedTest="technician" onOpenChange={onOpenChange} />);
 
       // Select General
-      const generalCard = screen.getByText('General').closest('button');
+      const generalCard = screen.getByText('General').closest('[role="option"]');
       await user.click(generalCard!);
 
       // Verify General is now highlighted
@@ -197,21 +197,21 @@ describe('LicenseSelectModal', () => {
       // When modal opens with technician selected, technician should be pending selection
       render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />);
 
-      const technicianCard = screen.getByText('Technician').closest('button');
+      const technicianCard = screen.getByText('Technician').closest('[role="option"]');
       expect(technicianCard).toHaveClass('border-primary');
     });
 
     it('starts with correct pending selection for general', () => {
       render(<LicenseSelectModal {...defaultProps} selectedTest="general" />);
 
-      const generalCard = screen.getByText('General').closest('button');
+      const generalCard = screen.getByText('General').closest('[role="option"]');
       expect(generalCard).toHaveClass('border-primary');
     });
 
     it('starts with correct pending selection for extra', () => {
       render(<LicenseSelectModal {...defaultProps} selectedTest="extra" />);
 
-      const extraCard = screen.getByText('Amateur Extra').closest('button');
+      const extraCard = screen.getByText('Amateur Extra').closest('[role="option"]');
       expect(extraCard).toHaveClass('border-primary');
     });
   });
@@ -230,12 +230,16 @@ describe('LicenseSelectModal', () => {
       expect(screen.getByText('Choose which amateur radio license exam you want to study for.')).toBeInTheDocument();
     });
 
-    it('license cards are buttons', () => {
+    it('license cards are selectable options', () => {
       render(<LicenseSelectModal {...defaultProps} />);
 
+      // License cards are now role="option" for proper a11y
+      const options = screen.getAllByRole('option');
+      expect(options.length).toBe(3); // 3 license options
+
+      // Should also have Cancel, Change/No Change buttons, plus close button
       const buttons = screen.getAllByRole('button');
-      // Should have Cancel, Change/No Change buttons, plus 3 license cards, plus close button
-      expect(buttons.length).toBeGreaterThanOrEqual(5);
+      expect(buttons.length).toBeGreaterThanOrEqual(2);
     });
   });
 
@@ -246,7 +250,7 @@ describe('LicenseSelectModal', () => {
       render(<LicenseSelectModal {...defaultProps} onTestChange={onTestChange} selectedTest="technician" />);
 
       // Select Extra
-      const extraCard = screen.getByText('Amateur Extra').closest('button');
+      const extraCard = screen.getByText('Amateur Extra').closest('[role="option"]');
       await user.click(extraCard!);
 
       // Confirm

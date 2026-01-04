@@ -362,9 +362,11 @@ export function PracticeTest({
           </div>
 
           {/* Screen reader announcement for timer warnings */}
-          <div aria-live="assertive" aria-atomic="true" className="sr-only">
-            {timerAnnouncement}
-          </div>
+          {timerAnnouncement && (
+            <div aria-live="assertive" aria-atomic="true" className="sr-only">
+              {timerAnnouncement}
+            </div>
+          )}
         </div>
 
         {/* Progress - Minimal bar with count */}

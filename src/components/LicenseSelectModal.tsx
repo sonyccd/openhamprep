@@ -69,7 +69,7 @@ export function LicenseSelectModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-3 py-4">
+        <div className="grid gap-3 py-4" role="listbox" aria-label="License class options">
           {testTypes.map((test) => {
             const Icon = licenseIcons[test.id];
             const config = testConfig[test.id];
@@ -79,10 +79,11 @@ export function LicenseSelectModal({
             return (
               <button
                 key={test.id}
+                role="option"
                 onClick={() => test.available && setPendingSelection(test.id)}
                 disabled={!test.available}
                 aria-label={`${test.name} license: ${licenseDescriptions[test.id]}${isCurrent ? ' (currently selected)' : ''}${!test.available ? ' (coming soon)' : ''}`}
-                aria-pressed={isSelected}
+                aria-selected={isSelected}
                 className={cn(
                   "relative flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left",
                   isSelected
