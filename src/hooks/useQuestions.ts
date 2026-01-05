@@ -194,8 +194,10 @@ export function useQuestion(questionId: string | undefined) {
  * Useful for fetching bookmarked questions without loading all questions.
  */
 export function useQuestionsByIds(questionIds: string[]) {
+  // Sort IDs for consistent cache key regardless of bookmark order
+  const sortedIds = [...questionIds].sort();
   return useQuery({
-    queryKey: ['questions-by-ids', questionIds],
+    queryKey: ['questions-by-ids', sortedIds],
     queryFn: async () => {
       if (questionIds.length === 0) return [];
 
