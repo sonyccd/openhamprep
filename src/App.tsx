@@ -9,6 +9,7 @@ import { PostHogProvider } from "@/hooks/usePostHog";
 import { PendoProvider } from "@/hooks/usePendo";
 import { AppNavigationProvider } from "@/hooks/useAppNavigation";
 import { ThemeProvider } from "next-themes";
+import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
 // Lazy load pages for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -41,6 +42,7 @@ const App = () => (
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
+                <PWAInstallBanner />
                 <BrowserRouter>
                   <Suspense fallback={<PageLoader />}>
                     <Routes>
