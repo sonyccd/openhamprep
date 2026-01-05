@@ -119,26 +119,25 @@ export function useQuestions(testType?: TestType) {
   return useQuery({
     queryKey: ['questions', testType],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('questions')
         .select(`
           *,
           topic_questions(
             topic:topics(id, slug, title, is_published)
           )
-        `)
-        .range(0, 1999); // Bypass Supabase's default 1000 row limit
+        `);
 
-      if (error) throw error;
-      let questions = (data as DbQuestion[]).map(transformQuestion);
-
-      // Filter by test type if provided (using displayName which has T/G/E prefix)
+      // Filter by test type server-side using display_name prefix
       if (testType) {
         const prefix = getTestTypePrefix(testType);
-        questions = questions.filter(q => q.displayName.startsWith(prefix));
+        query = query.like('display_name', `${prefix}%`);
       }
 
-      return questions;
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return (data as DbQuestion[]).map(transformQuestion);
     },
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
   });
@@ -162,9 +161,6 @@ export function useRandomQuestion(excludeIds: string[] = []) {
 }
 
 export function useQuestion(questionId: string | undefined) {
-  // Try to use the existing all-questions cache first
-  const { data: allQuestions } = useQuestions();
-
   return useQuery({
     queryKey: ['question', questionId],
     queryFn: async () => {
@@ -173,15 +169,7 @@ export function useQuestion(questionId: string | undefined) {
       // Determine if we're looking up by UUID or display_name
       const lookupByUUID = isUUID(questionId);
 
-      // Check if we have it in the all-questions cache
-      if (allQuestions) {
-        const found = lookupByUUID
-          ? allQuestions.find(q => q.id === questionId)
-          : allQuestions.find(q => q.displayName.toUpperCase() === questionId.toUpperCase());
-        if (found) return found;
-      }
-
-      // Fallback: fetch directly from database with topic associations
+      // Fetch directly from database with topic associations
       const column = lookupByUUID ? 'id' : 'display_name';
       const query = supabase.from('questions').select(`
         *,
@@ -197,6 +185,36 @@ export function useQuestion(questionId: string | undefined) {
       return transformQuestion(data as DbQuestion);
     },
     enabled: !!questionId,
+    staleTime: 1000 * 60 * 60, // 1 hour cache
+  });
+}
+
+/**
+ * Fetch multiple questions by their UUIDs.
+ * Useful for fetching bookmarked questions without loading all questions.
+ */
+export function useQuestionsByIds(questionIds: string[]) {
+  // Sort IDs for consistent cache key regardless of bookmark order
+  const sortedIds = [...questionIds].sort();
+  return useQuery({
+    queryKey: ['questions-by-ids', sortedIds],
+    queryFn: async () => {
+      if (questionIds.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from('questions')
+        .select(`
+          *,
+          topic_questions(
+            topic:topics(id, slug, title, is_published)
+          )
+        `)
+        .in('id', questionIds);
+
+      if (error) throw error;
+      return (data as DbQuestion[]).map(transformQuestion);
+    },
+    enabled: questionIds.length > 0,
     staleTime: 1000 * 60 * 60, // 1 hour cache
   });
 }

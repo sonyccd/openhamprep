@@ -4,19 +4,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { useQuestions, useQuestion } from './useQuestions';
 
-// Mock Supabase
-const mockRange = vi.fn();
-const mockSelect = vi.fn(() => ({ range: mockRange }));
-const mockSingleQuery = vi.fn();
-
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: mockSelect,
-    })),
-  },
-}));
-
 // Mock question data for all test types
 // Note: id is now UUID, display_name is the human-readable ID (T1A01, etc.)
 const mockDbQuestions = [
@@ -33,6 +20,87 @@ const mockDbQuestions = [
   { id: 'uuid-e1a02', display_name: 'E1A02', question: 'What is shown in Figure E1-1?', options: ['A', 'B', 'C', 'D'], correct_answer: 2, subelement: 'E1', question_group: 'E1A', links: [], explanation: null, forum_url: null, figure_url: 'https://storage.example.com/question-figures/E1A02.png' },
 ];
 
+// Variable to allow tests to override the mock data or force errors
+let mockDataOverride: typeof mockDbQuestions | null = null;
+let mockErrorOverride: Error | null = null;
+
+// Helper to set mock data for a test
+const setMockData = (data: typeof mockDbQuestions) => {
+  mockDataOverride = data;
+};
+
+// Helper to set error for a test
+const setMockError = (error: Error) => {
+  mockErrorOverride = error;
+};
+
+// Create the chainable query builder that simulates Supabase query behavior
+const createQueryBuilder = () => {
+  const currentData = mockDataOverride || mockDbQuestions;
+  const currentError = mockErrorOverride;
+
+  // Reset overrides after creating builder
+  mockDataOverride = null;
+  mockErrorOverride = null;
+
+  if (currentError) {
+    // Return error builder
+    return {
+      like: vi.fn(() => Promise.resolve({ data: null, error: currentError })),
+      in: vi.fn(() => Promise.resolve({ data: null, error: currentError })),
+      eq: vi.fn(() => ({
+        single: vi.fn(() => Promise.resolve({ data: null, error: currentError })),
+      })),
+      ilike: vi.fn(() => ({
+        single: vi.fn(() => Promise.resolve({ data: null, error: currentError })),
+      })),
+      then: (resolve: (value: { data: null; error: Error }) => void) => {
+        resolve({ data: null, error: currentError });
+      },
+    };
+  }
+
+  const builder = {
+    like: vi.fn((column: string, pattern: string) => {
+      // Filter data based on the like pattern (e.g., 'T%' for Technician)
+      const prefix = pattern.replace('%', '');
+      const filtered = currentData.filter(q => q.display_name.startsWith(prefix));
+      return Promise.resolve({ data: filtered, error: null });
+    }),
+    in: vi.fn((column: string, ids: string[]) => {
+      const filtered = currentData.filter(q => ids.includes(q.id));
+      return Promise.resolve({ data: filtered, error: null });
+    }),
+    eq: vi.fn((column: string, value: string) => ({
+      single: vi.fn(() => {
+        const found = currentData.find(q => column === 'id' ? q.id === value : q.display_name === value);
+        return Promise.resolve({ data: found || null, error: found ? null : { message: 'Not found' } });
+      }),
+    })),
+    ilike: vi.fn((column: string, value: string) => ({
+      single: vi.fn(() => {
+        const found = currentData.find(q => q.display_name.toUpperCase() === value.toUpperCase());
+        return Promise.resolve({ data: found || null, error: found ? null : { message: 'Not found' } });
+      }),
+    })),
+    // When no filter is applied (the query is awaited directly), return all data
+    then: (resolve: (value: { data: typeof mockDbQuestions; error: null }) => void) => {
+      resolve({ data: currentData, error: null });
+    },
+  };
+  return builder;
+};
+
+const mockSelect = vi.fn(() => createQueryBuilder());
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      select: mockSelect,
+    })),
+  },
+}));
+
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -47,7 +115,6 @@ function createWrapper() {
 describe('useQuestions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRange.mockResolvedValue({ data: mockDbQuestions, error: null });
   });
 
   describe('without testType filter', () => {
@@ -152,10 +219,7 @@ describe('useQuestions', () => {
 
   describe('correct answer mapping', () => {
     it('maps correct_answer 0 to A', async () => {
-      mockRange.mockResolvedValueOnce({
-        data: [{ id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null }],
-        error: null,
-      });
+      setMockData([{ id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null, figure_url: null }]);
 
       const { result } = renderHook(() => useQuestions('technician'), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -164,10 +228,7 @@ describe('useQuestions', () => {
     });
 
     it('maps correct_answer 1 to B', async () => {
-      mockRange.mockResolvedValueOnce({
-        data: [{ id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 1, subelement: 'T1', question_group: 'T1A', links: [], explanation: null }],
-        error: null,
-      });
+      setMockData([{ id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 1, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null, figure_url: null }]);
 
       const { result } = renderHook(() => useQuestions('technician'), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -176,10 +237,7 @@ describe('useQuestions', () => {
     });
 
     it('maps correct_answer 2 to C', async () => {
-      mockRange.mockResolvedValueOnce({
-        data: [{ id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 2, subelement: 'T1', question_group: 'T1A', links: [], explanation: null }],
-        error: null,
-      });
+      setMockData([{ id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 2, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null, figure_url: null }]);
 
       const { result } = renderHook(() => useQuestions('technician'), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -188,10 +246,7 @@ describe('useQuestions', () => {
     });
 
     it('maps correct_answer 3 to D', async () => {
-      mockRange.mockResolvedValueOnce({
-        data: [{ id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 3, subelement: 'T1', question_group: 'T1A', links: [], explanation: null }],
-        error: null,
-      });
+      setMockData([{ id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 3, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null, figure_url: null }]);
 
       const { result } = renderHook(() => useQuestions('technician'), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -202,10 +257,7 @@ describe('useQuestions', () => {
 
   describe('error handling', () => {
     it('returns error state when query fails', async () => {
-      mockRange.mockResolvedValueOnce({
-        data: null,
-        error: new Error('Database error'),
-      });
+      setMockError(new Error('Database error'));
 
       const { result } = renderHook(() => useQuestions('technician'), {
         wrapper: createWrapper(),
@@ -218,15 +270,12 @@ describe('useQuestions', () => {
 
   describe('empty results', () => {
     it('returns empty array when no questions match filter', async () => {
-      // Only return Technician questions from the database
-      mockRange.mockResolvedValueOnce({
-        data: [
-          { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Tech Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null },
-        ],
-        error: null,
-      });
+      // Only have Technician questions in the database
+      setMockData([
+        { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Tech Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null, figure_url: null },
+      ]);
 
-      // But request General questions
+      // But request General questions - should get empty because server-side filtering returns no G* questions
       const { result } = renderHook(() => useQuestions('general'), {
         wrapper: createWrapper(),
       });
@@ -239,12 +288,9 @@ describe('useQuestions', () => {
 
   describe('forum_url handling', () => {
     it('transforms forum_url to forumUrl in camelCase', async () => {
-      mockRange.mockResolvedValueOnce({
-        data: [
-          { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: 'https://forum.openhamprep.com/t/test/123' },
-        ],
-        error: null,
-      });
+      setMockData([
+        { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: 'https://forum.openhamprep.com/t/test/123', figure_url: null },
+      ]);
 
       const { result } = renderHook(() => useQuestions('technician'), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -253,12 +299,9 @@ describe('useQuestions', () => {
     });
 
     it('handles null forum_url', async () => {
-      mockRange.mockResolvedValueOnce({
-        data: [
-          { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null },
-        ],
-        error: null,
-      });
+      setMockData([
+        { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null, figure_url: null },
+      ]);
 
       const { result } = renderHook(() => useQuestions('technician'), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -283,12 +326,9 @@ describe('useQuestions', () => {
     });
 
     it('includes forumUrl in Question interface', async () => {
-      mockRange.mockResolvedValueOnce({
-        data: [
-          { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: 'Test explanation', forum_url: 'https://forum.openhamprep.com/t/test/456', figure_url: null },
-        ],
-        error: null,
-      });
+      setMockData([
+        { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: 'Test explanation', forum_url: 'https://forum.openhamprep.com/t/test/456', figure_url: null },
+      ]);
 
       const { result } = renderHook(() => useQuestions('technician'), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -310,12 +350,9 @@ describe('useQuestions', () => {
 
   describe('figure_url handling', () => {
     it('transforms figure_url to figureUrl in camelCase', async () => {
-      mockRange.mockResolvedValueOnce({
-        data: [
-          { id: 'uuid-e9b05', display_name: 'E9B05', question: 'What is shown in Figure E9-2?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: null, forum_url: null, figure_url: 'https://storage.example.com/question-figures/E9B05.png' },
-        ],
-        error: null,
-      });
+      setMockData([
+        { id: 'uuid-e9b05', display_name: 'E9B05', question: 'What is shown in Figure E9-2?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: null, forum_url: null, figure_url: 'https://storage.example.com/question-figures/E9B05.png' },
+      ]);
 
       const { result } = renderHook(() => useQuestions('extra'), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -324,12 +361,9 @@ describe('useQuestions', () => {
     });
 
     it('handles null figure_url', async () => {
-      mockRange.mockResolvedValueOnce({
-        data: [
-          { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null, figure_url: null },
-        ],
-        error: null,
-      });
+      setMockData([
+        { id: 'uuid-t1a01', display_name: 'T1A01', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A', links: [], explanation: null, forum_url: null, figure_url: null },
+      ]);
 
       const { result } = renderHook(() => useQuestions('technician'), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -354,12 +388,9 @@ describe('useQuestions', () => {
     });
 
     it('includes figureUrl in Question interface', async () => {
-      mockRange.mockResolvedValueOnce({
-        data: [
-          { id: 'uuid-e9b05', display_name: 'E9B05', question: 'What is shown in Figure E9-2?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: 'Antenna pattern explanation', forum_url: null, figure_url: 'https://storage.example.com/question-figures/E9B05.png' },
-        ],
-        error: null,
-      });
+      setMockData([
+        { id: 'uuid-e9b05', display_name: 'E9B05', question: 'What is shown in Figure E9-2?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: 'Antenna pattern explanation', forum_url: null, figure_url: 'https://storage.example.com/question-figures/E9B05.png' },
+      ]);
 
       const { result } = renderHook(() => useQuestions('extra'), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -375,24 +406,21 @@ describe('useQuestions', () => {
     });
 
     it('handles question with both forumUrl and figureUrl', async () => {
-      mockRange.mockResolvedValueOnce({
-        data: [
-          {
-            id: 'uuid-e9b05',
-            display_name: 'E9B05',
-            question: 'What is shown in Figure E9-2?',
-            options: ['A', 'B', 'C', 'D'],
-            correct_answer: 0,
-            subelement: 'E9',
-            question_group: 'E9B',
-            links: [],
-            explanation: 'Test explanation',
-            forum_url: 'https://forum.openhamprep.com/t/e9b05/123',
-            figure_url: 'https://storage.example.com/question-figures/E9B05.png',
-          },
-        ],
-        error: null,
-      });
+      setMockData([
+        {
+          id: 'uuid-e9b05',
+          display_name: 'E9B05',
+          question: 'What is shown in Figure E9-2?',
+          options: ['A', 'B', 'C', 'D'],
+          correct_answer: 0,
+          subelement: 'E9',
+          question_group: 'E9B',
+          links: [],
+          explanation: 'Test explanation',
+          forum_url: 'https://forum.openhamprep.com/t/e9b05/123',
+          figure_url: 'https://storage.example.com/question-figures/E9B05.png',
+        },
+      ]);
 
       const { result } = renderHook(() => useQuestions('extra'), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -404,12 +432,9 @@ describe('useQuestions', () => {
 
     it('handles Supabase storage URLs correctly', async () => {
       const storageUrl = 'https://xyz.supabase.co/storage/v1/object/public/question-figures/E9B05.png';
-      mockRange.mockResolvedValueOnce({
-        data: [
-          { id: 'uuid-e9b05', display_name: 'E9B05', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: null, forum_url: null, figure_url: storageUrl },
-        ],
-        error: null,
-      });
+      setMockData([
+        { id: 'uuid-e9b05', display_name: 'E9B05', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: null, forum_url: null, figure_url: storageUrl },
+      ]);
 
       const { result } = renderHook(() => useQuestions('extra'), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -419,12 +444,9 @@ describe('useQuestions', () => {
 
     it('handles figure URLs with cache-busting query parameters', async () => {
       const urlWithParams = 'https://storage.example.com/question-figures/E9B05.png?t=1234567890';
-      mockRange.mockResolvedValueOnce({
-        data: [
-          { id: 'uuid-e9b05', display_name: 'E9B05', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: null, forum_url: null, figure_url: urlWithParams },
-        ],
-        error: null,
-      });
+      setMockData([
+        { id: 'uuid-e9b05', display_name: 'E9B05', question: 'Q?', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'E9', question_group: 'E9B', links: [], explanation: null, forum_url: null, figure_url: urlWithParams },
+      ]);
 
       const { result } = renderHook(() => useQuestions('extra'), { wrapper: createWrapper() });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -437,7 +459,6 @@ describe('useQuestions', () => {
 describe('useQuestion', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRange.mockResolvedValue({ data: mockDbQuestions, error: null });
   });
 
   // Helper to first load questions into cache, then test useQuestion

@@ -44,21 +44,22 @@ const mockQuestions = [
 ];
 
 const mockSingleBookmark = [
-  { id: 'bookmark-1', question_id: 'uuid-t1a01', note: 'Remember this one!', created_at: '2024-01-01' },
+  { id: 'bookmark-1', question_id: 'uuid-t1a01', note: 'Remember this one!', created_at: '2024-01-01', display_name: 'T1A01' },
 ];
 
 const mockMultipleBookmarks = [
-  { id: 'bookmark-1', question_id: 'uuid-t1a01', note: 'Remember this one!', created_at: '2024-01-01' },
-  { id: 'bookmark-2', question_id: 'uuid-t1a02', note: null, created_at: '2024-01-02' },
-  { id: 'bookmark-3', question_id: 'uuid-t1a03', note: 'Third note', created_at: '2024-01-03' },
+  { id: 'bookmark-1', question_id: 'uuid-t1a01', note: 'Remember this one!', created_at: '2024-01-01', display_name: 'T1A01' },
+  { id: 'bookmark-2', question_id: 'uuid-t1a02', note: null, created_at: '2024-01-02', display_name: 'T1A02' },
+  { id: 'bookmark-3', question_id: 'uuid-t1a03', note: 'Third note', created_at: '2024-01-03', display_name: 'T1A03' },
 ];
 
 // Default to single bookmark for backward compatibility
 let mockBookmarks = mockSingleBookmark;
 
+// Mock useQuestionsByIds to return only the questions matching the bookmark IDs
 vi.mock('@/hooks/useQuestions', () => ({
-  useQuestions: () => ({
-    data: mockQuestions,
+  useQuestionsByIds: (questionIds: string[]) => ({
+    data: mockQuestions.filter(q => questionIds.includes(q.id)),
     isLoading: false,
     error: null,
   }),
