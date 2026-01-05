@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { QuestionCard } from "@/components/QuestionCard";
-import { useQuestions, Question } from "@/hooks/useQuestions";
+import { useQuestionsByIds } from "@/hooks/useQuestions";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
@@ -11,6 +11,7 @@ import { Bookmark, Loader2, Trash2, MessageSquare, ArrowLeft, ChevronLeft, Chevr
 import { motion } from "framer-motion";
 import { TestType } from "@/types/navigation";
 import { PageContainer } from "@/components/ui/page-container";
+import { filterByTestType } from "@/lib/testTypeUtils";
 
 
 interface BookmarkedQuestionsProps {
@@ -25,25 +26,40 @@ export function BookmarkedQuestions({
 }: BookmarkedQuestionsProps) {
   const { navigateToTopic } = useAppNavigation();
   const {
-    data: allQuestions,
-    isLoading: questionsLoading
-  } = useQuestions(testType);
-  const {
     bookmarks,
     isLoading: bookmarksLoading,
     removeBookmark
   } = useBookmarks();
+
+  // Filter bookmarks by test type first (same logic as AppLayout sidebar count)
+  // This ensures the displayed list matches the count shown in the sidebar
+  const filteredBookmarks = filterByTestType(
+    bookmarks || [],
+    testType,
+    (b) => b.display_name
+  );
+
+  // Get question UUIDs from filtered bookmarks
+  const bookmarkQuestionIds = filteredBookmarks.map(b => b.question_id);
+
+  // Fetch only the bookmarked questions (not all questions)
+  const {
+    data: bookmarkedQuestions,
+    isLoading: questionsLoading
+  } = useQuestionsByIds(bookmarkQuestionIds);
+
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
   const [showResult, setShowResult] = useState(false);
   const isLoading = questionsLoading || bookmarksLoading;
-  const bookmarkedQuestions = allQuestions?.filter(q => bookmarks?.some(b => b.question_id === q.id)) || [];
-  const selectedQuestion = currentIndex !== null ? bookmarkedQuestions[currentIndex] : null;
-  const selectedBookmark = selectedQuestion ? bookmarks?.find(b => b.question_id === selectedQuestion.id) : null;
+
+  const questions = bookmarkedQuestions || [];
+  const selectedQuestion = currentIndex !== null ? questions[currentIndex] : null;
+  const selectedBookmark = selectedQuestion ? filteredBookmarks?.find(b => b.question_id === selectedQuestion.id) : null;
 
   // Navigation helpers
   const canGoPrev = currentIndex !== null && currentIndex > 0;
-  const canGoNext = currentIndex !== null && currentIndex < bookmarkedQuestions.length - 1;
+  const canGoNext = currentIndex !== null && currentIndex < questions.length - 1;
 
   const handlePrevQuestion = () => {
     if (canGoPrev) {
@@ -62,13 +78,13 @@ export function BookmarkedQuestions({
   };
 
   const handleRandomize = () => {
-    if (bookmarkedQuestions.length <= 1) return;
+    if (questions.length <= 1) return;
     // Pick a random index different from current with max iteration guard
     let newIndex: number;
     let attempts = 0;
     const maxAttempts = 10;
     do {
-      newIndex = Math.floor(Math.random() * bookmarkedQuestions.length);
+      newIndex = Math.floor(Math.random() * questions.length);
       attempts++;
     } while (newIndex === currentIndex && attempts < maxAttempts);
     setCurrentIndex(newIndex);
@@ -168,7 +184,7 @@ export function BookmarkedQuestions({
           <Button
             variant="outline"
             onClick={handleRandomize}
-            disabled={bookmarkedQuestions.length <= 1}
+            disabled={questions.length <= 1}
             className="gap-2"
             title="Random question"
             aria-label="Jump to random question"
@@ -188,19 +204,19 @@ export function BookmarkedQuestions({
         </div>
 
         {/* Question counter */}
-        {bookmarkedQuestions.length > 1 && <motion.p initial={{
+        {questions.length > 1 && <motion.p initial={{
           opacity: 0
         }} animate={{
           opacity: 1
         }} className="text-center text-muted-foreground text-sm mt-4">
-            Question {currentIndex + 1} of {bookmarkedQuestions.length}
+            Question {currentIndex + 1} of {questions.length}
           </motion.p>}
       </PageContainer>
     );
   }
   return (
     <PageContainer width="standard" mobileNavPadding>
-        {bookmarkedQuestions.length === 0 ? (
+        {questions.length === 0 ? (
           <Card>
             <CardContent className="pt-6">
               <motion.div initial={{
@@ -231,11 +247,11 @@ export function BookmarkedQuestions({
                 Bookmarked Questions
               </h2>
               <p className="text-sm text-muted-foreground">
-                {bookmarkedQuestions.length} question{bookmarkedQuestions.length !== 1 ? 's' : ''}
+                {questions.length} question{questions.length !== 1 ? 's' : ''}
               </p>
             </div>
-            {bookmarkedQuestions.map((question, index) => {
-              const bookmark = bookmarks?.find(b => b.question_id === question.id);
+            {questions.map((question, index) => {
+              const bookmark = filteredBookmarks?.find(b => b.question_id === question.id);
               return <div key={question.id} className="bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
                 <div className="flex items-start gap-4">
                   <button onClick={() => setCurrentIndex(index)} className="flex-1 text-left">
