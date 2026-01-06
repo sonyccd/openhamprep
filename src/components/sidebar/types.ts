@@ -36,4 +36,5 @@ export interface DashboardSidebarProps {
   onProfileUpdate?: () => void;
   selectedTest: TestType;
   onTestChange: (test: TestType) => void;
+  onSearch?: () => void;
 }

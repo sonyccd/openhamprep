@@ -12,7 +12,9 @@ import {
   Library,
   Book,
   Layers,
+  Search,
 } from 'lucide-react';
+import { getModifierKey } from '@/lib/searchUtils';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -58,6 +60,7 @@ export function DashboardSidebar({
   onProfileUpdate,
   selectedTest,
   onTestChange,
+  onSearch,
 }: DashboardSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -141,6 +144,45 @@ export function DashboardSidebar({
           isMobile={isMobile}
           onOpenModal={() => setLicenseModalOpen(true)}
         />
+
+        {/* Search Button */}
+        {onSearch && (
+          <div className="px-2 pt-2">
+            {showExpanded ? (
+              <Button
+                variant="outline"
+                className="w-full justify-start text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  onSearch();
+                  setMobileOpen(false);
+                }}
+              >
+                <Search className="mr-2 h-4 w-4" />
+                Search...
+                <kbd className="ml-auto bg-muted px-1.5 py-0.5 rounded text-xs font-mono">
+                  {getModifierKey()}K
+                </kbd>
+              </Button>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="w-full text-muted-foreground hover:text-foreground"
+                    onClick={onSearch}
+                    aria-label="Search"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>Search ({getModifierKey()}K)</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        )}
 
         {/* Navigation */}
         <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, BookText, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,9 +6,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageContainer } from "@/components/ui/page-container";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 export function Glossary() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [highlightedTermId, setHighlightedTermId] = useState<string | null>(null);
+  const termRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const { selectedGlossaryTermId, setSelectedGlossaryTermId } = useAppNavigation();
 
   const { data: terms = [], isLoading } = useQuery({
     queryKey: ['glossary-terms'],
@@ -49,6 +53,27 @@ export function Glossary() {
     if (b === '#') return -1;
     return a.localeCompare(b);
   });
+
+  // Handle scroll-to-term when navigated from search
+  useEffect(() => {
+    if (selectedGlossaryTermId && !isLoading) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        const termElement = termRefs.current.get(selectedGlossaryTermId);
+        if (termElement) {
+          termElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setHighlightedTermId(selectedGlossaryTermId);
+          // Clear highlight after animation
+          setTimeout(() => {
+            setHighlightedTermId(null);
+          }, 2000);
+        }
+        // Clear the navigation state
+        setSelectedGlossaryTermId(null);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedGlossaryTermId, isLoading, setSelectedGlossaryTermId]);
 
   if (isLoading) {
     return (
@@ -99,7 +124,18 @@ export function Glossary() {
                   {groupedTerms[letter].map(term => (
                     <Card
                       key={term.id}
-                      className="bg-card/50 border-border/50 hover:border-primary/30 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      ref={(el) => {
+                        if (el) {
+                          termRefs.current.set(term.id, el);
+                        } else {
+                          termRefs.current.delete(term.id);
+                        }
+                      }}
+                      className={`bg-card/50 border-border/50 hover:border-primary/30 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                        highlightedTermId === term.id
+                          ? 'ring-2 ring-primary ring-offset-2 bg-primary/5'
+                          : ''
+                      }`}
                       onClick={() => window.open(`https://duckduckgo.com/?q=${encodeURIComponent(term.term)}&kp=1`, '_blank', 'noopener,noreferrer')}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {

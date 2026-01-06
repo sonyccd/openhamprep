@@ -8,8 +8,11 @@ interface AppNavigationContextType {
   setReviewingTestId: (id: string | null) => void;
   selectedTopicSlug: string | null;
   setSelectedTopicSlug: (slug: string | null) => void;
+  selectedGlossaryTermId: string | null;
+  setSelectedGlossaryTermId: (id: string | null) => void;
   navigateToTopic: (slug: string) => void;
   navigateToTopics: () => void;
+  navigateToGlossaryTerm: (termId: string) => void;
 }
 
 const AppNavigationContext = createContext<AppNavigationContextType | undefined>(undefined);
@@ -18,6 +21,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [reviewingTestId, setReviewingTestId] = useState<string | null>(null);
   const [selectedTopicSlug, setSelectedTopicSlug] = useState<string | null>(null);
+  const [selectedGlossaryTermId, setSelectedGlossaryTermId] = useState<string | null>(null);
 
   const navigateToTopic = (slug: string) => {
     setSelectedTopicSlug(slug);
@@ -29,6 +33,11 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setCurrentView('topics');
   };
 
+  const navigateToGlossaryTerm = (termId: string) => {
+    setSelectedGlossaryTermId(termId);
+    setCurrentView('glossary');
+  };
+
   return (
     <AppNavigationContext.Provider value={{
       currentView,
@@ -37,8 +46,11 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       setReviewingTestId,
       selectedTopicSlug,
       setSelectedTopicSlug,
+      selectedGlossaryTermId,
+      setSelectedGlossaryTermId,
       navigateToTopic,
       navigateToTopics,
+      navigateToGlossaryTerm,
     }}>
       {children}
     </AppNavigationContext.Provider>

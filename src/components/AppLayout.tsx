@@ -19,9 +19,10 @@ interface AppLayoutProps {
   onViewChange: (view: View) => void;
   selectedTest: TestType;
   onTestChange: (test: TestType) => void;
+  onSearch?: () => void;
 }
 
-export function AppLayout({ children, currentView, onViewChange, selectedTest, onTestChange }: AppLayoutProps) {
+export function AppLayout({ children, currentView, onViewChange, selectedTest, onTestChange, onSearch }: AppLayoutProps) {
   const { user, loading: authLoading, signOut } = useAuth();
   const { bookmarks } = useBookmarks();
   const navigate = useNavigate();
@@ -127,6 +128,7 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
           onProfileUpdate={handleProfileUpdate}
           selectedTest={selectedTest}
           onTestChange={onTestChange}
+          onSearch={onSearch}
         />
         <main id="main-content" className="flex-1 overflow-y-auto pt-16 md:pt-0 flex flex-col">
           {children}
