@@ -30,10 +30,7 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }));
 
-// Mock PostHog
-vi.mock('@/hooks/usePostHog', () => ({
-  usePostHog: vi.fn(() => ({
-    capture: vi.fn(),
-    identify: vi.fn(),
-  })),
+// Mock Pendo - PendoProvider only initializes user identity, no manual tracking needed
+vi.mock('@/hooks/usePendo', () => ({
+  PendoProvider: ({ children }: { children: React.ReactNode }) => children,
 }));

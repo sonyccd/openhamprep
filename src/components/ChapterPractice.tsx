@@ -4,7 +4,6 @@ import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
-import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { QuestionListView } from "@/components/QuestionListView";
@@ -57,7 +56,6 @@ export function ChapterPractice({
   } = useArrlChaptersWithCounts(licenseType);
 
   const { saveRandomAttempt } = useProgress();
-  const { capture } = usePostHog();
 
   const [selectedChapter, setSelectedChapter] = useState<ArrlChapterWithCount | null>(null);
   const [chapterView, setChapterView] = useState<ChapterView>('list');
@@ -146,12 +144,6 @@ export function ChapterPractice({
       total: 0
     });
     setAskedIds([]);
-
-    capture(ANALYTICS_EVENTS.TOPIC_SELECTED, {
-      chapter_id: chapter.id,
-      chapter_number: chapter.chapterNumber,
-      chapter_title: chapter.title
-    });
   };
 
   const handleStartPractice = (startIndex?: number) => {
@@ -171,12 +163,6 @@ export function ChapterPractice({
         setAskedIds([result.question.id]);
       }
     }
-
-    capture(ANALYTICS_EVENTS.SUBELEMENT_PRACTICE_STARTED, {
-      chapter_id: selectedChapter?.id,
-      chapter_number: selectedChapter?.chapterNumber,
-      chapter_title: selectedChapter?.title
-    });
   };
 
   const handleBackToQuestions = () => {

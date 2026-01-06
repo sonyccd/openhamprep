@@ -1,20 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { GlossaryFlashcards } from './GlossaryFlashcards';
-
-// Mock PostHog
-const mockCapture = vi.fn();
-vi.mock('@/hooks/usePostHog', () => ({
-  usePostHog: vi.fn(() => ({ capture: mockCapture })),
-  ANALYTICS_EVENTS: {
-    FLASHCARD_SESSION_STARTED: 'flashcard_session_started',
-    TERM_MARKED_KNOWN: 'term_marked_known',
-    TERM_MARKED_UNKNOWN: 'term_marked_unknown',
-  },
-}));
 
 // Mock Supabase
 const mockSelect = vi.fn();
@@ -175,25 +164,6 @@ describe('GlossaryFlashcards', () => {
       });
     });
 
-    it('captures analytics event when session starts', async () => {
-      const user = userEvent.setup();
-
-      render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /start studying/i })).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByRole('button', { name: /start studying/i }));
-
-      await waitFor(() => {
-        expect(mockCapture).toHaveBeenCalledWith(
-          'flashcard_session_started',
-          expect.objectContaining({ term_count: 3, mode: 'term-to-definition' })
-        );
-      });
-    });
-
     it('displays Got It and Review buttons during session', async () => {
       const user = userEvent.setup();
 
@@ -264,52 +234,6 @@ describe('GlossaryFlashcards', () => {
   });
 
   describe('Marking Cards', () => {
-    it('captures analytics when marking card as known', async () => {
-      const user = userEvent.setup();
-
-      render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /start studying/i })).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByRole('button', { name: /start studying/i }));
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /got it/i })).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByRole('button', { name: /got it/i }));
-
-      expect(mockCapture).toHaveBeenCalledWith(
-        'term_marked_known',
-        expect.any(Object)
-      );
-    });
-
-    it('captures analytics when marking card as unknown', async () => {
-      const user = userEvent.setup();
-
-      render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /start studying/i })).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByRole('button', { name: /start studying/i }));
-
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /review/i })).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByRole('button', { name: /review/i }));
-
-      expect(mockCapture).toHaveBeenCalledWith(
-        'term_marked_unknown',
-        expect.any(Object)
-      );
-    });
-
     it('advances to next card when marking as known', async () => {
       const user = userEvent.setup();
 

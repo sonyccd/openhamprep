@@ -21,13 +21,13 @@ vi.mock('sonner', () => ({
   },
 }));
 
-// Mock usePostHog
-vi.mock('@/hooks/usePostHog', () => ({
-  usePostHog: vi.fn(() => ({
-    capture: vi.fn(),
+// Mock usePendo
+vi.mock('@/hooks/usePendo', () => ({
+  usePendo: vi.fn(() => ({
+    track: vi.fn(),
     isReady: true,
   })),
-  ANALYTICS_EVENTS: {
+  PENDO_EVENTS: {
     QUESTION_BOOKMARKED: 'question_bookmarked',
     BOOKMARK_REMOVED: 'bookmark_removed',
     BOOKMARKED_QUESTION_REVIEWED: 'bookmarked_question_reviewed',
