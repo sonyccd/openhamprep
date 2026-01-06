@@ -4,6 +4,10 @@
 --
 -- TEST USER: Sign up directly in the app to create a test account.
 -- This ensures the signup flow is always tested.
+--
+-- FULL-TEXT SEARCH: The `fts` columns on questions, glossary_terms, and topics
+-- are auto-generated (STORED) columns. They will be populated automatically
+-- when data is inserted - no manual seeding required for search to work.
 -- =============================================================================
 
 -- =============================================================================

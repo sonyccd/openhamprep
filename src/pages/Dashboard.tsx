@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,6 +11,7 @@ import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Loader2, AlertTriangle, Zap, Brain, Target, MapPin } from 'lucide-react';
+import { GlobalSearch } from '@/components/GlobalSearch';
 import { PageContainer } from '@/components/ui/page-container';
 import {
   DashboardHero,
@@ -66,6 +67,24 @@ export default function Dashboard() {
   const [pendingView, setPendingView] = useState<typeof currentView | null>(null);
   const [showNavigationWarning, setShowNavigationWarning] = useState(false);
   const [showGoalsModal, setShowGoalsModal] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Global keyboard shortcut for search (Cmd/Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Expose search open function for sidebar button
+  const openSearch = useCallback(() => {
+    setSearchOpen(true);
+  }, []);
 
   // Handle view from URL query parameter (only on initial load)
   useEffect(() => {
@@ -391,6 +410,13 @@ export default function Dashboard() {
     );
   };
   return <>
+      {/* Global Search Dialog */}
+      <GlobalSearch
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        testType={selectedTest}
+      />
+
       {/* Navigation Warning Dialog */}
       <AlertDialog open={showNavigationWarning} onOpenChange={setShowNavigationWarning}>
         <AlertDialogContent>
@@ -419,7 +445,7 @@ export default function Dashboard() {
       queryKey: ['weekly-goals', user.id]
     })} />}
 
-      <AppLayout currentView={currentView} onViewChange={handleViewChange} selectedTest={selectedTest} onTestChange={setSelectedTest}>
+      <AppLayout currentView={currentView} onViewChange={handleViewChange} selectedTest={selectedTest} onTestChange={setSelectedTest} onSearch={openSearch}>
         {renderContent()}
       </AppLayout>
     </>;
