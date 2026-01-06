@@ -97,9 +97,10 @@ export function Glossary() {
                 </div>
                 <div className="space-y-2">
                   {groupedTerms[letter].map(term => (
-                    <Card 
-                      key={term.id} 
-                      className="bg-card/50 border-border/50 hover:border-primary/30 transition-colors"
+                    <Card
+                      key={term.id}
+                      className="bg-card/50 border-border/50 hover:border-primary/30 transition-colors cursor-pointer"
+                      onClick={() => window.open(`https://duckduckgo.com/?q=${encodeURIComponent(term.term)}&kp=1`, '_blank')}
                     >
                       <CardContent className="py-3 px-4">
                         <h3 className="font-semibold text-foreground text-lg">{term.term}</h3>
