@@ -69,7 +69,7 @@ export function PracticeTest({
   } = useProgress();
 
   // Fetch test history for this test type
-  const { data: testHistory, isLoading: historyLoading } = useQuery({
+  const { data: testHistory, isLoading: historyLoading, error: historyError } = useQuery({
     queryKey: ['test-history', user?.id, testType],
     queryFn: async () => {
       // Handle both legacy 'practice' test_type and new test type values
@@ -89,6 +89,7 @@ export function PracticeTest({
       return data as TestHistoryResult[];
     },
     enabled: !!user,
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
   });
 
   const formatDate = (dateStr: string) => {
@@ -303,6 +304,11 @@ export function PracticeTest({
             {historyLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : historyError ? (
+              <div className="text-center py-8">
+                <AlertTriangle className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Could not load test history</p>
               </div>
             ) : !hasHistory ? (
               <div className="text-center py-8">
