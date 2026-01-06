@@ -5,14 +5,16 @@ interface QuestionAttempt {
 
 /**
  * Calculate weak question IDs from question attempts.
- * A question is considered "weak" if the user has answered it incorrectly
- * more times than correctly (incorrect > correct).
+ * A question is considered "weak" if:
+ * 1. The user has answered it incorrectly at least 2 times, AND
+ * 2. They have more incorrect answers than correct answers (incorrect > correct)
  *
  * This means:
- * - 1 wrong, 0 right = weak (1 > 0)
- * - 1 wrong, 1 right = not weak (1 > 1 is false)
- * - 2 wrong, 1 right = weak (2 > 1)
- * - 2 wrong, 2 right = not weak (2 > 2 is false)
+ * - 1 wrong, 0 right = NOT weak (need at least 2 wrong)
+ * - 2 wrong, 0 right = weak (2 >= 2 and 2 > 0)
+ * - 2 wrong, 1 right = weak (2 >= 2 and 2 > 1)
+ * - 2 wrong, 2 right = NOT weak (2 > 2 is false)
+ * - 3 wrong, 2 right = weak (3 >= 2 and 3 > 2)
  */
 export function calculateWeakQuestionIds(attempts: QuestionAttempt[]): string[] {
   const stats: Record<string, { correct: number; incorrect: number }> = {};
@@ -29,6 +31,6 @@ export function calculateWeakQuestionIds(attempts: QuestionAttempt[]): string[] 
   });
 
   return Object.entries(stats)
-    .filter(([_, { correct, incorrect }]) => incorrect > correct)
+    .filter(([_, { correct, incorrect }]) => incorrect >= 2 && incorrect > correct)
     .map(([id]) => id);
 }

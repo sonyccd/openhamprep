@@ -112,6 +112,11 @@ export function WeakQuestionsReview({
     setJustClearedQuestion(null);
   };
 
+  const handleTryAgain = () => {
+    setSelectedAnswer(null);
+    setShowResult(false);
+  };
+
   const handleRandomize = () => {
     if (activeWeakQuestions.length <= 1) return;
     // Pick a random index different from current with max iteration guard
@@ -332,6 +337,11 @@ export function WeakQuestionsReview({
         >
           <Dices className="w-4 h-4" />
         </Button>
+        {showResult && !isJustCleared && (
+          <Button onClick={handleTryAgain} variant="outline">
+            Try Again
+          </Button>
+        )}
         <Button
           variant={showResult ? "default" : "outline"}
           onClick={handleNextQuestion}
@@ -343,13 +353,21 @@ export function WeakQuestionsReview({
         </Button>
       </div>
 
-      {/* Question counter - only shown when there are multiple questions */}
-      {activeWeakQuestions.length > 1 && !isJustCleared && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center text-muted-foreground text-sm mt-4">
-        Question {(currentIndex || 0) + 1} of {activeWeakQuestions.length}
-        {clearedQuestions.size > 0 && (
-          <span className="text-success ml-2">({clearedQuestions.size} cleared)</span>
-        )}
-      </motion.p>}
+      {/* Question counter */}
+      {(activeWeakQuestions.length > 1 || isJustCleared) && (
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center text-muted-foreground text-sm mt-4">
+          {isJustCleared ? (
+            activeWeakQuestions.length > 0
+              ? `${activeWeakQuestions.length} remaining`
+              : 'All questions cleared!'
+          ) : (
+            `Question ${(currentIndex || 0) + 1} of ${activeWeakQuestions.length}`
+          )}
+          {clearedQuestions.size > 0 && (
+            <span className="text-success ml-2">({clearedQuestions.size} cleared)</span>
+          )}
+        </motion.p>
+      )}
       </PageContainer>
     );
   }
@@ -371,14 +389,14 @@ export function WeakQuestionsReview({
               )}
             </p>
           </div>
-          <div className="flex items-center justify-between bg-card border border-border rounded-lg p-3">
+          <div className="flex items-center justify-between py-2">
             <div className="flex items-center gap-2">
               <Flame className={`w-4 h-4 ${streakModeEnabled ? 'text-warning' : 'text-muted-foreground'}`} />
               <Label htmlFor="streak-mode" className="text-sm cursor-pointer">
                 Streak mode
               </Label>
               <span className="text-xs text-muted-foreground">
-                ({streakModeEnabled ? `${STREAK_TO_CLEAR} correct in a row to clear` : '1 correct to clear'})
+                ({streakModeEnabled ? '3x to clear' : '1x to clear'})
               </span>
             </div>
             <Switch
@@ -391,7 +409,7 @@ export function WeakQuestionsReview({
         {activeWeakQuestions.map((question, index) => {
           const questionStreak = streaks[question.id] || 0;
           return (
-            <div key={question.id} className="bg-card border border-border rounded-lg p-4 hover:border-destructive/50 transition-colors">
+            <div key={question.id} className="bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
               <button onClick={() => setCurrentIndex(index)} className="w-full text-left">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">

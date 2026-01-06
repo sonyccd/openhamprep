@@ -580,7 +580,7 @@ describe('WeakQuestionsReview', () => {
 
       const toggle = screen.getByRole('switch');
       expect(toggle).not.toBeChecked();
-      expect(screen.getByText('(1 correct to clear)')).toBeInTheDocument();
+      expect(screen.getByText('(1x to clear)')).toBeInTheDocument();
     });
 
     it('shows correct description when streak mode is enabled', async () => {
@@ -592,7 +592,7 @@ describe('WeakQuestionsReview', () => {
       await user.click(toggle);
 
       await waitFor(() => {
-        expect(screen.getByText('(3 correct in a row to clear)')).toBeInTheDocument();
+        expect(screen.getByText('(3x to clear)')).toBeInTheDocument();
       });
     });
   });

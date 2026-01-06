@@ -6,10 +6,20 @@ describe('calculateWeakQuestionIds', () => {
     expect(calculateWeakQuestionIds([])).toEqual([]);
   });
 
-  it('marks question as weak when answered incorrectly once', () => {
+  it('does NOT mark question as weak when answered incorrectly only once', () => {
     const attempts = [
       { question_id: 'Q1', is_correct: false },
     ];
+    // 1 wrong is not enough - need at least 2 wrong
+    expect(calculateWeakQuestionIds(attempts)).toEqual([]);
+  });
+
+  it('marks question as weak when answered incorrectly twice', () => {
+    const attempts = [
+      { question_id: 'Q1', is_correct: false },
+      { question_id: 'Q1', is_correct: false },
+    ];
+    // 2 wrong, 0 right = weak (2 >= 2 and 2 > 0)
     expect(calculateWeakQuestionIds(attempts)).toEqual(['Q1']);
   });
 
@@ -20,39 +30,52 @@ describe('calculateWeakQuestionIds', () => {
     expect(calculateWeakQuestionIds(attempts)).toEqual([]);
   });
 
-  it('removes question from weak list when correct equals incorrect', () => {
+  it('does not mark as weak when 1 wrong and 1 correct', () => {
     const attempts = [
       { question_id: 'Q1', is_correct: false },
       { question_id: 'Q1', is_correct: true },
     ];
-    // 1 incorrect, 1 correct = not weak (1 > 1 is false)
+    // 1 wrong, 1 correct = not weak (doesn't meet 2 wrong minimum)
     expect(calculateWeakQuestionIds(attempts)).toEqual([]);
   });
 
-  it('keeps question weak when incorrect exceeds correct', () => {
+  it('keeps question weak when 2+ incorrect exceeds correct', () => {
     const attempts = [
       { question_id: 'Q1', is_correct: false },
       { question_id: 'Q1', is_correct: false },
       { question_id: 'Q1', is_correct: true },
     ];
-    // 2 incorrect, 1 correct = weak (2 > 1)
+    // 2 incorrect, 1 correct = weak (2 >= 2 and 2 > 1)
     expect(calculateWeakQuestionIds(attempts)).toEqual(['Q1']);
+  });
+
+  it('removes question from weak list when correct equals incorrect', () => {
+    const attempts = [
+      { question_id: 'Q1', is_correct: false },
+      { question_id: 'Q1', is_correct: false },
+      { question_id: 'Q1', is_correct: true },
+      { question_id: 'Q1', is_correct: true },
+    ];
+    // 2 incorrect, 2 correct = not weak (2 > 2 is false)
+    expect(calculateWeakQuestionIds(attempts)).toEqual([]);
   });
 
   it('removes question from weak list when correct exceeds incorrect', () => {
     const attempts = [
       { question_id: 'Q1', is_correct: false },
+      { question_id: 'Q1', is_correct: false },
+      { question_id: 'Q1', is_correct: true },
       { question_id: 'Q1', is_correct: true },
       { question_id: 'Q1', is_correct: true },
     ];
-    // 1 incorrect, 2 correct = not weak (1 > 2 is false)
+    // 2 incorrect, 3 correct = not weak (2 > 3 is false)
     expect(calculateWeakQuestionIds(attempts)).toEqual([]);
   });
 
   it('handles multiple questions independently', () => {
     const attempts = [
       { question_id: 'Q1', is_correct: false },
-      { question_id: 'Q1', is_correct: true },  // Q1: 1 wrong, 1 right = not weak
+      { question_id: 'Q1', is_correct: true },  // Q1: 1 wrong, 1 right = not weak (< 2 wrong)
       { question_id: 'Q2', is_correct: false },
       { question_id: 'Q2', is_correct: false }, // Q2: 2 wrong, 0 right = weak
       { question_id: 'Q3', is_correct: true },
@@ -88,17 +111,17 @@ describe('calculateWeakQuestionIds', () => {
 
   it('handles mixed results across many questions', () => {
     const attempts = [
-      // Q1: 3 wrong, 1 right = weak
+      // Q1: 3 wrong, 1 right = weak (3 >= 2 and 3 > 1)
       { question_id: 'Q1', is_correct: false },
       { question_id: 'Q1', is_correct: false },
       { question_id: 'Q1', is_correct: false },
       { question_id: 'Q1', is_correct: true },
-      // Q2: 1 wrong, 3 right = not weak
+      // Q2: 1 wrong, 3 right = not weak (1 < 2)
       { question_id: 'Q2', is_correct: false },
       { question_id: 'Q2', is_correct: true },
       { question_id: 'Q2', is_correct: true },
       { question_id: 'Q2', is_correct: true },
-      // Q3: 2 wrong, 2 right = not weak
+      // Q3: 2 wrong, 2 right = not weak (2 > 2 is false)
       { question_id: 'Q3', is_correct: false },
       { question_id: 'Q3', is_correct: false },
       { question_id: 'Q3', is_correct: true },
@@ -106,16 +129,16 @@ describe('calculateWeakQuestionIds', () => {
       // Q4: 0 wrong, 2 right = not weak
       { question_id: 'Q4', is_correct: true },
       { question_id: 'Q4', is_correct: true },
-      // Q5: 1 wrong, 0 right = weak
+      // Q5: 1 wrong, 0 right = NOT weak (only 1 wrong, need 2)
       { question_id: 'Q5', is_correct: false },
     ];
 
     const weakIds = calculateWeakQuestionIds(attempts);
     expect(weakIds).toContain('Q1');
-    expect(weakIds).toContain('Q5');
     expect(weakIds).not.toContain('Q2');
     expect(weakIds).not.toContain('Q3');
     expect(weakIds).not.toContain('Q4');
-    expect(weakIds).toHaveLength(2);
+    expect(weakIds).not.toContain('Q5'); // Changed: 1 wrong is not enough
+    expect(weakIds).toHaveLength(1); // Changed from 2 to 1
   });
 });

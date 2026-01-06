@@ -255,7 +255,15 @@ export default function Dashboard() {
   // Render content based on view
   const renderContent = () => {
     if (currentView === 'practice-test') {
-      return <PracticeTest onBack={() => changeView('dashboard')} onTestStateChange={setTestInProgress} testType={selectedTest} />;
+      return <PracticeTest
+        onBack={() => changeView('dashboard')}
+        onTestStateChange={setTestInProgress}
+        testType={selectedTest}
+        onReviewTest={(testId) => {
+          setReviewingTestId(testId);
+          changeView('review-test');
+        }}
+      />;
     }
     if (currentView === 'random-practice') {
       return <RandomPractice onBack={() => changeView('dashboard')} testType={selectedTest} />;
