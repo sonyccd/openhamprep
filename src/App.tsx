@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import { PostHogProvider } from "@/hooks/usePostHog";
 import { PendoProvider } from "@/hooks/usePendo";
 import { AppNavigationProvider } from "@/hooks/useAppNavigation";
 import { ThemeProvider } from "next-themes";
@@ -36,9 +35,8 @@ const App = () => (
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <PostHogProvider>
-          <PendoProvider>
-            <AppNavigationProvider>
+        <PendoProvider>
+          <AppNavigationProvider>
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
@@ -60,9 +58,8 @@ const App = () => (
                   </Suspense>
                 </BrowserRouter>
               </TooltipProvider>
-            </AppNavigationProvider>
-          </PendoProvider>
-        </PostHogProvider>
+          </AppNavigationProvider>
+        </PendoProvider>
       </AuthProvider>
     </QueryClientProvider>
   </ThemeProvider>

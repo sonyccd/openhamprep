@@ -50,9 +50,9 @@ vi.mock('@/hooks/useProgress', () => ({
   }),
 }));
 
-vi.mock('@/hooks/usePostHog', () => ({
-  usePostHog: () => ({ capture: vi.fn() }),
-  ANALYTICS_EVENTS: {
+vi.mock('@/hooks/usePendo', () => ({
+  usePendo: () => ({ track: vi.fn(), isReady: true }),
+  PENDO_EVENTS: {
     PRACTICE_TEST_STARTED: 'practice_test_started',
     PRACTICE_TEST_COMPLETED: 'practice_test_completed',
     PRACTICE_TEST_PASSED: 'practice_test_passed',

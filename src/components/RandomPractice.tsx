@@ -5,7 +5,6 @@ import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
-import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,9 +43,6 @@ export function RandomPractice({
   const {
     saveRandomAttempt
   } = useProgress();
-  const {
-    capture
-  } = usePostHog();
   const [stats, setStats] = useState({
     correct: 0,
     total: 0
@@ -177,14 +173,6 @@ export function RandomPractice({
       total: prev.total + 1
     }));
 
-    // Track question answered
-    capture(ANALYTICS_EVENTS.QUESTION_ANSWERED, {
-      question_id: question.id,
-      is_correct: isCorrect,
-      subelement: question.subelement,
-      practice_type: 'random'
-    });
-
     // Update streak
     if (isCorrect) {
       setStreak(prev => {
@@ -196,11 +184,6 @@ export function RandomPractice({
           if (newStreak > allTimeBestStreak) {
             setAllTimeBestStreak(newStreak);
             saveBestStreak(newStreak);
-
-            // Track new best streak
-            capture(ANALYTICS_EVENTS.NEW_BEST_STREAK, {
-              streak: newStreak
-            });
 
             // Show special message for new all-time best
             if (newStreak > 1) {
@@ -215,11 +198,6 @@ export function RandomPractice({
         // Check for milestone celebration
         if (STREAK_MILESTONES.includes(newStreak)) {
           setShowStreakCelebration(true);
-
-          // Track streak milestone
-          capture(ANALYTICS_EVENTS.STREAK_MILESTONE, {
-            milestone: newStreak
-          });
           toast.success(getMilestoneMessage(newStreak), {
             icon: <Trophy className="w-5 h-5 text-primary" />,
             duration: 3000

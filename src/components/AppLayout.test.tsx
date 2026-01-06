@@ -38,11 +38,12 @@ vi.mock('@/hooks/useAdmin', () => ({
   }),
 }));
 
-vi.mock('@/hooks/usePostHog', () => ({
-  usePostHog: () => ({
-    capture: vi.fn(),
-    identify: vi.fn(),
+vi.mock('@/hooks/usePendo', () => ({
+  usePendo: () => ({
+    track: vi.fn(),
+    isReady: true,
   }),
+  PENDO_EVENTS: {},
 }));
 
 // Mock question attempts data for testing weak questions calculation

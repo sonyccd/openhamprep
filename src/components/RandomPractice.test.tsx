@@ -57,9 +57,9 @@ vi.mock('@/hooks/useProgress', () => ({
   }),
 }));
 
-vi.mock('@/hooks/usePostHog', () => ({
-  usePostHog: () => ({ capture: vi.fn() }),
-  ANALYTICS_EVENTS: {
+vi.mock('@/hooks/usePendo', () => ({
+  usePendo: () => ({ track: vi.fn(), isReady: true }),
+  PENDO_EVENTS: {
     QUESTION_ANSWERED: 'question_answered',
     NEW_BEST_STREAK: 'new_best_streak',
     STREAK_MILESTONE: 'streak_milestone',

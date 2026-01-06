@@ -3,7 +3,6 @@ import { Calculator as CalculatorIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
 
 interface CalculatorProps {
   className?: string;
@@ -15,19 +14,6 @@ export function Calculator({ className }: CalculatorProps) {
   const [previousValue, setPreviousValue] = useState<number | null>(null);
   const [operation, setOperation] = useState<string | null>(null);
   const [waitingForOperand, setWaitingForOperand] = useState(false);
-  const [hasTrackedOpen, setHasTrackedOpen] = useState(false);
-  const { capture } = usePostHog();
-
-  // Track calculator opened
-  useEffect(() => {
-    if (isOpen && !hasTrackedOpen) {
-      capture(ANALYTICS_EVENTS.CALCULATOR_OPENED);
-      setHasTrackedOpen(true);
-    }
-    if (!isOpen) {
-      setHasTrackedOpen(false);
-    }
-  }, [isOpen, hasTrackedOpen, capture]);
 
   const inputDigit = useCallback((digit: string) => {
     setDisplay(prev => {
@@ -122,15 +108,12 @@ export function Calculator({ className }: CalculatorProps) {
           result = inputValue;
       }
 
-      // Track calculation performed
-      capture(ANALYTICS_EVENTS.CALCULATOR_USED, { operation });
-
       setPreviousValue(null);
       setOperation(null);
       setWaitingForOperand(true);
       return String(result);
     });
-  }, [operation, previousValue, capture]);
+  }, [operation, previousValue]);
 
   const buttons = [
     ["C", "÷"],
@@ -207,13 +190,13 @@ export function Calculator({ className }: CalculatorProps) {
           <p>{isOpen ? "Close calculator" : "Open calculator for calculations"}</p>
         </TooltipContent>
       </Tooltip>
-      
+
       {isOpen && (
         <div className="absolute right-0 top-0 translate-x-[calc(100%+0.5rem)] bg-card border border-border rounded-lg p-3 shadow-lg w-56 z-50">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-muted-foreground">Calculator</span>
           </div>
-          
+
           <div className="bg-secondary rounded-md p-3 mb-2 text-right">
             <span className="font-mono text-xl text-foreground">
               {display.length > 12 ? parseFloat(display).toExponential(6) : display}
@@ -245,5 +228,4 @@ export function Calculator({ className }: CalculatorProps) {
       )}
     </div>
   );
-
 }

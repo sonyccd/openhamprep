@@ -4,7 +4,6 @@ import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
-import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { QuestionListView } from "@/components/QuestionListView";
@@ -93,7 +92,6 @@ export function SubelementPractice({
   const {
     saveRandomAttempt
   } = useProgress();
-  const { capture } = usePostHog();
 
   // Get subelement names for the current test type
   const subelementNames = SUBELEMENT_NAMES[testType] || {};
@@ -182,11 +180,6 @@ export function SubelementPractice({
       total: 0
     });
     setAskedIds([]);
-
-    capture(ANALYTICS_EVENTS.TOPIC_SELECTED, {
-      subelement: sub,
-      topic_name: getSubelementName(sub)
-    });
   };
 
   const handleStartPractice = (startIndex?: number) => {
@@ -206,11 +199,6 @@ export function SubelementPractice({
         setAskedIds([result.question.id]);
       }
     }
-
-    capture(ANALYTICS_EVENTS.SUBELEMENT_PRACTICE_STARTED, {
-      subelement: selectedSubelement,
-      topic_name: getSubelementName(selectedSubelement || '')
-    });
   };
 
   const handleBackToQuestions = () => {

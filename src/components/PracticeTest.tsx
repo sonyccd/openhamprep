@@ -4,7 +4,6 @@ import { QuestionCard } from "@/components/QuestionCard";
 import { TestResults } from "@/components/TestResults";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
-import { usePostHog, ANALYTICS_EVENTS } from "@/hooks/usePostHog";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Clock, Info, Play, AlertTriangle } from "lucide-react";
@@ -52,7 +51,6 @@ export function PracticeTest({
   const {
     saveTestResult
   } = useProgress();
-  const { capture } = usePostHog();
   const [hasStarted, setHasStarted] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -165,7 +163,6 @@ export function PracticeTest({
     const shuffledQuestions = shuffleArray([...allQuestions]).slice(0, questionCount);
     setQuestions(shuffledQuestions);
     setHasStarted(true);
-    capture(ANALYTICS_EVENTS.PRACTICE_TEST_STARTED, { question_count: questionCount });
   };
 
   if (isLoading) {
@@ -273,24 +270,6 @@ export function PracticeTest({
     setIsFinished(true);
     const result = await saveTestResult(questions, answers, testType);
     if (result) {
-      const correctCount = questions.filter(q => answers[q.id] === q.correctAnswer).length;
-      const percentage = Math.round((correctCount / questions.length) * 100);
-      const passed = percentage >= 74;
-      
-      capture(ANALYTICS_EVENTS.PRACTICE_TEST_COMPLETED, {
-        score: correctCount,
-        total: questions.length,
-        percentage,
-        passed,
-        timer_enabled: timerEnabled,
-      });
-      
-      if (passed) {
-        capture(ANALYTICS_EVENTS.PRACTICE_TEST_PASSED, { percentage });
-      } else {
-        capture(ANALYTICS_EVENTS.PRACTICE_TEST_FAILED, { percentage });
-      }
-      
       toast.success('Test results saved!');
     }
   };

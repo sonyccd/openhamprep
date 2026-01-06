@@ -4,12 +4,13 @@ import userEvent from '@testing-library/user-event';
 import { Calculator } from './Calculator';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-// Mock PostHog
-vi.mock('@/hooks/usePostHog', () => ({
-  usePostHog: () => ({
-    capture: vi.fn(),
+// Mock Pendo
+vi.mock('@/hooks/usePendo', () => ({
+  usePendo: () => ({
+    track: vi.fn(),
+    isReady: true,
   }),
-  ANALYTICS_EVENTS: {
+  PENDO_EVENTS: {
     CALCULATOR_OPENED: 'calculator_opened',
     CALCULATOR_USED: 'calculator_used',
   },
