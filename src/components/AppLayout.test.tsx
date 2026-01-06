@@ -48,8 +48,9 @@ vi.mock('@/hooks/usePendo', () => ({
 
 // Mock question attempts data for testing weak questions calculation
 // Now includes joined questions data with display_name (since query uses questions!inner(display_name))
+// Note: A question needs at least 2 wrong answers AND more wrong than right to be "weak"
 const mockQuestionAttempts = [
-  { question_id: 'uuid-t1a01', is_correct: false, user_id: 'test-user', questions: { display_name: 'T1A01' } }, // 1 wrong
+  { question_id: 'uuid-t1a01', is_correct: false, user_id: 'test-user', questions: { display_name: 'T1A01' } }, // 1 wrong = NOT weak (need 2+)
   { question_id: 'uuid-t1a02', is_correct: false, user_id: 'test-user', questions: { display_name: 'T1A02' } }, // 1 wrong, then 1 right = not weak
   { question_id: 'uuid-t1a02', is_correct: true, user_id: 'test-user', questions: { display_name: 'T1A02' } },
   { question_id: 'uuid-t1a03', is_correct: false, user_id: 'test-user', questions: { display_name: 'T1A03' } }, // 2 wrong, 1 right = weak
@@ -233,7 +234,7 @@ describe('AppLayout', () => {
       });
     });
 
-    it('calculates weak question count correctly (incorrect > correct)', async () => {
+    it('calculates weak question count correctly (needs 2+ wrong AND incorrect > correct)', async () => {
       render(
         <AppLayout {...defaultProps}>
           <div>Content</div>
@@ -242,15 +243,15 @@ describe('AppLayout', () => {
       );
 
       // From mockQuestionAttempts:
-      // T1A01: 1 wrong, 0 right = weak (1 > 0)
-      // T1A02: 1 wrong, 1 right = NOT weak (1 > 1 is false)
-      // T1A03: 2 wrong, 1 right = weak (2 > 1)
-      // So weak count should be 2, not 3
+      // T1A01: 1 wrong, 0 right = NOT weak (needs at least 2 wrong)
+      // T1A02: 1 wrong, 1 right = NOT weak (only 1 wrong)
+      // T1A03: 2 wrong, 1 right = weak (2 >= 2 AND 2 > 1)
+      // So weak count should be 1
       await waitFor(() => {
         // Find the Weak Areas nav item and check its badge
         const weakAreasItem = screen.getByText('Weak Areas');
         const badge = weakAreasItem.parentElement?.querySelector('[class*="bg-primary"]');
-        expect(badge).toHaveTextContent('2');
+        expect(badge).toHaveTextContent('1');
       });
     });
   });

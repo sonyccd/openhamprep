@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { TestResults } from "@/components/TestResults";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
+import { useAuth } from "@/hooks/useAuth";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
-import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Clock, Info, Play, AlertTriangle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Clock, Info, Play, AlertTriangle, History, Trophy, XCircle, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -16,10 +18,22 @@ import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TestType, testConfig } from "@/types/navigation";
 import { PageContainer } from "@/components/ui/page-container";
+import { supabase } from "@/integrations/supabase/client";
 interface PracticeTestProps {
   onBack: () => void;
   onTestStateChange?: (inProgress: boolean) => void;
   testType: TestType;
+  onReviewTest?: (testId: string) => void;
+}
+
+interface TestHistoryResult {
+  id: string;
+  score: number;
+  total_questions: number;
+  percentage: number;
+  passed: boolean;
+  completed_at: string;
+  test_type: string;
 }
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
@@ -41,8 +55,10 @@ function formatTime(seconds: number): string {
 export function PracticeTest({
   onBack,
   onTestStateChange,
-  testType
+  testType,
+  onReviewTest
 }: PracticeTestProps) {
+  const { user } = useAuth();
   const {
     data: allQuestions,
     isLoading,
@@ -51,6 +67,45 @@ export function PracticeTest({
   const {
     saveTestResult
   } = useProgress();
+
+  // Fetch test history for this test type
+  const { data: testHistory, isLoading: historyLoading } = useQuery({
+    queryKey: ['test-history', user?.id, testType],
+    queryFn: async () => {
+      // Handle both legacy 'practice' test_type and new test type values
+      const testTypesToMatch = testType === 'technician'
+        ? ['practice', 'technician']
+        : [testType];
+
+      const { data, error } = await supabase
+        .from('practice_test_results')
+        .select('*')
+        .eq('user_id', user!.id)
+        .in('test_type', testTypesToMatch)
+        .order('completed_at', { ascending: false })
+        .limit(5); // Only show recent 5 on landing page
+
+      if (error) throw error;
+      return data as TestHistoryResult[];
+    },
+    enabled: !!user,
+  });
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return `Today at ${date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    } else if (diffDays === 1) {
+      return `Yesterday`;
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else {
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+  };
   const [hasStarted, setHasStarted] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -188,48 +243,28 @@ export function PracticeTest({
 
   // Start Screen
   if (!hasStarted) {
-    return (
-      <PageContainer width="narrow" mobileNavPadding>
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            
-            
-          </div>
+    const hasHistory = testHistory && testHistory.length > 0;
 
+    return (
+      <PageContainer width="standard" mobileNavPadding>
+        <div className="grid md:grid-cols-2 gap-6">
           {/* Start Card */}
-          <motion.div initial={{
-          opacity: 0,
-          y: 20
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} className="bg-card border border-border rounded-xl p-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card border border-border rounded-xl p-8 text-center"
+          >
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <Play className="w-8 h-8 text-primary" />
             </div>
-            
+
             <h1 className="text-2xl font-mono font-bold text-foreground mb-4">
               Ready to Begin?
             </h1>
-            
+
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               This practice test simulates the real Amateur Radio exam with {questionCount} randomly selected questions.
             </p>
-
-            {/* Warning Box */}
-            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 mb-8">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-                <div className="text-left">
-                  <p className="text-sm font-medium text-destructive mb-1">
-                    Important: Progress will not be saved
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    If you navigate away or exit the test before completing it, your progress will be lost. This simulates real exam conditions.
-                  </p>
-                </div>
-              </div>
-            </div>
 
             {/* Test Info */}
             <div className="grid grid-cols-3 gap-4 mb-8">
@@ -252,6 +287,89 @@ export function PracticeTest({
               Start Test
             </Button>
           </motion.div>
+
+          {/* Test History Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-card border border-border rounded-xl p-6"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <History className="w-5 h-5 text-muted-foreground" />
+              <h2 className="font-semibold text-foreground">Recent Tests</h2>
+            </div>
+
+            {historyLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : !hasHistory ? (
+              <div className="text-center py-8">
+                <History className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">No tests taken yet</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Complete a test to see your history</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {testHistory.map((test, index) => (
+                  <motion.button
+                    key={test.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => onReviewTest?.(test.id)}
+                    disabled={!onReviewTest}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-3 rounded-lg border border-border text-left transition-colors",
+                      onReviewTest && "hover:border-primary/50 cursor-pointer group"
+                    )}
+                  >
+                    {/* Pass/Fail Icon */}
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                      test.passed ? "bg-success/10" : "bg-destructive/10"
+                    )}>
+                      {test.passed ? (
+                        <Trophy className="w-4 h-4 text-success" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-destructive" />
+                      )}
+                    </div>
+
+                    {/* Score Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "font-bold",
+                          test.passed ? "text-success" : "text-destructive"
+                        )}>
+                          {test.percentage}%
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          ({test.score}/{test.total_questions})
+                        </span>
+                        {test.passed && (
+                          <span className="text-[10px] bg-success/10 text-success px-1.5 py-0.5 rounded font-medium">
+                            PASS
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {formatDate(test.completed_at)}
+                      </p>
+                    </div>
+
+                    {/* Review Arrow */}
+                    {onReviewTest && (
+                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                    )}
+                  </motion.button>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </div>
       </PageContainer>
     );
   }

@@ -166,11 +166,10 @@ describe('PracticeTest', () => {
       expect(screen.getByText('Correct Needed')).toBeInTheDocument();
     });
 
-    it('shows warning about progress not being saved', () => {
+    it('shows Recent Tests section on landing page', () => {
       renderPracticeTest();
-      
-      expect(screen.getByText(/Progress will not be saved/)).toBeInTheDocument();
-      expect(screen.getByText(/If you navigate away/)).toBeInTheDocument();
+
+      expect(screen.getByText('Recent Tests')).toBeInTheDocument();
     });
 
     it('renders Start Test button', () => {
