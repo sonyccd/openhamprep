@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getTestTypePrefix } from '@/lib/testTypeUtils';
 import { truncateText } from '@/lib/searchUtils';
@@ -72,6 +72,8 @@ export function useGlobalSearch(testType: TestType) {
   const [results, setResults] = useState<SearchResults>(EMPTY_RESULTS);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  // Track request ID to ignore stale responses when testType changes mid-flight
+  const requestIdRef = useRef(0);
 
   // Debounce the search query
   useEffect(() => {
@@ -92,6 +94,8 @@ export function useGlobalSearch(testType: TestType) {
     }
 
     const abortController = new AbortController();
+    // Increment request ID to track this specific request
+    const currentRequestId = ++requestIdRef.current;
 
     async function performSearch() {
       setIsLoading(true);
@@ -108,7 +112,10 @@ export function useGlobalSearch(testType: TestType) {
           topics_limit: 3,
         });
 
-        if (abortController.signal.aborted) return;
+        // Ignore stale responses (from previous requests or if component unmounted)
+        if (abortController.signal.aborted || currentRequestId !== requestIdRef.current) {
+          return;
+        }
 
         if (rpcError) {
           throw new Error(rpcError.message);
@@ -142,12 +149,14 @@ export function useGlobalSearch(testType: TestType) {
 
         setResults(transformedResults);
       } catch (err) {
-        if (!abortController.signal.aborted) {
+        // Only update error state if this is still the current request
+        if (!abortController.signal.aborted && currentRequestId === requestIdRef.current) {
           setError(err instanceof Error ? err : new Error('Search failed'));
           setResults(EMPTY_RESULTS);
         }
       } finally {
-        if (!abortController.signal.aborted) {
+        // Only update loading state if this is still the current request
+        if (!abortController.signal.aborted && currentRequestId === requestIdRef.current) {
           setIsLoading(false);
         }
       }

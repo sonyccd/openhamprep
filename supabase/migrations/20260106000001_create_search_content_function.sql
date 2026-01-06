@@ -18,6 +18,7 @@ DECLARE
   result JSON;
   ts_query tsquery;
   clean_query TEXT;
+  escaped_query TEXT;
   fts_question_count INT;
 BEGIN
   -- Return empty results for empty or whitespace-only queries
@@ -30,6 +31,8 @@ BEGIN
   END IF;
 
   clean_query := trim(search_query);
+  -- Escape ILIKE metacharacters (%, _, \) to prevent pattern injection
+  escaped_query := replace(replace(replace(clean_query, '\', '\\'), '%', '\%'), '_', '\_');
 
   -- Convert search query to tsquery using websearch syntax
   -- websearch_to_tsquery handles natural language queries like "antenna gain"
@@ -93,7 +96,7 @@ BEGIN
               explanation,
               1.0 as rank
             FROM public.questions
-            WHERE display_name ILIKE clean_query || '%'
+            WHERE display_name ILIKE escaped_query || '%'
               AND (license_prefix IS NULL OR display_name LIKE license_prefix || '%')
             ORDER BY display_name ASC
             LIMIT questions_limit

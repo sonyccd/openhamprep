@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { HelpCircle, BookText, Library, Loader2 } from 'lucide-react';
+import { HelpCircle, BookText, Library, Loader2, AlertCircle } from 'lucide-react';
 import {
   CommandDialog,
   CommandInput,
@@ -98,13 +98,14 @@ export function GlobalSearch({
   const navigate = useNavigate();
   const { setCurrentView, navigateToTopic, navigateToGlossaryTerm } =
     useAppNavigation();
-  const { query, setQuery, results, isLoading, hasResults, reset, totalCount } =
+  const { query, setQuery, results, isLoading, hasResults, reset, totalCount, error } =
     useGlobalSearch(testType);
 
   /**
    * Generate screen reader status message
    */
   const getStatusMessage = (): string => {
+    if (error) return 'Search failed. Please try again.';
     if (isLoading) return 'Searching...';
     if (query.length < 3) return '';
     if (!hasResults) return `No results found for ${query}`;
@@ -167,8 +168,19 @@ export function GlobalSearch({
       </div>
 
       <CommandList className="max-h-[350px]">
+        {/* Error state */}
+        {error && (
+          <div
+            className="py-6 flex items-center justify-center gap-2 text-sm text-destructive"
+            role="alert"
+          >
+            <AlertCircle className="h-4 w-4" aria-hidden="true" />
+            Search failed. Please try again.
+          </div>
+        )}
+
         {/* Loading state */}
-        {isLoading && (
+        {!error && isLoading && (
           <div
             className="py-6 flex items-center justify-center gap-2 text-sm text-muted-foreground"
             role="status"
@@ -180,12 +192,12 @@ export function GlobalSearch({
         )}
 
         {/* Empty state - only show when we have a query of sufficient length but no results */}
-        {!isLoading && query.length >= 3 && !hasResults && (
+        {!error && !isLoading && query.length >= 3 && !hasResults && (
           <CommandEmpty>No results found for "{query}"</CommandEmpty>
         )}
 
         {/* Initial state - show when dialog is open but no query or query too short */}
-        {!isLoading && query.length < 3 && (
+        {!error && !isLoading && query.length < 3 && (
           <div className="py-6 text-center text-sm text-muted-foreground">
             {query.length === 0
               ? 'Start typing to search...'

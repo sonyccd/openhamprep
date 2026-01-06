@@ -213,6 +213,64 @@ describe('GlobalSearch', () => {
     });
   });
 
+  describe('Error State', () => {
+    it('shows error message when search fails', () => {
+      vi.mocked(useGlobalSearch).mockReturnValue({
+        query: 'antenna',
+        setQuery: mockSetQuery,
+        results: { questions: [], glossary: [], topics: [] },
+        isLoading: false,
+        error: new Error('Search failed'),
+        totalCount: 0,
+        hasResults: false,
+        reset: mockReset,
+      });
+
+      renderGlobalSearch();
+
+      // Error message appears in both visible alert and sr-only status
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toHaveTextContent('Search failed. Please try again.');
+    });
+
+    it('does not show loading state when error is present', () => {
+      vi.mocked(useGlobalSearch).mockReturnValue({
+        query: 'antenna',
+        setQuery: mockSetQuery,
+        results: { questions: [], glossary: [], topics: [] },
+        isLoading: true,
+        error: new Error('Search failed'),
+        totalCount: 0,
+        hasResults: false,
+        reset: mockReset,
+      });
+
+      renderGlobalSearch();
+
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      // Loading spinner should not be visible when there's an error
+      expect(screen.queryByLabelText('Searching')).not.toBeInTheDocument();
+    });
+
+    it('does not show empty state when error is present', () => {
+      vi.mocked(useGlobalSearch).mockReturnValue({
+        query: 'antenna',
+        setQuery: mockSetQuery,
+        results: { questions: [], glossary: [], topics: [] },
+        isLoading: false,
+        error: new Error('Search failed'),
+        totalCount: 0,
+        hasResults: false,
+        reset: mockReset,
+      });
+
+      renderGlobalSearch();
+
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(screen.queryByText(/No results found/)).not.toBeInTheDocument();
+    });
+  });
+
   describe('Results Display', () => {
     it('displays question results', () => {
       vi.mocked(useGlobalSearch).mockReturnValue({
