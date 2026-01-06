@@ -5,6 +5,17 @@ create extension if not exists pg_net with schema extensions;
 -- Create the webhook trigger function that calls the edge function
 -- when a new user signs up. This ensures we capture signup events
 -- even when adblockers prevent the frontend Pendo SDK from running.
+--
+-- SECRETS SETUP REQUIRED:
+-- Before this trigger will work, you must set up the following secrets in Supabase Vault:
+--   1. Go to Supabase Dashboard > Project Settings > Vault
+--   2. Add secret: name='supabase_url', value='https://your-project-ref.supabase.co'
+--   3. Add secret: name='service_role_key', value='your-service-role-key'
+--
+-- Alternatively, use the SQL commands:
+--   select vault.create_secret('supabase_url', 'https://your-project-ref.supabase.co');
+--   select vault.create_secret('service_role_key', 'your-service-role-key');
+--
 create or replace function public.handle_new_user_signup()
 returns trigger
 language plpgsql
@@ -15,15 +26,33 @@ declare
   supabase_url text;
   service_role_key text;
   edge_function_url text;
+  vault_exists boolean;
 begin
-  -- Get Supabase URL and service role key from environment
-  -- These are set via Supabase Vault or database settings
-  supabase_url := current_setting('app.settings.supabase_url', true);
-  service_role_key := current_setting('app.settings.service_role_key', true);
+  -- Check if vault extension is available (it should be on hosted Supabase)
+  select exists(
+    select 1 from pg_extension where extname = 'supabase_vault'
+  ) into vault_exists;
+
+  if vault_exists then
+    -- Read secrets from Supabase Vault (recommended approach)
+    select decrypted_secret into supabase_url
+    from vault.decrypted_secrets
+    where name = 'supabase_url'
+    limit 1;
+
+    select decrypted_secret into service_role_key
+    from vault.decrypted_secrets
+    where name = 'service_role_key'
+    limit 1;
+  else
+    -- Fallback to database settings for local development
+    supabase_url := current_setting('app.settings.supabase_url', true);
+    service_role_key := current_setting('app.settings.service_role_key', true);
+  end if;
 
   -- Skip if settings are not configured (e.g., local development without secrets)
   if supabase_url is null or service_role_key is null then
-    raise warning 'Supabase URL or service role key not configured, skipping user signup tracking';
+    raise warning 'Supabase URL or service role key not configured in Vault, skipping user signup tracking. See migration comments for setup instructions.';
     return new;
   end if;
 
