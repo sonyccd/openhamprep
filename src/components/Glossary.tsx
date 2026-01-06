@@ -99,8 +99,17 @@ export function Glossary() {
                   {groupedTerms[letter].map(term => (
                     <Card
                       key={term.id}
-                      className="bg-card/50 border-border/50 hover:border-primary/30 transition-colors cursor-pointer"
-                      onClick={() => window.open(`https://duckduckgo.com/?q=${encodeURIComponent(term.term)}&kp=1`, '_blank')}
+                      className="bg-card/50 border-border/50 hover:border-primary/30 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      onClick={() => window.open(`https://duckduckgo.com/?q=${encodeURIComponent(term.term)}&kp=1`, '_blank', 'noopener,noreferrer')}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          window.open(`https://duckduckgo.com/?q=${encodeURIComponent(term.term)}&kp=1`, '_blank', 'noopener,noreferrer');
+                        }
+                      }}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`Search "${term.term}" on DuckDuckGo`}
                     >
                       <CardContent className="py-3 px-4">
                         <h3 className="font-semibold text-foreground text-lg">{term.term}</h3>
