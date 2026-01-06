@@ -18,6 +18,7 @@ declare global {
         };
       }) => void;
       isReady: () => boolean;
+      track: (name: string, metadata?: Record<string, unknown>) => void;
     };
   }
 }

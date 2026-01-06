@@ -73,6 +73,17 @@ export function useProgress() {
       console.error('Error saving question attempts:', attemptsError);
     }
 
+    // Track test completion event in Pendo
+    if (window.pendo?.track) {
+      window.pendo.track('Test Completed', {
+        score: correctCount,
+        total_questions: totalQuestions,
+        percentage: percentage,
+        passed: passed,
+        test_type: testType
+      });
+    }
+
     // Invalidate cached queries so UI updates immediately
     invalidateProgressQueries();
 
@@ -100,6 +111,14 @@ export function useProgress() {
 
     if (error) {
       console.error('Error saving attempt:', error);
+    }
+
+    // Track question answered event in Pendo
+    if (window.pendo?.track) {
+      window.pendo.track('Question Answered', {
+        question_id: question.id,
+        is_correct: selectedAnswer === question.correctAnswer
+      });
     }
 
     // Invalidate cached queries so UI updates immediately

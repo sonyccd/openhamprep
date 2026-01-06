@@ -918,4 +918,211 @@ describe('useProgress', () => {
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['weekly-goals', 'test-user-id'] });
     });
   });
+
+  describe('Pendo track events', () => {
+    beforeEach(async () => {
+      const { useAuth } = await import('./useAuth');
+      vi.mocked(useAuth).mockReturnValue({ user: { id: 'test-user-id' } } as ReturnType<typeof useAuth>);
+      // Reset window.pendo mock
+      (window as typeof window & { pendo?: { track: ReturnType<typeof vi.fn> } }).pendo = undefined;
+    });
+
+    it('tracks Test Completed event with score after saveTestResult', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockTrack = vi.fn();
+      (window as typeof window & { pendo?: { track: typeof mockTrack } }).pendo = { track: mockTrack };
+
+      const mockInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'test-result-id' },
+            error: null,
+          }),
+        }),
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === 'practice_test_results') {
+          return { insert: mockInsert } as ReturnType<typeof supabase.from>;
+        }
+        if (table === 'question_attempts') {
+          return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) } as ReturnType<typeof supabase.from>;
+        }
+        return {} as ReturnType<typeof supabase.from>;
+      });
+
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
+
+      const questions = [mockQuestion];
+      const answers = { 'T1A01': 'A' as const };
+
+      await result.current.saveTestResult(questions, answers, 'technician');
+
+      expect(mockTrack).toHaveBeenCalledWith('Test Completed', {
+        score: 1,
+        total_questions: 1,
+        percentage: 100,
+        passed: false,
+        test_type: 'technician',
+      });
+    });
+
+    it('tracks Test Completed with correct passed status', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockTrack = vi.fn();
+      (window as typeof window & { pendo?: { track: typeof mockTrack } }).pendo = { track: mockTrack };
+
+      const mockInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'test-result-id' },
+            error: null,
+          }),
+        }),
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === 'practice_test_results') {
+          return { insert: mockInsert } as ReturnType<typeof supabase.from>;
+        }
+        if (table === 'question_attempts') {
+          return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) } as ReturnType<typeof supabase.from>;
+        }
+        return {} as ReturnType<typeof supabase.from>;
+      });
+
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
+
+      // Create 35 questions with 26 correct (passing)
+      const questions = Array.from({ length: 35 }, (_, i) => ({
+        ...mockQuestion,
+        id: `T${i}`,
+      }));
+      const answers = questions.reduce((acc, q, i) => {
+        acc[q.id] = i < 26 ? 'A' : 'B';
+        return acc;
+      }, {} as Record<string, 'A' | 'B' | 'C' | 'D'>);
+
+      await result.current.saveTestResult(questions, answers, 'technician');
+
+      expect(mockTrack).toHaveBeenCalledWith('Test Completed', expect.objectContaining({
+        score: 26,
+        passed: true,
+      }));
+    });
+
+    it('does not track Test Completed when Pendo is not loaded', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      // Ensure pendo is undefined
+      (window as typeof window & { pendo?: undefined }).pendo = undefined;
+
+      const mockInsert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'test-result-id' },
+            error: null,
+          }),
+        }),
+      });
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === 'practice_test_results') {
+          return { insert: mockInsert } as ReturnType<typeof supabase.from>;
+        }
+        if (table === 'question_attempts') {
+          return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) } as ReturnType<typeof supabase.from>;
+        }
+        return {} as ReturnType<typeof supabase.from>;
+      });
+
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
+
+      // Should not throw when pendo is undefined
+      await expect(result.current.saveTestResult([mockQuestion], { 'T1A01': 'A' })).resolves.not.toThrow();
+    });
+
+    it('tracks Question Answered event after saveRandomAttempt', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockTrack = vi.fn();
+      (window as typeof window & { pendo?: { track: typeof mockTrack } }).pendo = { track: mockTrack };
+
+      const mockInsert = vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
+
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
+
+      await result.current.saveRandomAttempt(mockQuestion, 'A');
+
+      expect(mockTrack).toHaveBeenCalledWith('Question Answered', {
+        question_id: 'T1A01',
+        is_correct: true,
+      });
+    });
+
+    it('tracks Question Answered with is_correct false for wrong answer', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      const mockTrack = vi.fn();
+      (window as typeof window & { pendo?: { track: typeof mockTrack } }).pendo = { track: mockTrack };
+
+      const mockInsert = vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
+
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
+
+      await result.current.saveRandomAttempt(mockQuestion, 'D'); // Wrong answer
+
+      expect(mockTrack).toHaveBeenCalledWith('Question Answered', {
+        question_id: 'T1A01',
+        is_correct: false,
+      });
+    });
+
+    it('does not track Question Answered when Pendo is not loaded', async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+
+      // Ensure pendo is undefined
+      (window as typeof window & { pendo?: undefined }).pendo = undefined;
+
+      const mockInsert = vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      vi.mocked(supabase.from).mockReturnValue({ insert: mockInsert } as ReturnType<typeof supabase.from>);
+
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
+
+      // Should not throw when pendo is undefined
+      await expect(result.current.saveRandomAttempt(mockQuestion, 'A')).resolves.not.toThrow();
+    });
+
+    it('does not track events when no user is logged in', async () => {
+      const { useAuth } = await import('./useAuth');
+      vi.mocked(useAuth).mockReturnValue({ user: null } as ReturnType<typeof useAuth>);
+
+      const mockTrack = vi.fn();
+      (window as typeof window & { pendo?: { track: typeof mockTrack } }).pendo = { track: mockTrack };
+
+      const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
+
+      await result.current.saveTestResult([mockQuestion], { 'T1A01': 'A' });
+      await result.current.saveRandomAttempt(mockQuestion, 'A');
+
+      // Should not track when no user
+      expect(mockTrack).not.toHaveBeenCalled();
+    });
+  });
 });
