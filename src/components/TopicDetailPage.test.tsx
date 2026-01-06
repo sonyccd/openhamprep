@@ -86,6 +86,27 @@ vi.mock('@/hooks/useTopics', () => ({
     data: mockContentData,
     isLoading: mockContentLoading,
   }),
+  useTopicQuestions: () => ({
+    data: [],
+    isLoading: false,
+  }),
+  useTopicCompleted: () => false,
+  useToggleTopicComplete: () => ({
+    mutate: vi.fn(),
+  }),
+}));
+
+vi.mock('@/hooks/useQuestions', () => ({
+  useQuestionsByIds: () => ({
+    data: [],
+    isLoading: false,
+  }),
+}));
+
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: null,
+  }),
 }));
 
 describe('TopicDetailPage', () => {

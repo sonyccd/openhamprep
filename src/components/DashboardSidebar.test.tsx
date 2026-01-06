@@ -202,19 +202,30 @@ describe('DashboardSidebar', () => {
   });
 
   describe('Navigation Items', () => {
-    it('displays all navigation items', () => {
+    it('displays all navigation items', async () => {
+      const user = userEvent.setup();
       render(<DashboardSidebar {...defaultProps} />, { wrapper: createWrapper() });
 
+      // Top-level nav items (always visible)
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
       expect(screen.getByText('Practice Test')).toBeInTheDocument();
-      expect(screen.getByText('Study')).toBeInTheDocument();
-      expect(screen.getByText('Random Practice')).toBeInTheDocument();
       expect(screen.getByText('Topics')).toBeInTheDocument();
-      expect(screen.getByText('Weak Areas')).toBeInTheDocument();
-      expect(screen.getByText('Bookmarked')).toBeInTheDocument();
+      expect(screen.getByText('Study')).toBeInTheDocument();
       expect(screen.getByText('Glossary')).toBeInTheDocument();
       expect(screen.getByText('Find Test Site')).toBeInTheDocument();
       expect(screen.getByText('Forum')).toBeInTheDocument();
+
+      // Expand Study menu to see study group items
+      await user.click(screen.getByText('Study'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Random Practice')).toBeInTheDocument();
+      });
+      expect(screen.getByText('By Subelement')).toBeInTheDocument();
+      expect(screen.getByText('By Chapter')).toBeInTheDocument();
+      expect(screen.getByText('Weak Areas')).toBeInTheDocument();
+      expect(screen.getByText('Bookmarked')).toBeInTheDocument();
+      expect(screen.getByText('Study Terms')).toBeInTheDocument();
     });
 
     it('calls onViewChange when navigation item clicked', async () => {
@@ -222,6 +233,13 @@ describe('DashboardSidebar', () => {
       const onViewChange = vi.fn();
 
       render(<DashboardSidebar {...defaultProps} onViewChange={onViewChange} />, { wrapper: createWrapper() });
+
+      // Expand Study menu first
+      await user.click(screen.getByText('Study'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Random Practice')).toBeInTheDocument();
+      });
 
       await user.click(screen.getByText('Random Practice'));
 
@@ -235,27 +253,59 @@ describe('DashboardSidebar', () => {
       expect(practiceTestButton).toBeDisabled();
     });
 
-    it('disables Weak Areas when count is 0', () => {
+    it('disables Weak Areas when count is 0', async () => {
+      const user = userEvent.setup();
       render(<DashboardSidebar {...defaultProps} weakQuestionCount={0} />, { wrapper: createWrapper() });
+
+      // Expand Study menu first
+      await user.click(screen.getByText('Study'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Weak Areas')).toBeInTheDocument();
+      });
 
       const weakAreasButton = screen.getByText('Weak Areas').closest('button');
       expect(weakAreasButton).toBeDisabled();
     });
 
-    it('shows badge for weak questions count', () => {
+    it('shows badge for weak questions count', async () => {
+      const user = userEvent.setup();
       render(<DashboardSidebar {...defaultProps} weakQuestionCount={5} />, { wrapper: createWrapper() });
+
+      // Expand Study menu first
+      await user.click(screen.getByText('Study'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Weak Areas')).toBeInTheDocument();
+      });
 
       expect(screen.getByText('5')).toBeInTheDocument();
     });
 
-    it('shows badge for bookmark count', () => {
+    it('shows badge for bookmark count', async () => {
+      const user = userEvent.setup();
       render(<DashboardSidebar {...defaultProps} bookmarkCount={3} />, { wrapper: createWrapper() });
+
+      // Expand Study menu first
+      await user.click(screen.getByText('Study'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Bookmarked')).toBeInTheDocument();
+      });
 
       expect(screen.getByText('3')).toBeInTheDocument();
     });
 
-    it('shows 9+ for counts above 9', () => {
+    it('shows 9+ for counts above 9', async () => {
+      const user = userEvent.setup();
       render(<DashboardSidebar {...defaultProps} weakQuestionCount={15} />, { wrapper: createWrapper() });
+
+      // Expand Study menu first
+      await user.click(screen.getByText('Study'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Weak Areas')).toBeInTheDocument();
+      });
 
       // Multiple 9+ badges may appear (on Study group header and individual item)
       expect(screen.getAllByText('9+').length).toBeGreaterThan(0);
@@ -269,37 +319,40 @@ describe('DashboardSidebar', () => {
       expect(screen.getByText('Study')).toBeInTheDocument();
     });
 
-    it('shows study items when expanded (default)', () => {
+    it('hides study items when collapsed (default)', () => {
       render(<DashboardSidebar {...defaultProps} />, { wrapper: createWrapper() });
 
-      // Study group is expanded by default
-      expect(screen.getByText('Random Practice')).toBeInTheDocument();
-      expect(screen.getByText('Topics')).toBeInTheDocument();
-      expect(screen.getByText('Weak Areas')).toBeInTheDocument();
-      expect(screen.getByText('Bookmarked')).toBeInTheDocument();
+      // Study group is collapsed by default - only study GROUP items should be hidden
+      // (Topics is a top-level item, not in the Study group)
+      expect(screen.queryByText('Random Practice')).not.toBeInTheDocument();
+      expect(screen.queryByText('By Subelement')).not.toBeInTheDocument();
+      expect(screen.queryByText('By Chapter')).not.toBeInTheDocument();
+      expect(screen.queryByText('Weak Areas')).not.toBeInTheDocument();
+      expect(screen.queryByText('Bookmarked')).not.toBeInTheDocument();
+      expect(screen.queryByText('Study Terms')).not.toBeInTheDocument();
     });
 
     it('toggles study items visibility when header clicked', async () => {
       const user = userEvent.setup();
       render(<DashboardSidebar {...defaultProps} />, { wrapper: createWrapper() });
 
-      // Initially expanded - items should be in the document
-      expect(screen.getByText('Random Practice')).toBeInTheDocument();
+      // Initially collapsed - items should NOT be in the document
+      expect(screen.queryByText('Random Practice')).not.toBeInTheDocument();
 
-      // Click Study header to collapse
+      // Click Study header to expand
       await user.click(screen.getByText('Study'));
 
-      // Items should be removed from DOM when collapsed
-      await waitFor(() => {
-        expect(screen.queryByText('Random Practice')).not.toBeInTheDocument();
-      });
-
-      // Click again to expand
-      await user.click(screen.getByText('Study'));
-
-      // Items should be back in the document
+      // Items should appear in DOM when expanded
       await waitFor(() => {
         expect(screen.getByText('Random Practice')).toBeInTheDocument();
+      });
+
+      // Click again to collapse
+      await user.click(screen.getByText('Study'));
+
+      // Items should be removed from the document
+      await waitFor(() => {
+        expect(screen.queryByText('Random Practice')).not.toBeInTheDocument();
       });
     });
 

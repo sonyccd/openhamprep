@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { format, addMonths } from 'date-fns';
+import { motion } from 'framer-motion';
 import { MapPin, Calendar, List, Map, Clock, Phone, Mail, Users, Target, Loader2, ChevronLeft, ChevronRight, X, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -183,7 +184,11 @@ export const ExamSessionSearch = () => {
   return (
     <PageContainer width="wide" className="flex flex-col" contentClassName="flex flex-col gap-4 min-h-0">
       {/* Current Target Display */}
-      {userTarget && <Card className="border-primary/50 bg-primary/5">
+      {userTarget && <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card className="border-primary/50 bg-primary/5">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -208,9 +213,15 @@ export const ExamSessionSearch = () => {
               </Badge>
             </div>
           </CardContent>
-        </Card>}
+        </Card>
+        </motion.div>}
 
       {/* Search Filters - Collapsible on mobile */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: userTarget ? 0.1 : 0 }}
+      >
       <Card>
         <CardHeader
           className="cursor-pointer md:cursor-default"
@@ -282,8 +293,15 @@ export const ExamSessionSearch = () => {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Results */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: userTarget ? 0.2 : 0.1 }}
+        className="flex-1 flex flex-col min-h-0"
+      >
       <Card className="flex-1 flex flex-col min-h-0">
         <CardHeader className="shrink-0">
           <div className="flex items-center justify-between flex-wrap gap-4">
@@ -422,6 +440,7 @@ export const ExamSessionSearch = () => {
             </>}
         </CardContent>
       </Card>
+      </motion.div>
 
 
       {/* Save Target Dialog */}

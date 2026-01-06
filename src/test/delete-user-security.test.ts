@@ -112,7 +112,12 @@ describe('ProfileModal Delete Account Integration', () => {
 
     // The ProfileModal MUST use supabase.rpc('delete_own_account')
     // NOT supabase.functions.invoke (Edge Function) which has different security
-    expect(profileModalContent).toContain("supabase.rpc('delete_own_account')");
+    // Check for both single and double quote styles
+    expect(
+      profileModalContent.includes("supabase.rpc('delete_own_account')") ||
+      profileModalContent.includes('supabase.rpc("delete_own_account")')
+    ).toBe(true);
     expect(profileModalContent).not.toContain("supabase.functions.invoke('delete-user')");
+    expect(profileModalContent).not.toContain('supabase.functions.invoke("delete-user")');
   });
 });

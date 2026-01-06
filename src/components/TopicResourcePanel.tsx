@@ -112,7 +112,7 @@ function ResourceItem({ resource }: { resource: TopicResource }) {
 function ResourceGroup({
   type,
   resources,
-  defaultOpen = true,
+  defaultOpen = false,
 }: {
   type: string;
   resources: TopicResource[];
@@ -191,7 +191,7 @@ export function TopicResourcePanel({ resources }: TopicResourcePanelProps) {
                 key={type}
                 type={type}
                 resources={grouped[type]}
-                defaultOpen={type === "video"}
+                defaultOpen={false}
               />
             ) : null
           )}

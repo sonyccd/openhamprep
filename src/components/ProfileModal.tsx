@@ -1,15 +1,33 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { ThemeSelector } from "@/components/ThemeSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, KeyRound, Palette, Trash2, AlertTriangle, Mail, MessageSquare } from "lucide-react";
+import {
+  User,
+  KeyRound,
+  Palette,
+  Trash2,
+  AlertTriangle,
+  Mail,
+  MessageSquare,
+  ChevronRight,
+  Check,
+  Loader2,
+} from "lucide-react";
 import { validateForumUsername } from "@/lib/validation";
+import { cn } from "@/lib/utils";
+
 interface ProfileModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -21,26 +39,38 @@ interface ProfileModalProps {
   userId: string;
   onProfileUpdate: () => void;
 }
+
+type SettingsView = "main" | "account" | "appearance" | "danger";
+
 export function ProfileModal({
   open,
   onOpenChange,
   userInfo,
   userId,
-  onProfileUpdate
+  onProfileUpdate,
 }: ProfileModalProps) {
   const navigate = useNavigate();
+  const [currentView, setCurrentView] = useState<SettingsView>("main");
+
+  // Form states
   const [displayName, setDisplayName] = useState(userInfo.displayName || "");
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [forumUsername, setForumUsername] = useState(
+    userInfo.forumUsername || ""
+  );
   const [newEmail, setNewEmail] = useState("");
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
+  // Loading states
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [isUpdatingForumUsername, setIsUpdatingForumUsername] = useState(false);
   const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-  const [forumUsername, setForumUsername] = useState(userInfo.forumUsername || "");
+
+  // Edit states
+  const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingForumUsername, setIsEditingForumUsername] = useState(false);
-  const [isUpdatingForumUsername, setIsUpdatingForumUsername] = useState(false);
+
   const handleUpdateDisplayName = async () => {
     if (!displayName.trim()) {
       toast.error("Display name cannot be empty");
@@ -48,48 +78,55 @@ export function ProfileModal({
     }
     setIsUpdatingName(true);
     try {
-      const {
-        error
-      } = await supabase.from("profiles").update({
-        display_name: displayName.trim()
-      }).eq("id", userId);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ display_name: displayName.trim() })
+        .eq("id", userId);
       if (error) throw error;
-      toast.success("Display name updated successfully");
+      toast.success("Display name updated");
+      setIsEditingName(false);
       onProfileUpdate();
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Failed to update display name");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update display name"
+      );
     } finally {
       setIsUpdatingName(false);
     }
   };
+
   const handleUpdateForumUsername = async () => {
     const validation = validateForumUsername(forumUsername);
     if (!validation.valid) {
       toast.error(validation.error || "Invalid forum username");
       return;
     }
-    const trimmed = forumUsername.trim();
     setIsUpdatingForumUsername(true);
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ forum_username: trimmed })
+        .update({ forum_username: forumUsername.trim() })
         .eq("id", userId);
       if (error) {
-        // Check for unique constraint violation
-        if (error.code === '23505') {
+        if (error.code === "23505") {
           throw new Error("This username is already taken");
         }
         throw error;
       }
-      toast.success("Forum username updated successfully");
+      toast.success("Forum username updated");
+      setIsEditingForumUsername(false);
       onProfileUpdate();
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Failed to update forum username");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update forum username"
+      );
     } finally {
       setIsUpdatingForumUsername(false);
     }
   };
+
   const handleUpdateEmail = async () => {
     if (!newEmail.trim()) {
       toast.error("Email cannot be empty");
@@ -106,20 +143,21 @@ export function ProfileModal({
     }
     setIsUpdatingEmail(true);
     try {
-      const {
-        error
-      } = await supabase.auth.updateUser({
-        email: newEmail.trim()
+      const { error } = await supabase.auth.updateUser({
+        email: newEmail.trim(),
       });
       if (error) throw error;
-      toast.success("Verification email sent! Check your new email inbox to confirm the change.");
+      toast.success("Verification email sent!");
       setNewEmail("");
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Failed to update email");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update email"
+      );
     } finally {
       setIsUpdatingEmail(false);
     }
   };
+
   const handleResetPassword = async () => {
     if (!userInfo.email) {
       toast.error("No email associated with this account");
@@ -127,19 +165,25 @@ export function ProfileModal({
     }
     setIsResettingPassword(true);
     try {
-      const {
-        error
-      } = await supabase.auth.resetPasswordForEmail(userInfo.email, {
-        redirectTo: `${window.location.origin}/auth?type=recovery`
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        userInfo.email,
+        {
+          redirectTo: `${window.location.origin}/auth?type=recovery`,
+        }
+      );
       if (error) throw error;
-      toast.success("Password reset email sent! Check your inbox.");
+      toast.success("Password reset email sent!");
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Failed to send password reset email");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to send password reset email"
+      );
     } finally {
       setIsResettingPassword(false);
     }
   };
+
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== "DELETE") {
       toast.error("Please type DELETE to confirm");
@@ -147,221 +191,462 @@ export function ProfileModal({
     }
     setIsDeleting(true);
     try {
-      // Step 1: Delete from Discourse forum (if user has an account there)
-      // This must happen first while we still have the user's auth token
-      // The edge function handles auth validation - supabase.functions.invoke() automatically
-      // includes the Authorization header from the current session
       try {
-        const discourseResponse = await supabase.functions.invoke('delete-discourse-user', {
-          body: { deletePosts: false },
-        });
-
+        const discourseResponse = await supabase.functions.invoke(
+          "delete-discourse-user",
+          {
+            body: { deletePosts: false },
+          }
+        );
         if (discourseResponse.error) {
-          // Don't block local deletion if Discourse deletion fails
-          // The user might not have a Discourse account, or the forum might be unavailable
-          console.error('Discourse deletion error:', discourseResponse.error);
+          console.error("Discourse deletion error:", discourseResponse.error);
         }
       } catch (discourseError) {
-        // Log but don't block - Discourse deletion is best-effort
-        console.error('Failed to delete Discourse account:', discourseError);
+        console.error("Failed to delete Discourse account:", discourseError);
       }
 
-      // Step 2: Delete from local database
-      // Call RPC function to delete the user from auth.users
-      // This will cascade delete to profiles and all related data
-      // Security: The function uses auth.uid() to ensure users can only delete themselves
-      const { data, error } = await supabase.rpc('delete_own_account');
+      const { data, error } = await supabase.rpc("delete_own_account");
 
       if (error) {
-        console.error('Delete user error:', error);
-        throw new Error(error.message || 'Failed to delete account');
+        console.error("Delete user error:", error);
+        throw new Error(error.message || "Failed to delete account");
       }
 
       if (data && !data.success) {
-        throw new Error(data.error || 'Failed to delete account');
+        throw new Error(data.error || "Failed to delete account");
       }
 
-      // Sign out and redirect
       await supabase.auth.signOut();
-      toast.success("Account and all data deleted successfully");
+      toast.success("Account deleted successfully");
       onOpenChange(false);
       navigate("/");
     } catch (error: unknown) {
-      console.error('Account deletion failed:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete account");
+      console.error("Account deletion failed:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete account"
+      );
     } finally {
       setIsDeleting(false);
     }
   };
-  return <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <User className="w-5 h-5" />
-            Profile Settings
-          </DialogTitle>
-          <DialogDescription>
-            Manage your account settings and preferences
-          </DialogDescription>
-        </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Display Name Section */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <User className="w-4 h-4 text-muted-foreground" />
-              Display Name
-            </div>
-            {isEditingName ? <div className="flex gap-2">
-                <Input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Enter your display name" className="flex-1" autoFocus />
-                <Button onClick={async () => {
-              await handleUpdateDisplayName();
-              setIsEditingName(false);
-            }} disabled={isUpdatingName || displayName === userInfo.displayName} size="sm">
-                  {isUpdatingName ? "Saving..." : "Save"}
-                </Button>
-                <Button variant="outline" onClick={() => {
-              setDisplayName(userInfo.displayName || "");
-              setIsEditingName(false);
-            }} size="sm">
-                  Cancel
-                </Button>
-              </div> : <div className="flex items-center justify-between">
-                <span className="text-sm">{userInfo.displayName || "Not set"}</span>
-                <Button variant="outline" onClick={() => setIsEditingName(true)} size="sm">
-                  Edit
-                </Button>
-              </div>}
-            
+  const handleBack = () => {
+    setCurrentView("main");
+    // Reset edit states when going back
+    setIsEditingName(false);
+    setIsEditingForumUsername(false);
+    setDisplayName(userInfo.displayName || "");
+    setForumUsername(userInfo.forumUsername || "");
+  };
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      // Reset to main view when closing
+      setCurrentView("main");
+      setIsEditingName(false);
+      setIsEditingForumUsername(false);
+      setDisplayName(userInfo.displayName || "");
+      setForumUsername(userInfo.forumUsername || "");
+      setNewEmail("");
+      setDeleteConfirmText("");
+    }
+    onOpenChange(newOpen);
+  };
+
+  // Menu item component
+  const MenuItem = ({
+    icon: Icon,
+    label,
+    description,
+    onClick,
+    variant = "default",
+  }: {
+    icon: React.ElementType;
+    label: string;
+    description?: string;
+    onClick: () => void;
+    variant?: "default" | "danger";
+  }) => (
+    <button
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center gap-4 p-4 rounded-xl transition-all text-left",
+        "hover:bg-secondary/60 active:scale-[0.98]",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        variant === "danger" &&
+          "hover:bg-destructive/10 text-destructive hover:text-destructive"
+      )}
+    >
+      <div
+        className={cn(
+          "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
+          variant === "default" && "bg-primary/10 text-primary",
+          variant === "danger" && "bg-destructive/10 text-destructive"
+        )}
+      >
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-medium text-sm">{label}</div>
+        {description && (
+          <div className="text-xs text-muted-foreground truncate">
+            {description}
           </div>
+        )}
+      </div>
+      <ChevronRight
+        className={cn(
+          "w-5 h-5 text-muted-foreground shrink-0",
+          variant === "danger" && "text-destructive/50"
+        )}
+      />
+    </button>
+  );
 
-          <Separator />
-
-          {/* Forum Username Section */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <MessageSquare className="w-4 h-4 text-muted-foreground" />
-              Forum Username
-            </div>
-            {isEditingForumUsername ? <div className="flex gap-2">
-                <Input value={forumUsername} onChange={e => setForumUsername(e.target.value)} placeholder="Enter your forum username" className="flex-1" autoFocus />
-                <Button onClick={async () => {
-              await handleUpdateForumUsername();
-              setIsEditingForumUsername(false);
-            }} disabled={isUpdatingForumUsername || forumUsername === userInfo.forumUsername} size="sm">
-                  {isUpdatingForumUsername ? "Saving..." : "Save"}
-                </Button>
-                <Button variant="outline" onClick={() => {
-              setForumUsername(userInfo.forumUsername || "");
-              setIsEditingForumUsername(false);
-            }} size="sm">
-                  Cancel
-                </Button>
-              </div> : <div className="flex items-center justify-between">
-                <span className="text-sm">{userInfo.forumUsername || "Not set"}</span>
-                <Button variant="outline" onClick={() => setIsEditingForumUsername(true)} size="sm">
-                  Edit
-                </Button>
-              </div>}
-            <p className="text-xs text-muted-foreground">
-              This username will be visible on the Open Ham Prep forum
-            </p>
-          </div>
-
-          <Separator />
-
-          {/* Email Change Section */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Mail className="w-4 h-4 text-muted-foreground" />
-              Email Address
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Current: {userInfo.email}
-            </p>
-            <div className="flex gap-2">
-              <Input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="Enter new email address" className="flex-1" />
-              <Button onClick={handleUpdateEmail} disabled={isUpdatingEmail || !newEmail.trim()} size="sm">
-                {isUpdatingEmail ? "Sending..." : "Change"}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              A verification link will be sent to confirm the new email
-            </p>
-          </div>
-
-          <Separator />
-
-          {/* Password Reset Section */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <KeyRound className="w-4 h-4 text-muted-foreground" />
-              Password
-            </div>
-            <Button variant="outline" onClick={handleResetPassword} disabled={isResettingPassword} className="w-full justify-start">
-              {isResettingPassword ? "Sending..." : "Send Password Reset Email"}
+  // Editable field component
+  const EditableField = ({
+    label,
+    value,
+    displayValue,
+    onChange,
+    isEditing,
+    onEdit,
+    onSave,
+    onCancel,
+    isSaving,
+    placeholder,
+    helperText,
+    icon: Icon,
+  }: {
+    label: string;
+    value: string;
+    displayValue: string;
+    onChange: (value: string) => void;
+    isEditing: boolean;
+    onEdit: () => void;
+    onSave: () => void;
+    onCancel: () => void;
+    isSaving: boolean;
+    placeholder: string;
+    helperText?: string;
+    icon: React.ElementType;
+  }) => (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+        <Icon className="w-4 h-4" />
+        {label}
+      </div>
+      {isEditing ? (
+        <div className="space-y-3">
+          <Input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            autoFocus
+            className="h-11"
+          />
+          <div className="flex gap-2">
+            <Button
+              onClick={onSave}
+              disabled={isSaving}
+              size="sm"
+              className="flex-1 h-10"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  Save
+                </>
+              )}
             </Button>
-            <p className="text-xs text-muted-foreground">
-              A password reset link will be sent to your email
-            </p>
-          </div>
-
-          <Separator />
-
-          {/* Theme Section */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Palette className="w-4 h-4 text-muted-foreground" />
-              Theme
-            </div>
-            <ThemeSelector />
-          </div>
-
-          <Separator />
-
-          {/* Delete Account Section */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-destructive">
-              <Trash2 className="w-4 h-4" />
-              Danger Zone
-            </div>
-            
-            {!showDeleteConfirm ? <Button variant="outline" onClick={() => setShowDeleteConfirm(true)} className="w-full border-destructive text-destructive bg-background hover:bg-destructive hover:text-destructive-foreground">
-                Delete Account
-              </Button> : <div className="space-y-3 p-4 border border-destructive/50 rounded-lg bg-destructive/5">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-destructive">
-                      This action cannot be undone
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      All your data including practice history, bookmarks, test results, and your forum account (if any) will be permanently deleted.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="delete-confirm" className="text-sm">
-                    Type <span className="font-mono font-bold">DELETE</span> to confirm
-                  </Label>
-                  <Input id="delete-confirm" value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)} placeholder="DELETE" className="font-mono" />
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => {
-                setShowDeleteConfirm(false);
-                setDeleteConfirmText("");
-              }} className="flex-1">
-                    Cancel
-                  </Button>
-                  <Button variant="destructive" onClick={handleDeleteAccount} disabled={deleteConfirmText !== "DELETE" || isDeleting} className="flex-1">
-                    {isDeleting ? "Deleting..." : "Delete Forever"}
-                  </Button>
-                </div>
-              </div>}
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              size="sm"
+              className="flex-1 h-10"
+            >
+              Cancel
+            </Button>
           </div>
         </div>
+      ) : (
+        <button
+          onClick={onEdit}
+          className="w-full flex items-center justify-between p-3 rounded-lg bg-secondary/40 hover:bg-secondary/60 transition-colors text-left"
+        >
+          <span className="text-sm font-medium truncate">
+            {displayValue || (
+              <span className="text-muted-foreground">Not set</span>
+            )}
+          </span>
+          <span className="text-xs text-primary font-medium shrink-0 ml-2">
+            Edit
+          </span>
+        </button>
+      )}
+      {helperText && !isEditing && (
+        <p className="text-xs text-muted-foreground">{helperText}</p>
+      )}
+    </div>
+  );
+
+  // Main menu view
+  const MainView = () => (
+    <div className="space-y-2">
+      {/* User info header */}
+      <div className="flex items-center gap-4 p-4 mb-2">
+        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center ring-2 ring-primary/20">
+          <User className="w-7 h-7 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-base truncate">
+            {userInfo.displayName || "User"}
+          </div>
+          <div className="text-sm text-muted-foreground truncate">
+            {userInfo.email}
+          </div>
+        </div>
+      </div>
+
+      {/* Menu items */}
+      <div className="space-y-1">
+        <MenuItem
+          icon={User}
+          label="Account"
+          description="Name, email, password"
+          onClick={() => setCurrentView("account")}
+        />
+        <MenuItem
+          icon={Palette}
+          label="Appearance"
+          description="Theme preferences"
+          onClick={() => setCurrentView("appearance")}
+        />
+        <MenuItem
+          icon={Trash2}
+          label="Delete Account"
+          onClick={() => setCurrentView("danger")}
+          variant="danger"
+        />
+      </div>
+    </div>
+  );
+
+  // Account settings view
+  const AccountView = () => (
+    <div className="space-y-6">
+      <EditableField
+        icon={User}
+        label="Display Name"
+        value={displayName}
+        displayValue={userInfo.displayName || ""}
+        onChange={setDisplayName}
+        isEditing={isEditingName}
+        onEdit={() => setIsEditingName(true)}
+        onSave={handleUpdateDisplayName}
+        onCancel={() => {
+          setIsEditingName(false);
+          setDisplayName(userInfo.displayName || "");
+        }}
+        isSaving={isUpdatingName}
+        placeholder="Enter your name"
+      />
+
+      <EditableField
+        icon={MessageSquare}
+        label="Forum Username"
+        value={forumUsername}
+        displayValue={userInfo.forumUsername || ""}
+        onChange={setForumUsername}
+        isEditing={isEditingForumUsername}
+        onEdit={() => setIsEditingForumUsername(true)}
+        onSave={handleUpdateForumUsername}
+        onCancel={() => {
+          setIsEditingForumUsername(false);
+          setForumUsername(userInfo.forumUsername || "");
+        }}
+        isSaving={isUpdatingForumUsername}
+        placeholder="Enter username"
+        helperText="Visible on the Open Ham Prep forum"
+      />
+
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <Mail className="w-4 h-4" />
+          Email Address
+        </div>
+        <div className="p-3 rounded-lg bg-secondary/40">
+          <span className="text-sm font-medium">{userInfo.email}</span>
+        </div>
+        <div className="space-y-3 pt-2">
+          <Input
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="Enter new email"
+            className="h-11"
+          />
+          <Button
+            onClick={handleUpdateEmail}
+            disabled={isUpdatingEmail || !newEmail.trim()}
+            size="sm"
+            variant="outline"
+            className="w-full h-10"
+          >
+            {isUpdatingEmail ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <Mail className="w-4 h-4 mr-2" />
+            )}
+            Change Email
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <KeyRound className="w-4 h-4" />
+          Password
+        </div>
+        <Button
+          variant="outline"
+          onClick={handleResetPassword}
+          disabled={isResettingPassword}
+          className="w-full h-10"
+        >
+          {isResettingPassword ? (
+            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          ) : (
+            <KeyRound className="w-4 h-4 mr-2" />
+          )}
+          Send Reset Link
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          We'll send a password reset link to your email
+        </p>
+      </div>
+    </div>
+  );
+
+  // Appearance settings view
+  const AppearanceView = () => (
+    <div className="space-y-4">
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <Palette className="w-4 h-4" />
+          Theme
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Choose how Open Ham Prep looks to you
+        </p>
+        <ThemeSelector />
+      </div>
+    </div>
+  );
+
+  // Danger zone view
+  const DangerView = () => (
+    <div className="space-y-4">
+      <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/20 space-y-4">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+            <AlertTriangle className="w-5 h-5 text-destructive" />
+          </div>
+          <div className="space-y-1">
+            <p className="font-semibold text-destructive text-sm">
+              Delete your account permanently
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              All your data including practice history, bookmarks, test results,
+              and forum account will be permanently deleted. This cannot be
+              undone.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <Label htmlFor="delete-confirm" className="text-sm font-medium">
+              Type <span className="font-mono font-bold text-destructive">DELETE</span> to confirm
+            </Label>
+            <Input
+              id="delete-confirm"
+              value={deleteConfirmText}
+              onChange={(e) =>
+                setDeleteConfirmText(e.target.value.toUpperCase())
+              }
+              placeholder="DELETE"
+              className="font-mono h-11 uppercase"
+            />
+          </div>
+
+          <Button
+            variant="destructive"
+            onClick={handleDeleteAccount}
+            disabled={deleteConfirmText !== "DELETE" || isDeleting}
+            className="w-full h-11"
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Account Forever
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const viewTitles: Record<SettingsView, string> = {
+    main: "Settings",
+    account: "Account",
+    appearance: "Appearance",
+    danger: "Delete Account",
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-[425px] p-0 gap-0 overflow-hidden">
+        {/* Header */}
+        <DialogHeader className="p-4 pb-0 space-y-0">
+          <div className="flex items-center gap-2">
+            {currentView !== "main" && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleBack}
+                className="h-8 w-8 shrink-0 -ml-1"
+              >
+                <ChevronRight className="w-4 h-4 rotate-180" />
+              </Button>
+            )}
+            <DialogTitle className="text-lg font-semibold">
+              {viewTitles[currentView]}
+            </DialogTitle>
+          </div>
+          {currentView === "main" && (
+            <DialogDescription className="text-sm pt-1">
+              Manage your profile and preferences
+            </DialogDescription>
+          )}
+        </DialogHeader>
+
+        {/* Content with smooth height transitions */}
+        <div className="p-4 pt-2 max-h-[70vh] overflow-y-auto overscroll-contain">
+          {currentView === "main" && <MainView />}
+          {currentView === "account" && <AccountView />}
+          {currentView === "appearance" && <AppearanceView />}
+          {currentView === "danger" && <DangerView />}
+        </div>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 }
