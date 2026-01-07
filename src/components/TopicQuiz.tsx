@@ -18,9 +18,11 @@ import { TOPIC_QUIZ_PASSING_THRESHOLD } from "@/types/navigation";
 
 interface TopicQuizProps {
   questions: Question[];
-  onComplete: (passed: boolean, score: number, totalQuestions: number) => void;
+  onComplete: (passed: boolean, score: number, totalQuestions: number) => void | Promise<void>;
   onDone: () => void;
-  onSaveAttempt?: (question: Question, selectedAnswer: "A" | "B" | "C" | "D") => void | Promise<void>;
+  onSaveAttempts?: (
+    attempts: Array<{ question: Question; selectedAnswer: "A" | "B" | "C" | "D" }>
+  ) => Promise<{ success: boolean; error?: string }>;
   passingThreshold?: number;
 }
 
@@ -30,7 +32,7 @@ export function TopicQuiz({
   questions,
   onComplete,
   onDone,
-  onSaveAttempt,
+  onSaveAttempts,
   passingThreshold = TOPIC_QUIZ_PASSING_THRESHOLD,
 }: TopicQuizProps) {
   const [mode, setMode] = useState<QuizMode>("quiz");
@@ -39,6 +41,7 @@ export function TopicQuiz({
     {}
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const options = ["A", "B", "C", "D"] as const;
   const currentQuestion = questions[currentIndex];
@@ -81,18 +84,29 @@ export function TopicQuiz({
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
+    setSubmitError(null);
+
     try {
       // Save all question attempts before showing results
-      if (onSaveAttempt) {
-        // Fire all saves in parallel and wait for completion
-        await Promise.all(
-          questions
-            .filter((q) => answers[q.id])
-            .map((q) => onSaveAttempt(q, answers[q.id]))
-        );
+      if (onSaveAttempts) {
+        const attempts = questions
+          .filter((q) => answers[q.id])
+          .map((q) => ({ question: q, selectedAnswer: answers[q.id] }));
+
+        const saveResult = await onSaveAttempts(attempts);
+
+        if (!saveResult.success) {
+          setSubmitError(saveResult.error || 'Failed to save quiz results. Please try again.');
+          return; // Don't show results if save failed
+        }
       }
+
+      // Only proceed to results and call onComplete if saves succeeded
       setMode("results");
-      onComplete(results.passed, results.correctCount, questions.length);
+      await onComplete(results.passed, results.correctCount, questions.length);
+    } catch (error) {
+      console.error('Quiz submission error:', error);
+      setSubmitError('An unexpected error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -241,6 +255,13 @@ export function TopicQuiz({
             )}
           </div>
         </div>
+
+        {/* Error message */}
+        {submitError && (
+          <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+            {submitError}
+          </div>
+        )}
 
       </div>
     );

@@ -68,15 +68,18 @@ const mockQuestions: Question[] = [
 ];
 
 describe('TopicQuiz', () => {
+  const mockSaveAttempts = vi.fn().mockResolvedValue({ success: true });
+
   const defaultProps = {
     questions: mockQuestions,
     onComplete: vi.fn(),
     onDone: vi.fn(),
-    onSaveAttempt: vi.fn(),
+    onSaveAttempts: mockSaveAttempts,
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSaveAttempts.mockResolvedValue({ success: true });
   });
 
   describe('Quiz Mode', () => {
@@ -228,10 +231,10 @@ describe('TopicQuiz', () => {
   });
 
   describe('Quiz Submission', () => {
-    it('calls onSaveAttempt for each answered question on submit', async () => {
+    it('calls onSaveAttempts with all answered questions on submit', async () => {
       const user = userEvent.setup();
-      const onSaveAttempt = vi.fn();
-      render(<TopicQuiz {...defaultProps} onSaveAttempt={onSaveAttempt} />);
+      const onSaveAttempts = vi.fn().mockResolvedValue({ success: true });
+      render(<TopicQuiz {...defaultProps} onSaveAttempts={onSaveAttempts} />);
 
       // Answer all questions
       await user.click(screen.getByText('Answer A'));
@@ -252,11 +255,13 @@ describe('TopicQuiz', () => {
       await user.click(screen.getByRole('button', { name: /submit quiz/i }));
 
       await waitFor(() => {
-        expect(onSaveAttempt).toHaveBeenCalledTimes(3);
+        expect(onSaveAttempts).toHaveBeenCalledTimes(1);
       });
-      expect(onSaveAttempt).toHaveBeenCalledWith(mockQuestions[0], 'A');
-      expect(onSaveAttempt).toHaveBeenCalledWith(mockQuestions[1], 'B');
-      expect(onSaveAttempt).toHaveBeenCalledWith(mockQuestions[2], 'C');
+      expect(onSaveAttempts).toHaveBeenCalledWith([
+        { question: mockQuestions[0], selectedAnswer: 'A' },
+        { question: mockQuestions[1], selectedAnswer: 'B' },
+        { question: mockQuestions[2], selectedAnswer: 'C' },
+      ]);
     });
 
     it('calls onComplete with correct results for passing score', async () => {
@@ -457,7 +462,7 @@ describe('TopicQuiz', () => {
       });
     });
 
-    it('works without onSaveAttempt callback', async () => {
+    it('works without onSaveAttempts callback', async () => {
       const user = userEvent.setup();
       const onComplete = vi.fn();
       render(<TopicQuiz questions={mockQuestions} onComplete={onComplete} onDone={vi.fn()} />);
@@ -483,6 +488,68 @@ describe('TopicQuiz', () => {
       await waitFor(() => {
         expect(onComplete).toHaveBeenCalled();
       });
+    });
+
+    it('shows error message when save fails', async () => {
+      const user = userEvent.setup();
+      const onSaveAttempts = vi.fn().mockResolvedValue({ success: false, error: 'Database connection failed' });
+      const onComplete = vi.fn();
+      render(<TopicQuiz {...defaultProps} onSaveAttempts={onSaveAttempts} onComplete={onComplete} />);
+
+      // Answer all questions
+      await user.click(screen.getByText('Answer A'));
+      await user.click(screen.getByText('Next'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Option B')).toBeInTheDocument();
+      });
+      await user.click(screen.getByText('Option B'));
+      await user.click(screen.getByText('Next'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Choice C')).toBeInTheDocument();
+      });
+      await user.click(screen.getByText('Choice C'));
+
+      // Submit
+      await user.click(screen.getByRole('button', { name: /submit quiz/i }));
+
+      // Should show error and NOT call onComplete
+      await waitFor(() => {
+        expect(screen.getByText('Database connection failed')).toBeInTheDocument();
+      });
+      expect(onComplete).not.toHaveBeenCalled();
+    });
+
+    it('does not show results when save fails', async () => {
+      const user = userEvent.setup();
+      const onSaveAttempts = vi.fn().mockResolvedValue({ success: false, error: 'Save failed' });
+      render(<TopicQuiz {...defaultProps} onSaveAttempts={onSaveAttempts} />);
+
+      // Answer all questions
+      await user.click(screen.getByText('Answer A'));
+      await user.click(screen.getByText('Next'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Option B')).toBeInTheDocument();
+      });
+      await user.click(screen.getByText('Option B'));
+      await user.click(screen.getByText('Next'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Choice C')).toBeInTheDocument();
+      });
+      await user.click(screen.getByText('Choice C'));
+
+      // Submit
+      await user.click(screen.getByRole('button', { name: /submit quiz/i }));
+
+      // Should stay in quiz mode, not show results
+      await waitFor(() => {
+        expect(screen.getByText('Save failed')).toBeInTheDocument();
+      });
+      expect(screen.queryByText('Congratulations!')).not.toBeInTheDocument();
+      expect(screen.queryByText('Keep Practicing')).not.toBeInTheDocument();
     });
 
     it('uses default passing threshold of 0.8', async () => {

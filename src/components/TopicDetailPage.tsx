@@ -49,7 +49,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   const { mutate: toggleComplete } = useToggleTopicComplete();
 
   // Hook for saving question attempts
-  const { saveRandomAttempt } = useProgress();
+  const { saveQuizAttempts } = useProgress();
 
   const handleStartQuiz = () => {
     setIsQuizOpen(true);
@@ -66,8 +66,10 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
     setIsQuizOpen(false);
   };
 
-  const handleSaveAttempt = (question: Question, selectedAnswer: "A" | "B" | "C" | "D") => {
-    saveRandomAttempt(question, selectedAnswer, 'topic_quiz');
+  const handleSaveAttempts = async (
+    attempts: Array<{ question: Question; selectedAnswer: "A" | "B" | "C" | "D" }>
+  ) => {
+    return saveQuizAttempts(attempts, 'topic_quiz');
   };
 
   const handleQuestionClick = (questionId: string) => {
@@ -275,7 +277,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
               questions={fullQuestions}
               onComplete={handleQuizComplete}
               onDone={handleCloseQuiz}
-              onSaveAttempt={handleSaveAttempt}
+              onSaveAttempts={handleSaveAttempts}
               passingThreshold={TOPIC_QUIZ_PASSING_THRESHOLD}
             />
           )}
