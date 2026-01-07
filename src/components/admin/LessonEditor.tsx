@@ -115,7 +115,7 @@ export function LessonEditor({ lesson, onBack }: LessonEditorProps) {
         license_types: licenseTypes,
         is_published: isPublished,
         display_order: displayOrder,
-        edit_history: JSON.parse(JSON.stringify([...existingHistory, historyEntry])),
+        edit_history: [...existingHistory, historyEntry],
       },
       {
         onSuccess: () => {
@@ -141,7 +141,8 @@ export function LessonEditor({ lesson, onBack }: LessonEditorProps) {
   };
 
   const handleTogglePublish = () => {
-    const newPublished = !isPublished;
+    const previousState = isPublished;
+    const newPublished = !previousState;
     setIsPublished(newPublished);
 
     // Auto-save publish status
@@ -149,7 +150,7 @@ export function LessonEditor({ lesson, onBack }: LessonEditorProps) {
       user_id: user?.id || "",
       user_email: user?.email || "Unknown",
       action: "updated",
-      changes: { is_published: { from: lesson.is_published, to: newPublished } },
+      changes: { is_published: { from: previousState, to: newPublished } },
       timestamp: new Date().toISOString(),
     };
 
@@ -159,14 +160,14 @@ export function LessonEditor({ lesson, onBack }: LessonEditorProps) {
       {
         id: lesson.id,
         is_published: newPublished,
-        edit_history: JSON.parse(JSON.stringify([...existingHistory, historyEntry])),
+        edit_history: [...existingHistory, historyEntry],
       },
       {
         onSuccess: () => {
           toast.success(newPublished ? "Lesson published" : "Lesson unpublished");
         },
-        onError: (error) => {
-          setIsPublished(!newPublished); // Revert
+        onError: () => {
+          setIsPublished(previousState); // Proper revert to captured state
           toast.error("Failed to update publish status");
         },
       }

@@ -75,6 +75,14 @@ export function AdminLessons() {
       return;
     }
 
+    // Check slug uniqueness against cached lessons
+    const normalizedSlug = newSlug.trim().toLowerCase().replace(/\s+/g, "-");
+    const existingLesson = lessons.find(l => l.slug === normalizedSlug);
+    if (existingLesson) {
+      toast.error("A lesson with this slug already exists");
+      return;
+    }
+
     const historyEntry: EditHistoryEntry = {
       user_id: user?.id || "",
       user_email: user?.email || "Unknown",
@@ -95,7 +103,7 @@ export function AdminLessons() {
         is_published: newIsPublished,
         display_order: maxOrder + 1,
         thumbnail_url: null,
-        edit_history: JSON.parse(JSON.stringify([historyEntry])),
+        edit_history: [historyEntry],
       },
       {
         onSuccess: () => {
