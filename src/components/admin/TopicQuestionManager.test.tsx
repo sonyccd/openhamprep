@@ -114,7 +114,7 @@ describe('TopicQuestionManager', () => {
       renderComponent();
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Search or paste IDs (comma-separated)...')).toBeInTheDocument();
       });
     });
 
@@ -189,7 +189,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      const searchInput = screen.getByPlaceholderText('Search or paste IDs (comma-separated)...');
       fireEvent.change(searchInput, { target: { value: 'T1A01' } });
 
       // Should only show T1A01
@@ -204,7 +204,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      const searchInput = screen.getByPlaceholderText('Search or paste IDs (comma-separated)...');
       fireEvent.change(searchInput, { target: { value: 'General class' } });
 
       // Should only show the General question
@@ -219,7 +219,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      const searchInput = screen.getByPlaceholderText('Search or paste IDs (comma-separated)...');
       fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
 
       await waitFor(() => {
@@ -234,7 +234,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      const searchInput = screen.getByPlaceholderText('Search or paste IDs (comma-separated)...');
       fireEvent.change(searchInput, { target: { value: 't1a01' } });
 
       expect(screen.getByText('T1A01')).toBeInTheDocument();
@@ -247,7 +247,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      const searchInput = screen.getByPlaceholderText('Search or paste IDs (comma-separated)...');
       fireEvent.change(searchInput, { target: { value: 'T1A01, G1B01' } });
 
       // Should show both matching questions
@@ -265,7 +265,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      const searchInput = screen.getByPlaceholderText('Search or paste IDs (comma-separated)...');
       fireEvent.change(searchInput, { target: { value: '  T1A01 ,  G1B01  , E2A01  ' } });
 
       // Should show all three matching questions
@@ -283,7 +283,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      const searchInput = screen.getByPlaceholderText('Search or paste IDs (comma-separated)...');
       fireEvent.change(searchInput, { target: { value: 't1a01, g1b01' } });
 
       // Should show both matching questions (case insensitive)
@@ -298,7 +298,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      const searchInput = screen.getByPlaceholderText('Search or paste IDs (comma-separated)...');
       fireEvent.change(searchInput, { target: { value: 'T1A01, , , G1B01' } });
 
       // Should show both matching questions, ignoring empty terms
@@ -314,7 +314,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      const searchInput = screen.getByPlaceholderText('Search or paste IDs (comma-separated)...');
       fireEvent.change(searchInput, { target: { value: 'T1A, E2A' } });
 
       // Should show questions that contain T1A or E2A
@@ -655,7 +655,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      const searchInput = screen.getByPlaceholderText('Search or paste IDs (comma-separated)...');
       fireEvent.change(searchInput, { target: { value: 'T1A' } });
 
       await waitFor(() => {
