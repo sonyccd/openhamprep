@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAdminTopics } from "@/hooks/useTopics";
 import { useAddLessonTopic, useRemoveLessonTopic, useUpdateLessonTopicOrder } from "@/hooks/useLessons";
 import { Button } from "@/components/ui/button";
@@ -121,10 +121,12 @@ export function LessonTopicManager({ lessonId, topics }: LessonTopicManagerProps
   const removeLessonTopic = useRemoveLessonTopic();
   const updateOrder = useUpdateLessonTopicOrder();
 
-  // Keep local state in sync with props
-  if (JSON.stringify(topics) !== JSON.stringify(orderedTopics) && !updateOrder.isPending) {
-    setOrderedTopics(topics);
-  }
+  // Keep local state in sync with props using useEffect
+  useEffect(() => {
+    if (!updateOrder.isPending) {
+      setOrderedTopics(topics);
+    }
+  }, [topics, updateOrder.isPending]);
 
   // Get available topics (not already in lesson)
   const availableTopics = allTopics.filter(
@@ -162,6 +164,9 @@ export function LessonTopicManager({ lessonId, topics }: LessonTopicManagerProps
       }));
 
       updateOrder.mutate(updates, {
+        onSuccess: () => {
+          toast.success("Order updated");
+        },
         onError: () => {
           // Revert on error
           setOrderedTopics(topics);

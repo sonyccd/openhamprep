@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TestType } from "@/types/navigation";
 import { Lesson, LessonTopic, LessonProgress } from "@/types/lessons";
+import { useAdmin } from "./useAdmin";
 
 // Map test type to license type string
 const testTypeLicenseMap: Record<TestType, string> = {
@@ -60,8 +61,11 @@ export function useLessons(testType?: TestType) {
 
 /**
  * Fetch all lessons for admin (including unpublished)
+ * Only fetches when user is verified as admin
  */
 export function useAdminLessons() {
+  const { isAdmin } = useAdmin();
+
   return useQuery({
     queryKey: ['admin-lessons'],
     queryFn: async () => {
@@ -93,6 +97,7 @@ export function useAdminLessons() {
 
       return lessons;
     },
+    enabled: isAdmin, // Only fetch when user is verified as admin
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes (admin needs fresher data)
   });
 }
@@ -317,27 +322,22 @@ export function useRemoveLessonTopic() {
 
 /**
  * Update topic order within a lesson (admin only)
+ * Uses batch upsert to avoid N+1 queries
  */
 export function useUpdateLessonTopicOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (updates: { id: string; display_order: number }[]) => {
-      // Update each topic's display_order
-      const promises = updates.map(({ id, display_order }) =>
-        supabase
-          .from('lesson_topics')
-          .update({ display_order })
-          .eq('id', id)
-      );
+      // Batch upsert all display_order updates in a single query
+      const { error } = await supabase
+        .from('lesson_topics')
+        .upsert(
+          updates.map(({ id, display_order }) => ({ id, display_order })),
+          { onConflict: 'id' }
+        );
 
-      const results = await Promise.all(promises);
-
-      // Check for any errors
-      const errors = results.filter(r => r.error);
-      if (errors.length > 0) {
-        throw errors[0].error;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-lessons'] });
