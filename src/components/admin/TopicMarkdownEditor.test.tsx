@@ -33,11 +33,13 @@ vi.mock('@/components/TopicContent', () => ({
 // Mock useTopicContent hook
 let mockContentData: string | undefined = '# Existing Content\n\nSome text here.';
 let mockContentLoading = false;
+let mockContentFetching = false;
 
 vi.mock('@/hooks/useTopics', () => ({
   useTopicContent: () => ({
     data: mockContentData,
     isLoading: mockContentLoading,
+    isFetching: mockContentFetching,
   }),
 }));
 
@@ -79,6 +81,7 @@ describe('TopicMarkdownEditor', () => {
     vi.clearAllMocks();
     mockContentData = '# Existing Content\n\nSome text here.';
     mockContentLoading = false;
+    mockContentFetching = false;
     mockUpload.mockResolvedValue({ error: null });
     mockRemove.mockResolvedValue({ error: null });
     mockUpdate.mockReturnValue({
@@ -87,11 +90,41 @@ describe('TopicMarkdownEditor', () => {
   });
 
   describe('Loading State', () => {
-    it('should show loading spinner when content is loading', () => {
+    it('should show loading spinner when content is loading initially', () => {
       mockContentLoading = true;
+      mockContentData = undefined; // No data yet
       renderComponent();
 
       expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+      expect(screen.getByText('Loading content...')).toBeInTheDocument();
+    });
+
+    it('should not show full loading when content is cached', () => {
+      mockContentLoading = false;
+      mockContentFetching = true; // Refetching in background
+      mockContentData = '# Existing Content\n\nSome text here.';
+      renderComponent();
+
+      // Should not show full loading screen
+      expect(screen.queryByText('Loading content...')).not.toBeInTheDocument();
+      // But should show content
+      expect(screen.getByPlaceholderText('Write your markdown content here...')).toBeInTheDocument();
+    });
+
+    it('should show subtle spinner in header when refetching', async () => {
+      mockContentLoading = false;
+      mockContentFetching = true;
+      mockContentData = '# Existing Content\n\nSome text here.';
+      renderComponent();
+
+      // Wait for content to initialize (which sets isInitialized to true)
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('Write your markdown content here...')).toHaveValue('# Existing Content\n\nSome text here.');
+      });
+
+      // The subtle spinner should be visible in the header
+      const headerSpinner = document.querySelector('.animate-spin');
+      expect(headerSpinner).toBeInTheDocument();
     });
   });
 

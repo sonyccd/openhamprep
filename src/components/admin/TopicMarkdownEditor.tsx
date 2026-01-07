@@ -30,15 +30,17 @@ export function TopicMarkdownEditor({
   const [activeTab, setActiveTab] = useState<"edit" | "preview" | "split">("split");
 
   // Fetch existing content
-  const { data: existingContent, isLoading: contentLoading } = useTopicContent(contentPath);
+  const { data: existingContent, isLoading: contentLoading, isFetching } = useTopicContent(contentPath);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Initialize content when loaded
   useEffect(() => {
-    if (existingContent !== undefined) {
+    if (existingContent !== undefined && !isInitialized) {
       setContent(existingContent || getDefaultContent(topicSlug));
       setHasChanges(false);
+      setIsInitialized(true);
     }
-  }, [existingContent, topicSlug]);
+  }, [existingContent, topicSlug, isInitialized]);
 
   const getDefaultContent = (slug: string) => {
     const title = slug
@@ -145,13 +147,8 @@ Wrap up the topic with a brief summary of what was covered.
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [hasChanges, saveMutation.isPending]);
 
-  if (contentLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // Only show full-screen loading on initial load (not cached)
+  const showInitialLoading = contentLoading && !isInitialized && !content;
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -160,6 +157,9 @@ Wrap up the topic with a brief summary of what was covered.
         <div className="flex items-center gap-2">
           <FileText className="w-5 h-5 text-primary" />
           <h3 className="font-semibold text-foreground">Content Editor</h3>
+          {isFetching && isInitialized && (
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          )}
           {hasChanges && (
             <span className="text-xs text-warning bg-warning/10 px-2 py-0.5 rounded">
               Unsaved changes
@@ -199,33 +199,42 @@ Wrap up the topic with a brief summary of what was covered.
 
       {/* Editor/Preview Area */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        {activeTab === "edit" && (
-          <Textarea
-            value={content}
-            onChange={(e) => handleContentChange(e.target.value)}
-            className="w-full h-full resize-none font-mono text-sm"
-            placeholder="Write your markdown content here..."
-          />
-        )}
-
-        {activeTab === "preview" && (
-          <div className="h-full overflow-y-auto p-4 bg-background rounded-lg border border-border">
-            <TopicContent content={content} />
+        {showInitialLoading ? (
+          <div className="flex flex-col items-center justify-center h-full gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading content...</p>
           </div>
-        )}
+        ) : (
+          <>
+            {activeTab === "edit" && (
+              <Textarea
+                value={content}
+                onChange={(e) => handleContentChange(e.target.value)}
+                className="w-full h-full resize-none font-mono text-sm"
+                placeholder="Write your markdown content here..."
+              />
+            )}
 
-        {activeTab === "split" && (
-          <div className="grid grid-cols-2 gap-4 h-full">
-            <Textarea
-              value={content}
-              onChange={(e) => handleContentChange(e.target.value)}
-              className="w-full h-full resize-none font-mono text-sm"
-              placeholder="Write your markdown content here..."
-            />
-            <div className="h-full overflow-y-auto p-4 bg-background rounded-lg border border-border">
-              <TopicContent content={content} />
-            </div>
-          </div>
+            {activeTab === "preview" && (
+              <div className="h-full overflow-y-auto p-4 bg-background rounded-lg border border-border">
+                <TopicContent content={content} />
+              </div>
+            )}
+
+            {activeTab === "split" && (
+              <div className="grid grid-cols-2 gap-4 h-full">
+                <Textarea
+                  value={content}
+                  onChange={(e) => handleContentChange(e.target.value)}
+                  className="w-full h-full resize-none font-mono text-sm"
+                  placeholder="Write your markdown content here..."
+                />
+                <div className="h-full overflow-y-auto p-4 bg-background rounded-lg border border-border">
+                  <TopicContent content={content} />
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
