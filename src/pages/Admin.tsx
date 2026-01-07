@@ -8,9 +8,10 @@ import { AdminQuestions } from "@/components/admin/AdminQuestions";
 import { AdminStats } from "@/components/admin/AdminStats";
 import { AdminExamSessions } from "@/components/admin/AdminExamSessions";
 import { AdminTopics } from "@/components/admin/AdminTopics";
+import { AdminLessons } from "@/components/admin/AdminLessons";
 import { AdminChapters } from "@/components/admin/AdminChapters";
 import { DiscourseSyncDashboard } from "@/components/admin/DiscourseSyncDashboard";
-import { Loader2, ShieldAlert, BookOpen, MapPin, Library, MessageSquare, FileQuestion, Book } from "lucide-react";
+import { Loader2, ShieldAlert, BookText, MapPin, FileText, MessageSquare, FileQuestion, Book, Route } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { TestType } from "@/types/navigation";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -27,7 +28,7 @@ export default function Admin() {
   const [sidebarTest, setSidebarTest] = useState<TestType>('technician');
   const [adminExamType, setAdminExamType] = useState<TestType>('technician');
   const [activeTab, setActiveTab] = useState("stats");
-  const [activeSection, setActiveSection] = useState<"exam" | "glossary" | "sessions" | "topics" | "chapters" | "discourse">("exam");
+  const [activeSection, setActiveSection] = useState<"exam" | "glossary" | "sessions" | "topics" | "lessons" | "chapters" | "discourse">("exam");
   const [linkQuestionId, setLinkQuestionId] = useState("");
   useEffect(() => {
     if (!authLoading && !user) {
@@ -62,7 +63,7 @@ export default function Admin() {
     extra: 'Extra'
   };
   // Stats tab needs full page scroll, Questions/Glossary need fixed viewport with internal scroll
-  const needsFixedHeight = activeSection === "glossary" || activeSection === "sessions" || activeSection === "topics" || activeSection === "chapters" || activeSection === "discourse" || (activeSection === "exam" && activeTab === "questions");
+  const needsFixedHeight = activeSection === "glossary" || activeSection === "sessions" || activeSection === "topics" || activeSection === "lessons" || activeSection === "chapters" || activeSection === "discourse" || (activeSection === "exam" && activeTab === "questions");
 
   return <AppLayout currentView="dashboard" onViewChange={handleViewChange} selectedTest={sidebarTest} onTestChange={setSidebarTest}>
       <div className={`flex-1 p-6 md:p-8 flex flex-col ${needsFixedHeight ? 'h-full overflow-hidden' : 'overflow-y-auto'}`}>
@@ -92,7 +93,7 @@ export default function Admin() {
                     : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                 }`}
               >
-                <BookOpen className="w-4 h-4" />
+                <BookText className="w-4 h-4" />
                 <span className="hidden sm:inline">Glossary</span>
               </button>
               <button
@@ -114,8 +115,19 @@ export default function Admin() {
                     : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                 }`}
               >
-                <Library className="w-4 h-4" />
+                <FileText className="w-4 h-4" />
                 <span className="hidden sm:inline">Topics</span>
+              </button>
+              <button
+                onClick={() => setActiveSection("lessons")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  activeSection === "lessons"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                }`}
+              >
+                <Route className="w-4 h-4" />
+                <span className="hidden sm:inline">Lessons</span>
               </button>
               <button
                 onClick={() => setActiveSection("chapters")}
@@ -186,6 +198,10 @@ export default function Admin() {
             ) : activeSection === "topics" ? (
               <div className="flex-1 flex flex-col min-h-0">
                 <AdminTopics />
+              </div>
+            ) : activeSection === "lessons" ? (
+              <div className="flex-1 flex flex-col min-h-0">
+                <AdminLessons />
               </div>
             ) : activeSection === "chapters" ? (
               <div className="flex-1 flex flex-col min-h-0">

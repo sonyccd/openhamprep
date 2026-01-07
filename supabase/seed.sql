@@ -1512,6 +1512,138 @@ UPDATE public.questions SET
 WHERE display_name LIKE 'E0%';
 
 -- =============================================================================
+-- LESSONS (Ordered groups of topics)
+-- =============================================================================
+
+-- Create lessons
+INSERT INTO public.lessons (slug, title, description, display_order, is_published, license_types) VALUES
+  (
+    'getting-started-with-ham-radio',
+    'Getting Started with Ham Radio',
+    'Your first steps into amateur radio. Learn the essential regulations and set up your station.',
+    1,
+    true,
+    ARRAY['technician']
+  ),
+  (
+    'understanding-radio-waves',
+    'Understanding Radio Waves',
+    'Dive deep into how radio waves work, from frequencies to propagation methods.',
+    2,
+    true,
+    ARRAY['technician', 'general', 'extra']
+  ),
+  (
+    'technician-foundations',
+    'Technician Foundations',
+    'Core knowledge every Technician class operator needs. Complete this lesson to build a solid foundation.',
+    3,
+    true,
+    ARRAY['technician']
+  ),
+  (
+    'general-upgrade-path',
+    'General Class Upgrade Path',
+    'Topics to master when upgrading from Technician to General class license.',
+    4,
+    true,
+    ARRAY['general']
+  ),
+  (
+    'electronics-essentials',
+    'Electronics Essentials',
+    'Understanding the electronic principles behind amateur radio equipment.',
+    5,
+    true,
+    ARRAY['technician', 'general', 'extra']
+  )
+ON CONFLICT (slug) DO NOTHING;
+
+-- Link topics to lessons (order matters - display_order determines sequence)
+-- Lesson 1: Getting Started with Ham Radio (Technician)
+INSERT INTO public.lesson_topics (lesson_id, topic_id, display_order)
+SELECT l.id, t.id, 0
+FROM public.lessons l, public.topics t
+WHERE l.slug = 'getting-started-with-ham-radio' AND t.slug = 'fcc-rules-basics'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.lesson_topics (lesson_id, topic_id, display_order)
+SELECT l.id, t.id, 1
+FROM public.lessons l, public.topics t
+WHERE l.slug = 'getting-started-with-ham-radio' AND t.slug = 'station-setup'
+ON CONFLICT DO NOTHING;
+
+-- Lesson 2: Understanding Radio Waves
+INSERT INTO public.lesson_topics (lesson_id, topic_id, display_order)
+SELECT l.id, t.id, 0
+FROM public.lessons l, public.topics t
+WHERE l.slug = 'understanding-radio-waves' AND t.slug = 'radio-frequency-fundamentals'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.lesson_topics (lesson_id, topic_id, display_order)
+SELECT l.id, t.id, 1
+FROM public.lessons l, public.topics t
+WHERE l.slug = 'understanding-radio-waves' AND t.slug = 'radio-wave-propagation'
+ON CONFLICT DO NOTHING;
+
+-- Lesson 3: Technician Foundations
+INSERT INTO public.lesson_topics (lesson_id, topic_id, display_order)
+SELECT l.id, t.id, 0
+FROM public.lessons l, public.topics t
+WHERE l.slug = 'technician-foundations' AND t.slug = 'fcc-rules-basics'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.lesson_topics (lesson_id, topic_id, display_order)
+SELECT l.id, t.id, 1
+FROM public.lessons l, public.topics t
+WHERE l.slug = 'technician-foundations' AND t.slug = 'basic-electronics'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.lesson_topics (lesson_id, topic_id, display_order)
+SELECT l.id, t.id, 2
+FROM public.lessons l, public.topics t
+WHERE l.slug = 'technician-foundations' AND t.slug = 'repeater-operations'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.lesson_topics (lesson_id, topic_id, display_order)
+SELECT l.id, t.id, 3
+FROM public.lessons l, public.topics t
+WHERE l.slug = 'technician-foundations' AND t.slug = 'station-setup'
+ON CONFLICT DO NOTHING;
+
+-- Lesson 4: General Upgrade Path
+INSERT INTO public.lesson_topics (lesson_id, topic_id, display_order)
+SELECT l.id, t.id, 0
+FROM public.lessons l, public.topics t
+WHERE l.slug = 'general-upgrade-path' AND t.slug = 'radio-wave-propagation'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.lesson_topics (lesson_id, topic_id, display_order)
+SELECT l.id, t.id, 1
+FROM public.lessons l, public.topics t
+WHERE l.slug = 'general-upgrade-path' AND t.slug = 'basic-electronics'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.lesson_topics (lesson_id, topic_id, display_order)
+SELECT l.id, t.id, 2
+FROM public.lessons l, public.topics t
+WHERE l.slug = 'general-upgrade-path' AND t.slug = 'fcc-rules-basics'
+ON CONFLICT DO NOTHING;
+
+-- Lesson 5: Electronics Essentials
+INSERT INTO public.lesson_topics (lesson_id, topic_id, display_order)
+SELECT l.id, t.id, 0
+FROM public.lessons l, public.topics t
+WHERE l.slug = 'electronics-essentials' AND t.slug = 'basic-electronics'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.lesson_topics (lesson_id, topic_id, display_order)
+SELECT l.id, t.id, 1
+FROM public.lessons l, public.topics t
+WHERE l.slug = 'electronics-essentials' AND t.slug = 'radio-frequency-fundamentals'
+ON CONFLICT DO NOTHING;
+
+-- =============================================================================
 -- SUMMARY
 -- =============================================================================
 
@@ -1532,6 +1664,8 @@ BEGIN
   RAISE NOTICE 'Exam Sessions: %', (SELECT COUNT(*) FROM public.exam_sessions);
   RAISE NOTICE 'Topics: %', (SELECT COUNT(*) FROM public.topics);
   RAISE NOTICE 'Topic-Question Links: %', (SELECT COUNT(*) FROM public.topic_questions);
+  RAISE NOTICE 'Lessons: %', (SELECT COUNT(*) FROM public.lessons);
+  RAISE NOTICE 'Lesson-Topic Links: %', (SELECT COUNT(*) FROM public.lesson_topics);
   RAISE NOTICE 'ARRL Chapters: %', (SELECT COUNT(*) FROM public.arrl_chapters);
   RAISE NOTICE 'Questions with Chapter Links: %', (SELECT COUNT(*) FROM public.questions WHERE arrl_chapter_id IS NOT NULL);
   RAISE NOTICE '========================================';

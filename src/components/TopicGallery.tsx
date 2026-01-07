@@ -5,7 +5,7 @@ import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { TopicCard } from "./TopicCard";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, BookOpen } from "lucide-react";
+import { Search, FileText } from "lucide-react";
 import { TestType } from "@/types/navigation";
 import { PageContainer } from "@/components/ui/page-container";
 
@@ -56,7 +56,7 @@ export function TopicGallery({ testType }: TopicGalleryProps) {
         >
           <div>
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <BookOpen className="w-6 h-6" />
+              <FileText className="w-6 h-6" />
               Topics
             </h1>
             {totalCount > 0 && (
@@ -114,7 +114,7 @@ export function TopicGallery({ testType }: TopicGalleryProps) {
         {/* Empty state */}
         {!isLoading && filteredTopics && filteredTopics.length === 0 && (
           <div className="text-center py-12 bg-muted/30 rounded-lg">
-            <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             {searchQuery ? (
               <>
                 <h3 className="text-lg font-medium text-foreground mb-2">No topics found</h3>
