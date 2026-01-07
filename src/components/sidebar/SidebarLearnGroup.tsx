@@ -54,7 +54,7 @@ export function SidebarLearnGroup({
         <TooltipContent side="right" className="bg-popover border-border">
           <p className="font-medium">Learn</p>
           <p className="text-xs text-muted-foreground">
-            Topics, Lessons
+            Lessons, Topics
           </p>
         </TooltipContent>
       </Tooltip>
