@@ -114,7 +114,7 @@ describe('TopicQuestionManager', () => {
       renderComponent();
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Search questions by ID or text...')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...')).toBeInTheDocument();
       });
     });
 
@@ -189,7 +189,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search questions by ID or text...');
+      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
       fireEvent.change(searchInput, { target: { value: 'T1A01' } });
 
       // Should only show T1A01
@@ -204,7 +204,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search questions by ID or text...');
+      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
       fireEvent.change(searchInput, { target: { value: 'General class' } });
 
       // Should only show the General question
@@ -219,7 +219,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search questions by ID or text...');
+      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
       fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
 
       await waitFor(() => {
@@ -234,10 +234,95 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search questions by ID or text...');
+      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
       fireEvent.change(searchInput, { target: { value: 't1a01' } });
 
       expect(screen.getByText('T1A01')).toBeInTheDocument();
+    });
+
+    it('should filter by comma-separated question IDs', async () => {
+      renderComponent();
+
+      await waitFor(() => {
+        expect(screen.getByText('T1A01')).toBeInTheDocument();
+      });
+
+      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      fireEvent.change(searchInput, { target: { value: 'T1A01, G1B01' } });
+
+      // Should show both matching questions
+      expect(screen.getByText('T1A01')).toBeInTheDocument();
+      expect(screen.getByText('G1B01')).toBeInTheDocument();
+      // Should not show non-matching questions
+      expect(screen.queryByText('T1A02')).not.toBeInTheDocument();
+      expect(screen.queryByText('E2A01')).not.toBeInTheDocument();
+    });
+
+    it('should handle comma-separated IDs with extra spaces', async () => {
+      renderComponent();
+
+      await waitFor(() => {
+        expect(screen.getByText('T1A01')).toBeInTheDocument();
+      });
+
+      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      fireEvent.change(searchInput, { target: { value: '  T1A01 ,  G1B01  , E2A01  ' } });
+
+      // Should show all three matching questions
+      expect(screen.getByText('T1A01')).toBeInTheDocument();
+      expect(screen.getByText('G1B01')).toBeInTheDocument();
+      expect(screen.getByText('E2A01')).toBeInTheDocument();
+      // Should not show non-matching question
+      expect(screen.queryByText('T1A02')).not.toBeInTheDocument();
+    });
+
+    it('should handle comma-separated IDs case insensitively', async () => {
+      renderComponent();
+
+      await waitFor(() => {
+        expect(screen.getByText('T1A01')).toBeInTheDocument();
+      });
+
+      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      fireEvent.change(searchInput, { target: { value: 't1a01, g1b01' } });
+
+      // Should show both matching questions (case insensitive)
+      expect(screen.getByText('T1A01')).toBeInTheDocument();
+      expect(screen.getByText('G1B01')).toBeInTheDocument();
+    });
+
+    it('should filter empty terms from comma-separated list', async () => {
+      renderComponent();
+
+      await waitFor(() => {
+        expect(screen.getByText('T1A01')).toBeInTheDocument();
+      });
+
+      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      fireEvent.change(searchInput, { target: { value: 'T1A01, , , G1B01' } });
+
+      // Should show both matching questions, ignoring empty terms
+      expect(screen.getByText('T1A01')).toBeInTheDocument();
+      expect(screen.getByText('G1B01')).toBeInTheDocument();
+      expect(screen.queryByText('T1A02')).not.toBeInTheDocument();
+    });
+
+    it('should support partial matching in comma-separated list', async () => {
+      renderComponent();
+
+      await waitFor(() => {
+        expect(screen.getByText('T1A01')).toBeInTheDocument();
+      });
+
+      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
+      fireEvent.change(searchInput, { target: { value: 'T1A, E2A' } });
+
+      // Should show questions that contain T1A or E2A
+      expect(screen.getByText('T1A01')).toBeInTheDocument();
+      expect(screen.getByText('T1A02')).toBeInTheDocument();
+      expect(screen.getByText('E2A01')).toBeInTheDocument();
+      // Should not show G1B01
+      expect(screen.queryByText('G1B01')).not.toBeInTheDocument();
     });
   });
 
@@ -570,7 +655,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Search questions by ID or text...');
+      const searchInput = screen.getByPlaceholderText('Search by ID, text, or paste comma-separated IDs...');
       fireEvent.change(searchInput, { target: { value: 'T1A' } });
 
       await waitFor(() => {
