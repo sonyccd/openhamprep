@@ -21,7 +21,18 @@ import {
   Eye,
   EyeOff,
   HelpCircle,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Topic, useTopicQuestions } from "@/hooks/useTopics";
 import { TopicMarkdownEditor } from "./TopicMarkdownEditor";
@@ -53,6 +64,7 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
   const [isPublished, setIsPublished] = useState(topic.is_published);
   const [displayOrder, setDisplayOrder] = useState(topic.display_order || 0);
   const [hasSettingsChanges, setHasSettingsChanges] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Fetch linked questions count
   const { data: linkedQuestions } = useTopicQuestions(topic.id);
@@ -137,6 +149,45 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
       toast.error("Failed to save settings: " + error.message);
     },
   });
+
+  const deleteTopicMutation = useMutation({
+    mutationFn: async () => {
+      // First, delete the markdown content from storage if it exists
+      const contentPath = freshTopic?.content_path || topic.content_path;
+      if (contentPath) {
+        const { error: storageError } = await supabase.storage
+          .from("topic-content")
+          .remove([contentPath]);
+
+        // Log but don't fail if storage deletion fails (file may not exist)
+        if (storageError) {
+          console.warn("Failed to delete topic content from storage:", storageError.message);
+        }
+      }
+
+      // Then delete the database record (cascades to related tables)
+      const { error } = await supabase
+        .from("topics")
+        .delete()
+        .eq("id", topic.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-topics"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-topic-detail", topic.id] });
+      queryClient.invalidateQueries({ queryKey: ["topics"] });
+      toast.success("Topic deleted successfully");
+      onBack(); // Navigate back to the list
+    },
+    onError: (error) => {
+      toast.error("Failed to delete topic: " + error.message);
+    },
+  });
+
+  const handleDeleteTopic = () => {
+    deleteTopicMutation.mutate();
+  };
 
   const handleSettingsChange = () => {
     setHasSettingsChanges(true);
@@ -367,6 +418,31 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
               />
             </div>
 
+            <Separator />
+
+            {/* Danger Zone */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-destructive">Danger Zone</h3>
+              <div className="border border-destructive/30 rounded-lg p-4 bg-destructive/5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">Delete this topic</p>
+                    <p className="text-sm text-muted-foreground">
+                      This will permanently remove the topic, all linked resources, and user progress data.
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setShowDeleteDialog(true)}
+                    disabled={deleteTopicMutation.isPending}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Topic
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             {/* Save Button */}
             <div className="flex justify-end pt-4">
               <Button
@@ -384,6 +460,44 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="border-destructive/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-destructive" />
+              Delete Topic
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              Are you sure you want to delete <span className="font-semibold text-foreground">"{topic.title}"</span>?
+              <span className="block mt-2 text-destructive/80">
+                This will permanently remove the topic, all linked resources, and user progress data. This action cannot be undone.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteTopicMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteTopic}
+              disabled={deleteTopicMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteTopicMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Topic
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -158,7 +158,7 @@ export function useTopicContent(contentPath: string | null | undefined) {
 
       if (error) {
         // Return empty content if file doesn't exist yet
-        if (error.message.includes('not found')) {
+        if (error.message.includes('not found') || error.message.includes('Object not found')) {
           return '';
         }
         throw error;
@@ -168,6 +168,8 @@ export function useTopicContent(contentPath: string | null | undefined) {
     },
     enabled: !!contentPath,
     staleTime: 1000 * 60 * 30, // Cache for 30 minutes
+    // Keep previous data while refetching for smoother UX
+    placeholderData: (previousData) => previousData,
   });
 }
 

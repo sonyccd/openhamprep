@@ -25,18 +25,38 @@ export function TopicQuestionManager({ topicId }: TopicQuestionManagerProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [testTypeFilter, setTestTypeFilter] = useState<string>("all");
 
-  // Fetch all questions (using range to bypass Supabase's default 1000 row limit)
+  // Fetch all questions using pagination to get the complete set
   const { data: allQuestions = [], isLoading: questionsLoading } = useQuery({
     queryKey: ["all-questions-for-linking"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("questions")
-        .select("id, display_name, question")
-        .order("display_name", { ascending: true })
-        .range(0, 1999); // Fetch up to 2000 questions to cover all license types
+      const pageSize = 1000;
+      let allData: Question[] = [];
+      let page = 0;
+      let hasMore = true;
 
-      if (error) throw error;
-      return data as Question[];
+      // Paginate through all questions
+      while (hasMore) {
+        const from = page * pageSize;
+        const to = from + pageSize - 1;
+
+        const { data, error } = await supabase
+          .from("questions")
+          .select("id, display_name, question")
+          .order("display_name", { ascending: true })
+          .range(from, to);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allData = [...allData, ...(data as Question[])];
+          hasMore = data.length === pageSize;
+          page++;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return allData;
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });

@@ -8,6 +8,7 @@ import { Topic } from '@/hooks/useTopics';
 // Mock Supabase client
 const mockFrom = vi.fn();
 const mockDownload = vi.fn();
+const mockStorageRemove = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -16,6 +17,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       from: vi.fn(() => ({
         download: mockDownload,
         upload: vi.fn().mockResolvedValue({ error: null }),
+        remove: (...args: unknown[]) => mockStorageRemove(...args),
       })),
     },
   },
@@ -160,6 +162,8 @@ describe('TopicEditor', () => {
       data: new Blob(['# Topic Content']),
       error: null,
     });
+
+    mockStorageRemove.mockResolvedValue({ error: null });
   });
 
   describe('Header', () => {
@@ -539,6 +543,409 @@ describe('TopicEditor', () => {
       const resourcesTab = screen.getByRole('tab', { name: /Resources/i });
       // Should not contain a number badge
       expect(resourcesTab.querySelector('.badge')).toBeNull();
+    });
+  });
+
+  describe('Delete Topic', () => {
+    // Helper to render and switch to Settings tab
+    const setupSettingsTabForDelete = async () => {
+      const user = userEvent.setup();
+
+      queryClient = new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: false,
+          },
+        },
+      });
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <TopicEditor topic={mockTopic} onBack={mockOnBack} />
+        </QueryClientProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /Settings/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('tab', { name: /Settings/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Danger Zone')).toBeInTheDocument();
+      }, { timeout: 5000 });
+
+      return user;
+    };
+
+    it('should display Danger Zone section in Settings tab', async () => {
+      await setupSettingsTabForDelete();
+      expect(screen.getByText('Danger Zone')).toBeInTheDocument();
+      expect(screen.getByText('Delete this topic')).toBeInTheDocument();
+    });
+
+    it('should display Delete Topic button in Danger Zone', async () => {
+      await setupSettingsTabForDelete();
+      expect(screen.getByRole('button', { name: /Delete Topic/i })).toBeInTheDocument();
+    });
+
+    it('should open confirmation dialog when Delete Topic button is clicked', async () => {
+      const user = await setupSettingsTabForDelete();
+
+      await user.click(screen.getByRole('button', { name: /Delete Topic/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+        expect(screen.getByText(/"Amateur Radio Basics"/)).toBeInTheDocument();
+      });
+    });
+
+    it('should show warning message in confirmation dialog', async () => {
+      const user = await setupSettingsTabForDelete();
+
+      await user.click(screen.getByRole('button', { name: /Delete Topic/i }));
+
+      await waitFor(() => {
+        // The dialog shows warning text (may match multiple elements as text appears in Danger Zone and dialog)
+        const warningTexts = screen.getAllByText(/This will permanently remove the topic/);
+        expect(warningTexts.length).toBeGreaterThanOrEqual(1);
+        expect(screen.getByText(/This action cannot be undone/)).toBeInTheDocument();
+      });
+    });
+
+    it('should close dialog when Cancel is clicked', async () => {
+      const user = await setupSettingsTabForDelete();
+
+      await user.click(screen.getByRole('button', { name: /Delete Topic/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByText('Cancel'));
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Are you sure you want to delete/)).not.toBeInTheDocument();
+      });
+    });
+
+    it('should call delete mutation and onBack when deletion is confirmed', async () => {
+      const mockDeleteEq = vi.fn().mockResolvedValue({ error: null });
+      const mockDeleteFn = vi.fn().mockReturnValue({ eq: mockDeleteEq });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'topics') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: mockTopic,
+                  error: null,
+                }),
+              }),
+            }),
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ error: null }),
+            }),
+            delete: mockDeleteFn,
+          };
+        }
+        if (table === 'topic_questions') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: mockLinkedQuestions.map(q => ({ question: q })),
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: vi.fn() };
+      });
+
+      const user = await setupSettingsTabForDelete();
+
+      // Click the Delete Topic button in the Danger Zone to open the dialog
+      fireEvent.click(screen.getByRole('button', { name: /Delete Topic/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+      });
+
+      // Find and click the confirm button in the dialog (role="alertdialog" content)
+      const confirmButton = screen.getByRole('alertdialog').querySelector('button.bg-destructive');
+      expect(confirmButton).toBeTruthy();
+      fireEvent.click(confirmButton!);
+
+      await waitFor(() => {
+        expect(mockDeleteFn).toHaveBeenCalled();
+        expect(mockDeleteEq).toHaveBeenCalledWith('id', 'topic-123');
+      });
+    });
+
+    it('should show success toast and navigate back after successful deletion', async () => {
+      const mockDeleteEq = vi.fn().mockResolvedValue({ error: null });
+      const mockDeleteFn = vi.fn().mockReturnValue({ eq: mockDeleteEq });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'topics') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: mockTopic,
+                  error: null,
+                }),
+              }),
+            }),
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ error: null }),
+            }),
+            delete: mockDeleteFn,
+          };
+        }
+        if (table === 'topic_questions') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: mockLinkedQuestions.map(q => ({ question: q })),
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: vi.fn() };
+      });
+
+      const user = await setupSettingsTabForDelete();
+
+      fireEvent.click(screen.getByRole('button', { name: /Delete Topic/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+      });
+
+      const confirmButton = screen.getByRole('alertdialog').querySelector('button.bg-destructive');
+      fireEvent.click(confirmButton!);
+
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith('Topic deleted successfully');
+        expect(mockOnBack).toHaveBeenCalled();
+      });
+    });
+
+    it('should show error toast when deletion fails', async () => {
+      const mockDeleteEq = vi.fn().mockResolvedValue({ error: { message: 'Database error' } });
+      const mockDeleteFn = vi.fn().mockReturnValue({ eq: mockDeleteEq });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'topics') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: mockTopic,
+                  error: null,
+                }),
+              }),
+            }),
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ error: null }),
+            }),
+            delete: mockDeleteFn,
+          };
+        }
+        if (table === 'topic_questions') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: mockLinkedQuestions.map(q => ({ question: q })),
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: vi.fn() };
+      });
+
+      const user = await setupSettingsTabForDelete();
+
+      fireEvent.click(screen.getByRole('button', { name: /Delete Topic/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+      });
+
+      const confirmButton = screen.getByRole('alertdialog').querySelector('button.bg-destructive');
+      fireEvent.click(confirmButton!);
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Failed to delete topic'));
+      });
+    });
+
+    it('should delete storage content before deleting database record', async () => {
+      const mockDeleteEq = vi.fn().mockResolvedValue({ error: null });
+      const mockDeleteFn = vi.fn().mockReturnValue({ eq: mockDeleteEq });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'topics') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: mockTopic,
+                  error: null,
+                }),
+              }),
+            }),
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ error: null }),
+            }),
+            delete: mockDeleteFn,
+          };
+        }
+        if (table === 'topic_questions') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: mockLinkedQuestions.map(q => ({ question: q })),
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: vi.fn() };
+      });
+
+      const user = await setupSettingsTabForDelete();
+
+      fireEvent.click(screen.getByRole('button', { name: /Delete Topic/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+      });
+
+      const confirmButton = screen.getByRole('alertdialog').querySelector('button.bg-destructive');
+      fireEvent.click(confirmButton!);
+
+      await waitFor(() => {
+        // Storage remove should be called with the content path
+        expect(mockStorageRemove).toHaveBeenCalledWith(['articles/amateur-radio-basics.md']);
+        // Database delete should also be called
+        expect(mockDeleteFn).toHaveBeenCalled();
+      });
+    });
+
+    it('should continue deletion even if storage cleanup fails', async () => {
+      const mockDeleteEq = vi.fn().mockResolvedValue({ error: null });
+      const mockDeleteFn = vi.fn().mockReturnValue({ eq: mockDeleteEq });
+
+      // Mock storage removal to fail
+      mockStorageRemove.mockResolvedValue({ error: { message: 'Storage error' } });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'topics') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: mockTopic,
+                  error: null,
+                }),
+              }),
+            }),
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ error: null }),
+            }),
+            delete: mockDeleteFn,
+          };
+        }
+        if (table === 'topic_questions') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: mockLinkedQuestions.map(q => ({ question: q })),
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: vi.fn() };
+      });
+
+      const user = await setupSettingsTabForDelete();
+
+      fireEvent.click(screen.getByRole('button', { name: /Delete Topic/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+      });
+
+      const confirmButton = screen.getByRole('alertdialog').querySelector('button.bg-destructive');
+      fireEvent.click(confirmButton!);
+
+      await waitFor(() => {
+        // Database delete should still be called even if storage fails
+        expect(mockDeleteFn).toHaveBeenCalled();
+        // And success should still be shown
+        expect(toast.success).toHaveBeenCalledWith('Topic deleted successfully');
+      });
+    });
+
+    it('should disable delete button while deletion is in progress', async () => {
+      const mockDeleteEq = vi.fn().mockImplementation(() => new Promise(() => {})); // Never resolves
+      const mockDeleteFn = vi.fn().mockReturnValue({ eq: mockDeleteEq });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'topics') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: mockTopic,
+                  error: null,
+                }),
+              }),
+            }),
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ error: null }),
+            }),
+            delete: mockDeleteFn,
+          };
+        }
+        if (table === 'topic_questions') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: mockLinkedQuestions.map(q => ({ question: q })),
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: vi.fn() };
+      });
+
+      const user = await setupSettingsTabForDelete();
+
+      // Initial state - button should be enabled
+      const deleteButton = screen.getByRole('button', { name: /Delete Topic/i });
+      expect(deleteButton).not.toBeDisabled();
+
+      fireEvent.click(deleteButton);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+      });
+
+      const confirmButton = screen.getByRole('alertdialog').querySelector('button.bg-destructive');
+      fireEvent.click(confirmButton!);
+
+      // Wait a tick for the mutation to start
+      await waitFor(() => {
+        expect(mockStorageRemove).toHaveBeenCalled();
+      });
     });
   });
 });
