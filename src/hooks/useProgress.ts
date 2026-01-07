@@ -93,7 +93,7 @@ export function useProgress() {
   const saveRandomAttempt = async (
     question: Question,
     selectedAnswer: 'A' | 'B' | 'C' | 'D',
-    attemptType: 'random_practice' | 'weak_questions' | 'subelement_practice' | 'chapter_practice' = 'random_practice'
+    attemptType: 'random_practice' | 'weak_questions' | 'subelement_practice' | 'chapter_practice' | 'topic_quiz' = 'random_practice'
   ) => {
     if (!user) return;
 
@@ -125,5 +125,52 @@ export function useProgress() {
     invalidateProgressQueries();
   };
 
-  return { saveTestResult, saveRandomAttempt, invalidateProgressQueries };
+  /**
+   * Save multiple quiz attempts in a single bulk insert.
+   * More efficient than individual saves and avoids thundering herd issues.
+   */
+  const saveQuizAttempts = async (
+    attempts: Array<{ question: Question; selectedAnswer: 'A' | 'B' | 'C' | 'D' }>,
+    attemptType: 'topic_quiz' | 'chapter_practice' = 'topic_quiz'
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!user) return { success: false, error: 'Not authenticated' };
+    if (attempts.length === 0) return { success: true };
+
+    const answerToIndex: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+
+    const attemptRecords = attempts.map(({ question, selectedAnswer }) => ({
+      user_id: user.id,
+      question_id: question.id,
+      selected_answer: answerToIndex[selectedAnswer],
+      is_correct: selectedAnswer === question.correctAnswer,
+      attempt_type: attemptType
+    }));
+
+    const { error } = await supabase
+      .from('question_attempts')
+      .insert(attemptRecords);
+
+    if (error) {
+      console.error('Error saving quiz attempts:', error);
+      return { success: false, error: error.message };
+    }
+
+    // Track quiz completion event in Pendo
+    if (window.pendo?.track) {
+      const correctCount = attempts.filter(a => a.selectedAnswer === a.question.correctAnswer).length;
+      window.pendo.track('Quiz Completed', {
+        total_questions: attempts.length,
+        correct_count: correctCount,
+        percentage: Math.round((correctCount / attempts.length) * 100),
+        attempt_type: attemptType
+      });
+    }
+
+    // Invalidate cached queries so UI updates immediately
+    invalidateProgressQueries();
+
+    return { success: true };
+  };
+
+  return { saveTestResult, saveRandomAttempt, saveQuizAttempts, invalidateProgressQueries };
 }

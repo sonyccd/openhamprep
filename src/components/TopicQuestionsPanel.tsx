@@ -6,7 +6,6 @@ import {
   HelpCircle,
   ChevronDown,
   ChevronUp,
-  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -52,7 +51,7 @@ export function TopicQuestionsPanel({
   onQuestionClick,
 }: TopicQuestionsPanelProps) {
   const { data: questions, isLoading } = useTopicQuestions(topicId);
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   if (isLoading) {
     return (

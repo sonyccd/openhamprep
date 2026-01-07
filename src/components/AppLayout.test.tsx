@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
@@ -210,14 +211,15 @@ describe('AppLayout', () => {
       );
 
       await waitFor(() => {
-        // DashboardSidebar should show nav items
+        // DashboardSidebar should show top-level nav items
         expect(screen.getByText('Dashboard')).toBeInTheDocument();
         expect(screen.getByText('Practice Test')).toBeInTheDocument();
-        expect(screen.getByText('Random Practice')).toBeInTheDocument();
+        expect(screen.getByText('Topics')).toBeInTheDocument();
+        expect(screen.getByText('Study')).toBeInTheDocument();
       });
     });
 
-    it('shows bookmark count in sidebar', async () => {
+    it('shows bookmark count badge on Study header', async () => {
       render(
         <AppLayout {...defaultProps}>
           <div>Content</div>
@@ -226,11 +228,9 @@ describe('AppLayout', () => {
       );
 
       await waitFor(() => {
-        // Should show bookmark count of 2 (from mock) on the Bookmarked item
-        // There may be multiple '2' elements (weak questions also shows 2)
-        const bookmarkedItem = screen.getByText('Bookmarked');
-        const badge = bookmarkedItem.parentElement?.querySelector('[class*="bg-primary"]');
-        expect(badge).toHaveTextContent('2');
+        // The Study header shows combined badge for bookmarks + weak questions
+        // weakQuestionCount=1 + bookmarkCount=2 = 3 total
+        expect(screen.getByText('3')).toBeInTheDocument();
       });
     });
 
@@ -247,11 +247,10 @@ describe('AppLayout', () => {
       // T1A02: 1 wrong, 1 right = NOT weak (only 1 wrong)
       // T1A03: 2 wrong, 1 right = weak (2 >= 2 AND 2 > 1)
       // So weak count should be 1
+      // Combined with bookmark count of 2, Study header badge should show 3
       await waitFor(() => {
-        // Find the Weak Areas nav item and check its badge
-        const weakAreasItem = screen.getByText('Weak Areas');
-        const badge = weakAreasItem.parentElement?.querySelector('[class*="bg-primary"]');
-        expect(badge).toHaveTextContent('1');
+        // The Study header badge shows combined count
+        expect(screen.getByText('3')).toBeInTheDocument();
       });
     });
   });
@@ -267,8 +266,9 @@ describe('AppLayout', () => {
         { wrapper: createWrapper() }
       );
 
+      // Check that sidebar nav items are visible (Topics is a top-level item)
       await waitFor(() => {
-        expect(screen.getByText('Random Practice')).toBeInTheDocument();
+        expect(screen.getByText('Topics')).toBeInTheDocument();
       });
 
       // Note: The actual click handling is in DashboardSidebar which is already tested

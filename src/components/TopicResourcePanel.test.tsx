@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { TopicResourcePanel } from './TopicResourcePanel';
 import { TopicResource } from '@/hooks/useTopics';
 
@@ -64,12 +64,15 @@ describe('TopicResourcePanel', () => {
       expect(screen.getAllByText('3').length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should display resource title', () => {
-      // Use video type since video groups are open by default
+    it('should display resource title after expanding group', () => {
       const resources = [createResource({ resource_type: 'video', title: 'My Video Tutorial' })];
       render(<TopicResourcePanel resources={resources} />);
 
-      // Video resources are visible in desktop view since video groups are defaultOpen
+      // Click to expand the Videos group
+      const videosButton = screen.getAllByText('Videos')[0];
+      fireEvent.click(videosButton);
+
+      // Now the video resource should be visible
       expect(screen.getAllByText('My Video Tutorial').length).toBeGreaterThanOrEqual(1);
     });
 
@@ -83,7 +86,11 @@ describe('TopicResourcePanel', () => {
       ];
       render(<TopicResourcePanel resources={resources} />);
 
-      // Video resources with description are visible since video groups are defaultOpen
+      // Click to expand the Videos group
+      const videosButton = screen.getAllByText('Videos')[0];
+      fireEvent.click(videosButton);
+
+      // Now the description should be visible
       expect(screen.getAllByText('A helpful tutorial for beginners').length).toBeGreaterThanOrEqual(1);
     });
   });
@@ -137,7 +144,12 @@ describe('TopicResourcePanel', () => {
       // Group headers are always visible
       expect(screen.getAllByText('Videos').length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText('Articles').length).toBeGreaterThanOrEqual(1);
-      // Video items are visible (video group is open by default)
+
+      // Click to expand the Videos group
+      const videosButton = screen.getAllByText('Videos')[0];
+      fireEvent.click(videosButton);
+
+      // Video items are now visible
       expect(screen.getAllByText('Video 1').length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText('Video 2').length).toBeGreaterThanOrEqual(1);
       // Article group header shows count "1" indicating 1 article resource
@@ -152,7 +164,7 @@ describe('TopicResourcePanel', () => {
       ];
       render(<TopicResourcePanel resources={resources} />);
 
-      // The group should show count "2"
+      // The group should show count "2" (visible in group header even when collapsed)
       const badges = screen.getAllByText('2');
       expect(badges.length).toBeGreaterThanOrEqual(1);
     });
@@ -160,7 +172,6 @@ describe('TopicResourcePanel', () => {
 
   describe('External Links', () => {
     it('should render external link with correct href', () => {
-      // Use video type so content is visible (video groups are open by default)
       const resources = [
         createResource({
           resource_type: 'video',
@@ -170,7 +181,11 @@ describe('TopicResourcePanel', () => {
       ];
       render(<TopicResourcePanel resources={resources} />);
 
-      // Get the first matching link (desktop view - video group is open)
+      // Click to expand the Videos group
+      const videosButton = screen.getAllByText('Videos')[0];
+      fireEvent.click(videosButton);
+
+      // Get the first matching link
       const links = screen.getAllByText('External Resource');
       const link = links[0].closest('a');
       expect(link).toHaveAttribute('href', 'https://example.com/resource');
@@ -179,9 +194,12 @@ describe('TopicResourcePanel', () => {
     });
 
     it('should show external link icon for URL resources', () => {
-      // Use video type so content is visible
       const resources = [createResource({ resource_type: 'video', url: 'https://example.com' })];
       const { container } = render(<TopicResourcePanel resources={resources} />);
+
+      // Click to expand the Videos group
+      const videosButton = screen.getAllByText('Videos')[0];
+      fireEvent.click(videosButton);
 
       expect(container.querySelector('svg[class*="external-link"]')).toBeInTheDocument();
     });
@@ -198,6 +216,10 @@ describe('TopicResourcePanel', () => {
       ];
       render(<TopicResourcePanel resources={resources} />);
 
+      // Click to expand the Videos group
+      const videosButton = screen.getAllByText('Videos')[0];
+      fireEvent.click(videosButton);
+
       expect(screen.getAllByText('YouTube').length).toBeGreaterThanOrEqual(1);
     });
 
@@ -211,13 +233,16 @@ describe('TopicResourcePanel', () => {
       ];
       render(<TopicResourcePanel resources={resources} />);
 
+      // Click to expand the Videos group
+      const videosButton = screen.getAllByText('Videos')[0];
+      fireEvent.click(videosButton);
+
       expect(screen.getAllByText('YouTube').length).toBeGreaterThanOrEqual(1);
     });
   });
 
   describe('Uploaded Files', () => {
     it('should show Download badge for uploaded files', () => {
-      // Use video type so content is visible (video groups are open by default)
       const resources = [
         createResource({
           resource_type: 'video',
@@ -228,12 +253,14 @@ describe('TopicResourcePanel', () => {
       ];
       render(<TopicResourcePanel resources={resources} />);
 
-      // Video group is open by default, so Download badge should be visible
+      // Click to expand the Videos group
+      const videosButton = screen.getAllByText('Videos')[0];
+      fireEvent.click(videosButton);
+
       expect(screen.getAllByText('Download').length).toBeGreaterThanOrEqual(1);
     });
 
     it('should show download icon for uploaded files', () => {
-      // Use video type so content is visible
       const resources = [
         createResource({
           resource_type: 'video',
@@ -243,7 +270,10 @@ describe('TopicResourcePanel', () => {
       ];
       const { container } = render(<TopicResourcePanel resources={resources} />);
 
-      // Download icon should be visible since video group is open by default
+      // Click to expand the Videos group
+      const videosButton = screen.getAllByText('Videos')[0];
+      fireEvent.click(videosButton);
+
       const downloadIcon = container.querySelector('svg[class*="download"]');
       expect(downloadIcon).toBeInTheDocument();
     });
@@ -257,6 +287,10 @@ describe('TopicResourcePanel', () => {
         createResource({ resource_type: 'video', title: 'Video B', display_order: 2 }),
       ];
       render(<TopicResourcePanel resources={resources} />);
+
+      // Click to expand the Videos group
+      const videosButton = screen.getAllByText('Videos')[0];
+      fireEvent.click(videosButton);
 
       // Get videos from desktop view (first set)
       const videos = screen.getAllByText(/Video [ABC]/);

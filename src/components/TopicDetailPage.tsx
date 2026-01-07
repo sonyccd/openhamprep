@@ -1,17 +1,28 @@
-import { useTopic, useTopicContent } from "@/hooks/useTopics";
+import { useTopic, useTopicContent, useTopicQuestions, useTopicCompleted, useToggleTopicComplete } from "@/hooks/useTopics";
+import { useQuestionsByIds, Question } from "@/hooks/useQuestions";
+import { useAuth } from "@/hooks/useAuth";
+import { useProgress } from "@/hooks/useProgress";
 import { TopicTableOfContents } from "./TopicTableOfContents";
 import { TopicContent } from "./TopicContent";
 import { TopicResourcePanel } from "./TopicResourcePanel";
 import { TopicQuestionsPanel } from "./TopicQuestionsPanel";
 import { TopicProgressButton } from "./TopicProgressButton";
+import { TopicQuiz } from "./TopicQuiz";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, BookOpen } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ArrowLeft, BookOpen, PlayCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { PageContainer } from "@/components/ui/page-container";
+import { TOPIC_QUIZ_PASSING_THRESHOLD } from "@/types/navigation";
 
 interface TopicDetailPageProps {
   slug: string;
@@ -20,9 +31,46 @@ interface TopicDetailPageProps {
 
 export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: topic, isLoading: topicLoading, error: topicError } = useTopic(slug);
   const { data: content, isLoading: contentLoading } = useTopicContent(topic?.content_path);
+  const { data: topicQuestions } = useTopicQuestions(topic?.id);
   const [activeHeadingId, setActiveHeadingId] = useState<string>();
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
+
+  const questionCount = topicQuestions?.length || 0;
+  const isCompleted = useTopicCompleted(topic?.id);
+
+  // Fetch full question data for quiz
+  const questionIds = topicQuestions?.map((q) => q.id) || [];
+  const { data: fullQuestions, isLoading: fullQuestionsLoading } = useQuestionsByIds(questionIds);
+
+  // Hook for marking topic complete
+  const { mutate: toggleComplete } = useToggleTopicComplete();
+
+  // Hook for saving question attempts
+  const { saveQuizAttempts } = useProgress();
+
+  const handleStartQuiz = () => {
+    setIsQuizOpen(true);
+  };
+
+  const handleQuizComplete = (passed: boolean, score: number, totalQuestions: number) => {
+    // Auto-mark topic as complete if passed
+    if (passed && topic) {
+      toggleComplete({ topicId: topic.id, isCompleted: true });
+    }
+  };
+
+  const handleCloseQuiz = () => {
+    setIsQuizOpen(false);
+  };
+
+  const handleSaveAttempts = async (
+    attempts: Array<{ question: Question; selectedAnswer: "A" | "B" | "C" | "D" }>
+  ) => {
+    return saveQuizAttempts(attempts, 'topic_quiz');
+  };
 
   const handleQuestionClick = (questionId: string) => {
     navigate(`/questions/${questionId}`);
@@ -129,7 +177,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
             </div>
 
             {/* Progress button */}
-            <TopicProgressButton topicId={topic.id} className="shrink-0" />
+            <TopicProgressButton topicId={topic.id} questionCount={questionCount} className="shrink-0" />
           </div>
         </div>
       </motion.div>
@@ -169,9 +217,30 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
               <TopicContent content={displayContent} />
             )}
 
+            {/* Take Quiz CTA after content */}
+            {user && questionCount > 0 && (
+              <div className="mt-10 pt-8 border-t border-border">
+                <div className="bg-muted/30 rounded-xl p-6 text-center">
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    Ready to test your knowledge?
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {isCompleted
+                      ? "You've already completed this topic. Take the quiz again to reinforce your learning."
+                      : `Answer ${questionCount} question${questionCount !== 1 ? 's' : ''} and score 80% or higher to complete this topic.`
+                    }
+                  </p>
+                  <Button onClick={handleStartQuiz} size="lg" className="gap-2">
+                    <PlayCircle className="w-5 h-5" />
+                    {isCompleted ? "Retake Quiz" : "Take Quiz"}
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Bottom progress button for mobile */}
             <div className="lg:hidden mt-8 pt-8 border-t border-border">
-              <TopicProgressButton topicId={topic.id} className="w-full" />
+              <TopicProgressButton topicId={topic.id} questionCount={questionCount} className="w-full" />
             </div>
           </motion.main>
 
@@ -192,6 +261,28 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
           </motion.aside>
         </div>
       </div>
+
+      {/* Quiz Modal */}
+      <Dialog open={isQuizOpen} onOpenChange={setIsQuizOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Quiz: {topic.title}</DialogTitle>
+          </DialogHeader>
+          {fullQuestionsLoading || !fullQuestions ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <TopicQuiz
+              questions={fullQuestions}
+              onComplete={handleQuizComplete}
+              onDone={handleCloseQuiz}
+              onSaveAttempts={handleSaveAttempts}
+              passingThreshold={TOPIC_QUIZ_PASSING_THRESHOLD}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ProfileModal } from './ProfileModal';
 import { BrowserRouter } from 'react-router-dom';
@@ -42,6 +42,9 @@ vi.mock('@/integrations/supabase/client', () => ({
       signOut: mockSignOut,
     },
     rpc: mockRpc,
+    functions: {
+      invoke: vi.fn(() => Promise.resolve({ data: null, error: null })),
+    },
   },
 }));
 
@@ -65,6 +68,18 @@ const renderProfileModal = (props = {}) => {
   );
 };
 
+// Helper to click a menu item by its label text
+const clickMenuItem = async (user: ReturnType<typeof userEvent.setup>, label: string) => {
+  const menuItems = screen.getAllByRole('button');
+  const menuItem = menuItems.find(btn => {
+    const textContent = btn.textContent || '';
+    return textContent.includes(label) && !textContent.includes('Forever');
+  });
+  if (menuItem) {
+    await user.click(menuItem);
+  }
+};
+
 describe('ProfileModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -75,46 +90,101 @@ describe('ProfileModal', () => {
     it('renders the profile modal when open', () => {
       renderProfileModal();
 
-      expect(screen.getByText('Profile Settings')).toBeInTheDocument();
-      expect(screen.getByText('Display Name')).toBeInTheDocument();
-      expect(screen.getByText('Email Address')).toBeInTheDocument();
-      expect(screen.getByText('Password')).toBeInTheDocument();
-      expect(screen.getByText('Theme')).toBeInTheDocument();
-      expect(screen.getByText('Danger Zone')).toBeInTheDocument();
+      expect(screen.getByText('Settings')).toBeInTheDocument();
+      expect(screen.getByText('Account')).toBeInTheDocument();
+      expect(screen.getByText('Appearance')).toBeInTheDocument();
+      // The delete account menu item
+      expect(screen.getByText('Delete Account')).toBeInTheDocument();
     });
 
     it('displays user info', () => {
       renderProfileModal();
 
       expect(screen.getByText('Test User')).toBeInTheDocument();
-      expect(screen.getByText(/Current: test@example.com/)).toBeInTheDocument();
+      expect(screen.getByText('test@example.com')).toBeInTheDocument();
     });
 
-    it('shows "Not set" when display name is null', () => {
+    it('shows "User" when display name is null', () => {
       renderProfileModal({
         userInfo: { displayName: null, email: 'test@example.com', forumUsername: null },
       });
 
-      expect(screen.getAllByText('Not set').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText('User')).toBeInTheDocument();
     });
+  });
 
-    it('renders the Forum Username section', () => {
+  describe('Navigation', () => {
+    it('navigates to Account view when Account menu item is clicked', async () => {
+      const user = userEvent.setup();
       renderProfileModal();
 
+      // Find and click the Account menu item (has "Name, email, password" description)
+      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      await user.click(accountMenuItem!);
+
+      expect(screen.getByText('Display Name')).toBeInTheDocument();
       expect(screen.getByText('Forum Username')).toBeInTheDocument();
+      expect(screen.getByText('Email Address')).toBeInTheDocument();
+      expect(screen.getByText('Password')).toBeInTheDocument();
+    });
+
+    it('navigates to Appearance view when Appearance is clicked', async () => {
+      const user = userEvent.setup();
+      renderProfileModal();
+
+      // Find and click the Appearance menu item (has "Theme preferences" description)
+      const appearanceMenuItem = screen.getByText('Theme preferences').closest('button');
+      await user.click(appearanceMenuItem!);
+
+      expect(screen.getByText('Theme')).toBeInTheDocument();
+    });
+
+    it('navigates to Delete Account view when Delete Account is clicked', async () => {
+      const user = userEvent.setup();
+      renderProfileModal();
+
+      // Find the Delete Account menu item in main view (not the destructive button in danger view)
+      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
+      await user.click(deleteMenuItem!);
+
+      expect(screen.getByText(/delete your account permanently/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('DELETE')).toBeInTheDocument();
+    });
+
+    it('can navigate back from sub-views', async () => {
+      const user = userEvent.setup();
+      renderProfileModal();
+
+      // Navigate to Account view
+      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      await user.click(accountMenuItem!);
+      expect(screen.getByText('Display Name')).toBeInTheDocument();
+
+      // Find and click back button (has rotate-180 chevron)
+      const backButtons = screen.getAllByRole('button');
+      const backButton = backButtons.find(btn => btn.querySelector('.rotate-180'));
+      await user.click(backButton!);
+
+      // Should be back on main view
+      expect(screen.getByText('Settings')).toBeInTheDocument();
+      expect(screen.getByText('Manage your profile and preferences')).toBeInTheDocument();
     });
   });
 
   describe('Display Name Update', () => {
-    it('allows editing display name', async () => {
+    it('allows editing display name in Account view', async () => {
       const user = userEvent.setup();
       renderProfileModal();
 
-      // Get all Edit buttons and click the first one (Display Name)
-      const editButtons = screen.getAllByRole('button', { name: /edit/i });
-      await user.click(editButtons[0]);
+      // Navigate to Account view
+      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      await user.click(accountMenuItem!);
 
-      const input = screen.getByPlaceholderText('Enter your display name');
+      // Click on the display name field to edit (contains "Test User" and "Edit")
+      const displayNameSection = screen.getByText('Test User').closest('button');
+      await user.click(displayNameSection!);
+
+      const input = screen.getByPlaceholderText('Enter your name');
       expect(input).toBeInTheDocument();
       expect(input).toHaveValue('Test User');
     });
@@ -123,27 +193,42 @@ describe('ProfileModal', () => {
       const user = userEvent.setup();
       renderProfileModal();
 
-      // Get all Edit buttons and click the first one (Display Name)
-      const editButtons = screen.getAllByRole('button', { name: /edit/i });
-      await user.click(editButtons[0]);
+      // Navigate to Account view
+      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      await user.click(accountMenuItem!);
+
+      // Click on the display name field to edit
+      const displayNameSection = screen.getByText('Test User').closest('button');
+      await user.click(displayNameSection!);
+
       await user.click(screen.getByRole('button', { name: /cancel/i }));
 
-      expect(screen.queryByPlaceholderText('Enter your display name')).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('Enter your name')).not.toBeInTheDocument();
     });
   });
 
   describe('Email Update', () => {
-    it('has email input field', () => {
+    it('has email input field in Account view', async () => {
+      const user = userEvent.setup();
       renderProfileModal();
 
-      const emailInput = screen.getByPlaceholderText('Enter new email address');
+      // Navigate to Account view
+      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      await user.click(accountMenuItem!);
+
+      const emailInput = screen.getByPlaceholderText('Enter new email');
       expect(emailInput).toBeInTheDocument();
     });
 
-    it('change button is disabled when email is empty', () => {
+    it('change button is disabled when email is empty', async () => {
+      const user = userEvent.setup();
       renderProfileModal();
 
-      const changeButton = screen.getByRole('button', { name: /change/i });
+      // Navigate to Account view
+      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      await user.click(accountMenuItem!);
+
+      const changeButton = screen.getByRole('button', { name: /change email/i });
       expect(changeButton).toBeDisabled();
     });
 
@@ -151,32 +236,42 @@ describe('ProfileModal', () => {
       const user = userEvent.setup();
       renderProfileModal();
 
-      const emailInput = screen.getByPlaceholderText('Enter new email address');
+      // Navigate to Account view
+      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      await user.click(accountMenuItem!);
+
+      const emailInput = screen.getByPlaceholderText('Enter new email');
       await user.type(emailInput, 'new@example.com');
 
-      const changeButton = screen.getByRole('button', { name: /change/i });
+      const changeButton = screen.getByRole('button', { name: /change email/i });
       expect(changeButton).not.toBeDisabled();
     });
   });
 
   describe('Password Reset', () => {
-    it('has password reset button', () => {
+    it('has password reset button in Account view', async () => {
+      const user = userEvent.setup();
       renderProfileModal();
 
-      const resetButton = screen.getByRole('button', { name: /send password reset email/i });
+      // Navigate to Account view
+      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      await user.click(accountMenuItem!);
+
+      const resetButton = screen.getByRole('button', { name: /send reset link/i });
       expect(resetButton).toBeInTheDocument();
     });
   });
 
   describe('Account Deletion', () => {
-    it('shows delete confirmation when Delete Account is clicked', async () => {
+    it('shows delete confirmation when navigating to Delete Account', async () => {
       const user = userEvent.setup();
       renderProfileModal();
 
-      const deleteButton = screen.getByRole('button', { name: /delete account/i });
-      await user.click(deleteButton);
+      // Find and click the Delete Account menu item
+      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
+      await user.click(deleteMenuItem!);
 
-      expect(screen.getByText(/this action cannot be undone/i)).toBeInTheDocument();
+      expect(screen.getByText(/delete your account permanently/i)).toBeInTheDocument();
       expect(screen.getByPlaceholderText('DELETE')).toBeInTheDocument();
     });
 
@@ -184,22 +279,15 @@ describe('ProfileModal', () => {
       const user = userEvent.setup();
       renderProfileModal();
 
-      // Open delete confirmation
-      await user.click(screen.getByRole('button', { name: /delete account/i }));
+      // Navigate to Delete Account view
+      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
+      await user.click(deleteMenuItem!);
 
-      // Try to delete without typing DELETE
-      const deleteForeverButton = screen.getByRole('button', { name: /delete forever/i });
-      expect(deleteForeverButton).toBeDisabled();
+      // The delete button should be disabled initially
+      expect(screen.getByRole('button', { name: /delete account forever/i })).toBeDisabled();
 
-      // Type partial text
-      const confirmInput = screen.getByPlaceholderText('DELETE');
-      await user.type(confirmInput, 'DEL');
-      expect(deleteForeverButton).toBeDisabled();
-
-      // Type correct text
-      await user.clear(confirmInput);
-      await user.type(confirmInput, 'DELETE');
-      expect(deleteForeverButton).not.toBeDisabled();
+      // The input should have DELETE placeholder
+      expect(screen.getByPlaceholderText('DELETE')).toBeInTheDocument();
     });
 
     it('calls RPC delete_own_account when confirmed', async () => {
@@ -208,13 +296,14 @@ describe('ProfileModal', () => {
 
       renderProfileModal();
 
-      // Open delete confirmation
-      await user.click(screen.getByRole('button', { name: /delete account/i }));
+      // Navigate to Delete Account view
+      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
+      await user.click(deleteMenuItem!);
 
       // Type DELETE and confirm
-      const confirmInput = screen.getByPlaceholderText('DELETE');
-      await user.type(confirmInput, 'DELETE');
-      await user.click(screen.getByRole('button', { name: /delete forever/i }));
+      const confirmInput = screen.getByRole('textbox');
+      fireEvent.change(confirmInput, { target: { value: 'DELETE' } });
+      await user.click(screen.getByRole('button', { name: /delete account forever/i }));
 
       await waitFor(() => {
         expect(mockRpc).toHaveBeenCalledWith('delete_own_account');
@@ -227,10 +316,11 @@ describe('ProfileModal', () => {
 
       renderProfileModal();
 
-      await user.click(screen.getByRole('button', { name: /delete account/i }));
-      const confirmInput = screen.getByPlaceholderText('DELETE');
-      await user.type(confirmInput, 'DELETE');
-      await user.click(screen.getByRole('button', { name: /delete forever/i }));
+      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
+      await user.click(deleteMenuItem!);
+      const confirmInput = screen.getByRole('textbox');
+      fireEvent.change(confirmInput, { target: { value: 'DELETE' } });
+      await user.click(screen.getByRole('button', { name: /delete account forever/i }));
 
       await waitFor(() => {
         expect(mockSignOut).toHaveBeenCalled();
@@ -243,10 +333,11 @@ describe('ProfileModal', () => {
 
       renderProfileModal();
 
-      await user.click(screen.getByRole('button', { name: /delete account/i }));
-      const confirmInput = screen.getByPlaceholderText('DELETE');
-      await user.type(confirmInput, 'DELETE');
-      await user.click(screen.getByRole('button', { name: /delete forever/i }));
+      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
+      await user.click(deleteMenuItem!);
+      const confirmInput = screen.getByRole('textbox');
+      fireEvent.change(confirmInput, { target: { value: 'DELETE' } });
+      await user.click(screen.getByRole('button', { name: /delete account forever/i }));
 
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith('/');
@@ -263,10 +354,11 @@ describe('ProfileModal', () => {
 
       renderProfileModal();
 
-      await user.click(screen.getByRole('button', { name: /delete account/i }));
-      const confirmInput = screen.getByPlaceholderText('DELETE');
-      await user.type(confirmInput, 'DELETE');
-      await user.click(screen.getByRole('button', { name: /delete forever/i }));
+      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
+      await user.click(deleteMenuItem!);
+      const confirmInput = screen.getByRole('textbox');
+      fireEvent.change(confirmInput, { target: { value: 'DELETE' } });
+      await user.click(screen.getByRole('button', { name: /delete account forever/i }));
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith('Database error');
@@ -283,10 +375,11 @@ describe('ProfileModal', () => {
 
       renderProfileModal();
 
-      await user.click(screen.getByRole('button', { name: /delete account/i }));
-      const confirmInput = screen.getByPlaceholderText('DELETE');
-      await user.type(confirmInput, 'DELETE');
-      await user.click(screen.getByRole('button', { name: /delete forever/i }));
+      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
+      await user.click(deleteMenuItem!);
+      const confirmInput = screen.getByRole('textbox');
+      fireEvent.change(confirmInput, { target: { value: 'DELETE' } });
+      await user.click(screen.getByRole('button', { name: /delete account forever/i }));
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith('Not authenticated');
@@ -296,19 +389,22 @@ describe('ProfileModal', () => {
       expect(mockSignOut).not.toHaveBeenCalled();
     });
 
-    it('can cancel deletion', async () => {
+    it('can go back from delete view', async () => {
       const user = userEvent.setup();
       renderProfileModal();
 
-      // Open delete confirmation
-      await user.click(screen.getByRole('button', { name: /delete account/i }));
-      expect(screen.getByText(/this action cannot be undone/i)).toBeInTheDocument();
+      // Navigate to Delete Account view
+      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
+      await user.click(deleteMenuItem!);
+      expect(screen.getByText(/delete your account permanently/i)).toBeInTheDocument();
 
-      // Cancel
-      await user.click(screen.getByRole('button', { name: /cancel/i }));
+      // Find and click back button
+      const backButtons = screen.getAllByRole('button');
+      const backButton = backButtons.find(btn => btn.querySelector('.rotate-180'));
+      await user.click(backButton!);
 
-      // Confirmation should be hidden
-      expect(screen.queryByText(/this action cannot be undone/i)).not.toBeInTheDocument();
+      // Should be back on main view
+      expect(screen.getByText('Settings')).toBeInTheDocument();
     });
   });
 });

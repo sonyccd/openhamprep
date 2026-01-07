@@ -67,7 +67,7 @@ export function DashboardSidebar({
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
   const [licenseModalOpen, setLicenseModalOpen] = useState(false);
-  const [studyExpanded, setStudyExpanded] = useState(true);
+  const [studyExpanded, setStudyExpanded] = useState(false);
 
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
@@ -204,7 +204,16 @@ export function DashboardSidebar({
             isOnAdminPage={isOnAdminPage}
             isExpanded={studyExpanded}
             showExpanded={showExpanded}
-            onToggle={() => setStudyExpanded(!studyExpanded)}
+            onToggle={() => {
+              // If sidebar is collapsed, expand it and show study submenu
+              if (isCollapsed && onToggleCollapse) {
+                onToggleCollapse();
+                setStudyExpanded(true);
+              } else {
+                // Otherwise just toggle the study submenu
+                setStudyExpanded(!studyExpanded);
+              }
+            }}
             onNavClick={handleNavClick}
           />
 

@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageContainer } from "@/components/ui/page-container";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { motion } from "framer-motion";
 
 export function Glossary() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -86,7 +87,11 @@ export function Glossary() {
   return (
     <PageContainer width="wide" className="flex flex-col h-full">
       {/* Header */}
-      <div className="mb-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-4"
+      >
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <BookText className="w-6 h-6 text-primary" />
           Glossary
@@ -94,10 +99,15 @@ export function Glossary() {
         <p className="text-muted-foreground text-base mt-1">
           {terms.length} terms • Search or browse ham radio terminology
         </p>
-      </div>
+      </motion.div>
 
       {/* Search */}
-      <div className="relative mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="relative mb-6"
+      >
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Search terms or definitions..."
@@ -105,22 +115,28 @@ export function Glossary() {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
         />
-      </div>
+      </motion.div>
 
       {/* Terms List */}
-      <ScrollArea className="flex-1 -mx-2 px-2">
-        {filteredTerms.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            No terms found matching "{searchQuery}"
-          </div>
-        ) : (
-          <div className="space-y-6 pb-8">
-            {sortedKeys.map(letter => (
-              <div key={letter}>
-                <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 py-2">
-                  <span className="text-lg font-bold text-primary">{letter}</span>
-                </div>
-                <div className="space-y-2">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="flex-1 -mx-2 px-2"
+      >
+        <ScrollArea className="h-full">
+          {filteredTerms.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              No terms found matching "{searchQuery}"
+            </div>
+          ) : (
+            <div className="space-y-6 pb-8">
+              {sortedKeys.map((letter) => (
+                <div key={letter}>
+                  <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 py-2">
+                    <span className="text-lg font-bold text-primary">{letter}</span>
+                  </div>
+                  <div className="space-y-2">
                   {groupedTerms[letter].map(term => (
                     <Card
                       key={term.id}
@@ -153,12 +169,13 @@ export function Glossary() {
                       </CardContent>
                     </Card>
                   ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </ScrollArea>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
+      </motion.div>
     </PageContainer>
   );
 }

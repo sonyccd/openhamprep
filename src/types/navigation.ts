@@ -29,3 +29,7 @@ export const testTypes = [
   { id: 'general' as TestType, name: 'General', available: true },
   { id: 'extra' as TestType, name: 'Amateur Extra', available: true },
 ];
+
+// Topic quiz configuration
+// Users must score 80% or higher to complete a topic with associated questions
+export const TOPIC_QUIZ_PASSING_THRESHOLD = 0.8;

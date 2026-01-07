@@ -1,16 +1,19 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useToggleTopicComplete, useTopicCompleted } from "@/hooks/useTopics";
-import { CheckCircle2, Circle, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, Loader2, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
 interface TopicProgressButtonProps {
   topicId: string;
+  questionCount: number;
   className?: string;
 }
 
 export function TopicProgressButton({
   topicId,
+  questionCount,
   className,
 }: TopicProgressButtonProps) {
   const { user } = useAuth();
@@ -25,6 +28,35 @@ export function TopicProgressButton({
     toggleComplete({ topicId, isCompleted: !isCompleted });
   };
 
+  // Topics with questions: show status badge only (no manual toggle)
+  if (questionCount > 0) {
+    return (
+      <Badge
+        variant={isCompleted ? "default" : "secondary"}
+        className={cn(
+          "gap-1.5 py-1.5 px-3 text-sm font-medium",
+          isCompleted
+            ? "bg-success text-success-foreground hover:bg-success/90"
+            : "bg-muted text-muted-foreground",
+          className
+        )}
+      >
+        {isCompleted ? (
+          <>
+            <CheckCircle2 className="w-4 h-4" />
+            Completed
+          </>
+        ) : (
+          <>
+            <Target className="w-4 h-4" />
+            Score 80% to complete
+          </>
+        )}
+      </Badge>
+    );
+  }
+
+  // Topics without questions: manual toggle button (existing behavior)
   return (
     <Button
       variant={isCompleted ? "default" : "outline"}
