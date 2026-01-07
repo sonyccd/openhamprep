@@ -11,7 +11,9 @@ export type View =
   | 'glossary-flashcards'
   | 'find-test-site'
   | 'topics'
-  | 'topic-detail';
+  | 'topic-detail'
+  | 'lessons'
+  | 'lesson-detail';
 
 export type TestType = 'technician' | 'general' | 'extra';
 

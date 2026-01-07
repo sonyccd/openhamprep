@@ -33,6 +33,8 @@ import { WeeklyGoalsModal } from '@/components/WeeklyGoalsModal';
 import { ExamSessionSearch } from '@/components/ExamSessionSearch';
 import { TopicGallery } from '@/components/TopicGallery';
 import { TopicDetailPage } from '@/components/TopicDetailPage';
+import { LessonGallery } from '@/components/LessonGallery';
+import { LessonDetailPage } from '@/components/LessonDetailPage';
 import { TestType, testTypes, View } from '@/types/navigation';
 export default function Dashboard() {
   const {
@@ -51,6 +53,9 @@ export default function Dashboard() {
     setReviewingTestId,
     selectedTopicSlug,
     navigateToTopics,
+    selectedLessonSlug,
+    navigateToLessons,
+    navigateBackFromTopic,
   } = useAppNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
   // Persist selectedTest in localStorage
@@ -299,7 +304,13 @@ export default function Dashboard() {
       return <TopicGallery testType={selectedTest} />;
     }
     if (currentView === 'topic-detail' && selectedTopicSlug) {
-      return <TopicDetailPage slug={selectedTopicSlug} onBack={navigateToTopics} />;
+      return <TopicDetailPage slug={selectedTopicSlug} onBack={navigateBackFromTopic} />;
+    }
+    if (currentView === 'lessons') {
+      return <LessonGallery testType={selectedTest} />;
+    }
+    if (currentView === 'lesson-detail' && selectedLessonSlug) {
+      return <LessonDetailPage slug={selectedLessonSlug} onBack={navigateToLessons} />;
     }
     if (authLoading || testsLoading || attemptsLoading) {
       return <div className="min-h-screen bg-background flex items-center justify-center">

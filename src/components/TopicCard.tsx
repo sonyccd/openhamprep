@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, BookOpen } from "lucide-react";
+import { CheckCircle2, FileText } from "lucide-react";
 import { Topic } from "@/hooks/useTopics";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +29,7 @@ export function TopicCard({ topic, isCompleted = false, onClick }: TopicCardProp
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-            <BookOpen className="w-12 h-12 text-primary/40" />
+            <FileText className="w-12 h-12 text-primary/40" />
           </div>
         )}
 

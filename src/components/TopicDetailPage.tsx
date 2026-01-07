@@ -2,6 +2,7 @@ import { useTopic, useTopicContent, useTopicQuestions, useTopicCompleted, useTog
 import { useQuestionsByIds, Question } from "@/hooks/useQuestions";
 import { useAuth } from "@/hooks/useAuth";
 import { useProgress } from "@/hooks/useProgress";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { TopicTableOfContents } from "./TopicTableOfContents";
 import { TopicContent } from "./TopicContent";
 import { TopicResourcePanel } from "./TopicResourcePanel";
@@ -17,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, BookOpen, PlayCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, PlayCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -32,6 +33,7 @@ interface TopicDetailPageProps {
 export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { topicSource } = useAppNavigation();
   const { data: topic, isLoading: topicLoading, error: topicError } = useTopic(slug);
   const { data: content, isLoading: contentLoading } = useTopicContent(topic?.content_path);
   const { data: topicQuestions } = useTopicQuestions(topic?.id);
@@ -116,14 +118,14 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
     return (
       <PageContainer width="full" className="flex items-center justify-center">
         <div className="text-center">
-          <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-lg font-medium text-foreground mb-2">Topic not found</h2>
           <p className="text-muted-foreground mb-4">
             The topic you're looking for doesn't exist or has been removed.
           </p>
           <Button onClick={onBack}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Topics
+            {topicSource === 'lesson' ? 'Back to Lesson' : 'Back to Topics'}
           </Button>
         </div>
       </PageContainer>
@@ -150,7 +152,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
             className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Topics
+            {topicSource === 'lesson' ? 'Back to Lesson' : 'Back to Topics'}
           </Button>
 
           {/* Title and metadata */}

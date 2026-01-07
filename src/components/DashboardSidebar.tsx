@@ -1,7 +1,6 @@
 import {
   Play,
   Zap,
-  BookOpen,
   AlertTriangle,
   Bookmark,
   BarChart3,
@@ -9,10 +8,13 @@ import {
   BookText,
   MapPin,
   GraduationCap,
-  Library,
   Book,
-  Layers,
   Search,
+  Route,
+  Brain,
+  FileText,
+  LayoutGrid,
+  Square,
 } from 'lucide-react';
 import { getModifierKey } from '@/lib/searchUtils';
 import { cn } from '@/lib/utils';
@@ -40,6 +42,7 @@ import {
   SidebarLicenseSelector,
   SidebarNavItem,
   SidebarStudyGroup,
+  SidebarLearnGroup,
   SidebarFooter,
   type NavItem,
   type NavGroup,
@@ -68,30 +71,41 @@ export function DashboardSidebar({
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
   const [licenseModalOpen, setLicenseModalOpen] = useState(false);
   const [studyExpanded, setStudyExpanded] = useState(false);
+  const [learnExpanded, setLearnExpanded] = useState(false);
 
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const location = useLocation();
   const isOnAdminPage = location.pathname === '/admin';
 
-  // Top-level nav items (before Study group)
+  // Top-level nav items (before Learn group)
   const topNavItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { id: 'practice-test', label: 'Practice Test', icon: Play, disabled: !isTestAvailable },
-    { id: 'topics', label: 'Topics', icon: Library },
   ];
+
+  // Learn group items (Topics and Lessons)
+  const learnGroup: NavGroup = {
+    id: 'learn',
+    label: 'Learn',
+    icon: GraduationCap,
+    items: [
+      { id: 'topics', label: 'Topics', icon: FileText },
+      { id: 'lessons', label: 'Lessons', icon: Route },
+    ],
+  };
 
   // Study group items
   const studyGroup: NavGroup = {
     id: 'study',
     label: 'Study',
-    icon: GraduationCap,
+    icon: Brain,
     items: [
       { id: 'random-practice', label: 'Random Practice', icon: Zap, disabled: !isTestAvailable },
       {
         id: 'subelement-practice',
         label: 'By Subelement',
-        icon: BookOpen,
+        icon: LayoutGrid,
         disabled: !isTestAvailable,
       },
       {
@@ -109,7 +123,7 @@ export function DashboardSidebar({
         disabled: !isTestAvailable || weakQuestionCount === 0,
       },
       { id: 'bookmarks', label: 'Bookmarked', icon: Bookmark, badge: bookmarkCount, badgeAriaLabel: bookmarkCount === 1 ? '1 bookmark' : `${bookmarkCount} bookmarks` },
-      { id: 'glossary-flashcards', label: 'Study Terms', icon: Layers },
+      { id: 'glossary-flashcards', label: 'Flashcards', icon: Square },
     ],
   };
 
@@ -186,7 +200,7 @@ export function DashboardSidebar({
 
         {/* Navigation */}
         <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-          {/* Top nav items: Dashboard, Practice Test, Topics */}
+          {/* Top nav items: Dashboard, Practice Test */}
           {topNavItems.map((item) => (
             <SidebarNavItem
               key={item.id}
@@ -196,6 +210,26 @@ export function DashboardSidebar({
               onClick={() => handleNavClick(item.id, item.disabled)}
             />
           ))}
+
+          {/* Learn Group - Collapsible (Topics & Lessons) */}
+          <SidebarLearnGroup
+            group={learnGroup}
+            currentView={currentView}
+            isOnAdminPage={isOnAdminPage}
+            isExpanded={learnExpanded}
+            showExpanded={showExpanded}
+            onToggle={() => {
+              // If sidebar is collapsed, expand it and show learn submenu
+              if (isCollapsed && onToggleCollapse) {
+                onToggleCollapse();
+                setLearnExpanded(true);
+              } else {
+                // Otherwise just toggle the learn submenu
+                setLearnExpanded(!learnExpanded);
+              }
+            }}
+            onNavClick={handleNavClick}
+          />
 
           {/* Study Group - Collapsible */}
           <SidebarStudyGroup

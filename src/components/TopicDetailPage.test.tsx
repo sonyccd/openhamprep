@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { TopicDetailPage } from './TopicDetailPage';
 import { Topic } from '@/hooks/useTopics';
+import { AppNavigationProvider } from '@/hooks/useAppNavigation';
 
 // Mock framer-motion
 vi.mock('framer-motion', () => ({
@@ -123,7 +124,9 @@ describe('TopicDetailPage', () => {
     return render(
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
-          <TopicDetailPage slug={slug} onBack={mockOnBack} />
+          <AppNavigationProvider>
+            <TopicDetailPage slug={slug} onBack={mockOnBack} />
+          </AppNavigationProvider>
         </QueryClientProvider>
       </BrowserRouter>
     );

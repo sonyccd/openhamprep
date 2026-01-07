@@ -214,7 +214,7 @@ describe('AppLayout', () => {
         // DashboardSidebar should show top-level nav items
         expect(screen.getByText('Dashboard')).toBeInTheDocument();
         expect(screen.getByText('Practice Test')).toBeInTheDocument();
-        expect(screen.getByText('Topics')).toBeInTheDocument();
+        expect(screen.getByText('Learn')).toBeInTheDocument();
         expect(screen.getByText('Study')).toBeInTheDocument();
       });
     });
@@ -266,9 +266,9 @@ describe('AppLayout', () => {
         { wrapper: createWrapper() }
       );
 
-      // Check that sidebar nav items are visible (Topics is a top-level item)
+      // Check that sidebar nav items are visible (Learn is a top-level item that contains Topics)
       await waitFor(() => {
-        expect(screen.getByText('Topics')).toBeInTheDocument();
+        expect(screen.getByText('Learn')).toBeInTheDocument();
       });
 
       // Note: The actual click handling is in DashboardSidebar which is already tested

@@ -47,8 +47,8 @@ describe('TopicCard', () => {
 
     it('should show placeholder when no thumbnail', () => {
       render(<TopicCard topic={mockTopic} onClick={mockOnClick} />);
-      // The BookOpen icon is rendered as placeholder
-      expect(document.querySelector('.lucide-book-open')).toBeInTheDocument();
+      // The FileText icon is rendered as placeholder
+      expect(document.querySelector('.lucide-file-text')).toBeInTheDocument();
     });
 
     it('should show thumbnail image when provided', () => {

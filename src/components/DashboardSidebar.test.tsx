@@ -209,11 +209,18 @@ describe('DashboardSidebar', () => {
       // Top-level nav items (always visible)
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
       expect(screen.getByText('Practice Test')).toBeInTheDocument();
-      expect(screen.getByText('Topics')).toBeInTheDocument();
+      expect(screen.getByText('Learn')).toBeInTheDocument();
       expect(screen.getByText('Study')).toBeInTheDocument();
       expect(screen.getByText('Glossary')).toBeInTheDocument();
       expect(screen.getByText('Find Test Site')).toBeInTheDocument();
-      expect(screen.getByText('Forum')).toBeInTheDocument();
+
+      // Expand Learn menu to see Topics and Lessons
+      await user.click(screen.getByText('Learn'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Topics')).toBeInTheDocument();
+      });
+      expect(screen.getByText('Lessons')).toBeInTheDocument();
 
       // Expand Study menu to see study group items
       await user.click(screen.getByText('Study'));
@@ -225,7 +232,7 @@ describe('DashboardSidebar', () => {
       expect(screen.getByText('By Chapter')).toBeInTheDocument();
       expect(screen.getByText('Weak Areas')).toBeInTheDocument();
       expect(screen.getByText('Bookmarked')).toBeInTheDocument();
-      expect(screen.getByText('Study Terms')).toBeInTheDocument();
+      expect(screen.getByText('Flashcards')).toBeInTheDocument();
     });
 
     it('calls onViewChange when navigation item clicked', async () => {

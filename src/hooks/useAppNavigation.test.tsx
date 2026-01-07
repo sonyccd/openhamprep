@@ -212,4 +212,189 @@ describe('useAppNavigation', () => {
       expect(result1.current.reviewingTestId).toBe(null);
     });
   });
+
+  describe('lesson navigation', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <AppNavigationProvider>{children}</AppNavigationProvider>
+    );
+
+    it('provides initial selectedLessonSlug as null', () => {
+      const { result } = renderHook(() => useAppNavigation(), { wrapper });
+
+      expect(result.current.selectedLessonSlug).toBe(null);
+    });
+
+    it('navigateToLesson sets lesson slug and view', () => {
+      const { result } = renderHook(() => useAppNavigation(), { wrapper });
+
+      act(() => {
+        result.current.navigateToLesson('getting-started');
+      });
+
+      expect(result.current.selectedLessonSlug).toBe('getting-started');
+      expect(result.current.currentView).toBe('lesson-detail');
+    });
+
+    it('navigateToLessons clears lesson slug and sets view', () => {
+      const { result } = renderHook(() => useAppNavigation(), { wrapper });
+
+      // First navigate to a lesson
+      act(() => {
+        result.current.navigateToLesson('getting-started');
+      });
+      expect(result.current.selectedLessonSlug).toBe('getting-started');
+
+      // Then navigate back to lessons list
+      act(() => {
+        result.current.navigateToLessons();
+      });
+
+      expect(result.current.selectedLessonSlug).toBe(null);
+      expect(result.current.currentView).toBe('lessons');
+    });
+  });
+
+  describe('topic navigation', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <AppNavigationProvider>{children}</AppNavigationProvider>
+    );
+
+    it('provides initial selectedTopicSlug as null', () => {
+      const { result } = renderHook(() => useAppNavigation(), { wrapper });
+
+      expect(result.current.selectedTopicSlug).toBe(null);
+    });
+
+    it('provides initial topicSource as topics', () => {
+      const { result } = renderHook(() => useAppNavigation(), { wrapper });
+
+      expect(result.current.topicSource).toBe('topics');
+    });
+
+    it('navigateToTopic sets topic slug, source, and view', () => {
+      const { result } = renderHook(() => useAppNavigation(), { wrapper });
+
+      act(() => {
+        result.current.navigateToTopic('amateur-radio-basics');
+      });
+
+      expect(result.current.selectedTopicSlug).toBe('amateur-radio-basics');
+      expect(result.current.topicSource).toBe('topics');
+      expect(result.current.currentView).toBe('topic-detail');
+    });
+
+    it('navigateToTopic with lesson source sets topicSource to lesson', () => {
+      const { result } = renderHook(() => useAppNavigation(), { wrapper });
+
+      act(() => {
+        result.current.navigateToTopic('amateur-radio-basics', 'lesson');
+      });
+
+      expect(result.current.selectedTopicSlug).toBe('amateur-radio-basics');
+      expect(result.current.topicSource).toBe('lesson');
+      expect(result.current.currentView).toBe('topic-detail');
+    });
+
+    it('navigateToTopics clears topic slug and sets view', () => {
+      const { result } = renderHook(() => useAppNavigation(), { wrapper });
+
+      // First navigate to a topic
+      act(() => {
+        result.current.navigateToTopic('amateur-radio-basics');
+      });
+
+      // Then navigate back
+      act(() => {
+        result.current.navigateToTopics();
+      });
+
+      expect(result.current.selectedTopicSlug).toBe(null);
+      expect(result.current.currentView).toBe('topics');
+    });
+  });
+
+  describe('navigateBackFromTopic', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <AppNavigationProvider>{children}</AppNavigationProvider>
+    );
+
+    it('returns to topics list when source is topics', () => {
+      const { result } = renderHook(() => useAppNavigation(), { wrapper });
+
+      // Navigate to topic from topics list
+      act(() => {
+        result.current.navigateToTopic('amateur-radio-basics', 'topics');
+      });
+
+      // Navigate back
+      act(() => {
+        result.current.navigateBackFromTopic();
+      });
+
+      expect(result.current.currentView).toBe('topics');
+      expect(result.current.selectedTopicSlug).toBe(null);
+    });
+
+    it('returns to lesson detail when source is lesson', () => {
+      const { result } = renderHook(() => useAppNavigation(), { wrapper });
+
+      // First set up a lesson
+      act(() => {
+        result.current.navigateToLesson('getting-started');
+      });
+
+      // Navigate to topic from lesson
+      act(() => {
+        result.current.navigateToTopic('amateur-radio-basics', 'lesson');
+      });
+
+      // Navigate back
+      act(() => {
+        result.current.navigateBackFromTopic();
+      });
+
+      expect(result.current.currentView).toBe('lesson-detail');
+      expect(result.current.selectedTopicSlug).toBe(null);
+      expect(result.current.selectedLessonSlug).toBe('getting-started');
+    });
+
+    it('returns to topics list when source is lesson but no lesson slug', () => {
+      const { result } = renderHook(() => useAppNavigation(), { wrapper });
+
+      // Navigate to topic with lesson source but without setting lesson slug first
+      act(() => {
+        result.current.navigateToTopic('amateur-radio-basics', 'lesson');
+      });
+
+      // Navigate back - should go to topics since no lesson slug is set
+      act(() => {
+        result.current.navigateBackFromTopic();
+      });
+
+      expect(result.current.currentView).toBe('topics');
+    });
+  });
+
+  describe('glossary navigation', () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <AppNavigationProvider>{children}</AppNavigationProvider>
+    );
+
+    it('provides initial selectedGlossaryTermId as null', () => {
+      const { result } = renderHook(() => useAppNavigation(), { wrapper });
+
+      expect(result.current.selectedGlossaryTermId).toBe(null);
+    });
+
+    it('navigateToGlossaryTerm sets term id and view', () => {
+      const { result } = renderHook(() => useAppNavigation(), { wrapper });
+
+      act(() => {
+        result.current.navigateToGlossaryTerm('term-123');
+      });
+
+      expect(result.current.selectedGlossaryTermId).toBe('term-123');
+      expect(result.current.currentView).toBe('glossary');
+    });
+  });
 });
