@@ -205,8 +205,8 @@ describe('SidebarLearnGroup', () => {
     // Use getAllByText since tooltip duplicates content for accessibility
     const learnTexts = await screen.findAllByText('Learn');
     expect(learnTexts.length).toBeGreaterThan(0);
-    const topicsLessonsTexts = await screen.findAllByText('Topics, Lessons');
-    expect(topicsLessonsTexts.length).toBeGreaterThan(0);
+    const lessonsTopicsTexts = await screen.findAllByText('Lessons, Topics');
+    expect(lessonsTopicsTexts.length).toBeGreaterThan(0);
   });
 
   it('calls onToggle when collapsed icon is clicked', async () => {

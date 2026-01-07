@@ -126,11 +126,31 @@ export function TopicQuestionManager({ topicId }: TopicQuestionManagerProps) {
     }
   };
 
+  // Parse search term - support comma-separated list of question IDs
+  // Note: Comma-separated mode only searches display_name (ID-based),
+  // while single-term mode searches both display_name and question text
+  const searchTerms = searchTerm.includes(",")
+    ? searchTerm
+        .split(",")
+        .map((term) => term.trim().toLowerCase())
+        .filter((term) => term.length > 0)
+    : null;
+
   // Filter questions by search term and test type
   const filteredQuestions = allQuestions.filter((q) => {
-    const matchesSearch =
-      q.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      q.question.toLowerCase().includes(searchTerm.toLowerCase());
+    let matchesSearch: boolean;
+
+    if (searchTerms) {
+      // Multi-ID search: match if display_name contains any of the comma-separated terms
+      matchesSearch = searchTerms.some((term) =>
+        q.display_name.toLowerCase().includes(term)
+      );
+    } else {
+      // Single term search: match display_name or question text
+      matchesSearch =
+        q.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        q.question.toLowerCase().includes(searchTerm.toLowerCase());
+    }
 
     const matchesTestType =
       testTypeFilter === "all" ||
@@ -165,7 +185,7 @@ export function TopicQuestionManager({ topicId }: TopicQuestionManagerProps) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search questions by ID or text..."
+            placeholder="Search or paste IDs (comma-separated)..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"

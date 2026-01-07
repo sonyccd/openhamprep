@@ -84,14 +84,14 @@ export function DashboardSidebar({
     { id: 'practice-test', label: 'Practice Test', icon: Play, disabled: !isTestAvailable },
   ];
 
-  // Learn group items (Topics and Lessons)
+  // Learn group items (Lessons and Topics)
   const learnGroup: NavGroup = {
     id: 'learn',
     label: 'Learn',
     icon: GraduationCap,
     items: [
-      { id: 'topics', label: 'Topics', icon: FileText },
       { id: 'lessons', label: 'Lessons', icon: Route },
+      { id: 'topics', label: 'Topics', icon: FileText },
     ],
   };
 
