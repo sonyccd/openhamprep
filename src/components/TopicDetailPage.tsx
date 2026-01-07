@@ -1,6 +1,7 @@
 import { useTopic, useTopicContent, useTopicQuestions, useTopicCompleted, useToggleTopicComplete } from "@/hooks/useTopics";
-import { useQuestionsByIds } from "@/hooks/useQuestions";
+import { useQuestionsByIds, Question } from "@/hooks/useQuestions";
 import { useAuth } from "@/hooks/useAuth";
+import { useProgress } from "@/hooks/useProgress";
 import { TopicTableOfContents } from "./TopicTableOfContents";
 import { TopicContent } from "./TopicContent";
 import { TopicResourcePanel } from "./TopicResourcePanel";
@@ -21,6 +22,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { PageContainer } from "@/components/ui/page-container";
+import { TOPIC_QUIZ_PASSING_THRESHOLD } from "@/types/navigation";
 
 interface TopicDetailPageProps {
   slug: string;
@@ -46,6 +48,9 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   // Hook for marking topic complete
   const { mutate: toggleComplete } = useToggleTopicComplete();
 
+  // Hook for saving question attempts
+  const { saveRandomAttempt } = useProgress();
+
   const handleStartQuiz = () => {
     setIsQuizOpen(true);
   };
@@ -59,6 +64,10 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
 
   const handleCloseQuiz = () => {
     setIsQuizOpen(false);
+  };
+
+  const handleSaveAttempt = (question: Question, selectedAnswer: "A" | "B" | "C" | "D") => {
+    saveRandomAttempt(question, selectedAnswer, 'topic_quiz');
   };
 
   const handleQuestionClick = (questionId: string) => {
@@ -265,8 +274,9 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
             <TopicQuiz
               questions={fullQuestions}
               onComplete={handleQuizComplete}
-              onCancel={handleCloseQuiz}
-              passingThreshold={0.8}
+              onDone={handleCloseQuiz}
+              onSaveAttempt={handleSaveAttempt}
+              passingThreshold={TOPIC_QUIZ_PASSING_THRESHOLD}
             />
           )}
         </DialogContent>

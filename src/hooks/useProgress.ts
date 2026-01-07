@@ -93,7 +93,7 @@ export function useProgress() {
   const saveRandomAttempt = async (
     question: Question,
     selectedAnswer: 'A' | 'B' | 'C' | 'D',
-    attemptType: 'random_practice' | 'weak_questions' | 'subelement_practice' | 'chapter_practice' = 'random_practice'
+    attemptType: 'random_practice' | 'weak_questions' | 'subelement_practice' | 'chapter_practice' | 'topic_quiz' = 'random_practice'
   ) => {
     if (!user) return;
 

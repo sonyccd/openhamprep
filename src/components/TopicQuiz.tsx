@@ -13,11 +13,13 @@ import {
   Trophy,
   RotateCcw,
 } from "lucide-react";
+import { TOPIC_QUIZ_PASSING_THRESHOLD } from "@/types/navigation";
 
 interface TopicQuizProps {
   questions: Question[];
   onComplete: (passed: boolean, score: number, totalQuestions: number) => void;
-  onCancel: () => void;
+  onDone: () => void;
+  onSaveAttempt?: (question: Question, selectedAnswer: "A" | "B" | "C" | "D") => void;
   passingThreshold?: number;
 }
 
@@ -26,8 +28,9 @@ type QuizMode = "quiz" | "results";
 export function TopicQuiz({
   questions,
   onComplete,
-  onCancel,
-  passingThreshold = 0.8,
+  onDone,
+  onSaveAttempt,
+  passingThreshold = TOPIC_QUIZ_PASSING_THRESHOLD,
 }: TopicQuizProps) {
   const [mode, setMode] = useState<QuizMode>("quiz");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -75,6 +78,14 @@ export function TopicQuiz({
   };
 
   const handleSubmit = () => {
+    // Save all question attempts before showing results
+    if (onSaveAttempt) {
+      questions.forEach((q) => {
+        if (answers[q.id]) {
+          onSaveAttempt(q, answers[q.id]);
+        }
+      });
+    }
     setMode("results");
     onComplete(results.passed, results.correctCount, questions.length);
   };
@@ -184,6 +195,7 @@ export function TopicQuiz({
             onClick={handlePrevious}
             disabled={currentIndex === 0}
             className="gap-2"
+            aria-label={`Go to previous question (${currentIndex} of ${questions.length})`}
           >
             <ChevronLeft className="w-4 h-4" />
             Previous
@@ -191,7 +203,11 @@ export function TopicQuiz({
 
           <div className="flex gap-2">
             {currentIndex < questions.length - 1 ? (
-              <Button onClick={handleNext} className="gap-2">
+              <Button
+                onClick={handleNext}
+                className="gap-2"
+                aria-label={`Go to next question (${currentIndex + 2} of ${questions.length})`}
+              >
                 Next
                 <ChevronRight className="w-4 h-4" />
               </Button>
@@ -200,6 +216,7 @@ export function TopicQuiz({
                 onClick={handleSubmit}
                 disabled={!allAnswered}
                 className="gap-2"
+                aria-label={`Submit quiz with ${answeredCount} of ${questions.length} questions answered`}
               >
                 Submit Quiz
                 <CheckCircle2 className="w-4 h-4" />
@@ -309,7 +326,7 @@ export function TopicQuiz({
           <RotateCcw className="w-4 h-4" />
           Try Again
         </Button>
-        <Button onClick={onCancel}>Done</Button>
+        <Button onClick={onDone}>Done</Button>
       </div>
     </div>
   );
