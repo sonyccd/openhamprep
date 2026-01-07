@@ -12,6 +12,7 @@ import {
   XCircle,
   Trophy,
   RotateCcw,
+  Loader2,
 } from "lucide-react";
 import { TOPIC_QUIZ_PASSING_THRESHOLD } from "@/types/navigation";
 
@@ -19,7 +20,7 @@ interface TopicQuizProps {
   questions: Question[];
   onComplete: (passed: boolean, score: number, totalQuestions: number) => void;
   onDone: () => void;
-  onSaveAttempt?: (question: Question, selectedAnswer: "A" | "B" | "C" | "D") => void;
+  onSaveAttempt?: (question: Question, selectedAnswer: "A" | "B" | "C" | "D") => void | Promise<void>;
   passingThreshold?: number;
 }
 
@@ -37,6 +38,7 @@ export function TopicQuiz({
   const [answers, setAnswers] = useState<Record<string, "A" | "B" | "C" | "D">>(
     {}
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const options = ["A", "B", "C", "D"] as const;
   const currentQuestion = questions[currentIndex];
@@ -77,17 +79,23 @@ export function TopicQuiz({
     }
   };
 
-  const handleSubmit = () => {
-    // Save all question attempts before showing results
-    if (onSaveAttempt) {
-      questions.forEach((q) => {
-        if (answers[q.id]) {
-          onSaveAttempt(q, answers[q.id]);
-        }
-      });
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      // Save all question attempts before showing results
+      if (onSaveAttempt) {
+        // Fire all saves in parallel and wait for completion
+        await Promise.all(
+          questions
+            .filter((q) => answers[q.id])
+            .map((q) => onSaveAttempt(q, answers[q.id]))
+        );
+      }
+      setMode("results");
+      onComplete(results.passed, results.correctCount, questions.length);
+    } finally {
+      setIsSubmitting(false);
     }
-    setMode("results");
-    onComplete(results.passed, results.correctCount, questions.length);
   };
 
   const handleRetry = () => {
@@ -214,12 +222,21 @@ export function TopicQuiz({
             ) : (
               <Button
                 onClick={handleSubmit}
-                disabled={!allAnswered}
+                disabled={!allAnswered || isSubmitting}
                 className="gap-2"
                 aria-label={`Submit quiz with ${answeredCount} of ${questions.length} questions answered`}
               >
-                Submit Quiz
-                <CheckCircle2 className="w-4 h-4" />
+                {isSubmitting ? (
+                  <>
+                    Submitting
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  </>
+                ) : (
+                  <>
+                    Submit Quiz
+                    <CheckCircle2 className="w-4 h-4" />
+                  </>
+                )}
               </Button>
             )}
           </div>

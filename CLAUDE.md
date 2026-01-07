@@ -199,7 +199,9 @@ When saving question attempts, use these `attempt_type` values:
 - `'practice_test'` - From full 35-question exam simulation
 - `'random_practice'` - From random practice mode
 - `'subelement_practice'` - From subelement-focused study
+- `'chapter_practice'` - From ARRL chapter-focused study
 - `'weak_questions'` - From weak questions review
+- `'topic_quiz'` - From topic mastery quizzes (80% required to complete topic)
 
 ## Local Development Setup
 
