@@ -112,14 +112,40 @@ Wrap up the topic with a brief summary of what was covered.
       setContent(newContent);
       setSavedContent(newContent);
       setHasChanges(false);
-      // Update editor content programmatically
-      editorRef.current?.setMarkdown(newContent);
+      // Update editor content programmatically if ref is available
+      // Use setTimeout to ensure MDXEditor has mounted before setting markdown
+      if (editorRef.current) {
+        editorRef.current.setMarkdown(newContent);
+      } else {
+        // Editor not ready yet, schedule update for next tick
+        setTimeout(() => {
+          editorRef.current?.setMarkdown(newContent);
+        }, 0);
+      }
       prevTopicIdRef.current = topicId;
     }
   }, [topicId, initialContentProp, topicSlug]);
 
+  // Allowed image MIME types for upload validation
+  const ALLOWED_IMAGE_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/svg+xml",
+  ];
+
   // Image upload handler for Supabase Storage (images still go to storage)
   const imageUploadHandler = async (image: File): Promise<string> => {
+    // Validate MIME type to prevent uploading non-image files
+    if (!ALLOWED_IMAGE_TYPES.includes(image.type)) {
+      const error = new Error(
+        `Invalid file type: ${image.type}. Allowed types: JPEG, PNG, GIF, WebP, SVG`
+      );
+      toast.error(error.message);
+      throw error;
+    }
+
     const fileExt = image.name.split(".").pop();
     const fileName = `${crypto.randomUUID()}.${fileExt}`;
     const filePath = `topic-images/${fileName}`;
