@@ -276,7 +276,7 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
           <TopicMarkdownEditor
             topicId={topic.id}
             topicSlug={freshTopic?.slug || topic.slug}
-            contentPath={freshTopic?.content_path || topic.content_path}
+            initialContent={freshTopic?.content || topic.content}
           />
         </TabsContent>
 

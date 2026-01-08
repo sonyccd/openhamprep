@@ -57,6 +57,7 @@ const mockTopic: Topic = {
   is_published: true,
   license_types: ['technician', 'general'],
   content_path: 'articles/amateur-radio-basics.md',
+  content: '# Amateur Radio Basics\n\nThis is the content.',
   edit_history: [],
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
@@ -69,12 +70,8 @@ const mockTopic: Topic = {
   ],
 };
 
-const mockContent = '# Amateur Radio Basics\n\nThis is the content.';
-
 let mockTopicData: Topic | null = mockTopic;
-let mockContentData: string | null = mockContent;
 let mockTopicLoading = false;
-let mockContentLoading = false;
 let mockTopicError: Error | null = null;
 
 vi.mock('@/hooks/useTopics', () => ({
@@ -82,10 +79,6 @@ vi.mock('@/hooks/useTopics', () => ({
     data: mockTopicData,
     isLoading: mockTopicLoading,
     error: mockTopicError,
-  }),
-  useTopicContent: () => ({
-    data: mockContentData,
-    isLoading: mockContentLoading,
   }),
   useTopicQuestions: () => ({
     data: [],
@@ -135,9 +128,7 @@ describe('TopicDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockTopicData = mockTopic;
-    mockContentData = mockContent;
     mockTopicLoading = false;
-    mockContentLoading = false;
     mockTopicError = null;
   });
 
@@ -244,8 +235,8 @@ describe('TopicDetailPage', () => {
   });
 
   describe('Default Content', () => {
-    it('should show default content when no markdown is available', () => {
-      mockContentData = null;
+    it('should show default content when topic has no content', () => {
+      mockTopicData = { ...mockTopic, content: null };
       renderComponent();
 
       const content = screen.getByTestId('topic-content');
@@ -254,23 +245,11 @@ describe('TopicDetailPage', () => {
     });
 
     it('should show "Content coming soon" message when no content and no description', () => {
-      mockContentData = null;
-      mockTopicData = { ...mockTopic, description: null };
+      mockTopicData = { ...mockTopic, content: null, description: null };
       renderComponent();
 
       const content = screen.getByTestId('topic-content');
       expect(content.textContent).toContain('Content coming soon');
-    });
-  });
-
-  describe('Content Loading', () => {
-    it('should show skeleton when content is loading', () => {
-      mockContentLoading = true;
-      const { container } = renderComponent();
-
-      // The content area should show loading skeleton
-      const skeletons = container.querySelectorAll('[class*="animate-pulse"]');
-      expect(skeletons.length).toBeGreaterThan(0);
     });
   });
 

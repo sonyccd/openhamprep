@@ -46,6 +46,7 @@ const mockTopics: Topic[] = [
     is_published: true,
     license_types: ['technician'],
     content_path: 'articles/amateur-radio-basics.md',
+    content: '# Amateur Radio Basics\n\nThis is the content for amateur radio basics.',
     edit_history: [],
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
@@ -62,6 +63,7 @@ const mockTopics: Topic[] = [
     is_published: true,
     license_types: ['technician', 'general'],
     content_path: 'articles/frequency-bands.md',
+    content: '# Frequency Bands\n\nLearn about frequency allocations.',
     edit_history: [],
     created_at: '2024-01-02T00:00:00Z',
     updated_at: '2024-01-02T00:00:00Z',
@@ -78,6 +80,7 @@ const mockTopics: Topic[] = [
     is_published: false, // Unpublished
     license_types: ['extra'],
     content_path: 'articles/advanced-operations.md',
+    content: null, // Topic without content yet
     edit_history: [],
     created_at: '2024-01-03T00:00:00Z',
     updated_at: '2024-01-03T00:00:00Z',
