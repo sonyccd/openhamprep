@@ -1075,7 +1075,7 @@ ON CONFLICT DO NOTHING;
 -- TOPICS (learning content with linked questions)
 -- =============================================================================
 
-INSERT INTO public.topics (slug, title, description, display_order, is_published, license_types, content_path) VALUES
+INSERT INTO public.topics (slug, title, description, display_order, is_published, license_types, content) VALUES
   (
     'fcc-rules-basics',
     'FCC Rules and Regulations',
@@ -1083,7 +1083,80 @@ INSERT INTO public.topics (slug, title, description, display_order, is_published
     1,
     true,
     ARRAY['technician', 'general', 'extra'],
-    'articles/fcc-rules-basics.md'
+    '# FCC Rules and Regulations
+
+## Introduction
+
+The Federal Communications Commission (FCC) regulates all amateur radio operations in the United States under Part 97 of Title 47 of the Code of Federal Regulations. Understanding these rules is essential for every amateur radio operator.
+
+## License Classes
+
+There are three license classes in the Amateur Radio Service:
+
+1. **Technician Class** - Entry-level license with VHF/UHF privileges and limited HF access
+2. **General Class** - Intermediate license with extensive HF privileges
+3. **Amateur Extra Class** - Highest class with full amateur privileges
+
+Each license class requires passing a written examination. Higher classes include all privileges of lower classes.
+
+## Station Identification
+
+Amateur stations must transmit their assigned call sign at least every **10 minutes** during a communication and at the end of each communication. Your call sign must be transmitted in English using:
+
+- Phone (voice)
+- CW (Morse code)
+- Digital modes
+
+### Tactical Call Signs
+
+You may use tactical call signs (like "Net Control" or "Mobile 1") during operations, but you must still identify with your FCC-assigned call sign every 10 minutes.
+
+## Permitted Communications
+
+Amateur radio is for:
+- Personal communication
+- Technical experimentation
+- Emergency communications
+- Public service
+
+### Prohibited Communications
+
+- Broadcasting (one-way transmissions to the general public)
+- Music transmission (except incidental to authorized retransmission)
+- Communications for hire or material compensation
+- Obscene or indecent language
+
+## Control Operator Requirements
+
+Every amateur station must have a **control operator** - a licensed amateur responsible for the proper operation of the station. The control operator:
+
+- Must hold a valid amateur license
+- Is responsible for all transmissions
+- May designate another licensed amateur to serve as control operator
+
+## Power Limits
+
+Maximum power output varies by license class and band:
+
+| License Class | General Power Limit |
+|---------------|---------------------|
+| Technician | 1500W PEP (varies by band) |
+| General | 1500W PEP |
+| Amateur Extra | 1500W PEP |
+
+*Note: Some bands and segments have lower power limits. Always check the band plan.*
+
+## Key Points to Remember
+
+1. Always identify your station every 10 minutes and at the end of transmissions
+2. No broadcasting or one-way transmissions to the general public
+3. A licensed control operator must be responsible for every transmission
+4. Know your privileges - transmit only on frequencies your license class permits
+5. Keep your license current and your address updated with the FCC
+
+## Summary
+
+Understanding FCC rules ensures you operate legally and responsibly. These regulations protect the amateur radio spectrum and ensure it remains available for personal, experimental, and emergency communications.'
   ),
   (
     'radio-frequency-fundamentals',
@@ -1092,7 +1165,95 @@ INSERT INTO public.topics (slug, title, description, display_order, is_published
     2,
     true,
     ARRAY['technician', 'general', 'extra'],
-    'articles/radio-frequency-fundamentals.md'
+    '# Radio Frequency Fundamentals
+
+## Introduction
+
+Radio frequency (RF) is the foundation of amateur radio. Understanding how radio waves work, their properties, and how they''re organized is essential for effective communication.
+
+## What is Radio Frequency?
+
+Radio waves are a type of electromagnetic radiation with frequencies ranging from about 3 kHz to 300 GHz. Amateur radio uses portions of this spectrum allocated by the FCC.
+
+### The Electromagnetic Spectrum
+
+```
+Low Frequency ←————————————————————→ High Frequency
+    │                                      │
+   VLF → LF → MF → HF → VHF → UHF → SHF → EHF
+```
+
+## Frequency and Wavelength
+
+Frequency and wavelength are inversely related:
+
+$$\lambda = \frac{c}{f}$$
+
+Where:
+- $\lambda$ = wavelength (in meters)
+- $c$ = speed of light (300,000,000 m/s)
+- $f$ = frequency (in Hz)
+
+### Quick Conversion
+
+| Frequency | Wavelength |
+|-----------|------------|
+| 3.5 MHz | 80 meters |
+| 7 MHz | 40 meters |
+| 14 MHz | 20 meters |
+| 28 MHz | 10 meters |
+| 50 MHz | 6 meters |
+| 144 MHz | 2 meters |
+| 440 MHz | 70 cm |
+
+## Amateur Radio Bands
+
+### HF Bands (High Frequency: 3-30 MHz)
+
+HF bands are used for long-distance communication via ionospheric propagation:
+
+- **160 meters** (1.8-2.0 MHz) - Nighttime band, limited range
+- **80 meters** (3.5-4.0 MHz) - Regional, best at night
+- **40 meters** (7.0-7.3 MHz) - Day and night, worldwide
+- **20 meters** (14.0-14.35 MHz) - Premier DX band
+- **10 meters** (28.0-29.7 MHz) - Excellent during solar maximum
+
+### VHF/UHF Bands
+
+These bands are primarily for local communication:
+
+- **6 meters** (50-54 MHz) - "Magic Band" with occasional skip
+- **2 meters** (144-148 MHz) - Most popular VHF band
+- **70 cm** (420-450 MHz) - Most popular UHF band
+
+## Band Plans
+
+Band plans organize each amateur band by mode:
+
+- **CW (Morse Code)** - Usually at the low end
+- **Digital modes** - Below voice segments
+- **SSB (Voice)** - Middle and upper portions
+- **FM/Repeaters** - Upper portions of VHF/UHF bands
+
+## Key Formulas
+
+### Wavelength in Meters
+$$\lambda_m = \frac{300}{f_{MHz}}$$
+
+### Antenna Length (Half-wave dipole)
+$$L_{feet} = \frac{468}{f_{MHz}}$$
+
+## Key Points
+
+1. Frequency and wavelength are inversely related
+2. Lower frequencies generally travel farther
+3. HF bands (3-30 MHz) support long-distance communication
+4. VHF/UHF bands are primarily for local communication
+5. Always check band plans before transmitting
+
+## Summary
+
+Understanding radio frequencies and how they behave is fundamental to amateur radio. This knowledge helps you choose the right band for your communication needs and set up antennas efficiently.'
   ),
   (
     'repeater-operations',
@@ -1101,7 +1262,113 @@ INSERT INTO public.topics (slug, title, description, display_order, is_published
     3,
     true,
     ARRAY['technician', 'general'],
-    'articles/repeater-operations.md'
+    '# Repeater Operations
+
+## Introduction
+
+Repeaters are automated radio stations that receive signals on one frequency and retransmit them on another, extending the range of handheld and mobile radios. They''re essential for local communication, especially in areas with challenging terrain.
+
+## How Repeaters Work
+
+A repeater consists of:
+- **Receiver** - Listens on the input frequency
+- **Transmitter** - Transmits on the output frequency
+- **Controller** - Manages timing, identification, and features
+- **Antenna system** - Usually at a high location
+
+### Frequency Offset
+
+Repeaters use two frequencies separated by a standard **offset**:
+
+| Band | Standard Offset |
+|------|-----------------|
+| 2 meters (144 MHz) | ±600 kHz |
+| 70 cm (440 MHz) | ±5 MHz |
+| 6 meters (50 MHz) | ±500 kHz or ±1 MHz |
+
+**Negative offset (-)**: Your transmit frequency is *below* the repeater output
+**Positive offset (+)**: Your transmit frequency is *above* the repeater output
+
+## CTCSS Tones (PL Tones)
+
+Most repeaters require a **Continuous Tone-Coded Squelch System (CTCSS)** tone to access them. This sub-audible tone (67-254.1 Hz) prevents interference from other stations.
+
+### Common CTCSS Tones
+
+| Tone (Hz) | Motorola PL |
+|-----------|-------------|
+| 88.5 | 1B |
+| 100.0 | 1Z |
+| 107.2 | 2A |
+| 123.0 | 3A |
+| 141.3 | 4A |
+
+*Check RepeaterBook or your local repeater directory for specific tones.*
+
+## Proper Operating Procedures
+
+### Making a Call
+
+1. **Listen first** - Make sure the repeater is not in use
+2. **Identify** - Give your call sign
+3. **Wait** - Pause for the repeater to reset (the "courtesy tone")
+4. **Call** - "This is [your call], listening" or call a specific station
+
+### During a QSO (Conversation)
+
+- Keep transmissions brief
+- Leave pauses between transmissions for others to break in
+- **Unkey the PTT button** to allow the repeater timer to reset
+- Identify every 10 minutes and at the end
+
+### Breaking In
+
+If you need to join a conversation or make an emergency call:
+- Wait for a pause between transmissions
+- Say "Break" or your call sign
+- Wait for acknowledgment before proceeding
+
+## Repeater Features
+
+### Autopatch
+
+Some repeaters allow you to make phone calls through the repeater. This is becoming rare but may still be available.
+
+### Linked Repeaters
+
+Multiple repeaters can be linked together via:
+- **Internet (IRLP, EchoLink, AllStar)**
+- **Hardwired connections**
+- **RF links**
+
+This allows communication over very long distances.
+
+### Time-Out Timer (TOT)
+
+Repeaters have a timer (typically 3 minutes) that will cut off your transmission if you talk too long. This prevents:
+- Accidental stuck microphones
+- Single-user monopolization
+- Overheating of the repeater
+
+## Finding Repeaters
+
+Resources for finding local repeaters:
+
+- **RepeaterBook** (repeaterbook.com) - Comprehensive database
+- **ARRL Repeater Directory** - Annual publication
+- **Local radio clubs** - Know the active repeaters in your area
+
+## Key Points
+
+1. Know your offset and CTCSS tone before transmitting
+2. Always listen before transmitting
+3. Keep transmissions brief and leave pauses
+4. Identify every 10 minutes and at the end of communications
+5. Be courteous - repeaters are shared resources
+
+## Summary
+
+Repeaters extend your range and enable reliable local communication. With the right programming and proper operating procedures, you''ll be making contacts through repeaters in no time.'
   ),
   (
     'radio-wave-propagation',
@@ -1110,7 +1377,122 @@ INSERT INTO public.topics (slug, title, description, display_order, is_published
     4,
     true,
     ARRAY['technician', 'general', 'extra'],
-    'articles/radio-wave-propagation.md'
+    '# Radio Wave Propagation
+
+## Introduction
+
+Propagation describes how radio waves travel from transmitter to receiver. Understanding propagation modes helps you choose the right band, time, and conditions for your communications.
+
+## Types of Propagation
+
+### Ground Wave
+
+Radio waves that follow the Earth''s surface. Effective at lower frequencies (below 2 MHz) and limited to short distances at higher frequencies.
+
+### Line of Sight (LOS)
+
+Direct propagation between antennas that can "see" each other. Primary mode for VHF and UHF communications.
+
+**Approximate VHF/UHF range:**
+$$D_{miles} = 1.42 \times (\sqrt{h_1} + \sqrt{h_2})$$
+
+Where $h_1$ and $h_2$ are antenna heights in feet.
+
+### Ionospheric (Skip) Propagation
+
+Radio waves refracted by the ionosphere, enabling long-distance HF communication.
+
+## The Ionosphere
+
+The ionosphere consists of several layers that affect radio propagation:
+
+| Layer | Height | Characteristics |
+|-------|--------|-----------------|
+| D | 60-90 km | Absorbs HF, present during day only |
+| E | 90-150 km | Supports short skip, sporadic E |
+| F1 | 150-250 km | Merges with F2 at night |
+| F2 | 250-400 km | Primary layer for long-distance HF |
+
+### Ionospheric Propagation Factors
+
+- **Time of day** - F layer stronger during daylight
+- **Season** - Higher frequencies work better in summer
+- **Solar cycle** - High sunspot numbers improve HF propagation
+- **Geomagnetic activity** - Storms can disrupt propagation
+
+### Maximum Usable Frequency (MUF)
+
+The highest frequency that will reflect from the ionosphere at a given time. Frequencies above the MUF pass through to space.
+
+## VHF/UHF Propagation Modes
+
+### Tropospheric Ducting
+
+Temperature inversions create "ducts" that guide VHF/UHF signals beyond normal range. Common in:
+- Coastal areas
+- Along weather fronts
+- During stable high-pressure systems
+
+### Sporadic E (Es)
+
+Patches of intense ionization in the E layer that reflect VHF signals (primarily 6 meters and 2 meters) over distances of 500-1500 miles.
+
+**Signs of Sporadic E:**
+- FM broadcast band distant stations
+- Skip on 10 meters
+- 6-meter band "opening"
+
+### Meteor Scatter
+
+Brief reflections from ionized meteor trails. Useful for:
+- 6 meters and 2 meters
+- Very short transmissions (high-speed CW or digital)
+- During meteor showers
+
+### Aurora
+
+Signals reflected from the aurora borealis. Causes distortion but enables VHF contacts over 500-1000+ miles.
+
+## Propagation Indicators
+
+### Solar Flux Index (SFI)
+
+Measure of solar activity. Higher values (above 100) generally mean better HF propagation.
+
+### K-Index and A-Index
+
+Measure geomagnetic activity:
+- **K-index**: 0-9 scale (0-2 is quiet, good for HF)
+- **A-index**: Daily average (below 10 is good)
+
+### Sunspot Number
+
+More sunspots = more solar radiation = better HF propagation on higher bands.
+
+## Band-by-Band Propagation
+
+| Band | Best Conditions |
+|------|-----------------|
+| 160m | Night, winter, low noise |
+| 80m | Night, regional |
+| 40m | Day and night, worldwide |
+| 20m | Daylight, high solar activity |
+| 15m | High solar activity |
+| 10m | Solar maximum, sporadic E |
+| 6m | Sporadic E, tropo |
+| 2m | Tropo, Es, meteor scatter |
+
+## Key Points
+
+1. VHF/UHF is primarily line-of-sight
+2. HF propagation depends on ionospheric conditions
+3. Solar activity affects HF propagation
+4. Sporadic E enables occasional VHF long-distance contacts
+5. Check propagation forecasts before operating
+
+## Summary
+
+Understanding propagation helps you work more stations and make the most of band openings. Keep an eye on solar conditions and be ready when the bands open up!'
   ),
   (
     'basic-electronics',
@@ -1119,7 +1501,157 @@ INSERT INTO public.topics (slug, title, description, display_order, is_published
     5,
     true,
     ARRAY['technician', 'general', 'extra'],
-    'articles/basic-electronics.md'
+    '# Basic Electronics for Ham Radio
+
+## Introduction
+
+Understanding basic electronics is essential for amateur radio operators. This knowledge helps you troubleshoot equipment, build antennas, and understand how your radio works.
+
+## Fundamental Quantities
+
+### Voltage (E or V)
+
+Voltage is electrical pressure - the force that pushes electrons through a circuit. Measured in **volts (V)**.
+
+*Analogy: Water pressure in a pipe*
+
+### Current (I)
+
+Current is the flow of electrons through a circuit. Measured in **amperes (A)** or milliamperes (mA).
+
+*Analogy: Rate of water flow*
+
+### Resistance (R)
+
+Resistance opposes the flow of current. Measured in **ohms (Ω)**.
+
+*Analogy: A narrow section of pipe restricting water flow*
+
+## Ohm''s Law
+
+The fundamental relationship between voltage, current, and resistance:
+
+$$E = I \times R$$
+
+Or rearranged:
+$$I = \frac{E}{R}$$
+$$R = \frac{E}{I}$$
+
+### The Ohm''s Law Circle
+
+```
+      E
+    ─────
+    I × R
+```
+
+Cover what you want to find - the remaining formula tells you how to calculate it.
+
+### Example Problems
+
+**Problem 1:** A 12V battery connected to a 4Ω resistor
+$$I = \frac{12V}{4Ω} = 3A$$
+
+**Problem 2:** 2A flowing through a 100Ω resistor
+$$E = 2A \times 100Ω = 200V$$
+
+## Power
+
+Power is the rate of energy consumption. Measured in **watts (W)**.
+
+$$P = E \times I$$
+$$P = I^2 \times R$$
+$$P = \frac{E^2}{R}$$
+
+### Example
+
+A 12V transmitter drawing 15A:
+$$P = 12V \times 15A = 180W$$
+
+## Capacitance and Inductance
+
+### Capacitors
+
+Store energy in an electric field. Measured in **farads (F)**, usually microfarads (µF) or picofarads (pF).
+
+**In circuits:**
+- Block DC, pass AC
+- Oppose changes in voltage
+- Used for filtering and tuning
+
+### Inductors
+
+Store energy in a magnetic field. Measured in **henrys (H)**, usually millihenrys (mH) or microhenrys (µH).
+
+**In circuits:**
+- Block AC, pass DC
+- Oppose changes in current
+- Used in filters, transformers, and RF circuits
+
+## AC vs DC
+
+### Direct Current (DC)
+
+Current flows in one direction only. Examples:
+- Batteries
+- Power supplies
+
+### Alternating Current (AC)
+
+Current reverses direction periodically. Characterized by:
+- **Frequency** - Cycles per second (Hz)
+- **Amplitude** - Peak voltage or current
+- **Wavelength** - For radio frequencies
+
+## Series and Parallel Circuits
+
+### Resistors in Series
+$$R_{total} = R_1 + R_2 + R_3...$$
+
+### Resistors in Parallel
+$$\frac{1}{R_{total}} = \frac{1}{R_1} + \frac{1}{R_2} + \frac{1}{R_3}...$$
+
+For two resistors in parallel:
+$$R_{total} = \frac{R_1 \times R_2}{R_1 + R_2}$$
+
+## Common Components
+
+| Component | Symbol | Function |
+|-----------|--------|----------|
+| Resistor | ─/\/\/\/─ | Limits current |
+| Capacitor | ─┤├─ | Stores charge |
+| Inductor | ─⌒⌒⌒─ | Stores magnetic energy |
+| Diode | ─▶│─ | One-way valve |
+| Transistor | Various | Amplification, switching |
+
+## Decibels (dB)
+
+A logarithmic unit for expressing power ratios:
+
+$$dB = 10 \times \log_{10}\frac{P_2}{P_1}$$
+
+### Quick Reference
+
+| dB Change | Power Ratio |
+|-----------|-------------|
+| +3 dB | 2× power |
+| +6 dB | 4× power |
+| +10 dB | 10× power |
+| -3 dB | ½ power |
+| -10 dB | 1/10 power |
+
+## Key Points
+
+1. Ohm''s Law: E = I × R
+2. Power: P = E × I
+3. Resistors in series add directly
+4. Capacitors block DC, pass AC
+5. Inductors block AC, pass DC
+6. +3 dB = double the power
+
+## Summary
+
+These basic electronics concepts form the foundation for understanding radio equipment. Master Ohm''s Law and power calculations, and you''ll be well on your way to understanding more complex circuits.'
   ),
   (
     'station-setup',
@@ -1128,9 +1660,150 @@ INSERT INTO public.topics (slug, title, description, display_order, is_published
     6,
     true,
     ARRAY['technician'],
-    'articles/station-setup.md'
+    '# Setting Up Your Station
+
+## Introduction
+
+Setting up your first amateur radio station is exciting! This guide covers the essential components and considerations for getting on the air safely and effectively.
+
+## Essential Station Components
+
+### Transceiver
+
+Your radio is the heart of the station. Options include:
+
+- **Handheld (HT)** - Portable, 2m/70cm, 5W typical
+- **Mobile** - Car-mounted, 50W typical, VHF/UHF
+- **Base/Desktop** - Home station, may include HF
+
+### Power Supply
+
+For mobile and base stations, you need a quality power supply:
+
+- **13.8V DC** - Standard amateur radio voltage
+- **Current capacity** - Match to your radio''s requirements
+- **Regulation** - Should maintain voltage under load
+
+**Rule of thumb:** Peak current = (TX power in watts) ÷ 10 × 1.5
+
+*Example: 100W radio needs ~15A supply*
+
+### Antenna
+
+No station works without an antenna! Basic options:
+
+| Type | Band | Typical Gain |
+|------|------|--------------|
+| Rubber duck | VHF/UHF | 0 dBi |
+| Magmount | VHF/UHF | 3-5 dBi |
+| J-pole | VHF/UHF | 3 dBi |
+| Yagi | VHF/UHF | 6-15 dBi |
+| Dipole | HF | 2 dBi |
+| Vertical | HF | 0 dBi |
+
+### Coaxial Cable
+
+Connects your radio to the antenna:
+
+- **RG-58** - Thin, flexible, higher loss, good for short runs
+- **RG-8X** - Medium, good balance
+- **RG-213/LMR-400** - Low loss, best for longer runs or UHF
+
+**Important:** Use quality connectors (PL-259 for HF, N-type for UHF)
+
+## Grounding and Safety
+
+### Station Ground
+
+A good ground system:
+- Reduces RF interference
+- Protects equipment from static
+- May improve antenna performance
+
+Connect station equipment to a common ground bus, then to an external ground rod.
+
+### Lightning Protection
+
+- Disconnect antennas during storms
+- Use lightning arrestors on antenna feedlines
+- Ground antenna masts properly
+
+### RF Safety
+
+Be aware of RF exposure near antennas:
+- Maintain safe distances during transmission
+- Avoid pointing directional antennas at occupied areas
+- Reduce power when necessary
+
+## Mobile Installation
+
+### Power Connection
+
+**Best:** Direct connection to battery with in-line fuse
+**Acceptable:** Fuse panel connection with adequate wire gauge
+**Avoid:** Cigarette lighter adapter (voltage drop, noise)
+
+### Antenna Mounting
+
+Options for mobile antennas:
+- **Magmount** - No drilling, easy to move
+- **Lip mount** - Clamps to trunk/hood edge
+- **NMO mount** - Permanent, best performance
+- **Glass mount** - No external mounting, some signal loss
+
+### Noise Suppression
+
+Mobile installations may have electrical noise from:
+- Alternator/charging system
+- Ignition system
+- Fuel pump
+- Electric motors (fans, wipers)
+
+Solutions:
+- Ferrite chokes on power leads
+- Capacitors on noisy components
+- Proper grounding
+
+## Basic Station Setup Checklist
+
+1. ☐ Transceiver and microphone
+2. ☐ Power supply (or battery for HT)
+3. ☐ Antenna and feedline
+4. ☐ SWR meter (optional but recommended)
+5. ☐ Grounding system
+6. ☐ Reference materials (band plans, repeater directory)
+
+## Testing Your Setup
+
+Before making contacts:
+
+1. **Check SWR** - Should be below 2:1
+2. **Listen first** - Receive signals to verify antenna works
+3. **Low power test** - Start with low power on a simplex frequency
+4. **Repeater access** - Verify you can hit local repeaters
+
+## Programming Your Radio
+
+Most modern radios need to be programmed with:
+- Repeater frequencies and offsets
+- CTCSS/DCS tones
+- Memory channels
+
+Many radios can be programmed with free software like CHIRP.
+
+## Key Points
+
+1. Match your power supply to your radio''s requirements
+2. Use quality coax and connectors
+3. Ground your station properly
+4. Protect against lightning
+5. Check SWR before transmitting at full power
+
+## Summary
+
+A well-planned station setup ensures reliable operation and protects your equipment. Start simple, add capabilities as you learn, and always prioritize safety. See you on the air!'
   )
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT (slug) DO UPDATE SET content = EXCLUDED.content;
 
 -- Link topics to subelements
 INSERT INTO public.topic_subelements (topic_id, subelement)

@@ -401,3 +401,414 @@
   }
 }
 
+/* MDXEditor theme integration */
+.mdxeditor {
+  --accentBase: hsl(var(--primary));
+  --accentBgSubtle: hsl(var(--primary) / 0.1);
+  --accentBorder: hsl(var(--primary) / 0.3);
+  --accentSolid: hsl(var(--primary));
+  --accentSolidHover: hsl(var(--primary) / 0.9);
+  --accentText: hsl(var(--primary));
+  --accentTextContrast: hsl(var(--primary-foreground));
+
+  --baseBase: hsl(var(--background));
+  --baseBgSubtle: hsl(var(--muted));
+  --baseBgActive: hsl(var(--muted));
+  --baseBorder: hsl(var(--border));
+  --baseSolid: hsl(var(--secondary));
+  --baseSolidHover: hsl(var(--secondary) / 0.9);
+  --baseText: hsl(var(--muted-foreground));
+  --baseTextContrast: hsl(var(--foreground));
+  --basePageBg: hsl(var(--background));
+
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.mdxeditor [role="toolbar"] {
+  background: hsl(var(--card));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.mdxeditor-toolbar {
+  background: hsl(var(--card)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  flex-wrap: wrap;
+  gap: 0.125rem;
+  padding: 0.5rem 0.75rem !important;
+  align-items: center;
+}
+
+/* All toolbar buttons - clean, borderless style */
+.mdxeditor-toolbar button,
+.mdxeditor [role="toolbar"] button {
+  background: transparent !important;
+  border: none !important;
+  color: hsl(var(--muted-foreground)) !important;
+  border-radius: 0.375rem !important;
+  padding: 0.375rem !important;
+  min-width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease !important;
+}
+
+.mdxeditor-toolbar button:hover,
+.mdxeditor [role="toolbar"] button:hover {
+  background: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.mdxeditor-toolbar button[data-state="on"],
+.mdxeditor [role="toolbar"] button[data-state="on"],
+.mdxeditor-toolbar button[aria-pressed="true"],
+.mdxeditor [role="toolbar"] button[aria-pressed="true"] {
+  background: hsl(var(--primary) / 0.15) !important;
+  color: hsl(var(--primary)) !important;
+}
+
+/* Toolbar separator */
+.mdxeditor-toolbar [data-orientation="vertical"],
+.mdxeditor [role="toolbar"] [role="separator"] {
+  width: 1px !important;
+  height: 1.25rem !important;
+  background: hsl(var(--border)) !important;
+  margin: 0 0.375rem !important;
+}
+
+.mdxeditor-root-contenteditable {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* MDXEditor popup dialogs and portaled content */
+.mdxeditor-popup-container {
+  z-index: 50;
+}
+
+.mdxeditor-popup-container [role="dialog"],
+.mdxeditor-popup-container form {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.3) !important;
+}
+
+.mdxeditor-popup-container input,
+.mdxeditor-popup-container textarea {
+  background: hsl(var(--input)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.mdxeditor-popup-container input:focus,
+.mdxeditor-popup-container textarea:focus {
+  outline: none !important;
+  border-color: hsl(var(--ring)) !important;
+}
+
+.mdxeditor-popup-container input::placeholder {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.mdxeditor-popup-container label {
+  color: hsl(var(--foreground)) !important;
+}
+
+.mdxeditor-popup-container button {
+  border-radius: calc(var(--radius) - 2px) !important;
+}
+
+.mdxeditor [data-radix-popper-content-wrapper] {
+  z-index: 50 !important;
+}
+
+/* Radix dialog portal - targets dialogs rendered outside .mdxeditor */
+[data-radix-portal] [role="dialog"] {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+[data-radix-portal] [role="dialog"] input,
+[data-radix-portal] [role="dialog"] textarea {
+  background: hsl(var(--input)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+[data-radix-portal] [role="dialog"] label {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* MDXEditor select dropdowns (block type, etc.) */
+.mdxeditor-select-content,
+.mdxeditor [data-radix-popper-content-wrapper] > div,
+.mdxeditor-popup-container [data-radix-popper-content-wrapper] > div {
+  background: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Block type select trigger - minimal style matching toolbar */
+.mdxeditor-toolbar select,
+.mdxeditor-toolbar button[role="combobox"],
+.mdxeditor [role="combobox"],
+.mdxeditor-select-trigger,
+.mdxeditor button[aria-haspopup="listbox"],
+.mdxeditor-toolbar [data-radix-collection-item],
+[class*="selectTrigger"],
+.mdxeditor-toolbar [class*="selectTrigger"] {
+  background: hsl(var(--muted) / 0.5) !important;
+  color: hsl(var(--foreground)) !important;
+  border: none !important;
+  border-radius: 0.375rem !important;
+  padding: 0.375rem 0.625rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  height: 2rem !important;
+  min-width: auto !important;
+  transition: all 0.15s ease !important;
+}
+
+.mdxeditor-toolbar select:hover,
+.mdxeditor-toolbar button[role="combobox"]:hover,
+.mdxeditor [role="combobox"]:hover,
+.mdxeditor button[aria-haspopup="listbox"]:hover,
+[class*="selectTrigger"]:hover,
+.mdxeditor-toolbar [class*="selectTrigger"]:hover {
+  background: hsl(var(--muted)) !important;
+}
+
+/* Ensure toggle buttons don't get select styles */
+.mdxeditor-toolbar button[data-state]:not([role="combobox"]):not([aria-haspopup="listbox"]) {
+  background: transparent !important;
+  padding: 0.375rem !important;
+}
+
+/* Select dropdown items */
+.mdxeditor [role="option"],
+.mdxeditor [role="menuitem"],
+.mdxeditor [role="listbox"] [role="option"],
+.mdxeditor-select-content [role="option"] {
+  color: hsl(var(--foreground)) !important;
+  background: transparent !important;
+}
+
+.mdxeditor [role="option"]:hover,
+.mdxeditor [role="option"][data-highlighted],
+.mdxeditor [role="menuitem"]:hover,
+.mdxeditor [role="menuitem"][data-highlighted],
+.mdxeditor-select-content [role="option"]:hover,
+.mdxeditor-select-content [role="option"][data-highlighted] {
+  background: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+
+.mdxeditor [role="option"][data-state="checked"],
+.mdxeditor-select-content [role="option"][data-state="checked"] {
+  background: hsl(var(--primary) / 0.1) !important;
+  color: hsl(var(--primary)) !important;
+}
+
+/* Select separator */
+.mdxeditor [role="separator"] {
+  background: hsl(var(--border)) !important;
+}
+
+/* Select group labels */
+.mdxeditor [role="group"] > [role="presentation"],
+.mdxeditor-select-content [role="group"] > span {
+  color: hsl(var(--muted-foreground)) !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+}
+
+/* Code block styling in editor */
+.mdxeditor pre {
+  background: hsl(var(--secondary)) !important;
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.mdxeditor code {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Table styling in editor */
+.mdxeditor table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.mdxeditor th,
+.mdxeditor td {
+  border: 1px solid hsl(var(--border));
+  padding: 0.5rem;
+}
+
+.mdxeditor th {
+  background: hsl(var(--muted));
+  font-weight: 600;
+}
+
+/* Blockquote styling */
+.mdxeditor blockquote {
+  border-left: 4px solid hsl(var(--primary));
+  padding-left: 1rem;
+  margin-left: 0;
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+}
+
+/* Image styling in editor */
+.mdxeditor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+}
+
+/* MDXEditor dialog/modal styling (image upload, link dialogs, etc.) */
+.mdxeditor-dialog-overlay {
+  background-color: hsl(var(--background) / 0.8) !important;
+}
+
+.mdxeditor-dialog,
+.mdxeditor [role="dialog"],
+[data-radix-dialog-content].mdxeditor-dialog {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Dialog content and form elements */
+.mdxeditor [role="dialog"] input,
+.mdxeditor [role="dialog"] textarea,
+.mdxeditor-dialog input,
+.mdxeditor-dialog textarea {
+  background: hsl(var(--input)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+  color: hsl(var(--foreground)) !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+.mdxeditor [role="dialog"] input:focus,
+.mdxeditor [role="dialog"] textarea:focus,
+.mdxeditor-dialog input:focus,
+.mdxeditor-dialog textarea:focus {
+  outline: none !important;
+  border-color: hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2) !important;
+}
+
+.mdxeditor [role="dialog"] input::placeholder,
+.mdxeditor-dialog input::placeholder {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Dialog labels */
+.mdxeditor [role="dialog"] label,
+.mdxeditor-dialog label {
+  color: hsl(var(--foreground)) !important;
+  font-weight: 500 !important;
+}
+
+/* Dialog buttons */
+.mdxeditor [role="dialog"] button,
+.mdxeditor-dialog button {
+  border-radius: calc(var(--radius) - 2px) !important;
+  font-weight: 500 !important;
+  transition: all 0.2s !important;
+}
+
+/* Primary/submit buttons in dialogs */
+.mdxeditor [role="dialog"] button[type="submit"],
+.mdxeditor-dialog button[type="submit"],
+.mdxeditor [role="dialog"] button:not([aria-label]):last-of-type,
+.mdxeditor-dialog button:not([aria-label]):last-of-type {
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border: none !important;
+}
+
+.mdxeditor [role="dialog"] button[type="submit"]:hover,
+.mdxeditor-dialog button[type="submit"]:hover {
+  background: hsl(var(--primary) / 0.9) !important;
+}
+
+/* Cancel/secondary buttons in dialogs */
+.mdxeditor [role="dialog"] button[type="button"]:not([aria-label]),
+.mdxeditor-dialog button[type="button"]:not([aria-label]) {
+  background: transparent !important;
+  color: hsl(var(--muted-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+.mdxeditor [role="dialog"] button[type="button"]:not([aria-label]):hover,
+.mdxeditor-dialog button[type="button"]:not([aria-label]):hover {
+  background: hsl(var(--secondary)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Close button */
+.mdxeditor [role="dialog"] button[aria-label="close"],
+.mdxeditor-dialog button[aria-label="close"] {
+  color: hsl(var(--muted-foreground)) !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.mdxeditor [role="dialog"] button[aria-label="close"]:hover,
+.mdxeditor-dialog button[aria-label="close"]:hover {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Tab triggers in dialogs (e.g., URL vs Upload tabs) */
+.mdxeditor [role="dialog"] [role="tablist"],
+.mdxeditor-dialog [role="tablist"] {
+  background: hsl(var(--muted)) !important;
+  border-radius: var(--radius) !important;
+  padding: 0.25rem !important;
+}
+
+.mdxeditor [role="dialog"] [role="tab"],
+.mdxeditor-dialog [role="tab"] {
+  color: hsl(var(--muted-foreground)) !important;
+  border-radius: calc(var(--radius) - 2px) !important;
+}
+
+.mdxeditor [role="dialog"] [role="tab"][data-state="active"],
+.mdxeditor-dialog [role="tab"][data-state="active"] {
+  background: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* File upload/drop area styling */
+.mdxeditor [role="dialog"] [data-upload-area],
+.mdxeditor-dialog [data-upload-area],
+.mdxeditor [role="dialog"] .upload-area,
+.mdxeditor-dialog .upload-area {
+  background: hsl(var(--muted) / 0.5) !important;
+  border: 2px dashed hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.mdxeditor [role="dialog"] [data-upload-area]:hover,
+.mdxeditor-dialog [data-upload-area]:hover,
+.mdxeditor [role="dialog"] .upload-area:hover,
+.mdxeditor-dialog .upload-area:hover {
+  border-color: hsl(var(--primary)) !important;
+  background: hsl(var(--primary) / 0.05) !important;
+}
+

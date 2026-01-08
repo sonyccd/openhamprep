@@ -1,46 +1,62 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Save, Loader2, Eye, Edit3, FileText } from "lucide-react";
-import { TopicContent } from "@/components/TopicContent";
-import { useTopicContent } from "@/hooks/useTopics";
+import { Save, Loader2, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
+
+// MDXEditor imports
+import {
+  MDXEditor,
+  headingsPlugin,
+  listsPlugin,
+  quotePlugin,
+  linkPlugin,
+  linkDialogPlugin,
+  imagePlugin,
+  tablePlugin,
+  thematicBreakPlugin,
+  codeBlockPlugin,
+  markdownShortcutPlugin,
+  diffSourcePlugin,
+  toolbarPlugin,
+  UndoRedo,
+  BoldItalicUnderlineToggles,
+  CodeToggle,
+  BlockTypeSelect,
+  ListsToggle,
+  CreateLink,
+  InsertImage,
+  InsertTable,
+  InsertThematicBreak,
+  InsertCodeBlock,
+  DiffSourceToggleWrapper,
+  Separator,
+  type MDXEditorMethods,
+} from "@mdxeditor/editor";
+import "@mdxeditor/editor/style.css";
 
 interface TopicMarkdownEditorProps {
   topicId: string;
   topicSlug: string;
-  contentPath: string | null;
+  initialContent: string | null;
   onSave?: () => void;
 }
 
 export function TopicMarkdownEditor({
   topicId,
   topicSlug,
-  contentPath,
+  initialContent: initialContentProp,
   onSave,
 }: TopicMarkdownEditorProps) {
   const queryClient = useQueryClient();
-  const [content, setContent] = useState("");
-  const [hasChanges, setHasChanges] = useState(false);
-  const [activeTab, setActiveTab] = useState<"edit" | "preview" | "split">("split");
+  const editorRef = useRef<MDXEditorMethods>(null);
+  const { theme, resolvedTheme } = useTheme();
 
-  // Fetch existing content
-  const { data: existingContent, isLoading: contentLoading, isFetching } = useTopicContent(contentPath);
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  // Initialize content when loaded
-  useEffect(() => {
-    if (existingContent !== undefined && !isInitialized) {
-      setContent(existingContent || getDefaultContent(topicSlug));
-      setHasChanges(false);
-      setIsInitialized(true);
-    }
-  }, [existingContent, topicSlug, isInitialized]);
+  // Determine if dark mode is active
+  const isDarkMode = resolvedTheme === "dark" || theme === "dark";
 
   const getDefaultContent = (slug: string) => {
     const title = slug
@@ -78,43 +94,102 @@ Wrap up the topic with a brief summary of what was covered.
 `;
   };
 
+  // Initialize content from prop or default
+  const startingContent = initialContentProp || getDefaultContent(topicSlug);
+  const [content, setContent] = useState(startingContent);
+  const [savedContent, setSavedContent] = useState(startingContent);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Track current topic to detect topic switches
+  const prevTopicIdRef = useRef(topicId);
+
+  // Only reset state when switching to a DIFFERENT topic
+  // This prevents losing local state when component remounts (e.g., tab switch)
+  useEffect(() => {
+    if (prevTopicIdRef.current !== topicId) {
+      // Switched to a different topic - reset everything
+      const newContent = initialContentProp || getDefaultContent(topicSlug);
+      setContent(newContent);
+      setSavedContent(newContent);
+      setHasChanges(false);
+      // Update editor content programmatically if ref is available
+      // Use setTimeout to ensure MDXEditor has mounted before setting markdown
+      if (editorRef.current) {
+        editorRef.current.setMarkdown(newContent);
+      } else {
+        // Editor not ready yet, schedule update for next tick
+        setTimeout(() => {
+          editorRef.current?.setMarkdown(newContent);
+        }, 0);
+      }
+      prevTopicIdRef.current = topicId;
+    }
+  }, [topicId, initialContentProp, topicSlug]);
+
+  // Allowed image MIME types for upload validation
+  const ALLOWED_IMAGE_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/svg+xml",
+  ];
+
+  // Image upload handler for Supabase Storage (images still go to storage)
+  const imageUploadHandler = async (image: File): Promise<string> => {
+    // Validate MIME type to prevent uploading non-image files
+    if (!ALLOWED_IMAGE_TYPES.includes(image.type)) {
+      const error = new Error(
+        `Invalid file type: ${image.type}. Allowed types: JPEG, PNG, GIF, WebP, SVG`
+      );
+      toast.error(error.message);
+      throw error;
+    }
+
+    const fileExt = image.name.split(".").pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const filePath = `topic-images/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from("topic-content")
+      .upload(filePath, image, {
+        contentType: image.type,
+        upsert: false,
+      });
+
+    if (error) {
+      toast.error("Failed to upload image: " + error.message);
+      throw error;
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("topic-content").getPublicUrl(filePath);
+
+    toast.success("Image uploaded successfully");
+    return publicUrl;
+  };
+
+  // Save content to database
   const saveMutation = useMutation({
     mutationFn: async (markdownContent: string) => {
-      const path = contentPath || `articles/${topicSlug}.md`;
-
-      // Convert string to blob for upload
-      const blob = new Blob([markdownContent], { type: "text/markdown" });
-
-      // Try to delete existing file first (in case of update)
-      await supabase.storage.from("topic-content").remove([path]);
-
-      // Upload the new content
-      const { error } = await supabase.storage
-        .from("topic-content")
-        .upload(path, blob, {
-          contentType: "text/markdown",
-          upsert: true,
-        });
+      const { error } = await supabase
+        .from("topics")
+        .update({
+          content: markdownContent,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", topicId);
 
       if (error) throw error;
-
-      // Update the topic's content_path if it wasn't set
-      if (!contentPath) {
-        const { error: updateError } = await supabase
-          .from("topics")
-          .update({ content_path: path })
-          .eq("id", topicId);
-
-        if (updateError) throw updateError;
-      }
-
-      return path;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["topic-content", contentPath] });
       queryClient.invalidateQueries({ queryKey: ["topic", topicSlug] });
       queryClient.invalidateQueries({ queryKey: ["admin-topics"] });
+      queryClient.invalidateQueries({ queryKey: ["topics"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-topic-detail", topicId] });
       setHasChanges(false);
+      setSavedContent(content);
       toast.success("Content saved successfully");
       onSave?.();
     },
@@ -123,14 +198,17 @@ Wrap up the topic with a brief summary of what was covered.
     },
   });
 
-  const handleContentChange = useCallback((value: string) => {
-    setContent(value);
-    setHasChanges(true);
-  }, []);
+  const handleContentChange = useCallback(
+    (value: string) => {
+      setContent(value);
+      setHasChanges(value !== savedContent);
+    },
+    [savedContent]
+  );
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     saveMutation.mutate(content);
-  };
+  }, [saveMutation, content]);
 
   // Keyboard shortcut for save (Ctrl/Cmd + S)
   useEffect(() => {
@@ -145,10 +223,48 @@ Wrap up the topic with a brief summary of what was covered.
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasChanges, saveMutation.isPending]);
+  }, [hasChanges, saveMutation.isPending, handleSave]);
 
-  // Only show full-screen loading on initial load (not cached)
-  const showInitialLoading = contentLoading && !isInitialized && !content;
+  // MDXEditor plugins configuration
+  const editorPlugins = [
+    headingsPlugin(),
+    listsPlugin(),
+    quotePlugin(),
+    linkPlugin(),
+    linkDialogPlugin(),
+    imagePlugin({
+      imageUploadHandler,
+      disableImageResize: false,
+    }),
+    tablePlugin(),
+    thematicBreakPlugin(),
+    codeBlockPlugin({ defaultCodeBlockLanguage: "" }),
+    markdownShortcutPlugin(),
+    diffSourcePlugin({ viewMode: "rich-text" }),
+    toolbarPlugin({
+      toolbarContents: () => (
+        <>
+          <UndoRedo />
+          <Separator />
+          <BoldItalicUnderlineToggles />
+          <CodeToggle />
+          <Separator />
+          <BlockTypeSelect />
+          <Separator />
+          <ListsToggle />
+          <Separator />
+          <CreateLink />
+          <InsertImage />
+          <InsertTable />
+          <InsertThematicBreak />
+          <Separator />
+          <InsertCodeBlock />
+          <Separator />
+          <DiffSourceToggleWrapper />
+        </>
+      ),
+    }),
+  ];
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -157,91 +273,45 @@ Wrap up the topic with a brief summary of what was covered.
         <div className="flex items-center gap-2">
           <FileText className="w-5 h-5 text-primary" />
           <h3 className="font-semibold text-foreground">Content Editor</h3>
-          {isFetching && isInitialized && (
-            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-          )}
           {hasChanges && (
             <span className="text-xs text-warning bg-warning/10 px-2 py-0.5 rounded">
               Unsaved changes
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-            <TabsList className="h-8">
-              <TabsTrigger value="edit" className="text-xs px-2 h-6">
-                <Edit3 className="w-3 h-3 mr-1" />
-                Edit
-              </TabsTrigger>
-              <TabsTrigger value="split" className="text-xs px-2 h-6">
-                Split
-              </TabsTrigger>
-              <TabsTrigger value="preview" className="text-xs px-2 h-6">
-                <Eye className="w-3 h-3 mr-1" />
-                Preview
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={!hasChanges || saveMutation.isPending}
-          >
-            {saveMutation.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Save
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={!hasChanges || saveMutation.isPending}
+        >
+          {saveMutation.isPending ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4 mr-2" />
+          )}
+          Save
+        </Button>
       </div>
 
-      {/* Editor/Preview Area */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        {showInitialLoading ? (
-          <div className="flex flex-col items-center justify-center h-full gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading content...</p>
-          </div>
-        ) : (
-          <>
-            {activeTab === "edit" && (
-              <Textarea
-                value={content}
-                onChange={(e) => handleContentChange(e.target.value)}
-                className="w-full h-full resize-none font-mono text-sm"
-                placeholder="Write your markdown content here..."
-              />
-            )}
-
-            {activeTab === "preview" && (
-              <div className="h-full overflow-y-auto p-4 bg-background rounded-lg border border-border">
-                <TopicContent content={content} />
-              </div>
-            )}
-
-            {activeTab === "split" && (
-              <div className="grid grid-cols-2 gap-4 h-full">
-                <Textarea
-                  value={content}
-                  onChange={(e) => handleContentChange(e.target.value)}
-                  className="w-full h-full resize-none font-mono text-sm"
-                  placeholder="Write your markdown content here..."
-                />
-                <div className="h-full overflow-y-auto p-4 bg-background rounded-lg border border-border">
-                  <TopicContent content={content} />
-                </div>
-              </div>
-            )}
-          </>
-        )}
+      {/* Editor Area */}
+      <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-border">
+        <MDXEditor
+          ref={editorRef}
+          markdown={content}
+          onChange={handleContentChange}
+          className={cn(
+            "h-full [&_.mdxeditor]:h-full",
+            isDarkMode && "dark-theme"
+          )}
+          contentEditableClassName="prose prose-slate dark:prose-invert max-w-none p-4 min-h-[400px] focus:outline-none"
+          plugins={editorPlugins}
+        />
       </div>
 
       {/* Help text */}
       <div className="mt-2 text-xs text-muted-foreground shrink-0">
-        Supports Markdown: **bold**, *italic*, `code`, [links](url), # headings, - lists, and math: $inline$ or $$block$$.
-        Press Ctrl+S to save.
+        Use the toolbar for formatting. Math expressions ($inline$ or $$block$$)
+        will render when viewing the topic. Press Ctrl+S to save.
       </div>
     </div>
   );

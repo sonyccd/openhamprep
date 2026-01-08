@@ -1,46 +1,70 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TopicMarkdownEditor } from './TopicMarkdownEditor';
 
-// Mock Supabase storage
-const mockUpload = vi.fn();
-const mockRemove = vi.fn();
+// Mock Supabase client for database updates and image uploads
 const mockUpdate = vi.fn();
+const mockUpload = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    storage: {
-      from: vi.fn(() => ({
-        upload: mockUpload,
-        remove: mockRemove,
-      })),
-    },
     from: vi.fn(() => ({
       update: mockUpdate,
     })),
+    storage: {
+      from: vi.fn(() => ({
+        upload: mockUpload,
+        getPublicUrl: vi.fn(() => ({ data: { publicUrl: 'https://example.com/image.png' } })),
+      })),
+    },
   },
 }));
 
-// Mock TopicContent component
-vi.mock('@/components/TopicContent', () => ({
-  TopicContent: ({ content }: { content: string }) => (
-    <div data-testid="topic-content-preview">{content}</div>
-  ),
+// Mock next-themes
+vi.mock('next-themes', () => ({
+  useTheme: () => ({
+    theme: 'light',
+    resolvedTheme: 'light',
+  }),
 }));
 
-// Mock useTopicContent hook
-let mockContentData: string | undefined = '# Existing Content\n\nSome text here.';
-let mockContentLoading = false;
-let mockContentFetching = false;
-
-vi.mock('@/hooks/useTopics', () => ({
-  useTopicContent: () => ({
-    data: mockContentData,
-    isLoading: mockContentLoading,
-    isFetching: mockContentFetching,
-  }),
+// Mock MDXEditor - we can't easily test the actual editor in JSDOM
+vi.mock('@mdxeditor/editor', () => ({
+  MDXEditor: ({ markdown, onChange, className }: { markdown: string; onChange: (val: string) => void; className?: string }) => (
+    <div data-testid="mdx-editor" className={className}>
+      <textarea
+        data-testid="mock-editor-textarea"
+        value={markdown}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Mock MDXEditor"
+      />
+    </div>
+  ),
+  headingsPlugin: vi.fn(() => ({})),
+  listsPlugin: vi.fn(() => ({})),
+  quotePlugin: vi.fn(() => ({})),
+  linkPlugin: vi.fn(() => ({})),
+  linkDialogPlugin: vi.fn(() => ({})),
+  imagePlugin: vi.fn(() => ({})),
+  tablePlugin: vi.fn(() => ({})),
+  thematicBreakPlugin: vi.fn(() => ({})),
+  codeBlockPlugin: vi.fn(() => ({})),
+  markdownShortcutPlugin: vi.fn(() => ({})),
+  diffSourcePlugin: vi.fn(() => ({})),
+  toolbarPlugin: vi.fn(() => ({})),
+  UndoRedo: () => <button>Undo/Redo</button>,
+  BoldItalicUnderlineToggles: () => <button>Bold/Italic</button>,
+  CodeToggle: () => <button>Code</button>,
+  BlockTypeSelect: () => <select><option>Paragraph</option></select>,
+  ListsToggle: () => <button>Lists</button>,
+  CreateLink: () => <button>Link</button>,
+  InsertImage: () => <button>Image</button>,
+  InsertTable: () => <button>Table</button>,
+  InsertThematicBreak: () => <button>HR</button>,
+  InsertCodeBlock: () => <button>Code Block</button>,
+  DiffSourceToggleWrapper: () => <button>Source</button>,
+  Separator: () => <span>|</span>,
 }));
 
 // Mock sonner toast
@@ -60,7 +84,7 @@ describe('TopicMarkdownEditor', () => {
     const defaultProps = {
       topicId: 'topic-123',
       topicSlug: 'test-topic',
-      contentPath: 'articles/test-topic.md',
+      initialContent: '# Test Content\n\nSome text here.',
       onSave: vi.fn(),
     };
 
@@ -79,66 +103,16 @@ describe('TopicMarkdownEditor', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockContentData = '# Existing Content\n\nSome text here.';
-    mockContentLoading = false;
-    mockContentFetching = false;
-    mockUpload.mockResolvedValue({ error: null });
-    mockRemove.mockResolvedValue({ error: null });
     mockUpdate.mockReturnValue({
       eq: vi.fn().mockResolvedValue({ error: null }),
     });
-  });
-
-  describe('Loading State', () => {
-    it('should show loading spinner when content is loading initially', () => {
-      mockContentLoading = true;
-      mockContentData = undefined; // No data yet
-      renderComponent();
-
-      expect(document.querySelector('.animate-spin')).toBeInTheDocument();
-      expect(screen.getByText('Loading content...')).toBeInTheDocument();
-    });
-
-    it('should not show full loading when content is cached', () => {
-      mockContentLoading = false;
-      mockContentFetching = true; // Refetching in background
-      mockContentData = '# Existing Content\n\nSome text here.';
-      renderComponent();
-
-      // Should not show full loading screen
-      expect(screen.queryByText('Loading content...')).not.toBeInTheDocument();
-      // But should show content
-      expect(screen.getByPlaceholderText('Write your markdown content here...')).toBeInTheDocument();
-    });
-
-    it('should show subtle spinner in header when refetching', async () => {
-      mockContentLoading = false;
-      mockContentFetching = true;
-      mockContentData = '# Existing Content\n\nSome text here.';
-      renderComponent();
-
-      // Wait for content to initialize (which sets isInitialized to true)
-      await waitFor(() => {
-        expect(screen.getByPlaceholderText('Write your markdown content here...')).toHaveValue('# Existing Content\n\nSome text here.');
-      });
-
-      // The subtle spinner should be visible in the header
-      const headerSpinner = document.querySelector('.animate-spin');
-      expect(headerSpinner).toBeInTheDocument();
-    });
+    mockUpload.mockResolvedValue({ error: null });
   });
 
   describe('Rendering', () => {
     it('should render Content Editor heading', () => {
       renderComponent();
       expect(screen.getByText('Content Editor')).toBeInTheDocument();
-    });
-
-    it('should render tab buttons', () => {
-      renderComponent();
-      expect(screen.getByText('Edit')).toBeInTheDocument();
-      expect(screen.getByText('Split')).toBeInTheDocument();
-      expect(screen.getByText('Preview')).toBeInTheDocument();
     });
 
     it('should render Save button', () => {
@@ -148,71 +122,36 @@ describe('TopicMarkdownEditor', () => {
 
     it('should render help text', () => {
       renderComponent();
-      expect(screen.getByText(/Supports Markdown/)).toBeInTheDocument();
       expect(screen.getByText(/Press Ctrl\+S to save/)).toBeInTheDocument();
     });
 
-    it('should load existing content into textarea', () => {
+    it('should render the MDXEditor with initial content', () => {
       renderComponent();
-
-      const textarea = screen.getByPlaceholderText('Write your markdown content here...');
-      expect(textarea).toHaveValue('# Existing Content\n\nSome text here.');
+      expect(screen.getByTestId('mdx-editor')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-editor-textarea')).toHaveValue('# Test Content\n\nSome text here.');
     });
   });
 
-  describe('Tab Switching', () => {
-    it('should show split view by default', () => {
-      renderComponent();
+  describe('Default Content', () => {
+    it('should generate default content when no initial content provided', () => {
+      renderComponent({ initialContent: null });
 
-      // Split view shows both textarea and preview
-      expect(screen.getByPlaceholderText('Write your markdown content here...')).toBeInTheDocument();
-      expect(screen.getByTestId('topic-content-preview')).toBeInTheDocument();
+      const textarea = screen.getByTestId('mock-editor-textarea');
+      const value = (textarea as HTMLTextAreaElement).value;
+
+      // Should generate default content from slug
+      expect(value).toContain('Test Topic');
+      expect(value).toContain('Introduction');
     });
 
-    it('should show only editor in Edit mode', async () => {
-      const user = userEvent.setup();
-      renderComponent();
+    it('should generate default content when initial content is empty string', () => {
+      renderComponent({ initialContent: '' });
 
-      await user.click(screen.getByText('Edit'));
+      const textarea = screen.getByTestId('mock-editor-textarea');
+      const value = (textarea as HTMLTextAreaElement).value;
 
-      await waitFor(() => {
-        expect(screen.getByPlaceholderText('Write your markdown content here...')).toBeInTheDocument();
-        expect(screen.queryByTestId('topic-content-preview')).not.toBeInTheDocument();
-      });
-    });
-
-    it('should show only preview in Preview mode', async () => {
-      const user = userEvent.setup();
-      renderComponent();
-
-      await user.click(screen.getByText('Preview'));
-
-      await waitFor(() => {
-        expect(screen.queryByPlaceholderText('Write your markdown content here...')).not.toBeInTheDocument();
-        expect(screen.getByTestId('topic-content-preview')).toBeInTheDocument();
-      });
-    });
-  });
-
-  describe('Content Editing', () => {
-    it('should update content when typing', () => {
-      renderComponent();
-
-      const textarea = screen.getByPlaceholderText('Write your markdown content here...');
-      fireEvent.change(textarea, { target: { value: '# New Content' } });
-
-      expect(textarea).toHaveValue('# New Content');
-    });
-
-    it('should show unsaved changes indicator when content is modified', () => {
-      renderComponent();
-
-      expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument();
-
-      const textarea = screen.getByPlaceholderText('Write your markdown content here...');
-      fireEvent.change(textarea, { target: { value: '# Modified Content' } });
-
-      expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+      // Falsy value triggers default content
+      expect(value).toContain('Test Topic');
     });
   });
 
@@ -225,32 +164,48 @@ describe('TopicMarkdownEditor', () => {
     it('should enable Save button when there are changes', () => {
       renderComponent();
 
-      const textarea = screen.getByPlaceholderText('Write your markdown content here...');
+      const textarea = screen.getByTestId('mock-editor-textarea');
       fireEvent.change(textarea, { target: { value: '# Modified Content' } });
 
       expect(screen.getByText('Save').closest('button')).not.toBeDisabled();
     });
   });
 
-  describe('Saving Content', () => {
-    it('should call storage upload when saving', async () => {
+  describe('Unsaved Changes Indicator', () => {
+    it('should not show unsaved indicator when content matches initial', () => {
+      renderComponent();
+      expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument();
+    });
+
+    it('should show unsaved indicator when content is modified', () => {
       renderComponent();
 
-      const textarea = screen.getByPlaceholderText('Write your markdown content here...');
+      const textarea = screen.getByTestId('mock-editor-textarea');
+      fireEvent.change(textarea, { target: { value: '# Modified Content' } });
+
+      expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+    });
+  });
+
+  describe('Saving Content', () => {
+    it('should save content to database when Save is clicked', async () => {
+      const onSave = vi.fn();
+      renderComponent({ onSave });
+
+      const textarea = screen.getByTestId('mock-editor-textarea');
       fireEvent.change(textarea, { target: { value: '# New Content' } });
 
       fireEvent.click(screen.getByText('Save'));
 
       await waitFor(() => {
-        expect(mockRemove).toHaveBeenCalled();
-        expect(mockUpload).toHaveBeenCalled();
+        expect(mockUpdate).toHaveBeenCalled();
       });
     });
 
     it('should show success toast on successful save', async () => {
       renderComponent();
 
-      const textarea = screen.getByPlaceholderText('Write your markdown content here...');
+      const textarea = screen.getByTestId('mock-editor-textarea');
       fireEvent.change(textarea, { target: { value: '# New Content' } });
 
       fireEvent.click(screen.getByText('Save'));
@@ -260,12 +215,28 @@ describe('TopicMarkdownEditor', () => {
       });
     });
 
+    it('should call onSave callback after successful save', async () => {
+      const onSave = vi.fn();
+      renderComponent({ onSave });
+
+      const textarea = screen.getByTestId('mock-editor-textarea');
+      fireEvent.change(textarea, { target: { value: '# New Content' } });
+
+      fireEvent.click(screen.getByText('Save'));
+
+      await waitFor(() => {
+        expect(onSave).toHaveBeenCalled();
+      });
+    });
+
     it('should show error toast on failed save', async () => {
-      mockUpload.mockResolvedValue({ error: { message: 'Upload failed' } });
+      mockUpdate.mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ error: { message: 'Database error' } }),
+      });
 
       renderComponent();
 
-      const textarea = screen.getByPlaceholderText('Write your markdown content here...');
+      const textarea = screen.getByTestId('mock-editor-textarea');
       fireEvent.change(textarea, { target: { value: '# New Content' } });
 
       fireEvent.click(screen.getByText('Save'));
@@ -274,37 +245,138 @@ describe('TopicMarkdownEditor', () => {
         expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Failed to save content'));
       });
     });
-  });
 
-  describe('Default Content', () => {
-    it('should generate default content when no existing content', async () => {
-      // Empty string (falsy) triggers default content generation
-      mockContentData = '';
-      renderComponent({ topicSlug: 'my-new-topic' });
+    it('should reset hasChanges after successful save', async () => {
+      renderComponent();
 
-      // Wait for content to initialize and check value attribute
+      const textarea = screen.getByTestId('mock-editor-textarea');
+      fireEvent.change(textarea, { target: { value: '# New Content' } });
+
+      expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('Save'));
+
       await waitFor(() => {
-        const textarea = screen.getByPlaceholderText('Write your markdown content here...');
-        // Textarea value contains the default content - use string check
-        const value = (textarea as HTMLTextAreaElement).value;
-        expect(value).toContain('My New Topic');
+        expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument();
       });
     });
-  });
 
-  describe('New Content Path', () => {
-    it('should update topic content_path when saving new content', async () => {
-      mockContentData = '';
-      renderComponent({ contentPath: null });
+    it('should invalidate all relevant query caches on successful save', async () => {
+      // Create a new QueryClient with a spy on invalidateQueries
+      const testQueryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+        },
+      });
+      const invalidateQueriesSpy = vi.spyOn(testQueryClient, 'invalidateQueries');
 
-      const textarea = screen.getByPlaceholderText('Write your markdown content here...');
+      render(
+        <QueryClientProvider client={testQueryClient}>
+          <TopicMarkdownEditor
+            topicId="topic-123"
+            topicSlug="test-topic"
+            initialContent="# Test Content"
+            onSave={vi.fn()}
+          />
+        </QueryClientProvider>
+      );
+
+      const textarea = screen.getByTestId('mock-editor-textarea');
       fireEvent.change(textarea, { target: { value: '# New Content' } });
 
       fireEvent.click(screen.getByText('Save'));
 
       await waitFor(() => {
-        expect(mockUpload).toHaveBeenCalled();
+        // Should invalidate topic by slug
+        expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: ['topic', 'test-topic'] });
+        // Should invalidate admin topics list
+        expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: ['admin-topics'] });
+        // Should invalidate public topics list
+        expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: ['topics'] });
+        // Should invalidate admin topic detail (for tab switching)
+        expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: ['admin-topic-detail', 'topic-123'] });
       });
+    });
+  });
+
+  describe('Topic Switching Behavior', () => {
+    it('should preserve content when remounting with same topicId', () => {
+      const { rerender } = renderComponent({
+        topicId: 'topic-123',
+        initialContent: '# Original Content',
+      });
+
+      // Modify content
+      const textarea = screen.getByTestId('mock-editor-textarea');
+      fireEvent.change(textarea, { target: { value: '# Modified Content' } });
+
+      // Simulate remount with same props (like tab switching)
+      rerender(
+        <QueryClientProvider client={queryClient}>
+          <TopicMarkdownEditor
+            topicId="topic-123"
+            topicSlug="test-topic"
+            initialContent="# Original Content"
+            onSave={vi.fn()}
+          />
+        </QueryClientProvider>
+      );
+
+      // Content should be preserved (not reset to initial)
+      expect(screen.getByTestId('mock-editor-textarea')).toHaveValue('# Modified Content');
+    });
+
+    it('should reset content when switching to different topicId', () => {
+      const { rerender } = renderComponent({
+        topicId: 'topic-123',
+        initialContent: '# Topic 1 Content',
+      });
+
+      // Modify content
+      const textarea = screen.getByTestId('mock-editor-textarea');
+      fireEvent.change(textarea, { target: { value: '# Modified Content' } });
+
+      // Switch to different topic
+      rerender(
+        <QueryClientProvider client={queryClient}>
+          <TopicMarkdownEditor
+            topicId="topic-456"
+            topicSlug="different-topic"
+            initialContent="# Topic 2 Content"
+            onSave={vi.fn()}
+          />
+        </QueryClientProvider>
+      );
+
+      // Content should be reset to new topic's content
+      expect(screen.getByTestId('mock-editor-textarea')).toHaveValue('# Topic 2 Content');
+    });
+  });
+
+  describe('Keyboard Shortcuts', () => {
+    it('should save on Ctrl+S when there are changes', async () => {
+      renderComponent();
+
+      const textarea = screen.getByTestId('mock-editor-textarea');
+      fireEvent.change(textarea, { target: { value: '# New Content' } });
+
+      // Simulate Ctrl+S
+      fireEvent.keyDown(window, { key: 's', ctrlKey: true });
+
+      await waitFor(() => {
+        expect(mockUpdate).toHaveBeenCalled();
+      });
+    });
+
+    it('should not save on Ctrl+S when there are no changes', async () => {
+      renderComponent();
+
+      // Simulate Ctrl+S without making changes
+      fireEvent.keyDown(window, { key: 's', ctrlKey: true });
+
+      // Wait a bit and verify no save was triggered
+      await new Promise(resolve => setTimeout(resolve, 100));
+      expect(mockUpdate).not.toHaveBeenCalled();
     });
   });
 });

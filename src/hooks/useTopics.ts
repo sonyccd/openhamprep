@@ -35,7 +35,8 @@ export interface Topic {
   display_order: number;
   is_published: boolean;
   license_types: string[];
-  content_path: string | null;
+  content: string | null;
+  content_path: string | null; // Deprecated - kept for migration compatibility
   edit_history: unknown[];
   created_at: string;
   updated_at: string;
@@ -144,7 +145,9 @@ export function useTopic(slug: string | undefined) {
 }
 
 /**
- * Fetch markdown content from storage
+ * @deprecated Content is now stored in the topics.content column.
+ * Use topic.content directly from useTopic() instead.
+ * This hook is kept for backward compatibility during migration.
  */
 export function useTopicContent(contentPath: string | null | undefined) {
   return useQuery({

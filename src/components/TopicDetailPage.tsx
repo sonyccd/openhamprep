@@ -1,4 +1,4 @@
-import { useTopic, useTopicContent, useTopicQuestions, useTopicCompleted, useToggleTopicComplete } from "@/hooks/useTopics";
+import { useTopic, useTopicQuestions, useTopicCompleted, useToggleTopicComplete } from "@/hooks/useTopics";
 import { useQuestionsByIds, Question } from "@/hooks/useQuestions";
 import { useAuth } from "@/hooks/useAuth";
 import { useProgress } from "@/hooks/useProgress";
@@ -35,7 +35,6 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   const { user } = useAuth();
   const { topicSource } = useAppNavigation();
   const { data: topic, isLoading: topicLoading, error: topicError } = useTopic(slug);
-  const { data: content, isLoading: contentLoading } = useTopicContent(topic?.content_path);
   const { data: topicQuestions } = useTopicQuestions(topic?.id);
   const [activeHeadingId, setActiveHeadingId] = useState<string>();
   const [isQuizOpen, setIsQuizOpen] = useState(false);
@@ -133,7 +132,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   }
 
   // Default content if no markdown is available
-  const displayContent = content || `# ${topic.title}\n\n${topic.description || "Content coming soon..."}\n\nThis topic is still being developed. Check back later for the full article.`;
+  const displayContent = topic.content || `# ${topic.title}\n\n${topic.description || "Content coming soon..."}\n\nThis topic is still being developed. Check back later for the full article.`;
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -208,16 +207,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
             transition={{ delay: 0.15 }}
             className="lg:order-2 order-1 min-w-0"
           >
-            {contentLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-6 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-5/6" />
-              </div>
-            ) : (
-              <TopicContent content={displayContent} />
-            )}
+            <TopicContent content={displayContent} />
 
             {/* Take Quiz CTA after content */}
             {user && questionCount > 0 && (
