@@ -25,11 +25,36 @@ const supabaseKey =
   process.env.SUPABASE_ANON_KEY ||
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
 
-// Check if running against production
-const isProduction =
-  supabaseUrl.includes("supabase.co") ||
-  supabaseUrl.includes("supabase.com") ||
-  (!supabaseUrl.includes("localhost") && !supabaseUrl.includes("127.0.0.1"));
+// Check if running against production by parsing the URL properly
+function isProductionUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.toLowerCase();
+
+    // Local development hosts
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return false;
+    }
+
+    // Supabase production domains - check exact match or subdomain
+    if (
+      hostname === "supabase.co" ||
+      hostname === "supabase.com" ||
+      hostname.endsWith(".supabase.co") ||
+      hostname.endsWith(".supabase.com")
+    ) {
+      return true;
+    }
+
+    // Any other non-local URL is treated as production for safety
+    return true;
+  } catch {
+    // If URL parsing fails, assume it could be production for safety
+    return true;
+  }
+}
+
+const isProduction = isProductionUrl(supabaseUrl);
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
