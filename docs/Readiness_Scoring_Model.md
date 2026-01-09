@@ -42,6 +42,8 @@ The exam questions are **not drawn uniformly** from the pool. Each subelement co
 
 This structure is critical: a student who scores 90% on T9 (2 questions) but 50% on T1 (6 questions) will struggle, while the reverse situation is much more forgiving.
 
+![](https://github.com/sonyccd/openhamprep/blob/e3bcadbb897e71df762bc36c6b6c592592ec9d81/docs/images/chart3_subelement_weights.png)
+
 ---
 
 ## 3. Input Variables
@@ -89,6 +91,8 @@ Where:
 - $T_{rate} = \frac{T_p}{\max(T_t, 1)}$ (practice test pass rate)
 - $\delta(D) = \min(10, 0.5 \cdot D)$ is a recency decay penalty
 
+![](https://github.com/sonyccd/openhamprep/blob/e3bcadbb897e71df762bc36c6b6c592592ec9d81/docs/images/chart2_readiness_components.png)
+
 ### 4.2 Weight Rationale
 
 | Component | Weight | Rationale |
@@ -101,6 +105,8 @@ Where:
 | Recency penalty ($\delta$) | -10 max | Knowledge decays; encourages consistent study habits |
 
 The weights sum to 100 before the recency penalty, making the score intuitive.
+
+![](https://github.com/sonyccd/openhamprep/blob/e3bcadbb897e71df762bc36c6b6c592592ec9d81/docs/images/chart8_recency_decay.png)
 
 ### 4.3 Pass Probability Estimate
 
@@ -126,6 +132,10 @@ This yields:
 | 85 | 95% |
 
 The inflection at 65 is intentionally conservative—it requires solid recent performance plus meaningful coverage and practice test success.
+
+![](https://github.com/sonyccd/openhamprep/blob/e3bcadbb897e71df762bc36c6b6c592592ec9d81/docs/images/chart1_pass_probability.png)
+
+![](https://github.com/sonyccd/openhamprep/blob/e3bcadbb897e71df762bc36c6b6c592592ec9d81/docs/images/chart5_thresholds.png)
 
 ---
 
@@ -156,6 +166,8 @@ Where:
 - $\alpha = \frac{n_{s,r}}{20}$ provides smooth interpolation
 
 This approach favors recent performance when we have enough data, but falls back to overall accuracy for subelements with limited recent activity.
+
+![](https://github.com/sonyccd/openhamprep/blob/e3bcadbb897e71df762bc36c6b6c592592ec9d81/docs/images/chart7_accuracy_blend.png)
 
 ### 5.2 Total Expected Score
 
@@ -188,6 +200,8 @@ Where $\beta_s$ is a confidence/coverage modifier:
 
 The intuition: if you've only seen 20% of a subelement's questions, your accuracy estimate is less reliable and the risk is higher.
 
+![](https://github.com/sonyccd/openhamprep/blob/e3bcadbb897e71df762bc36c6b6c592592ec9d81/docs/images/chart6_beta_modifier.png)
+
 ### 5.4 Interpreting Risk Scores
 
 Risk scores are relative, not absolute. We rank subelements by risk and focus attention on the top contributors.
@@ -202,6 +216,8 @@ Risk scores are relative, not absolute. We rank subelements by risk and focus at
 | T9 | 2 | 0.50 | 0.35 | 1.0 | 2 × 0.50 × 1.0 = 1.00 |
 
 This student should prioritize T1 (FCC Rules) first—it has the highest risk score due to the combination of low accuracy and high exam weight.
+
+![](https://github.com/sonyccd/openhamprep/blob/e3bcadbb897e71df762bc36c6b6c592592ec9d81/docs/images/chart4_risk_analysis.png)
 
 ### 5.5 Expected Questions Lost
 
