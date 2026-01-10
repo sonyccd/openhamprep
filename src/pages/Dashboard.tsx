@@ -35,6 +35,7 @@ import { TopicGallery } from '@/components/TopicGallery';
 import { TopicDetailPage } from '@/components/TopicDetailPage';
 import { LessonGallery } from '@/components/LessonGallery';
 import { LessonDetailPage } from '@/components/LessonDetailPage';
+import { HamRadioToolsGallery } from '@/components/HamRadioToolsGallery';
 import { TestType, testTypes, View } from '@/types/navigation';
 export default function Dashboard() {
   const {
@@ -300,6 +301,9 @@ export default function Dashboard() {
     }
     if (currentView === 'find-test-site') {
       return <ExamSessionSearch />;
+    }
+    if (currentView === 'tools') {
+      return <HamRadioToolsGallery />;
     }
     if (currentView === 'topics') {
       return <TopicGallery testType={selectedTest} />;

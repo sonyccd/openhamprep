@@ -2337,6 +2337,97 @@ ON CONFLICT (key) DO UPDATE SET
   updated_at = now();
 
 -- =============================================================================
+-- HAM RADIO TOOL CATEGORIES
+-- =============================================================================
+
+INSERT INTO public.ham_radio_tool_categories (name, slug, description, display_order, icon_name) VALUES
+  ('Digital Modes', 'digital-modes', 'Software for FT8, JS8Call, RTTY, and other digital modes', 1, 'Radio'),
+  ('Logging', 'logging', 'Station logging software and online logbook services', 2, 'ClipboardList'),
+  ('Propagation', 'propagation', 'Band conditions, propagation prediction, and solar data', 3, 'Globe'),
+  ('Antenna Design', 'antenna-design', 'Antenna modeling, calculators, and design tools', 4, 'Antenna'),
+  ('SDR Software', 'sdr-software', 'Software defined radio applications', 5, 'Cpu'),
+  ('Repeater Directories', 'repeater-directories', 'Find local repeaters and link systems', 6, 'MapPin'),
+  ('Callsign Lookup', 'callsign-lookup', 'Callsign databases and QRZ lookup tools', 7, 'Search'),
+  ('Contest Tools', 'contest-tools', 'Contest logging, scoring, and resources', 8, 'Trophy')
+ON CONFLICT (slug) DO NOTHING;
+
+-- =============================================================================
+-- HAM RADIO TOOLS
+-- =============================================================================
+
+INSERT INTO public.ham_radio_tools (category_id, title, description, url, is_published, display_order)
+SELECT c.id, 'WSJT-X',
+  'Weak signal communication software supporting FT8, FT4, JT65, and other digital modes. Essential for modern digital amateur radio operation.',
+  'https://wsjt.sourceforge.io/', true, 1
+FROM public.ham_radio_tool_categories c WHERE c.slug = 'digital-modes';
+
+INSERT INTO public.ham_radio_tools (category_id, title, description, url, is_published, display_order)
+SELECT c.id, 'JS8Call',
+  'Keyboard-to-keyboard messaging using JS8 mode. Designed for weak signal communication with store-and-forward capability.',
+  'http://js8call.com/', true, 2
+FROM public.ham_radio_tool_categories c WHERE c.slug = 'digital-modes';
+
+INSERT INTO public.ham_radio_tools (category_id, title, description, url, is_published, display_order)
+SELECT c.id, 'fldigi',
+  'Digital modem program supporting over 80 digital modes including PSK31, RTTY, CW, and many more.',
+  'http://www.w1hkj.com/', true, 3
+FROM public.ham_radio_tool_categories c WHERE c.slug = 'digital-modes';
+
+INSERT INTO public.ham_radio_tools (category_id, title, description, url, is_published, display_order)
+SELECT c.id, 'Log4OM',
+  'Free logging software with DX cluster integration, QSL management, and awards tracking.',
+  'https://www.log4om.com/', true, 1
+FROM public.ham_radio_tool_categories c WHERE c.slug = 'logging';
+
+INSERT INTO public.ham_radio_tools (category_id, title, description, url, is_published, display_order)
+SELECT c.id, 'CloudLog',
+  'Self-hosted, web-based amateur radio logging application. Access your log from anywhere.',
+  'https://www.cloudlog.co.uk/', true, 2
+FROM public.ham_radio_tool_categories c WHERE c.slug = 'logging';
+
+INSERT INTO public.ham_radio_tools (category_id, title, description, url, is_published, display_order)
+SELECT c.id, 'PSK Reporter',
+  'Real-time propagation monitoring showing where digital signals are being received worldwide.',
+  'https://pskreporter.info/', true, 1
+FROM public.ham_radio_tool_categories c WHERE c.slug = 'propagation';
+
+INSERT INTO public.ham_radio_tools (category_id, title, description, url, is_published, display_order)
+SELECT c.id, 'VOACAP Online',
+  'HF propagation prediction tool. Plan your contacts by seeing predicted signal strength.',
+  'https://www.voacap.com/', true, 2
+FROM public.ham_radio_tool_categories c WHERE c.slug = 'propagation';
+
+INSERT INTO public.ham_radio_tools (category_id, title, description, url, is_published, display_order)
+SELECT c.id, '4NEC2',
+  'Free antenna modeling software for designing and analyzing antenna patterns and performance.',
+  'https://www.qsl.net/4nec2/', true, 1
+FROM public.ham_radio_tool_categories c WHERE c.slug = 'antenna-design';
+
+INSERT INTO public.ham_radio_tools (category_id, title, description, url, is_published, display_order)
+SELECT c.id, 'SDR++',
+  'Cross-platform SDR software with support for many receivers. Modern UI with waterfall display.',
+  'https://www.sdrpp.org/', true, 1
+FROM public.ham_radio_tool_categories c WHERE c.slug = 'sdr-software';
+
+INSERT INTO public.ham_radio_tools (category_id, title, description, url, is_published, display_order)
+SELECT c.id, 'RepeaterBook',
+  'Comprehensive database of amateur radio repeaters worldwide with search and filtering.',
+  'https://www.repeaterbook.com/', true, 1
+FROM public.ham_radio_tool_categories c WHERE c.slug = 'repeater-directories';
+
+INSERT INTO public.ham_radio_tools (category_id, title, description, url, is_published, display_order)
+SELECT c.id, 'QRZ.com',
+  'The most popular callsign lookup database. Find contact info, QSL routes, and station details.',
+  'https://www.qrz.com/', true, 1
+FROM public.ham_radio_tool_categories c WHERE c.slug = 'callsign-lookup';
+
+INSERT INTO public.ham_radio_tools (category_id, title, description, url, is_published, display_order)
+SELECT c.id, 'N1MM Logger+',
+  'Free contest logging software. Industry standard for amateur radio contests with real-time scoring.',
+  'https://n1mmwp.hamdocs.com/', true, 1
+FROM public.ham_radio_tool_categories c WHERE c.slug = 'contest-tools';
+
+-- =============================================================================
 -- SUMMARY
 -- =============================================================================
 
@@ -2362,5 +2453,7 @@ BEGIN
   RAISE NOTICE 'ARRL Chapters: %', (SELECT COUNT(*) FROM public.arrl_chapters);
   RAISE NOTICE 'Questions with Chapter Links: %', (SELECT COUNT(*) FROM public.questions WHERE arrl_chapter_id IS NOT NULL);
   RAISE NOTICE 'Readiness Config: %', (SELECT COUNT(*) FROM public.readiness_config);
+  RAISE NOTICE 'Ham Radio Tool Categories: %', (SELECT COUNT(*) FROM public.ham_radio_tool_categories);
+  RAISE NOTICE 'Ham Radio Tools: %', (SELECT COUNT(*) FROM public.ham_radio_tools);
   RAISE NOTICE '========================================';
 END $$;

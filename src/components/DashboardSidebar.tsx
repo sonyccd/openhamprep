@@ -15,6 +15,7 @@ import {
   FileText,
   LayoutGrid,
   Square,
+  Wrench,
 } from 'lucide-react';
 import { getModifierKey } from '@/lib/searchUtils';
 import { cn } from '@/lib/utils';
@@ -130,6 +131,7 @@ export function DashboardSidebar({
   // Bottom nav items (after Study group)
   const bottomNavItems: NavItem[] = [
     { id: 'glossary', label: 'Glossary', icon: BookText },
+    { id: 'tools', label: 'Tools', icon: Wrench },
     { id: 'find-test-site', label: 'Find Test Site', icon: MapPin },
   ];
 

@@ -212,6 +212,7 @@ describe('DashboardSidebar', () => {
       expect(screen.getByText('Learn')).toBeInTheDocument();
       expect(screen.getByText('Study')).toBeInTheDocument();
       expect(screen.getByText('Glossary')).toBeInTheDocument();
+      expect(screen.getByText('Tools')).toBeInTheDocument();
       expect(screen.getByText('Find Test Site')).toBeInTheDocument();
 
       // Expand Learn menu to see Topics and Lessons
@@ -251,6 +252,17 @@ describe('DashboardSidebar', () => {
       await user.click(screen.getByText('Random Practice'));
 
       expect(onViewChange).toHaveBeenCalledWith('random-practice');
+    });
+
+    it('calls onViewChange with tools when Tools clicked', async () => {
+      const user = userEvent.setup();
+      const onViewChange = vi.fn();
+
+      render(<DashboardSidebar {...defaultProps} onViewChange={onViewChange} />, { wrapper: createWrapper() });
+
+      await user.click(screen.getByText('Tools'));
+
+      expect(onViewChange).toHaveBeenCalledWith('tools');
     });
 
     it('disables Practice Test when test not available', () => {

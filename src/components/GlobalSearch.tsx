@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { HelpCircle, BookText, Library, Loader2, AlertCircle } from 'lucide-react';
+import { HelpCircle, BookText, Library, Loader2, AlertCircle, Wrench } from 'lucide-react';
 import {
   CommandDialog,
   CommandInput,
@@ -33,6 +33,8 @@ function ResultIcon({ type }: { type: SearchResult['type'] }) {
       return <BookText className={iconClass} aria-hidden="true" />;
     case 'topic':
       return <Library className={iconClass} aria-hidden="true" />;
+    case 'tool':
+      return <Wrench className={iconClass} aria-hidden="true" />;
     default:
       return null;
   }
@@ -49,6 +51,8 @@ function getResultTypeLabel(type: SearchResult['type']): string {
       return 'Glossary term';
     case 'topic':
       return 'Topic';
+    case 'tool':
+      return 'Tool';
     default:
       return '';
   }
@@ -145,6 +149,12 @@ export function GlobalSearch({
           navigateToTopic(result.slug);
         }
         break;
+      case 'tool':
+        // Tools open in a new tab
+        if (result.url) {
+          window.open(result.url, '_blank', 'noopener,noreferrer');
+        }
+        break;
     }
   };
 
@@ -153,7 +163,7 @@ export function GlobalSearch({
   return (
     <CommandDialog open={open} onOpenChange={handleOpenChange}>
       <CommandInput
-        placeholder="Search questions, glossary, topics..."
+        placeholder="Search questions, glossary, topics, tools..."
         value={query}
         onValueChange={setQuery}
       />
@@ -244,6 +254,24 @@ export function GlobalSearch({
               {results.topics.map((result) => (
                 <SearchResultItem
                   key={`topic-${result.id}`}
+                  result={result}
+                  onSelect={() => handleSelect(result)}
+                />
+              ))}
+            </CommandGroup>
+          </>
+        )}
+
+        {/* Tools results */}
+        {!isLoading && results.tools.length > 0 && (
+          <>
+            {(results.questions.length > 0 || results.glossary.length > 0 || results.topics.length > 0) && (
+              <CommandSeparator />
+            )}
+            <CommandGroup heading="Tools">
+              {results.tools.map((result) => (
+                <SearchResultItem
+                  key={`tool-${result.id}`}
                   result={result}
                   onSelect={() => handleSelect(result)}
                 />
