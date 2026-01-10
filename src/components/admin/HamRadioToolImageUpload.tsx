@@ -26,6 +26,14 @@ interface HamRadioToolImageUploadProps {
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
 
+// Map MIME types to file extensions for more reliable extension detection
+const MIME_TO_EXT: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+};
+
 export function HamRadioToolImageUpload({
   toolId,
   currentStoragePath,
@@ -73,18 +81,17 @@ export function HamRadioToolImageUpload({
     // Upload to Supabase Storage
     setIsUploading(true);
     try {
-      // Generate filename based on tool ID
-      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'png';
+      // Generate filename based on tool ID, deriving extension from MIME type
+      const fileExt = MIME_TO_EXT[file.type] || 'png';
       const storagePath = `${toolId}.${fileExt}`;
 
-      // First try to delete any existing file (in case of re-upload)
-      if (currentStoragePath) {
+      // Delete existing file only if it has a different name (different extension)
+      // The upsert: true option handles overwriting files with the same name
+      if (currentStoragePath && currentStoragePath !== storagePath) {
         await supabase.storage.from('ham-radio-tools').remove([currentStoragePath]);
       }
-      // Also try to delete any file with the same name pattern
-      await supabase.storage.from('ham-radio-tools').remove([storagePath]);
 
-      // Upload new file
+      // Upload new file (upsert handles overwrite if same path)
       const { error: uploadError } = await supabase.storage
         .from('ham-radio-tools')
         .upload(storagePath, file, {

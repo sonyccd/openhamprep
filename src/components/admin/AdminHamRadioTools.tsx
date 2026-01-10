@@ -111,7 +111,7 @@ export function AdminHamRadioTools() {
         url: newUrl.trim(),
         category_id: newCategoryId || null,
         is_published: newIsPublished,
-        display_order: tools.length,
+        display_order: tools.length > 0 ? Math.max(...tools.map(t => t.display_order)) + 1 : 0,
         image_url: null,
         storage_path: null,
         edit_history: [historyEntry],

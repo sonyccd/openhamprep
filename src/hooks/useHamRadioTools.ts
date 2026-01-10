@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { EditHistoryEntry } from "@/components/admin/EditHistoryViewer";
 
 export interface HamRadioToolCategory {
   id: string;
@@ -22,21 +23,26 @@ export interface HamRadioTool {
   storage_path: string | null;
   is_published: boolean;
   display_order: number;
-  edit_history: unknown[];
+  edit_history: EditHistoryEntry[];
   created_at: string;
   updated_at: string;
   category?: HamRadioToolCategory;
 }
 
 /**
- * Get the image URL for a tool, preferring storage_path over image_url
+ * Get the image URL for a tool, preferring storage_path over image_url.
+ * Falls back to image_url if storage URL retrieval fails.
  */
 export function getToolImageUrl(tool: HamRadioTool): string | null {
   if (tool.storage_path) {
-    const { data } = supabase.storage
-      .from('ham-radio-tools')
-      .getPublicUrl(tool.storage_path);
-    return data.publicUrl;
+    try {
+      const { data } = supabase.storage
+        .from('ham-radio-tools')
+        .getPublicUrl(tool.storage_path);
+      return data?.publicUrl || tool.image_url;
+    } catch {
+      return tool.image_url;
+    }
   }
   return tool.image_url;
 }

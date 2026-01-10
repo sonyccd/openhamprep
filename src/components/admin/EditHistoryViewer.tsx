@@ -20,7 +20,7 @@ export interface EditHistoryEntry {
 
 interface EditHistoryViewerProps {
   history: EditHistoryEntry[];
-  entityType: 'question' | 'term';
+  entityType: 'question' | 'term' | 'tool';
 }
 
 export function EditHistoryViewer({ history, entityType }: EditHistoryViewerProps) {
