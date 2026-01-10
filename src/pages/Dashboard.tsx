@@ -223,7 +223,7 @@ export default function Dashboard() {
   const currentTest = testTypes.find(t => t.id === selectedTest);
   const isTestAvailable = currentTest?.available ?? false;
 
-  // Use test readiness hook for calculations
+  // Use test readiness hook for calculations - use examType for database-backed readiness
   const {
     readinessLevel,
     readinessMessage,
@@ -231,8 +231,9 @@ export default function Dashboard() {
     recentAvgScore,
     nextAction,
   } = useTestReadiness({
-    testResults,
+    examType: selectedTest,
     weakQuestionCount: weakQuestionIds.length,
+    testResults, // Fallback for when DB cache is empty
   });
 
   // Handle view changes with test-in-progress check

@@ -3,9 +3,14 @@
   const STORAGE_KEY = 'theme';
   const DARK_CLASS = 'dark';
 
-  // Get saved theme or default to 'light'
-  function getSavedTheme() {
-    return localStorage.getItem(STORAGE_KEY) || 'light';
+  // Get the effective theme (saved preference or system default)
+  function getEffectiveTheme() {
+    const savedTheme = localStorage.getItem(STORAGE_KEY);
+    if (savedTheme) {
+      return savedTheme;
+    }
+    // Default to system preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
 
   // Save theme preference
@@ -24,7 +29,7 @@
 
   // Toggle between light and dark
   function toggleTheme() {
-    const currentTheme = getSavedTheme();
+    const currentTheme = getEffectiveTheme();
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     saveTheme(newTheme);
     applyTheme(newTheme);
@@ -32,8 +37,8 @@
 
   // Initialize theme on page load
   function initTheme() {
-    const savedTheme = getSavedTheme();
-    applyTheme(savedTheme);
+    const effectiveTheme = getEffectiveTheme();
+    applyTheme(effectiveTheme);
 
     // Set up theme toggle buttons
     const themeToggle = document.getElementById('theme-toggle');
@@ -46,6 +51,13 @@
     if (themeToggleMobile) {
       themeToggleMobile.addEventListener('click', toggleTheme);
     }
+
+    // Listen for system theme changes (when no saved preference)
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      if (!localStorage.getItem(STORAGE_KEY)) {
+        applyTheme(e.matches ? 'dark' : 'light');
+      }
+    });
   }
 
   // Run when DOM is ready

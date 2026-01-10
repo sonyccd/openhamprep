@@ -21,6 +21,12 @@ export default function QuestionPage() {
   const { navigateToTopic } = useAppNavigation();
   const { data: question, isLoading, error } = useQuestion(id);
 
+  // Handle topic click - navigate to dashboard with topic state
+  const handleTopicClick = (slug: string) => {
+    navigateToTopic(slug);
+    navigate('/dashboard');
+  };
+
   // Update document title - use displayName if available (for UUID-based URLs)
   useEffect(() => {
     const prevTitle = document.title;
@@ -126,7 +132,7 @@ export default function QuestionPage() {
           onSelectAnswer={() => {}}
           showResult={true}
           enableGlossaryHighlight
-          onTopicClick={navigateToTopic}
+          onTopicClick={handleTopicClick}
         />
 
         {/* Sign-up CTA for anonymous users */}

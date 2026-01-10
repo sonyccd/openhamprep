@@ -70,7 +70,8 @@ export function useReadinessScore(examType: TestType) {
       return data as ReadinessData | null;
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes - edge function updates on events
+    staleTime: 30 * 1000, // 30 seconds - allow more frequent refetches after invalidation
+    gcTime: 5 * 60 * 1000, // 5 minutes - keep in cache for background updates
   });
 }
 

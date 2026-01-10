@@ -13,14 +13,18 @@ export function LinkPreview({ link }: LinkPreviewProps) {
   const typeLabel = config?.label ?? "Link";
   const typeColor = config ? `${config.colorClass} ${config.bgClass}` : "text-muted-foreground bg-secondary";
 
+  const linkTitle = link.title || link.url;
+
   return (
     <a
       href={link.url}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label={`${linkTitle} (opens in new tab)`}
       className={cn(
         "flex gap-4 p-4 rounded-lg border border-border bg-card/50",
         "hover:bg-secondary/50 hover:border-primary/30 transition-all duration-200",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "group"
       )}
     >
@@ -43,7 +47,7 @@ export function LinkPreview({ link }: LinkPreviewProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium", typeColor)}>
-            <TypeIcon className="w-3 h-3" />
+            <TypeIcon className="w-3 h-3" aria-hidden="true" />
             {typeLabel}
           </span>
           {link.siteName && (
@@ -64,7 +68,7 @@ export function LinkPreview({ link }: LinkPreviewProps) {
         )}
       </div>
       
-      <ExternalLink className="flex-shrink-0 w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors mt-1" />
+      <ExternalLink className="flex-shrink-0 w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors mt-1" aria-hidden="true" />
     </a>
   );
 }

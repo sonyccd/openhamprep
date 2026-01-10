@@ -80,7 +80,12 @@ export function GlossaryHighlightedText({ text }: GlossaryHighlightedTextProps) 
             return (
               <Tooltip key={index}>
                 <TooltipTrigger asChild>
-                  <span className="underline decoration-primary/50 decoration-dotted underline-offset-2 cursor-help text-primary/90 hover:text-primary hover:decoration-primary transition-colors">
+                  <span
+                    className="underline decoration-primary/50 decoration-dotted underline-offset-2 cursor-help text-primary/90 hover:text-primary hover:decoration-primary transition-colors"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${segment.term.term}: ${segment.term.definition.slice(0, 50)}${segment.term.definition.length > 50 ? '...' : ''}`}
+                  >
                     {segment.text}
                   </span>
                 </TooltipTrigger>
