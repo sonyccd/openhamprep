@@ -2317,6 +2317,26 @@ WHERE l.slug = 'electronics-essentials' AND t.slug = 'radio-frequency-fundamenta
 ON CONFLICT DO NOTHING;
 
 -- =============================================================================
+-- READINESS SCORING CONFIG
+-- Default formula parameters for the readiness scoring model.
+-- These can be adjusted via admin or direct DB access to tune the algorithm.
+-- =============================================================================
+
+INSERT INTO public.readiness_config (key, value, description) VALUES
+  ('formula_weights', '{"recent_accuracy": 35, "overall_accuracy": 20, "coverage": 15, "mastery": 15, "test_rate": 15}', 'Weights for readiness score components (must sum to 100)'),
+  ('pass_probability', '{"k": 0.15, "r0": 65}', 'Logistic curve parameters: k=steepness, r0=inflection point'),
+  ('recency_penalty', '{"max_penalty": 10, "decay_rate": 0.5}', 'Days-since-study penalty: penalty = min(max_penalty, decay_rate * days)'),
+  ('coverage_beta', '{"low": 1.2, "mid": 1.0, "high": 0.9, "low_threshold": 0.3, "high_threshold": 0.7}', 'Coverage modifier for subelement risk score'),
+  ('blend', '{"min_recent_for_blend": 5, "recent_window": 20}', 'Accuracy blend formula: min_recent_for_blend=threshold to start blending, recent_window=full weight threshold'),
+  ('thresholds', '{"min_attempts": 50, "min_per_subelement": 2, "recent_window": 50, "subelement_recent_window": 20}', 'Sample size thresholds for confidence'),
+  ('client_recalc', '{"question_batch_size": 10, "debounce_ms": 5000}', 'Client-side recalculation settings: batch questions before recalc, minimum time between recalcs'),
+  ('version', '"v1.0.0"', 'Current formula version for audit trail')
+ON CONFLICT (key) DO UPDATE SET
+  value = EXCLUDED.value,
+  description = EXCLUDED.description,
+  updated_at = now();
+
+-- =============================================================================
 -- SUMMARY
 -- =============================================================================
 
@@ -2341,5 +2361,6 @@ BEGIN
   RAISE NOTICE 'Lesson-Topic Links: %', (SELECT COUNT(*) FROM public.lesson_topics);
   RAISE NOTICE 'ARRL Chapters: %', (SELECT COUNT(*) FROM public.arrl_chapters);
   RAISE NOTICE 'Questions with Chapter Links: %', (SELECT COUNT(*) FROM public.questions WHERE arrl_chapter_id IS NOT NULL);
+  RAISE NOTICE 'Readiness Config: %', (SELECT COUNT(*) FROM public.readiness_config);
   RAISE NOTICE '========================================';
 END $$;

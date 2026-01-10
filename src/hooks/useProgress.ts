@@ -3,11 +3,66 @@ import { useAuth } from '@/hooks/useAuth';
 import { Question } from '@/hooks/useQuestions';
 import { TestType, testConfig } from '@/types/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
+import { recalculateReadiness } from '@/hooks/useReadinessScore';
+
+/** Number of questions to batch before triggering a readiness recalculation */
+const RECALC_QUESTION_THRESHOLD = 10;
+
+/** Minimum time between recalculations (debounce) in ms */
+const RECALC_DEBOUNCE_MS = 5000;
+
+/** Valid exam type prefixes */
+const EXAM_TYPE_PREFIXES = {
+  T: 'technician',
+  G: 'general',
+  E: 'extra',
+} as const;
+
+type ExamPrefix = keyof typeof EXAM_TYPE_PREFIXES;
+
+/**
+ * Check if a character is a valid exam type prefix
+ */
+function isValidExamPrefix(char: string): char is ExamPrefix {
+  return char in EXAM_TYPE_PREFIXES;
+}
+
+/**
+ * Determine the exam type from a question's display_name or id.
+ * Question IDs start with T (Technician), G (General), or E (Extra).
+ * Falls back to 'technician' for invalid or unexpected formats.
+ */
+function getExamTypeFromQuestion(question: Question): TestType {
+  const displayName = question.displayName || question.id;
+
+  if (!displayName || displayName.length === 0) {
+    console.warn('Question missing displayName and id, defaulting to technician');
+    return 'technician';
+  }
+
+  const prefix = displayName.charAt(0).toUpperCase();
+
+  if (isValidExamPrefix(prefix)) {
+    return EXAM_TYPE_PREFIXES[prefix];
+  }
+
+  console.warn(`Unexpected question prefix "${prefix}" in "${displayName}", defaulting to technician`);
+  return 'technician';
+}
 
 export function useProgress() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // Track pending question attempts for batched readiness recalculation
+  const pendingRecalcCount = useRef(0);
+
+  // Track last recalculation time for debouncing
+  const lastRecalcTime = useRef<number>(0);
+
+  // Track if a recalculation is in progress
+  const recalcInProgress = useRef(false);
 
   const invalidateProgressQueries = useCallback(() => {
     if (!user) return;
@@ -18,6 +73,48 @@ export function useProgress() {
     queryClient.invalidateQueries({ queryKey: ['profile-stats', user.id] });
     queryClient.invalidateQueries({ queryKey: ['weekly-goals', user.id] });
   }, [queryClient, user]);
+
+  /**
+   * Invalidate readiness queries after recalculation
+   */
+  const invalidateReadinessQueries = useCallback(() => {
+    if (!user) return;
+    queryClient.invalidateQueries({ queryKey: ['readiness', user.id] });
+    queryClient.invalidateQueries({ queryKey: ['readiness-snapshots', user.id] });
+  }, [queryClient, user]);
+
+  /**
+   * Trigger readiness recalculation and invalidate cache.
+   * Includes debouncing to prevent concurrent recalculations.
+   */
+  const triggerReadinessRecalc = useCallback(async (testType: TestType): Promise<boolean> => {
+    const now = Date.now();
+
+    // Skip if recalculation is already in progress
+    if (recalcInProgress.current) {
+      console.debug('Skipping recalc: already in progress');
+      return false;
+    }
+
+    // Skip if we recalculated recently (debounce)
+    if (now - lastRecalcTime.current < RECALC_DEBOUNCE_MS) {
+      console.debug('Skipping recalc: debounced');
+      return false;
+    }
+
+    try {
+      recalcInProgress.current = true;
+      lastRecalcTime.current = now;
+
+      const success = await recalculateReadiness(testType);
+      if (success) {
+        invalidateReadinessQueries();
+      }
+      return success;
+    } finally {
+      recalcInProgress.current = false;
+    }
+  }, [invalidateReadinessQueries]);
 
   const saveTestResult = async (
     questions: Question[],
@@ -87,6 +184,15 @@ export function useProgress() {
     // Invalidate cached queries so UI updates immediately
     invalidateProgressQueries();
 
+    // Recalculate readiness score after completing a test
+    // This is done in the background - don't block the UI
+    triggerReadinessRecalc(testType).catch((err) => {
+      console.error('Failed to recalculate readiness after test:', err);
+    });
+
+    // Reset pending count since we just recalculated
+    pendingRecalcCount.current = 0;
+
     return testResult;
   };
 
@@ -123,6 +229,16 @@ export function useProgress() {
 
     // Invalidate cached queries so UI updates immediately
     invalidateProgressQueries();
+
+    // Batch readiness recalculation - only trigger after N questions
+    pendingRecalcCount.current++;
+    if (pendingRecalcCount.current >= RECALC_QUESTION_THRESHOLD) {
+      const examType = getExamTypeFromQuestion(question);
+      triggerReadinessRecalc(examType).catch((err) => {
+        console.error('Failed to recalculate readiness after batch:', err);
+      });
+      pendingRecalcCount.current = 0;
+    }
   };
 
   /**
@@ -168,6 +284,16 @@ export function useProgress() {
 
     // Invalidate cached queries so UI updates immediately
     invalidateProgressQueries();
+
+    // Trigger readiness recalculation after quiz completion
+    // Quiz attempts are typically 5-10 questions, so always recalculate
+    if (attempts.length > 0) {
+      const examType = getExamTypeFromQuestion(attempts[0].question);
+      triggerReadinessRecalc(examType).catch((err) => {
+        console.error('Failed to recalculate readiness after quiz:', err);
+      });
+      pendingRecalcCount.current = 0;
+    }
 
     return { success: true };
   };
