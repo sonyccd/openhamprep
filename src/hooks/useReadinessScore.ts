@@ -77,9 +77,19 @@ export function useReadinessScore(examType: TestType) {
 /**
  * Trigger a readiness recalculation via the edge function.
  * Call this after tests or batched question attempts.
+ *
+ * Note: This requires the user to be authenticated. The edge function
+ * will reject requests without a valid auth token.
  */
 export async function recalculateReadiness(examType: TestType): Promise<boolean> {
   try {
+    // Check if user is authenticated before calling edge function
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      console.warn('Cannot recalculate readiness: user not authenticated');
+      return false;
+    }
+
     const { data, error } = await supabase.functions.invoke('calculate-readiness', {
       body: { exam_type: examType },
     });

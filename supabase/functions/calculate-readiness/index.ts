@@ -36,6 +36,11 @@ interface CoverageBetaConfig {
   high_threshold: number;
 }
 
+interface BlendConfig {
+  min_recent_for_blend: number;
+  recent_window: number;
+}
+
 interface ThresholdsConfig {
   min_attempts: number;
   min_per_subelement: number;
@@ -48,6 +53,7 @@ interface Config {
   pass_probability: PassProbabilityConfig;
   recency_penalty: RecencyPenaltyConfig;
   coverage_beta: CoverageBetaConfig;
+  blend: BlendConfig;
   thresholds: ThresholdsConfig;
   version: string;
 }
@@ -85,6 +91,29 @@ interface ReadinessResult {
   passProbability: number;
   recencyPenalty: number;
   expectedExamScore: number;
+}
+
+// ============================================================
+// INPUT VALIDATION
+// ============================================================
+
+function validateExamType(examType: unknown): examType is "technician" | "general" | "extra" {
+  return typeof examType === "string" &&
+    ["technician", "general", "extra"].includes(examType);
+}
+
+function validateRequest(body: unknown): ReadinessRequest {
+  if (!body || typeof body !== "object") {
+    throw new Error("Request body must be an object");
+  }
+
+  const { exam_type } = body as Record<string, unknown>;
+
+  if (!validateExamType(exam_type)) {
+    throw new Error("Invalid exam_type: must be 'technician', 'general', or 'extra'");
+  }
+
+  return { exam_type };
 }
 
 // ============================================================
@@ -135,11 +164,13 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Parse request
-    const { exam_type } = (await req.json()) as ReadinessRequest;
-    if (!["technician", "general", "extra"].includes(exam_type)) {
+    // Parse and validate request
+    let requestBody: unknown;
+    try {
+      requestBody = await req.json();
+    } catch {
       return new Response(
-        JSON.stringify({ error: "Invalid exam_type" }),
+        JSON.stringify({ error: "Invalid JSON body" }),
         {
           status: 400,
           headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
@@ -147,6 +178,22 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    let validatedRequest: ReadinessRequest;
+    try {
+      validatedRequest = validateRequest(requestBody);
+    } catch (validationError) {
+      return new Response(
+        JSON.stringify({
+          error: validationError instanceof Error ? validationError.message : "Validation failed"
+        }),
+        {
+          status: 400,
+          headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const { exam_type } = validatedRequest;
     const prefix =
       exam_type === "technician" ? "T" : exam_type === "general" ? "G" : "E";
 
@@ -158,12 +205,13 @@ Deno.serve(async (req: Request) => {
     const config = await loadConfig(supabase);
     console.log(`[${requestId}] Loaded config version: ${config.version}`);
 
-    // Gather raw metrics
+    // Gather raw metrics with graceful degradation
     const metrics = await gatherMetrics(
       supabase,
       user.id,
       prefix,
-      config.thresholds
+      config.thresholds,
+      requestId
     );
     console.log(
       `[${requestId}] Metrics: attempts=${metrics.totalAttempts}, coverage=${(metrics.coverage * 100).toFixed(1)}%, mastery=${(metrics.mastery * 100).toFixed(1)}%`
@@ -175,12 +223,13 @@ Deno.serve(async (req: Request) => {
       `[${requestId}] Result: score=${result.readinessScore.toFixed(1)}, passProbability=${(result.passProbability * 100).toFixed(1)}%`
     );
 
-    // Calculate subelement metrics
+    // Calculate subelement metrics (optimized - single batch of queries)
     const subelementMetrics = await calculateSubelementMetrics(
       supabase,
       user.id,
       prefix,
-      config
+      config,
+      requestId
     );
 
     // Calculate expected exam score from subelement metrics
@@ -189,21 +238,28 @@ Deno.serve(async (req: Request) => {
       0
     );
 
-    // Upsert to cache
-    await upsertCache(
-      supabase,
-      user.id,
-      exam_type,
-      { ...result, expectedExamScore },
-      subelementMetrics,
-      metrics,
-      config.version
+    // Upsert to cache (don't fail the whole request if this fails)
+    try {
+      await upsertCache(
+        supabase,
+        user.id,
+        exam_type,
+        { ...result, expectedExamScore },
+        subelementMetrics,
+        metrics,
+        config.version
+      );
+    } catch (cacheError) {
+      console.error(`[${requestId}] Cache upsert failed:`, cacheError);
+      // Continue - we can still return the calculated values
+    }
+
+    // Upsert daily snapshot (non-blocking, don't fail request)
+    upsertSnapshot(supabase, user.id, exam_type, result, metrics).catch(
+      (err) => console.error(`[${requestId}] Snapshot upsert failed:`, err)
     );
 
-    // Upsert daily snapshot
-    await upsertSnapshot(supabase, user.id, exam_type, result, metrics);
-
-    console.log(`[${requestId}] Successfully updated readiness cache`);
+    console.log(`[${requestId}] Successfully calculated readiness`);
 
     return new Response(
       JSON.stringify({
@@ -278,6 +334,10 @@ async function loadConfig(supabase: SupabaseClient): Promise<Config> {
       low_threshold: 0.3,
       high_threshold: 0.7,
     },
+    blend: (configMap.get("blend") as BlendConfig) || {
+      min_recent_for_blend: 5,
+      recent_window: 20,
+    },
     thresholds: (configMap.get("thresholds") as ThresholdsConfig) || {
       min_attempts: 50,
       min_per_subelement: 2,
@@ -289,30 +349,73 @@ async function loadConfig(supabase: SupabaseClient): Promise<Config> {
 }
 
 // ============================================================
-// METRICS GATHERING
+// METRICS GATHERING (with graceful degradation)
 // ============================================================
 
 async function gatherMetrics(
   supabase: SupabaseClient,
   userId: string,
   prefix: string,
-  thresholds: ThresholdsConfig
+  thresholds: ThresholdsConfig,
+  requestId: string
 ): Promise<Metrics> {
+  // Default fallback metrics
+  const fallbackMetrics: Metrics = {
+    recentAccuracy: null,
+    overallAccuracy: null,
+    coverage: 0,
+    mastery: 0,
+    testsPassed: 0,
+    testsTaken: 0,
+    testPassRate: 0,
+    daysSinceStudy: 30,
+    lastStudyAt: null,
+    totalAttempts: 0,
+    uniqueQuestionsSeen: 0,
+    totalPoolSize: 0,
+  };
+
   // Get total pool size for this exam type
-  const { count: totalPoolSize } = await supabase
-    .from("questions")
-    .select("id", { count: "exact", head: true })
-    .like("display_name", `${prefix}%`);
+  let totalPoolSize = 0;
+  try {
+    const { count } = await supabase
+      .from("questions")
+      .select("id", { count: "exact", head: true })
+      .like("display_name", `${prefix}%`);
+    totalPoolSize = count || 0;
+  } catch (err) {
+    console.warn(`[${requestId}] Failed to get pool size:`, err);
+  }
+
+  if (totalPoolSize === 0) {
+    console.warn(`[${requestId}] No questions found for prefix ${prefix}`);
+    return fallbackMetrics;
+  }
 
   // Get all attempts for this exam type (we'll process in JS for flexibility)
-  const { data: allAttempts } = await supabase
-    .from("question_attempts")
-    .select("is_correct, attempted_at, question_id, questions!inner(display_name)")
-    .eq("user_id", userId)
-    .like("questions.display_name", `${prefix}%`)
-    .order("attempted_at", { ascending: false });
+  let attempts: Array<{
+    is_correct: boolean;
+    attempted_at: string;
+    question_id: string;
+  }> = [];
 
-  const attempts = allAttempts || [];
+  try {
+    const { data: allAttempts, error } = await supabase
+      .from("question_attempts")
+      .select("is_correct, attempted_at, question_id, questions!inner(display_name)")
+      .eq("user_id", userId)
+      .like("questions.display_name", `${prefix}%`)
+      .order("attempted_at", { ascending: false });
+
+    if (error) {
+      console.warn(`[${requestId}] Failed to get attempts:`, error);
+    } else {
+      attempts = allAttempts || [];
+    }
+  } catch (err) {
+    console.warn(`[${requestId}] Exception getting attempts:`, err);
+  }
+
   const totalAttempts = attempts.length;
 
   // Recent accuracy (last N questions)
@@ -332,27 +435,42 @@ async function gatherMetrics(
   const coverage = totalPoolSize ? uniqueQuestionsSeen / totalPoolSize : 0;
 
   // Mastery (questions correct 2+ times)
-  const { count: masteredCount } = await supabase
-    .from("question_mastery")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("is_mastered", true)
-    .in(
-      "question_id",
-      await getQuestionIdsForPrefix(supabase, prefix)
-    );
+  let masteredCount = 0;
+  try {
+    const questionIds = await getQuestionIdsForPrefix(supabase, prefix);
+    if (questionIds.length > 0) {
+      const { count } = await supabase
+        .from("question_mastery")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("is_mastered", true)
+        .in("question_id", questionIds);
+      masteredCount = count || 0;
+    }
+  } catch (err) {
+    console.warn(`[${requestId}] Failed to get mastery:`, err);
+  }
 
-  const mastery = totalPoolSize ? (masteredCount || 0) / totalPoolSize : 0;
+  const mastery = totalPoolSize ? masteredCount / totalPoolSize : 0;
 
   // Practice test stats
-  const { data: testResults } = await supabase
-    .from("practice_test_results")
-    .select("passed")
-    .eq("user_id", userId)
-    .eq("test_type", prefixToExamType(prefix));
+  let testsTaken = 0;
+  let testsPassed = 0;
+  try {
+    const { data: testResults, error } = await supabase
+      .from("practice_test_results")
+      .select("passed")
+      .eq("user_id", userId)
+      .eq("test_type", prefixToExamType(prefix));
 
-  const testsTaken = testResults?.length || 0;
-  const testsPassed = testResults?.filter((t) => t.passed).length || 0;
+    if (!error && testResults) {
+      testsTaken = testResults.length;
+      testsPassed = testResults.filter((t) => t.passed).length;
+    }
+  } catch (err) {
+    console.warn(`[${requestId}] Failed to get test results:`, err);
+  }
+
   const testPassRate = testsTaken > 0 ? testsPassed / testsTaken : 0;
 
   // Days since last study
@@ -373,7 +491,7 @@ async function gatherMetrics(
     lastStudyAt,
     totalAttempts,
     uniqueQuestionsSeen,
-    totalPoolSize: totalPoolSize || 0,
+    totalPoolSize,
   };
 }
 
@@ -430,82 +548,187 @@ function calculateReadiness(metrics: Metrics, config: Config): ReadinessResult {
 }
 
 // ============================================================
-// SUBELEMENT METRICS CALCULATION
+// SUBELEMENT METRICS CALCULATION (OPTIMIZED - SINGLE BATCH)
 // ============================================================
+
+interface SubelementData {
+  code: string;
+  weight: number;
+}
+
+interface QuestionData {
+  id: string;
+  subelement: string;
+}
+
+interface AttemptData {
+  question_id: string;
+  is_correct: boolean;
+  attempted_at: string;
+}
+
+interface MasteryData {
+  question_id: string;
+}
 
 async function calculateSubelementMetrics(
   supabase: SupabaseClient,
   userId: string,
   prefix: string,
-  config: Config
+  config: Config,
+  requestId: string
 ): Promise<Record<string, SubelementMetric>> {
-  // Get all subelements for this exam type with their weights
-  const { data: syllabusData } = await supabase
+  // ===== BATCH 1: Get all subelements for this exam type =====
+  const { data: syllabusData, error: syllabusError } = await supabase
     .from("syllabus")
     .select("code, exam_questions")
     .eq("license_type", prefix)
     .eq("type", "subelement");
 
-  const subelements = syllabusData || [];
+  if (syllabusError) {
+    console.warn(`[${requestId}] Failed to get syllabus:`, syllabusError);
+    return {};
+  }
+
+  const subelements: SubelementData[] = (syllabusData || []).map((s) => ({
+    code: s.code,
+    weight: s.exam_questions || 0,
+  }));
+
+  if (subelements.length === 0) {
+    return {};
+  }
+
+  const subelementCodes = subelements.map((s) => s.code);
+
+  // ===== BATCH 2: Get all questions for these subelements =====
+  const { data: questionsData, error: questionsError } = await supabase
+    .from("questions")
+    .select("id, subelement")
+    .in("subelement", subelementCodes);
+
+  if (questionsError) {
+    console.warn(`[${requestId}] Failed to get questions:`, questionsError);
+    return {};
+  }
+
+  const questions: QuestionData[] = questionsData || [];
+  const questionIds = questions.map((q) => q.id);
+
+  // Group questions by subelement for pool size
+  const poolSizeBySubelement = new Map<string, number>();
+  const questionIdsBySubelement = new Map<string, Set<string>>();
+
+  for (const q of questions) {
+    poolSizeBySubelement.set(
+      q.subelement,
+      (poolSizeBySubelement.get(q.subelement) || 0) + 1
+    );
+
+    if (!questionIdsBySubelement.has(q.subelement)) {
+      questionIdsBySubelement.set(q.subelement, new Set());
+    }
+    questionIdsBySubelement.get(q.subelement)!.add(q.id);
+  }
+
+  // ===== BATCH 3: Get all attempts for these questions =====
+  let attempts: AttemptData[] = [];
+  if (questionIds.length > 0) {
+    const { data: attemptsData, error: attemptsError } = await supabase
+      .from("question_attempts")
+      .select("question_id, is_correct, attempted_at")
+      .eq("user_id", userId)
+      .in("question_id", questionIds)
+      .order("attempted_at", { ascending: false });
+
+    if (attemptsError) {
+      console.warn(`[${requestId}] Failed to get attempts:`, attemptsError);
+    } else {
+      attempts = attemptsData || [];
+    }
+  }
+
+  // Group attempts by subelement (using question -> subelement mapping)
+  const questionToSubelement = new Map(questions.map((q) => [q.id, q.subelement]));
+  const attemptsBySubelement = new Map<string, AttemptData[]>();
+
+  for (const attempt of attempts) {
+    const subelement = questionToSubelement.get(attempt.question_id);
+    if (subelement) {
+      if (!attemptsBySubelement.has(subelement)) {
+        attemptsBySubelement.set(subelement, []);
+      }
+      attemptsBySubelement.get(subelement)!.push(attempt);
+    }
+  }
+
+  // ===== BATCH 4: Get all mastery data for these questions =====
+  let masteryData: MasteryData[] = [];
+  if (questionIds.length > 0) {
+    const { data: masteryResult, error: masteryError } = await supabase
+      .from("question_mastery")
+      .select("question_id")
+      .eq("user_id", userId)
+      .eq("is_mastered", true)
+      .in("question_id", questionIds);
+
+    if (masteryError) {
+      console.warn(`[${requestId}] Failed to get mastery:`, masteryError);
+    } else {
+      masteryData = masteryResult || [];
+    }
+  }
+
+  // Group mastery by subelement
+  const masteredBySubelement = new Map<string, Set<string>>();
+  for (const m of masteryData) {
+    const subelement = questionToSubelement.get(m.question_id);
+    if (subelement) {
+      if (!masteredBySubelement.has(subelement)) {
+        masteredBySubelement.set(subelement, new Set());
+      }
+      masteredBySubelement.get(subelement)!.add(m.question_id);
+    }
+  }
+
+  // ===== CALCULATE METRICS FOR EACH SUBELEMENT IN-MEMORY =====
   const result: Record<string, SubelementMetric> = {};
+  const { blend, coverage_beta: beta, thresholds } = config;
 
   for (const sub of subelements) {
     const code = sub.code;
-    const weight = sub.exam_questions || 0;
+    const weight = sub.weight;
+    const poolSize = poolSizeBySubelement.get(code) || 0;
 
-    // Get pool size for this subelement
-    const { count: poolSize } = await supabase
-      .from("questions")
-      .select("id", { count: "exact", head: true })
-      .eq("subelement", code);
-
-    // Get all attempts for this subelement
-    const { data: attempts } = await supabase
-      .from("question_attempts")
-      .select("is_correct, attempted_at, question_id, questions!inner(subelement)")
-      .eq("user_id", userId)
-      .eq("questions.subelement", code)
-      .order("attempted_at", { ascending: false });
-
-    const attemptsCount = attempts?.length || 0;
-    const correctCount = attempts?.filter((a) => a.is_correct).length || 0;
+    const subAttempts = attemptsBySubelement.get(code) || [];
+    const attemptsCount = subAttempts.length;
+    const correctCount = subAttempts.filter((a) => a.is_correct).length;
     const accuracy = attemptsCount > 0 ? correctCount / attemptsCount : null;
 
-    // Recent accuracy (last N per subelement)
-    const recentWindow = config.thresholds.subelement_recent_window;
-    const recentAttempts = attempts?.slice(0, recentWindow) || [];
+    // Recent accuracy (last N per subelement) - attempts already sorted by date desc
+    const recentWindow = thresholds.subelement_recent_window;
+    const recentAttempts = subAttempts.slice(0, recentWindow);
     const recentCorrect = recentAttempts.filter((a) => a.is_correct).length;
     const recentAccuracy =
       recentAttempts.length > 0 ? recentCorrect / recentAttempts.length : null;
     const recentAttemptsCount = recentAttempts.length;
 
-    // Coverage
-    const uniqueQuestionIds = new Set(attempts?.map((a) => a.question_id) || []);
-    const coverage = poolSize ? uniqueQuestionIds.size / poolSize : 0;
+    // Coverage - unique questions seen
+    const uniqueQuestionsSeen = new Set(subAttempts.map((a) => a.question_id)).size;
+    const coverage = poolSize > 0 ? uniqueQuestionsSeen / poolSize : 0;
 
     // Mastery
-    const questionIds = await supabase
-      .from("questions")
-      .select("id")
-      .eq("subelement", code);
+    const masteredQuestions = masteredBySubelement.get(code) || new Set();
+    const mastery = poolSize > 0 ? masteredQuestions.size / poolSize : 0;
 
-    const { count: masteredCount } = await supabase
-      .from("question_mastery")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("is_mastered", true)
-      .in("question_id", questionIds.data?.map((q) => q.id) || []);
-
-    const mastery = poolSize ? (masteredCount || 0) / poolSize : 0;
-
-    // Calculate estimated accuracy (A_hat) using blend formula from spec
+    // Calculate estimated accuracy (A_hat) using configurable blend formula
     let estimatedAccuracy: number;
-    if (recentAttemptsCount >= recentWindow) {
+    if (recentAttemptsCount >= blend.recent_window) {
       // Sufficient recent data: use recent accuracy
       estimatedAccuracy = recentAccuracy ?? 0;
-    } else if (recentAttemptsCount >= 5) {
+    } else if (recentAttemptsCount >= blend.min_recent_for_blend) {
       // Some recent data: blend recent and overall
-      const alpha = recentAttemptsCount / recentWindow;
+      const alpha = recentAttemptsCount / blend.recent_window;
       estimatedAccuracy =
         alpha * (recentAccuracy ?? 0) + (1 - alpha) * (accuracy ?? 0);
     } else {
@@ -514,7 +737,6 @@ async function calculateSubelementMetrics(
     }
 
     // Calculate beta (coverage modifier)
-    const beta = config.coverage_beta;
     const coverageModifier =
       coverage < beta.low_threshold
         ? beta.low
@@ -536,7 +758,7 @@ async function calculateSubelementMetrics(
       risk_score: riskScore,
       expected_score: expectedScore,
       weight,
-      pool_size: poolSize || 0,
+      pool_size: poolSize,
       attempts_count: attemptsCount,
       recent_attempts_count: recentAttemptsCount,
     };

@@ -2327,6 +2327,7 @@ INSERT INTO public.readiness_config (key, value, description) VALUES
   ('pass_probability', '{"k": 0.15, "r0": 65}', 'Logistic curve parameters: k=steepness, r0=inflection point'),
   ('recency_penalty', '{"max_penalty": 10, "decay_rate": 0.5}', 'Days-since-study penalty: penalty = min(max_penalty, decay_rate * days)'),
   ('coverage_beta', '{"low": 1.2, "mid": 1.0, "high": 0.9, "low_threshold": 0.3, "high_threshold": 0.7}', 'Coverage modifier for subelement risk score'),
+  ('blend', '{"min_recent_for_blend": 5, "recent_window": 20}', 'Accuracy blend formula: min_recent_for_blend=threshold to start blending, recent_window=full weight threshold'),
   ('thresholds', '{"min_attempts": 50, "min_per_subelement": 2, "recent_window": 50, "subelement_recent_window": 20}', 'Sample size thresholds for confidence'),
   ('version', '"v1.0.0"', 'Current formula version for audit trail')
 ON CONFLICT (key) DO UPDATE SET
