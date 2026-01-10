@@ -201,6 +201,26 @@ Deno.serve(async (req: Request) => {
       `[${requestId}] Calculating readiness for user ${user.id}, exam_type=${exam_type}`
     );
 
+    // Rate limiting: Skip recalculation if cache was updated recently (30 seconds)
+    const CACHE_FRESHNESS_SECONDS = 30;
+    const existingCache = await checkCacheFreshness(supabase, user.id, exam_type, CACHE_FRESHNESS_SECONDS);
+    if (existingCache) {
+      console.log(`[${requestId}] Cache still fresh (updated ${existingCache.age_seconds}s ago), skipping recalculation`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          cached: true,
+          readiness_score: existingCache.readiness_score,
+          pass_probability: existingCache.pass_probability,
+          expected_exam_score: existingCache.expected_exam_score,
+          config_version: existingCache.config_version,
+        }),
+        {
+          headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // Load config from database
     const config = await loadConfig(supabase);
     console.log(`[${requestId}] Loaded config version: ${config.version}`);
@@ -334,6 +354,60 @@ const DEFAULT_CONFIG: Config = {
   },
   version: "v1.0.0-default",
 };
+
+// ============================================================
+// RATE LIMITING (cache freshness check)
+// ============================================================
+
+interface CacheFreshnessResult {
+  readiness_score: number;
+  pass_probability: number;
+  expected_exam_score: number;
+  config_version: string | null;
+  age_seconds: number;
+}
+
+/**
+ * Check if the cache was updated recently (within freshnessSeconds).
+ * Returns the cached data if fresh, null if stale or missing.
+ */
+async function checkCacheFreshness(
+  supabase: SupabaseClient,
+  userId: string,
+  examType: string,
+  freshnessSeconds: number
+): Promise<CacheFreshnessResult | null> {
+  try {
+    const { data, error } = await supabase
+      .from("user_readiness_cache")
+      .select("readiness_score, pass_probability, expected_exam_score, config_version, calculated_at")
+      .eq("user_id", userId)
+      .eq("exam_type", examType)
+      .maybeSingle();
+
+    if (error || !data || !data.calculated_at) {
+      return null;
+    }
+
+    const calculatedAt = new Date(data.calculated_at);
+    const ageSeconds = (Date.now() - calculatedAt.getTime()) / 1000;
+
+    if (ageSeconds <= freshnessSeconds) {
+      return {
+        readiness_score: data.readiness_score,
+        pass_probability: data.pass_probability,
+        expected_exam_score: data.expected_exam_score,
+        config_version: data.config_version,
+        age_seconds: Math.round(ageSeconds),
+      };
+    }
+
+    return null;
+  } catch {
+    // If check fails, allow recalculation
+    return null;
+  }
+}
 
 // ============================================================
 // CONFIGURATION LOADING (with graceful fallback)

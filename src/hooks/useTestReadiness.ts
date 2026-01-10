@@ -120,14 +120,19 @@ export function useTestReadiness(options: UseTestReadinessOptions): TestReadines
     const passedTests = readinessData?.tests_passed ?? testResults?.filter((t) => t.passed).length ?? 0;
 
     // Recent accuracy as percentage (convert from 0-1 to 0-100)
-    const recentAvgScore = readinessData?.recent_accuracy
+    // Use nullish coalescing consistently for fallback chain
+    const recentAccuracyFromDb = readinessData?.recent_accuracy != null
       ? Math.round(readinessData.recent_accuracy * 100)
-      : testResults && testResults.length > 0
-        ? Math.round(
-            testResults.slice(0, 5).reduce((sum, t) => sum + Number(t.percentage), 0) /
-              Math.min(testResults.length, 5)
-          )
-        : 0;
+      : null;
+
+    const recentAccuracyFromTests = testResults?.length
+      ? Math.round(
+          testResults.slice(0, 5).reduce((sum, t) => sum + Number(t.percentage), 0) /
+            Math.min(testResults.length, 5)
+        )
+      : null;
+
+    const recentAvgScore = recentAccuracyFromDb ?? recentAccuracyFromTests ?? 0;
 
     // Determine readiness level from database score
     const readinessLevel = scoreToLevel(readinessData);

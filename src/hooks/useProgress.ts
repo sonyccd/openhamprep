@@ -12,15 +12,42 @@ const RECALC_QUESTION_THRESHOLD = 10;
 /** Minimum time between recalculations (debounce) in ms */
 const RECALC_DEBOUNCE_MS = 5000;
 
+/** Valid exam type prefixes */
+const EXAM_TYPE_PREFIXES = {
+  T: 'technician',
+  G: 'general',
+  E: 'extra',
+} as const;
+
+type ExamPrefix = keyof typeof EXAM_TYPE_PREFIXES;
+
 /**
- * Determine the exam type from a question's display_name or id
+ * Check if a character is a valid exam type prefix
+ */
+function isValidExamPrefix(char: string): char is ExamPrefix {
+  return char in EXAM_TYPE_PREFIXES;
+}
+
+/**
+ * Determine the exam type from a question's display_name or id.
+ * Question IDs start with T (Technician), G (General), or E (Extra).
+ * Falls back to 'technician' for invalid or unexpected formats.
  */
 function getExamTypeFromQuestion(question: Question): TestType {
-  // Question display_name starts with T (Technician), G (General), or E (Extra)
   const displayName = question.displayName || question.id;
+
+  if (!displayName || displayName.length === 0) {
+    console.warn('Question missing displayName and id, defaulting to technician');
+    return 'technician';
+  }
+
   const prefix = displayName.charAt(0).toUpperCase();
-  if (prefix === 'G') return 'general';
-  if (prefix === 'E') return 'extra';
+
+  if (isValidExamPrefix(prefix)) {
+    return EXAM_TYPE_PREFIXES[prefix];
+  }
+
+  console.warn(`Unexpected question prefix "${prefix}" in "${displayName}", defaulting to technician`);
   return 'technician';
 }
 

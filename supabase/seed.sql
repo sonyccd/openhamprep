@@ -2329,6 +2329,7 @@ INSERT INTO public.readiness_config (key, value, description) VALUES
   ('coverage_beta', '{"low": 1.2, "mid": 1.0, "high": 0.9, "low_threshold": 0.3, "high_threshold": 0.7}', 'Coverage modifier for subelement risk score'),
   ('blend', '{"min_recent_for_blend": 5, "recent_window": 20}', 'Accuracy blend formula: min_recent_for_blend=threshold to start blending, recent_window=full weight threshold'),
   ('thresholds', '{"min_attempts": 50, "min_per_subelement": 2, "recent_window": 50, "subelement_recent_window": 20}', 'Sample size thresholds for confidence'),
+  ('client_recalc', '{"question_batch_size": 10, "debounce_ms": 5000}', 'Client-side recalculation settings: batch questions before recalc, minimum time between recalcs'),
   ('version', '"v1.0.0"', 'Current formula version for audit trail')
 ON CONFLICT (key) DO UPDATE SET
   value = EXCLUDED.value,
