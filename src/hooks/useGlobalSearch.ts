@@ -120,6 +120,7 @@ export function useGlobalSearch(testType: TestType) {
           questions_limit: 5,
           glossary_limit: 5,
           topics_limit: 3,
+          tools_limit: 3,
         });
 
         // Ignore stale responses (from previous requests or if component unmounted)

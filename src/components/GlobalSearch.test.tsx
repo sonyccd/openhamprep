@@ -20,6 +20,7 @@ vi.mock('@/hooks/useGlobalSearch', () => ({
       questions: [],
       glossary: [],
       topics: [],
+      tools: [],
     },
     isLoading: false,
     error: null,
@@ -78,6 +79,7 @@ describe('GlobalSearch', () => {
         questions: [],
         glossary: [],
         topics: [],
+        tools: [],
       },
       isLoading: false,
       error: null,
@@ -103,7 +105,7 @@ describe('GlobalSearch', () => {
     it('renders search input with placeholder', () => {
       renderGlobalSearch();
 
-      expect(screen.getByPlaceholderText('Search questions, glossary, topics...')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Search questions, glossary, topics, tools...')).toBeInTheDocument();
     });
 
     it('renders keyboard hints footer', () => {
@@ -126,7 +128,7 @@ describe('GlobalSearch', () => {
       vi.mocked(useGlobalSearch).mockReturnValue({
         query: '',
         setQuery: mockSetQuery,
-        results: { questions: [], glossary: [], topics: [] },
+        results: { questions: [], glossary: [], topics: [], tools: [] },
         isLoading: false,
         error: null,
         totalCount: 0,
@@ -143,7 +145,7 @@ describe('GlobalSearch', () => {
       vi.mocked(useGlobalSearch).mockReturnValue({
         query: 'a',
         setQuery: mockSetQuery,
-        results: { questions: [], glossary: [], topics: [] },
+        results: { questions: [], glossary: [], topics: [], tools: [] },
         isLoading: false,
         error: null,
         totalCount: 0,
@@ -160,7 +162,7 @@ describe('GlobalSearch', () => {
       vi.mocked(useGlobalSearch).mockReturnValue({
         query: 'ab',
         setQuery: mockSetQuery,
-        results: { questions: [], glossary: [], topics: [] },
+        results: { questions: [], glossary: [], topics: [], tools: [] },
         isLoading: false,
         error: null,
         totalCount: 0,
@@ -179,7 +181,7 @@ describe('GlobalSearch', () => {
       vi.mocked(useGlobalSearch).mockReturnValue({
         query: 'antenna',
         setQuery: mockSetQuery,
-        results: { questions: [], glossary: [], topics: [] },
+        results: { questions: [], glossary: [], topics: [], tools: [] },
         isLoading: true,
         error: null,
         totalCount: 0,
@@ -199,7 +201,7 @@ describe('GlobalSearch', () => {
       vi.mocked(useGlobalSearch).mockReturnValue({
         query: 'xyznonexistent',
         setQuery: mockSetQuery,
-        results: { questions: [], glossary: [], topics: [] },
+        results: { questions: [], glossary: [], topics: [], tools: [] },
         isLoading: false,
         error: null,
         totalCount: 0,
@@ -218,7 +220,7 @@ describe('GlobalSearch', () => {
       vi.mocked(useGlobalSearch).mockReturnValue({
         query: 'antenna',
         setQuery: mockSetQuery,
-        results: { questions: [], glossary: [], topics: [] },
+        results: { questions: [], glossary: [], topics: [], tools: [] },
         isLoading: false,
         error: new Error('Search failed'),
         totalCount: 0,
@@ -237,7 +239,7 @@ describe('GlobalSearch', () => {
       vi.mocked(useGlobalSearch).mockReturnValue({
         query: 'antenna',
         setQuery: mockSetQuery,
-        results: { questions: [], glossary: [], topics: [] },
+        results: { questions: [], glossary: [], topics: [], tools: [] },
         isLoading: true,
         error: new Error('Search failed'),
         totalCount: 0,
@@ -256,7 +258,7 @@ describe('GlobalSearch', () => {
       vi.mocked(useGlobalSearch).mockReturnValue({
         query: 'antenna',
         setQuery: mockSetQuery,
-        results: { questions: [], glossary: [], topics: [] },
+        results: { questions: [], glossary: [], topics: [], tools: [] },
         isLoading: false,
         error: new Error('Search failed'),
         totalCount: 0,
@@ -286,6 +288,7 @@ describe('GlobalSearch', () => {
           }],
           glossary: [],
           topics: [],
+          tools: [],
         },
         isLoading: false,
         error: null,
@@ -316,6 +319,7 @@ describe('GlobalSearch', () => {
             subtitle: 'A device for transmitting radio waves.',
           }],
           topics: [],
+          tools: [],
         },
         isLoading: false,
         error: null,
@@ -345,6 +349,7 @@ describe('GlobalSearch', () => {
             subtitle: 'Learn about antenna fundamentals.',
             slug: 'antenna-basics',
           }],
+          tools: [],
         },
         isLoading: false,
         error: null,
@@ -385,10 +390,17 @@ describe('GlobalSearch', () => {
             subtitle: 'Learn about antennas...',
             slug: 'antenna-basics',
           }],
+          tools: [{
+            type: 'tool',
+            id: 'tool1',
+            title: '4NEC2',
+            subtitle: 'Free antenna modeling software...',
+            url: 'https://www.qsl.net/4nec2/',
+          }],
         },
         isLoading: false,
         error: null,
-        totalCount: 3,
+        totalCount: 4,
         hasResults: true,
         reset: mockReset,
       });
@@ -398,6 +410,37 @@ describe('GlobalSearch', () => {
       expect(screen.getByText('Questions', { selector: '[cmdk-group-heading]' })).toBeInTheDocument();
       expect(screen.getByText('Glossary', { selector: '[cmdk-group-heading]' })).toBeInTheDocument();
       expect(screen.getByText('Topics', { selector: '[cmdk-group-heading]' })).toBeInTheDocument();
+      expect(screen.getByText('Tools', { selector: '[cmdk-group-heading]' })).toBeInTheDocument();
+    });
+
+    it('displays tool results', () => {
+      vi.mocked(useGlobalSearch).mockReturnValue({
+        query: 'wsjt',
+        setQuery: mockSetQuery,
+        results: {
+          questions: [],
+          glossary: [],
+          topics: [],
+          tools: [{
+            type: 'tool',
+            id: 'tool1',
+            title: 'WSJT-X',
+            subtitle: 'Weak signal communication software.',
+            url: 'https://wsjt.sourceforge.io/',
+          }],
+        },
+        isLoading: false,
+        error: null,
+        totalCount: 1,
+        hasResults: true,
+        reset: mockReset,
+      });
+
+      renderGlobalSearch();
+
+      expect(screen.getByText('Tools', { selector: '[cmdk-group-heading]' })).toBeInTheDocument();
+      expect(screen.getByText('WSJT-X')).toBeInTheDocument();
+      expect(screen.getByText('Weak signal communication software.')).toBeInTheDocument();
     });
   });
 
@@ -406,7 +449,7 @@ describe('GlobalSearch', () => {
       const user = userEvent.setup();
       renderGlobalSearch();
 
-      const input = screen.getByPlaceholderText('Search questions, glossary, topics...');
+      const input = screen.getByPlaceholderText('Search questions, glossary, topics, tools...');
       await user.type(input, 'antenna');
 
       // setQuery should be called for each character
@@ -442,6 +485,7 @@ describe('GlobalSearch', () => {
           }],
           glossary: [],
           topics: [],
+          tools: [],
         },
         isLoading: false,
         error: null,
@@ -474,6 +518,7 @@ describe('GlobalSearch', () => {
             subtitle: 'A device for transmitting...',
           }],
           topics: [],
+          tools: [],
         },
         isLoading: false,
         error: null,
@@ -507,6 +552,7 @@ describe('GlobalSearch', () => {
             subtitle: 'Learn about antennas...',
             slug: 'antenna-basics',
           }],
+          tools: [],
         },
         isLoading: false,
         error: null,
@@ -524,6 +570,48 @@ describe('GlobalSearch', () => {
       expect(mockNavigateToTopic).toHaveBeenCalledWith('antenna-basics');
       expect(onOpenChange).toHaveBeenCalledWith(false);
     });
+
+    it('opens tool URL in new tab when tool result is selected', async () => {
+      const onOpenChange = vi.fn();
+      const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+      vi.mocked(useGlobalSearch).mockReturnValue({
+        query: 'wsjt',
+        setQuery: mockSetQuery,
+        results: {
+          questions: [],
+          glossary: [],
+          topics: [],
+          tools: [{
+            type: 'tool',
+            id: 'tool1',
+            title: 'WSJT-X',
+            subtitle: 'Weak signal communication software.',
+            url: 'https://wsjt.sourceforge.io/',
+          }],
+        },
+        isLoading: false,
+        error: null,
+        totalCount: 1,
+        hasResults: true,
+        reset: mockReset,
+      });
+
+      renderGlobalSearch({ onOpenChange });
+
+      const user = userEvent.setup();
+      const resultItem = screen.getByText('WSJT-X').closest('[cmdk-item]');
+      await user.click(resultItem!);
+
+      expect(windowOpenSpy).toHaveBeenCalledWith(
+        'https://wsjt.sourceforge.io/',
+        '_blank',
+        'noopener,noreferrer'
+      );
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+
+      windowOpenSpy.mockRestore();
+    });
   });
 
   describe('Accessibility', () => {
@@ -536,7 +624,7 @@ describe('GlobalSearch', () => {
     it('has accessible search input', () => {
       renderGlobalSearch();
 
-      const input = screen.getByPlaceholderText('Search questions, glossary, topics...');
+      const input = screen.getByPlaceholderText('Search questions, glossary, topics, tools...');
       expect(input).toHaveAttribute('type', 'text');
     });
 
@@ -554,6 +642,7 @@ describe('GlobalSearch', () => {
           }],
           glossary: [],
           topics: [],
+          tools: [],
         },
         isLoading: false,
         error: null,
@@ -581,7 +670,7 @@ describe('GlobalSearch', () => {
     it('search input receives focus when dialog opens', () => {
       renderGlobalSearch();
 
-      const input = screen.getByPlaceholderText('Search questions, glossary, topics...');
+      const input = screen.getByPlaceholderText('Search questions, glossary, topics, tools...');
       // Input should be focused (cmdk auto-focuses the input)
       expect(document.activeElement).toBe(input);
     });
@@ -602,6 +691,7 @@ describe('GlobalSearch', () => {
           }],
           glossary: [],
           topics: [],
+          tools: [],
         },
         isLoading: false,
         error: null,

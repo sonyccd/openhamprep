@@ -34,6 +34,7 @@ describe('useGlobalSearch', () => {
         questions: [],
         glossary: [],
         topics: [],
+        tools: [],
       });
     });
 
@@ -89,7 +90,7 @@ describe('useGlobalSearch', () => {
     it('trims whitespace from query', async () => {
       const mockRpc = vi.mocked(supabase.rpc);
       mockRpc.mockResolvedValue({
-        data: { questions: [], glossary: [], topics: [] },
+        data: { questions: [], glossary: [], topics: [], tools: [] },
         error: null,
       });
 
@@ -112,7 +113,7 @@ describe('useGlobalSearch', () => {
     it('debounces search by 300ms', async () => {
       const mockRpc = vi.mocked(supabase.rpc);
       mockRpc.mockResolvedValue({
-        data: { questions: [], glossary: [], topics: [] },
+        data: { questions: [], glossary: [], topics: [], tools: [] },
         error: null,
       });
 
@@ -138,7 +139,7 @@ describe('useGlobalSearch', () => {
     it('cancels previous debounce when query changes', async () => {
       const mockRpc = vi.mocked(supabase.rpc);
       mockRpc.mockResolvedValue({
-        data: { questions: [], glossary: [], topics: [] },
+        data: { questions: [], glossary: [], topics: [], tools: [] },
         error: null,
       });
 
@@ -182,7 +183,7 @@ describe('useGlobalSearch', () => {
     it('calls supabase RPC with correct parameters', async () => {
       const mockRpc = vi.mocked(supabase.rpc);
       mockRpc.mockResolvedValue({
-        data: { questions: [], glossary: [], topics: [] },
+        data: { questions: [], glossary: [], topics: [], tools: [] },
         error: null,
       });
 
@@ -202,13 +203,14 @@ describe('useGlobalSearch', () => {
         questions_limit: 5,
         glossary_limit: 5,
         topics_limit: 3,
+        tools_limit: 3,
       });
     });
 
     it('uses correct license prefix for general', async () => {
       const mockRpc = vi.mocked(supabase.rpc);
       mockRpc.mockResolvedValue({
-        data: { questions: [], glossary: [], topics: [] },
+        data: { questions: [], glossary: [], topics: [], tools: [] },
         error: null,
       });
 
@@ -230,7 +232,7 @@ describe('useGlobalSearch', () => {
     it('uses correct license prefix for extra', async () => {
       const mockRpc = vi.mocked(supabase.rpc);
       mockRpc.mockResolvedValue({
-        data: { questions: [], glossary: [], topics: [] },
+        data: { questions: [], glossary: [], topics: [], tools: [] },
         error: null,
       });
 
@@ -272,7 +274,7 @@ describe('useGlobalSearch', () => {
       // Resolve the promise
       await act(async () => {
         resolvePromise!({
-          data: { questions: [], glossary: [], topics: [] },
+          data: { questions: [], glossary: [], topics: [], tools: [] },
           error: null,
         });
       });
@@ -295,6 +297,7 @@ describe('useGlobalSearch', () => {
           }],
           glossary: [],
           topics: [],
+          tools: [],
         },
         error: null,
       });
@@ -331,6 +334,7 @@ describe('useGlobalSearch', () => {
             rank: 0.8,
           }],
           topics: [],
+          tools: [],
         },
         error: null,
       });
@@ -367,6 +371,7 @@ describe('useGlobalSearch', () => {
             description: 'Learn the fundamentals of antenna design.',
             rank: 0.7,
           }],
+          tools: [],
         },
         error: null,
       });
@@ -391,6 +396,44 @@ describe('useGlobalSearch', () => {
       });
     });
 
+    it('transforms tool results correctly', async () => {
+      const mockRpc = vi.mocked(supabase.rpc);
+      mockRpc.mockResolvedValue({
+        data: {
+          questions: [],
+          glossary: [],
+          topics: [],
+          tools: [{
+            id: 'tool1',
+            title: 'WSJT-X',
+            description: 'Weak signal communication software.',
+            url: 'https://wsjt.sourceforge.io/',
+            rank: 0.9,
+          }],
+        },
+        error: null,
+      });
+
+      const { result } = renderHook(() => useGlobalSearch('technician'));
+
+      act(() => {
+        result.current.setQuery('wsjt');
+      });
+
+      await act(async () => {
+        vi.advanceTimersByTime(400);
+      });
+
+      expect(result.current.results.tools).toHaveLength(1);
+      expect(result.current.results.tools[0]).toEqual({
+        type: 'tool',
+        id: 'tool1',
+        title: 'WSJT-X',
+        subtitle: 'Weak signal communication software.',
+        url: 'https://wsjt.sourceforge.io/',
+      });
+    });
+
     it('truncates long subtitles', async () => {
       const mockRpc = vi.mocked(supabase.rpc);
       const longQuestion = 'A'.repeat(200);
@@ -405,6 +448,7 @@ describe('useGlobalSearch', () => {
           }],
           glossary: [],
           topics: [],
+          tools: [],
         },
         error: null,
       });
@@ -455,6 +499,7 @@ describe('useGlobalSearch', () => {
           questions: [{ id: 'q1', display_name: 'T5A01', question: 'Test', explanation: '', rank: 1 }],
           glossary: [],
           topics: [],
+          tools: [],
         },
         error: null,
       });
@@ -489,6 +534,7 @@ describe('useGlobalSearch', () => {
         questions: [],
         glossary: [],
         topics: [],
+        tools: [],
       });
     });
   });
@@ -509,6 +555,9 @@ describe('useGlobalSearch', () => {
             { id: 't1', slug: 'topic-1', title: 'Topic 1', description: 'Desc1', rank: 0.7 },
             { id: 't2', slug: 'topic-2', title: 'Topic 2', description: 'Desc2', rank: 0.6 },
           ],
+          tools: [
+            { id: 'tool1', title: 'Tool 1', description: 'Desc1', url: 'https://example.com', rank: 0.5 },
+          ],
         },
         error: null,
       });
@@ -523,7 +572,7 @@ describe('useGlobalSearch', () => {
         vi.advanceTimersByTime(400);
       });
 
-      expect(result.current.totalCount).toBe(5); // 2 questions + 1 glossary + 2 topics
+      expect(result.current.totalCount).toBe(6); // 2 questions + 1 glossary + 2 topics + 1 tool
     });
 
     it('hasResults is true when there are results', async () => {
@@ -533,6 +582,7 @@ describe('useGlobalSearch', () => {
           questions: [{ id: 'q1', display_name: 'T5A01', question: 'Q1', explanation: '', rank: 1 }],
           glossary: [],
           topics: [],
+          tools: [],
         },
         error: null,
       });
@@ -550,6 +600,31 @@ describe('useGlobalSearch', () => {
       expect(result.current.hasResults).toBe(true);
     });
 
+    it('hasResults is true when only tools have results', async () => {
+      const mockRpc = vi.mocked(supabase.rpc);
+      mockRpc.mockResolvedValue({
+        data: {
+          questions: [],
+          glossary: [],
+          topics: [],
+          tools: [{ id: 'tool1', title: 'WSJT-X', description: 'Digital mode software', url: 'https://wsjt.sourceforge.io/', rank: 1 }],
+        },
+        error: null,
+      });
+
+      const { result } = renderHook(() => useGlobalSearch('technician'));
+
+      act(() => {
+        result.current.setQuery('wsjt');
+      });
+
+      await act(async () => {
+        vi.advanceTimersByTime(400);
+      });
+
+      expect(result.current.hasResults).toBe(true);
+    });
+
     it('hasResults is false when no results', async () => {
       const mockRpc = vi.mocked(supabase.rpc);
       mockRpc.mockResolvedValue({
@@ -557,6 +632,7 @@ describe('useGlobalSearch', () => {
           questions: [],
           glossary: [],
           topics: [],
+          tools: [],
         },
         error: null,
       });
@@ -579,7 +655,7 @@ describe('useGlobalSearch', () => {
     it('clears query', async () => {
       const mockRpc = vi.mocked(supabase.rpc);
       mockRpc.mockResolvedValue({
-        data: { questions: [], glossary: [], topics: [] },
+        data: { questions: [], glossary: [], topics: [], tools: [] },
         error: null,
       });
 
@@ -607,6 +683,7 @@ describe('useGlobalSearch', () => {
           questions: [{ id: 'q1', display_name: 'T5A01', question: 'Q1', explanation: '', rank: 1 }],
           glossary: [],
           topics: [],
+          tools: [],
         },
         error: null,
       });
@@ -631,6 +708,7 @@ describe('useGlobalSearch', () => {
         questions: [],
         glossary: [],
         topics: [],
+        tools: [],
       });
     });
 
@@ -665,7 +743,7 @@ describe('useGlobalSearch', () => {
     it('re-executes search when testType changes', async () => {
       const mockRpc = vi.mocked(supabase.rpc);
       mockRpc.mockResolvedValue({
-        data: { questions: [], glossary: [], topics: [] },
+        data: { questions: [], glossary: [], topics: [], tools: [] },
         error: null,
       });
 
