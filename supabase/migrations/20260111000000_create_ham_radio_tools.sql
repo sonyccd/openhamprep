@@ -11,6 +11,7 @@ CREATE TABLE public.ham_radio_tool_categories (
 );
 
 -- Create ham_radio_tools table
+-- Note: ON DELETE SET NULL allows deleting categories while keeping tools (they become uncategorized)
 CREATE TABLE public.ham_radio_tools (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   category_id UUID REFERENCES public.ham_radio_tool_categories(id) ON DELETE SET NULL,
