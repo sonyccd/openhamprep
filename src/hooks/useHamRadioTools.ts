@@ -31,18 +31,14 @@ export interface HamRadioTool {
 
 /**
  * Get the image URL for a tool, preferring storage_path over image_url.
- * Falls back to image_url if storage URL retrieval fails.
+ * Falls back to image_url if storage URL is unavailable.
  */
 export function getToolImageUrl(tool: HamRadioTool): string | null {
   if (tool.storage_path) {
-    try {
-      const { data } = supabase.storage
-        .from('ham-radio-tools')
-        .getPublicUrl(tool.storage_path);
-      return data?.publicUrl || tool.image_url;
-    } catch {
-      return tool.image_url;
-    }
+    const { data } = supabase.storage
+      .from('ham-radio-tools')
+      .getPublicUrl(tool.storage_path);
+    return data.publicUrl || tool.image_url;
   }
   return tool.image_url;
 }
@@ -186,10 +182,14 @@ export function useDeleteHamRadioTool() {
       if (fetchError) throw fetchError;
 
       // Delete the image from storage if it exists
+      // Log errors but don't fail - we still want to delete the DB record
       if (tool?.storage_path) {
-        await supabase.storage
+        const { error: storageError } = await supabase.storage
           .from('ham-radio-tools')
           .remove([tool.storage_path]);
+        if (storageError) {
+          console.error('Failed to delete tool image:', storageError);
+        }
       }
 
       // Delete the tool from the database

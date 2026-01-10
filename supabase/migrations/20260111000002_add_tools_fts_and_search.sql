@@ -32,6 +32,7 @@ DECLARE
   ts_query tsquery;
   clean_query TEXT;
   escaped_query TEXT;
+  validated_prefix TEXT;
   fts_question_count INT;
 BEGIN
   -- Return empty results for empty or whitespace-only queries
@@ -42,6 +43,13 @@ BEGIN
       'topics', '[]'::json,
       'tools', '[]'::json
     );
+  END IF;
+
+  -- Validate license_prefix to prevent SQL injection - only allow T, G, E, or NULL
+  IF license_prefix IS NOT NULL AND license_prefix NOT IN ('T', 'G', 'E') THEN
+    validated_prefix := NULL;
+  ELSE
+    validated_prefix := license_prefix;
   END IF;
 
   clean_query := trim(search_query);
@@ -61,7 +69,7 @@ BEGIN
   SELECT COUNT(*) INTO fts_question_count
   FROM public.questions
   WHERE fts @@ ts_query
-    AND (license_prefix IS NULL OR display_name LIKE license_prefix || '%');
+    AND (validated_prefix IS NULL OR display_name LIKE validated_prefix || '%');
 
   -- Build the result with conditional question search strategy
   SELECT json_build_object(
@@ -87,7 +95,7 @@ BEGIN
               ts_rank(fts, ts_query) as rank
             FROM public.questions
             WHERE fts @@ ts_query
-              AND (license_prefix IS NULL OR display_name LIKE license_prefix || '%')
+              AND (validated_prefix IS NULL OR display_name LIKE validated_prefix || '%')
             ORDER BY ts_rank(fts, ts_query) DESC
             LIMIT questions_limit
           ) q)
@@ -111,7 +119,7 @@ BEGIN
               1.0 as rank
             FROM public.questions
             WHERE display_name ILIKE escaped_query || '%'
-              AND (license_prefix IS NULL OR display_name LIKE license_prefix || '%')
+              AND (validated_prefix IS NULL OR display_name LIKE validated_prefix || '%')
             ORDER BY display_name ASC
             LIMIT questions_limit
           ) q)
@@ -159,9 +167,9 @@ BEGIN
         WHERE fts @@ ts_query
           AND is_published = true
           AND (
-            license_prefix IS NULL
+            validated_prefix IS NULL
             OR license_types @> ARRAY[
-              CASE license_prefix
+              CASE validated_prefix
                 WHEN 'T' THEN 'technician'
                 WHEN 'G' THEN 'general'
                 WHEN 'E' THEN 'extra'
