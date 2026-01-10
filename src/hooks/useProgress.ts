@@ -9,6 +9,9 @@ import { recalculateReadiness } from '@/hooks/useReadinessScore';
 /** Number of questions to batch before triggering a readiness recalculation */
 const RECALC_QUESTION_THRESHOLD = 10;
 
+/** Minimum time between recalculations (debounce) in ms */
+const RECALC_DEBOUNCE_MS = 5000;
+
 /**
  * Determine the exam type from a question's display_name or id
  */
@@ -27,6 +30,12 @@ export function useProgress() {
 
   // Track pending question attempts for batched readiness recalculation
   const pendingRecalcCount = useRef(0);
+
+  // Track last recalculation time for debouncing
+  const lastRecalcTime = useRef<number>(0);
+
+  // Track if a recalculation is in progress
+  const recalcInProgress = useRef(false);
 
   const invalidateProgressQueries = useCallback(() => {
     if (!user) return;
@@ -48,14 +57,36 @@ export function useProgress() {
   }, [queryClient, user]);
 
   /**
-   * Trigger readiness recalculation and invalidate cache
+   * Trigger readiness recalculation and invalidate cache.
+   * Includes debouncing to prevent concurrent recalculations.
    */
-  const triggerReadinessRecalc = useCallback(async (testType: TestType) => {
-    const success = await recalculateReadiness(testType);
-    if (success) {
-      invalidateReadinessQueries();
+  const triggerReadinessRecalc = useCallback(async (testType: TestType): Promise<boolean> => {
+    const now = Date.now();
+
+    // Skip if recalculation is already in progress
+    if (recalcInProgress.current) {
+      console.debug('Skipping recalc: already in progress');
+      return false;
     }
-    return success;
+
+    // Skip if we recalculated recently (debounce)
+    if (now - lastRecalcTime.current < RECALC_DEBOUNCE_MS) {
+      console.debug('Skipping recalc: debounced');
+      return false;
+    }
+
+    try {
+      recalcInProgress.current = true;
+      lastRecalcTime.current = now;
+
+      const success = await recalculateReadiness(testType);
+      if (success) {
+        invalidateReadinessQueries();
+      }
+      return success;
+    } finally {
+      recalcInProgress.current = false;
+    }
   }, [invalidateReadinessQueries]);
 
   const saveTestResult = async (

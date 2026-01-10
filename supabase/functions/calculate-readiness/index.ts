@@ -296,56 +296,80 @@ Deno.serve(async (req: Request) => {
 });
 
 // ============================================================
-// CONFIGURATION LOADING
+// DEFAULT CONFIGURATION (fallback if DB config unavailable)
+// ============================================================
+
+const DEFAULT_CONFIG: Config = {
+  formula_weights: {
+    recent_accuracy: 35,
+    overall_accuracy: 20,
+    coverage: 15,
+    mastery: 15,
+    test_rate: 15,
+  },
+  pass_probability: {
+    k: 0.15,
+    r0: 65,
+  },
+  recency_penalty: {
+    max_penalty: 10,
+    decay_rate: 0.5,
+  },
+  coverage_beta: {
+    low: 1.2,
+    mid: 1.0,
+    high: 0.9,
+    low_threshold: 0.3,
+    high_threshold: 0.7,
+  },
+  blend: {
+    min_recent_for_blend: 5,
+    recent_window: 20,
+  },
+  thresholds: {
+    min_attempts: 50,
+    min_per_subelement: 2,
+    recent_window: 50,
+    subelement_recent_window: 20,
+  },
+  version: "v1.0.0-default",
+};
+
+// ============================================================
+// CONFIGURATION LOADING (with graceful fallback)
 // ============================================================
 
 async function loadConfig(supabase: SupabaseClient): Promise<Config> {
-  const { data, error } = await supabase
-    .from("readiness_config")
-    .select("key, value");
+  try {
+    const { data, error } = await supabase
+      .from("readiness_config")
+      .select("key, value");
 
-  if (error) {
-    console.error("Failed to load config:", error);
-    throw new Error("Failed to load readiness configuration");
+    if (error) {
+      console.warn("Failed to load config from DB, using defaults:", error.message);
+      return DEFAULT_CONFIG;
+    }
+
+    if (!data || data.length === 0) {
+      console.warn("No config found in DB, using defaults");
+      return DEFAULT_CONFIG;
+    }
+
+    const configMap = new Map(data.map((r: { key: string; value: unknown }) => [r.key, r.value]));
+
+    return {
+      formula_weights: (configMap.get("formula_weights") as FormulaWeights) || DEFAULT_CONFIG.formula_weights,
+      pass_probability: (configMap.get("pass_probability") as PassProbabilityConfig) || DEFAULT_CONFIG.pass_probability,
+      recency_penalty: (configMap.get("recency_penalty") as RecencyPenaltyConfig) || DEFAULT_CONFIG.recency_penalty,
+      coverage_beta: (configMap.get("coverage_beta") as CoverageBetaConfig) || DEFAULT_CONFIG.coverage_beta,
+      blend: (configMap.get("blend") as BlendConfig) || DEFAULT_CONFIG.blend,
+      thresholds: (configMap.get("thresholds") as ThresholdsConfig) || DEFAULT_CONFIG.thresholds,
+      version: (configMap.get("version") as string) || DEFAULT_CONFIG.version,
+    };
+  } catch (err) {
+    console.error("Exception loading config, using defaults:", err);
+    return DEFAULT_CONFIG;
   }
-
-  const configMap = new Map(data?.map((r) => [r.key, r.value]) || []);
-
-  return {
-    formula_weights: (configMap.get("formula_weights") as FormulaWeights) || {
-      recent_accuracy: 35,
-      overall_accuracy: 20,
-      coverage: 15,
-      mastery: 15,
-      test_rate: 15,
-    },
-    pass_probability: (configMap.get("pass_probability") as PassProbabilityConfig) || {
-      k: 0.15,
-      r0: 65,
-    },
-    recency_penalty: (configMap.get("recency_penalty") as RecencyPenaltyConfig) || {
-      max_penalty: 10,
-      decay_rate: 0.5,
-    },
-    coverage_beta: (configMap.get("coverage_beta") as CoverageBetaConfig) || {
-      low: 1.2,
-      mid: 1.0,
-      high: 0.9,
-      low_threshold: 0.3,
-      high_threshold: 0.7,
-    },
-    blend: (configMap.get("blend") as BlendConfig) || {
-      min_recent_for_blend: 5,
-      recent_window: 20,
-    },
-    thresholds: (configMap.get("thresholds") as ThresholdsConfig) || {
-      min_attempts: 50,
-      min_per_subelement: 2,
-      recent_window: 50,
-      subelement_recent_window: 20,
-    },
-    version: (configMap.get("version") as string) || "v1.0.0",
-  };
 }
 
 // ============================================================

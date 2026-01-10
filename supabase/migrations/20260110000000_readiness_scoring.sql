@@ -330,3 +330,21 @@ CREATE POLICY "Admins can view all readiness snapshots"
       WHERE user_id = auth.uid() AND role = 'admin'
     )
   );
+
+-- ============================================================
+-- 8. PERFORMANCE INDEXES
+-- Optimize queries used by the readiness edge function
+-- ============================================================
+
+-- Index for LIKE queries on display_name (used to filter by exam type prefix T/G/E)
+-- Using text_pattern_ops for LIKE 'T%' style patterns
+CREATE INDEX IF NOT EXISTS idx_questions_display_name_pattern
+  ON public.questions (display_name text_pattern_ops);
+
+-- Index for question_attempts filtering by question_id for subelement metrics
+CREATE INDEX IF NOT EXISTS idx_question_attempts_question_id
+  ON public.question_attempts (question_id);
+
+-- Composite index for practice_test_results queries
+CREATE INDEX IF NOT EXISTS idx_practice_test_results_user_type
+  ON public.practice_test_results (user_id, test_type);
