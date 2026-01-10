@@ -1,5 +1,8 @@
 -- Add full-text search support to ham_radio_tools table
 
+-- Drop the old search_content function (5 parameters) before creating new one (6 parameters)
+DROP FUNCTION IF EXISTS public.search_content(TEXT, TEXT, INT, INT, INT);
+
 -- Add FTS column to ham_radio_tools
 ALTER TABLE public.ham_radio_tools ADD COLUMN IF NOT EXISTS fts tsvector
   GENERATED ALWAYS AS (
@@ -200,7 +203,7 @@ END;
 $$;
 
 -- Grant execute permission to authenticated and anonymous users
-GRANT EXECUTE ON FUNCTION public.search_content TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.search_content(TEXT, TEXT, INT, INT, INT, INT) TO authenticated, anon;
 
 -- Update comment
-COMMENT ON FUNCTION public.search_content IS 'Unified search function for global keyword search. Searches questions, glossary terms, topics, and tools with optional license filtering. Uses FTS for natural language with ILIKE fallback for question IDs.';
+COMMENT ON FUNCTION public.search_content(TEXT, TEXT, INT, INT, INT, INT) IS 'Unified search function for global keyword search. Searches questions, glossary terms, topics, and tools with optional license filtering. Uses FTS for natural language with ILIKE fallback for question IDs.';
