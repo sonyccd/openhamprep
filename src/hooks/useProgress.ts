@@ -3,11 +3,30 @@ import { useAuth } from '@/hooks/useAuth';
 import { Question } from '@/hooks/useQuestions';
 import { TestType, testConfig } from '@/types/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
+import { recalculateReadiness } from '@/hooks/useReadinessScore';
+
+/** Number of questions to batch before triggering a readiness recalculation */
+const RECALC_QUESTION_THRESHOLD = 10;
+
+/**
+ * Determine the exam type from a question's display_name or id
+ */
+function getExamTypeFromQuestion(question: Question): TestType {
+  // Question display_name starts with T (Technician), G (General), or E (Extra)
+  const displayName = question.displayName || question.id;
+  const prefix = displayName.charAt(0).toUpperCase();
+  if (prefix === 'G') return 'general';
+  if (prefix === 'E') return 'extra';
+  return 'technician';
+}
 
 export function useProgress() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // Track pending question attempts for batched readiness recalculation
+  const pendingRecalcCount = useRef(0);
 
   const invalidateProgressQueries = useCallback(() => {
     if (!user) return;
@@ -18,6 +37,26 @@ export function useProgress() {
     queryClient.invalidateQueries({ queryKey: ['profile-stats', user.id] });
     queryClient.invalidateQueries({ queryKey: ['weekly-goals', user.id] });
   }, [queryClient, user]);
+
+  /**
+   * Invalidate readiness queries after recalculation
+   */
+  const invalidateReadinessQueries = useCallback(() => {
+    if (!user) return;
+    queryClient.invalidateQueries({ queryKey: ['readiness', user.id] });
+    queryClient.invalidateQueries({ queryKey: ['readiness-snapshots', user.id] });
+  }, [queryClient, user]);
+
+  /**
+   * Trigger readiness recalculation and invalidate cache
+   */
+  const triggerReadinessRecalc = useCallback(async (testType: TestType) => {
+    const success = await recalculateReadiness(testType);
+    if (success) {
+      invalidateReadinessQueries();
+    }
+    return success;
+  }, [invalidateReadinessQueries]);
 
   const saveTestResult = async (
     questions: Question[],
@@ -87,6 +126,15 @@ export function useProgress() {
     // Invalidate cached queries so UI updates immediately
     invalidateProgressQueries();
 
+    // Recalculate readiness score after completing a test
+    // This is done in the background - don't block the UI
+    triggerReadinessRecalc(testType).catch((err) => {
+      console.error('Failed to recalculate readiness after test:', err);
+    });
+
+    // Reset pending count since we just recalculated
+    pendingRecalcCount.current = 0;
+
     return testResult;
   };
 
@@ -123,6 +171,16 @@ export function useProgress() {
 
     // Invalidate cached queries so UI updates immediately
     invalidateProgressQueries();
+
+    // Batch readiness recalculation - only trigger after N questions
+    pendingRecalcCount.current++;
+    if (pendingRecalcCount.current >= RECALC_QUESTION_THRESHOLD) {
+      const examType = getExamTypeFromQuestion(question);
+      triggerReadinessRecalc(examType).catch((err) => {
+        console.error('Failed to recalculate readiness after batch:', err);
+      });
+      pendingRecalcCount.current = 0;
+    }
   };
 
   /**
@@ -168,6 +226,16 @@ export function useProgress() {
 
     // Invalidate cached queries so UI updates immediately
     invalidateProgressQueries();
+
+    // Trigger readiness recalculation after quiz completion
+    // Quiz attempts are typically 5-10 questions, so always recalculate
+    if (attempts.length > 0) {
+      const examType = getExamTypeFromQuestion(attempts[0].question);
+      triggerReadinessRecalc(examType).catch((err) => {
+        console.error('Failed to recalculate readiness after quiz:', err);
+      });
+      pendingRecalcCount.current = 0;
+    }
 
     return { success: true };
   };

@@ -3,11 +3,11 @@ import { Target, Zap, TrendingUp, CheckCircle, Brain, LucideIcon } from 'lucide-
 import {
   ReadinessLevel,
   READINESS_CONFIG,
-  calculateReadinessLevel,
   getReadinessMessage,
   getReadinessTitle,
-  getReadinessProgress,
 } from '@/lib/readinessConfig';
+import { useReadinessScore, ReadinessData } from '@/hooks/useReadinessScore';
+import { TestType } from '@/types/navigation';
 
 interface TestResult {
   id: string;
@@ -29,50 +29,122 @@ interface TestReadinessResult {
   readinessMessage: string;
   readinessTitle: string;
   readinessProgress: number;
+  readinessScore: number | null;
+  passProbability: number | null;
   config: typeof READINESS_CONFIG[ReadinessLevel];
   recentAvgScore: number;
   totalTests: number;
   passedTests: number;
   nextAction: NextAction;
+  isLoading: boolean;
 }
 
-interface UseTestReadinessOptions {
+/**
+ * Options for the new database-backed readiness hook
+ */
+interface UseTestReadinessOptionsV2 {
+  examType: TestType;
+  weakQuestionCount: number;
+  /** Fallback test results for when DB cache is empty */
+  testResults?: TestResult[];
+}
+
+/**
+ * Legacy options for backwards compatibility
+ * @deprecated Use the new options with examType instead
+ */
+interface UseTestReadinessOptionsLegacy {
   testResults: TestResult[] | undefined;
   weakQuestionCount: number;
 }
 
-export function useTestReadiness({
-  testResults,
-  weakQuestionCount,
-}: UseTestReadinessOptions): TestReadinessResult {
-  return useMemo(() => {
-    const totalTests = testResults?.length || 0;
-    const passedTests = testResults?.filter((t) => t.passed).length || 0;
+type UseTestReadinessOptions = UseTestReadinessOptionsV2 | UseTestReadinessOptionsLegacy;
 
-    // Calculate from last 5 tests
-    const lastFiveTests = testResults?.slice(0, 5) || [];
-    const recentPassCount = lastFiveTests.filter((t) => t.passed).length;
-    const recentAvgScore =
-      lastFiveTests.length > 0
+/**
+ * Determine readiness level from the numeric readiness score
+ */
+function scoreToLevel(readinessData: ReadinessData | null): ReadinessLevel {
+  if (!readinessData || readinessData.total_attempts < 10) {
+    return 'not-started';
+  }
+
+  const score = readinessData.readiness_score ?? 0;
+
+  // Map 0-100 score to readiness levels
+  // These thresholds align with pass probability from the model
+  if (score >= 75) return 'ready';         // ~82%+ pass probability
+  if (score >= 60) return 'getting-close'; // ~32-82% pass probability
+  return 'needs-work';                     // <32% pass probability
+}
+
+/**
+ * Calculate progress percentage for the progress bar
+ */
+function getReadinessProgress(level: ReadinessLevel, score: number | null): number {
+  if (level === 'not-started') return 0;
+
+  // Use the actual score if available, scaled to 0-100
+  if (score !== null) {
+    return Math.min(100, Math.max(0, score));
+  }
+
+  // Fallback to fixed values per level
+  const progressMap: Record<ReadinessLevel, number> = {
+    'not-started': 0,
+    'needs-work': 40,
+    'getting-close': 75,
+    'ready': 100,
+  };
+  return progressMap[level];
+}
+
+/**
+ * Hook to get test readiness using the database-backed readiness model.
+ *
+ * This hook fetches cached readiness data from the database instead of
+ * calculating it client-side. The edge function handles all calculations.
+ */
+export function useTestReadiness(options: UseTestReadinessOptions): TestReadinessResult {
+  // Check if using new or legacy options format
+  const isV2 = 'examType' in options;
+  const examType = isV2 ? options.examType : 'technician';
+  const weakQuestionCount = options.weakQuestionCount;
+  const testResults = options.testResults;
+
+  // Fetch readiness data from database (new approach)
+  const { data: readinessData, isLoading } = useReadinessScore(examType);
+
+  return useMemo(() => {
+    // Calculate values from readiness data or fall back to test results
+    const totalTests = readinessData?.tests_taken ?? testResults?.length ?? 0;
+    const passedTests = readinessData?.tests_passed ?? testResults?.filter((t) => t.passed).length ?? 0;
+
+    // Recent accuracy as percentage (convert from 0-1 to 0-100)
+    const recentAvgScore = readinessData?.recent_accuracy
+      ? Math.round(readinessData.recent_accuracy * 100)
+      : testResults && testResults.length > 0
         ? Math.round(
-            lastFiveTests.reduce((sum, t) => sum + Number(t.percentage), 0) /
-              lastFiveTests.length
+            testResults.slice(0, 5).reduce((sum, t) => sum + Number(t.percentage), 0) /
+              Math.min(testResults.length, 5)
           )
         : 0;
 
-    const readinessLevel = calculateReadinessLevel(
-      totalTests,
-      recentAvgScore,
-      recentPassCount,
-      lastFiveTests.length
-    );
-
+    // Determine readiness level from database score
+    const readinessLevel = scoreToLevel(readinessData);
     const readinessMessage = getReadinessMessage(readinessLevel);
     const readinessTitle = getReadinessTitle(readinessLevel);
-    const readinessProgress = getReadinessProgress(readinessLevel);
+    const readinessProgress = getReadinessProgress(
+      readinessLevel,
+      readinessData?.readiness_score ?? null
+    );
     const config = READINESS_CONFIG[readinessLevel];
 
-    // Determine next action
+    // Get pass probability from database (already calculated by edge function)
+    const passProbability = readinessData?.pass_probability ?? null;
+    const readinessScore = readinessData?.readiness_score ?? null;
+
+    // Determine next action based on readiness data
+    const recentPassCount = passedTests > 0 ? Math.min(passedTests, 3) : 0; // Approximate
     const nextAction = getNextAction(
       totalTests,
       weakQuestionCount,
@@ -85,13 +157,16 @@ export function useTestReadiness({
       readinessMessage,
       readinessTitle,
       readinessProgress,
+      readinessScore,
+      passProbability,
       config,
       recentAvgScore,
       totalTests,
       passedTests,
       nextAction,
+      isLoading,
     };
-  }, [testResults, weakQuestionCount]);
+  }, [readinessData, testResults, weakQuestionCount, isLoading]);
 }
 
 function getNextAction(

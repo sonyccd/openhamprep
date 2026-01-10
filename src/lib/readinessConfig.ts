@@ -1,5 +1,10 @@
 import { Target, TrendingUp, CheckCircle, LucideIcon } from 'lucide-react';
 
+/**
+ * Readiness level categories for UI display.
+ * The actual readiness score (0-100) is calculated by the edge function
+ * and mapped to these levels for display purposes.
+ */
 export type ReadinessLevel = 'not-started' | 'needs-work' | 'getting-close' | 'ready';
 
 export interface ReadinessState {
@@ -10,6 +15,10 @@ export interface ReadinessState {
   progress: number;
 }
 
+/**
+ * UI configuration for each readiness level.
+ * Used for styling the readiness indicator in the dashboard.
+ */
 export const READINESS_CONFIG: Record<ReadinessLevel, ReadinessState> = {
   'not-started': {
     color: 'text-muted-foreground',
@@ -42,30 +51,6 @@ export const READINESS_CONFIG: Record<ReadinessLevel, ReadinessState> = {
 };
 
 /**
- * Calculate the readiness level based on test performance.
- */
-export function calculateReadinessLevel(
-  totalTests: number,
-  recentAvgScore: number,
-  recentPassCount: number,
-  lastFiveTestsCount: number
-): ReadinessLevel {
-  if (totalTests < 1) {
-    return 'not-started';
-  }
-
-  if (recentAvgScore >= 85 && recentPassCount >= Math.min(3, lastFiveTestsCount)) {
-    return 'ready';
-  }
-
-  if (recentAvgScore >= 74 && recentPassCount >= 1) {
-    return 'getting-close';
-  }
-
-  return 'needs-work';
-}
-
-/**
  * Get the readiness message for a given level.
  */
 export function getReadinessMessage(level: ReadinessLevel): string {
@@ -92,7 +77,9 @@ export function getReadinessTitle(level: ReadinessLevel): string {
 }
 
 /**
- * Get the progress bar width percentage for a readiness level.
+ * Get the default progress bar width percentage for a readiness level.
+ * Note: The actual progress is now derived from the readiness score (0-100)
+ * calculated by the edge function. This is used as a fallback.
  */
 export function getReadinessProgress(level: ReadinessLevel): number {
   const progressMap: Record<ReadinessLevel, number> = {
@@ -102,4 +89,36 @@ export function getReadinessProgress(level: ReadinessLevel): number {
     'ready': 100,
   };
   return progressMap[level];
+}
+
+/**
+ * @deprecated Use the readiness score from useReadinessScore hook instead.
+ * This function is kept for backwards compatibility but will be removed.
+ *
+ * The actual readiness calculation is now done by the calculate-readiness
+ * edge function, which provides a more sophisticated model including:
+ * - Coverage (unique questions seen)
+ * - Mastery (questions correct 2+ times)
+ * - Recency penalty (days since last study)
+ * - Per-subelement analysis
+ */
+export function calculateReadinessLevel(
+  totalTests: number,
+  recentAvgScore: number,
+  recentPassCount: number,
+  lastFiveTestsCount: number
+): ReadinessLevel {
+  if (totalTests < 1) {
+    return 'not-started';
+  }
+
+  if (recentAvgScore >= 85 && recentPassCount >= Math.min(3, lastFiveTestsCount)) {
+    return 'ready';
+  }
+
+  if (recentAvgScore >= 74 && recentPassCount >= 1) {
+    return 'getting-close';
+  }
+
+  return 'needs-work';
 }
