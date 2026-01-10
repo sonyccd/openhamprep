@@ -8,12 +8,13 @@ import type { TestType } from '@/types/navigation';
  * Unified search result type for displaying in the command palette
  */
 export interface SearchResult {
-  type: 'question' | 'glossary' | 'topic';
+  type: 'question' | 'glossary' | 'topic' | 'tool';
   id: string;
   title: string;
   subtitle: string;
   displayName?: string; // For questions - used for navigation
   slug?: string; // For topics - used for navigation
+  url?: string; // For tools - external URL
 }
 
 /**
@@ -23,6 +24,7 @@ export interface SearchResults {
   questions: SearchResult[];
   glossary: SearchResult[];
   topics: SearchResult[];
+  tools: SearchResult[];
 }
 
 /**
@@ -49,6 +51,13 @@ interface SearchContentResponse {
     description: string;
     rank: number;
   }>;
+  tools: Array<{
+    id: string;
+    title: string;
+    description: string;
+    url: string;
+    rank: number;
+  }>;
 }
 
 const DEBOUNCE_MS = 300;
@@ -57,6 +66,7 @@ const EMPTY_RESULTS: SearchResults = {
   questions: [],
   glossary: [],
   topics: [],
+  tools: [],
 };
 
 /**
@@ -145,6 +155,13 @@ export function useGlobalSearch(testType: TestType) {
             subtitle: truncateText(t.description || '', 80),
             slug: t.slug,
           })),
+          tools: (response?.tools || []).map((tool) => ({
+            type: 'tool' as const,
+            id: tool.id,
+            title: tool.title,
+            subtitle: truncateText(tool.description, 80),
+            url: tool.url,
+          })),
         };
 
         setResults(transformedResults);
@@ -174,7 +191,8 @@ export function useGlobalSearch(testType: TestType) {
     return (
       results.questions.length +
       results.glossary.length +
-      results.topics.length
+      results.topics.length +
+      results.tools.length
     );
   }, [results]);
 

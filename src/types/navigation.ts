@@ -10,6 +10,7 @@ export type View =
   | 'glossary'
   | 'glossary-flashcards'
   | 'find-test-site'
+  | 'tools'
   | 'topics'
   | 'topic-detail'
   | 'lessons'

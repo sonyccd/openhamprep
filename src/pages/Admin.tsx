@@ -10,8 +10,9 @@ import { AdminExamSessions } from "@/components/admin/AdminExamSessions";
 import { AdminTopics } from "@/components/admin/AdminTopics";
 import { AdminLessons } from "@/components/admin/AdminLessons";
 import { AdminChapters } from "@/components/admin/AdminChapters";
+import { AdminHamRadioTools } from "@/components/admin/AdminHamRadioTools";
 import { DiscourseSyncDashboard } from "@/components/admin/DiscourseSyncDashboard";
-import { Loader2, ShieldAlert, BookText, MapPin, FileText, MessageSquare, FileQuestion, Book, Route } from "lucide-react";
+import { Loader2, ShieldAlert, BookText, MapPin, FileText, MessageSquare, FileQuestion, Book, Route, Wrench } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { TestType } from "@/types/navigation";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -28,7 +29,7 @@ export default function Admin() {
   const [sidebarTest, setSidebarTest] = useState<TestType>('technician');
   const [adminExamType, setAdminExamType] = useState<TestType>('technician');
   const [activeTab, setActiveTab] = useState("stats");
-  const [activeSection, setActiveSection] = useState<"exam" | "glossary" | "sessions" | "topics" | "lessons" | "chapters" | "discourse">("exam");
+  const [activeSection, setActiveSection] = useState<"exam" | "glossary" | "sessions" | "topics" | "lessons" | "chapters" | "tools" | "discourse">("exam");
   const [linkQuestionId, setLinkQuestionId] = useState("");
   useEffect(() => {
     if (!authLoading && !user) {
@@ -63,7 +64,7 @@ export default function Admin() {
     extra: 'Extra'
   };
   // Stats tab needs full page scroll, Questions/Glossary need fixed viewport with internal scroll
-  const needsFixedHeight = activeSection === "glossary" || activeSection === "sessions" || activeSection === "topics" || activeSection === "lessons" || activeSection === "chapters" || activeSection === "discourse" || (activeSection === "exam" && activeTab === "questions");
+  const needsFixedHeight = activeSection === "glossary" || activeSection === "sessions" || activeSection === "topics" || activeSection === "lessons" || activeSection === "chapters" || activeSection === "tools" || activeSection === "discourse" || (activeSection === "exam" && activeTab === "questions");
 
   return <AppLayout currentView="dashboard" onViewChange={handleViewChange} selectedTest={sidebarTest} onTestChange={setSidebarTest}>
       <div className={`flex-1 p-6 md:p-8 flex flex-col ${needsFixedHeight ? 'h-full overflow-hidden' : 'overflow-y-auto'}`}>
@@ -141,6 +142,17 @@ export default function Admin() {
                 <span className="hidden sm:inline">Chapters</span>
               </button>
               <button
+                onClick={() => setActiveSection("tools")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  activeSection === "tools"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                }`}
+              >
+                <Wrench className="w-4 h-4" />
+                <span className="hidden sm:inline">Tools</span>
+              </button>
+              <button
                 onClick={() => setActiveSection("discourse")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                   activeSection === "discourse"
@@ -206,6 +218,10 @@ export default function Admin() {
             ) : activeSection === "chapters" ? (
               <div className="flex-1 flex flex-col min-h-0">
                 <AdminChapters />
+              </div>
+            ) : activeSection === "tools" ? (
+              <div className="flex-1 flex flex-col min-h-0">
+                <AdminHamRadioTools />
               </div>
             ) : (
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
