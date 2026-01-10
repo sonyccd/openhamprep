@@ -250,12 +250,15 @@ export function AdminHamRadioTools() {
             </div>
             <div>
               <Label>Category</Label>
-              <Select value={editCategoryId} onValueChange={setEditCategoryId}>
+              <Select
+                value={editCategoryId || "none"}
+                onValueChange={(val) => setEditCategoryId(val === "none" ? "" : val)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No category</SelectItem>
+                  <SelectItem value="none">No category</SelectItem>
                   {categories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
@@ -372,12 +375,15 @@ export function AdminHamRadioTools() {
             </div>
             <div>
               <Label>Category</Label>
-              <Select value={newCategoryId} onValueChange={setNewCategoryId}>
+              <Select
+                value={newCategoryId || "none"}
+                onValueChange={(val) => setNewCategoryId(val === "none" ? "" : val)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No category</SelectItem>
+                  <SelectItem value="none">No category</SelectItem>
                   {categories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
