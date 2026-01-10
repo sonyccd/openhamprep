@@ -64,7 +64,8 @@ export function useReadinessSnapshots({
       return (data as ReadinessSnapshot[]) || [];
     },
     enabled: !!user,
-    staleTime: 10 * 60 * 1000, // 10 minutes - snapshots are daily
+    staleTime: 60 * 1000, // 1 minute - allow refetch after test completion
+    gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache for background updates
   });
 }
 

@@ -21,6 +21,17 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="/css/styles.css">
+  <!-- Prevent theme flash by setting theme class before page renders -->
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans antialiased">
 
@@ -256,14 +267,14 @@
             </div>
           </div>
 
-          <!-- FAQ Item 10 - Calculator -->
+          <!-- FAQ Item 10 - Community -->
           <div class="faq-item reveal border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden" style="transition-delay: 1.0s;">
             <button class="faq-button w-full flex items-center justify-between p-6 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors" id="faq-btn-10" aria-expanded="false" aria-controls="faq-answer-10">
-              <span class="font-semibold text-lg pr-4">Is there a calculator for math questions?</span>
+              <span class="font-semibold text-lg pr-4">How can I get help or join the community?</span>
               <i data-lucide="chevron-down" aria-hidden="true" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 transition-transform"></i>
             </button>
             <div id="faq-answer-10" class="faq-answer hidden px-6 pb-6 text-gray-600 dark:text-gray-400">
-              Yes! We have a built-in scientific calculator available during study sessions. Some exam questions involve calculations (like Ohm's Law or frequency calculations), and our calculator is right there when you need it—no switching apps required.
+              Every question has a discussion feature where you can ask questions and get answers from experienced hams. We also have a growing community of users helping each other succeed. Since Open Ham Prep is open source, you can also contribute on GitHub or report issues there.
             </div>
           </div>
         </div>

@@ -119,7 +119,7 @@ describe('Calculator', () => {
 
       await user.click(screen.getByRole('button', { name: /open calculator/i }));
       await user.click(screen.getByRole('button', { name: '1' }));
-      await user.click(screen.getByRole('button', { name: '.' }));
+      await user.click(screen.getByRole('button', { name: /decimal point/i }));
       await user.click(screen.getByRole('button', { name: '5' }));
 
       const display = document.querySelector('.font-mono.text-xl');
@@ -132,8 +132,8 @@ describe('Calculator', () => {
 
       await user.click(screen.getByRole('button', { name: /open calculator/i }));
       await user.click(screen.getByRole('button', { name: '1' }));
-      await user.click(screen.getByRole('button', { name: '.' }));
-      await user.click(screen.getByRole('button', { name: '.' }));
+      await user.click(screen.getByRole('button', { name: /decimal point/i }));
+      await user.click(screen.getByRole('button', { name: /decimal point/i }));
       await user.click(screen.getByRole('button', { name: '5' }));
 
       const display = document.querySelector('.font-mono.text-xl');
@@ -150,9 +150,9 @@ describe('Calculator', () => {
 
       // Should be able to click operation buttons without error
       await user.click(screen.getByRole('button', { name: '2' }));
-      await user.click(screen.getByRole('button', { name: '+' }));
+      await user.click(screen.getByRole('button', { name: /add/i }));
       await user.click(screen.getByRole('button', { name: '3' }));
-      await user.click(screen.getByRole('button', { name: '=' }));
+      await user.click(screen.getByRole('button', { name: /equals/i }));
 
       // Calculator should still be open
       expect(screen.getByText('Close')).toBeInTheDocument();
@@ -168,7 +168,7 @@ describe('Calculator', () => {
       await user.click(screen.getByRole('button', { name: '1' }));
       await user.click(screen.getByRole('button', { name: '2' }));
       await user.click(screen.getByRole('button', { name: '3' }));
-      await user.click(screen.getByRole('button', { name: 'C' }));
+      await user.click(screen.getByRole('button', { name: /clear/i }));
 
       // The display shows 0 after clear
       const display = document.querySelector('.font-mono.text-xl');
@@ -194,12 +194,12 @@ describe('Calculator', () => {
 
       await user.click(screen.getByRole('button', { name: /open calculator/i }));
 
-      expect(screen.getByRole('button', { name: '+' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '-' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '×' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '÷' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: '=' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'C' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /subtract/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /multiply/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /divide/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /equals/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /clear/i })).toBeInTheDocument();
     });
 
     it('displays decimal button', async () => {
@@ -208,7 +208,7 @@ describe('Calculator', () => {
 
       await user.click(screen.getByRole('button', { name: /open calculator/i }));
 
-      expect(screen.getByRole('button', { name: '.' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /decimal point/i })).toBeInTheDocument();
     });
   });
 

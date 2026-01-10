@@ -546,8 +546,8 @@ export function ProfileModal({
     </div>
   );
 
-  // Danger zone view
-  const DangerView = () => (
+  // Danger zone view - extracted as inline JSX to avoid focus loss from function recreation
+  const dangerViewContent = (
     <div className="space-y-4">
       <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/20 space-y-4">
         <div className="flex items-start gap-3">
@@ -644,7 +644,7 @@ export function ProfileModal({
           {currentView === "main" && <MainView />}
           {currentView === "account" && <AccountView />}
           {currentView === "appearance" && <AppearanceView />}
-          {currentView === "danger" && <DangerView />}
+          {currentView === "danger" && dangerViewContent}
         </div>
       </DialogContent>
     </Dialog>

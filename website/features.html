@@ -21,6 +21,17 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="/css/styles.css">
+  <!-- Prevent theme flash by setting theme class before page renders -->
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans antialiased">
 
@@ -418,11 +429,11 @@
           </div>
 
           <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center" style="transition-delay: 0.2s;">
-            <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
-              <i data-lucide="calculator" aria-hidden="true" class="w-6 h-6 text-gray-600 dark:text-gray-400"></i>
+            <div class="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center mx-auto mb-4">
+              <i data-lucide="heart" aria-hidden="true" class="w-6 h-6 text-rose-600 dark:text-rose-400"></i>
             </div>
-            <h3 class="font-semibold mb-2">Built-in Calculator</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">Scientific calculator for technical questions. No app switching.</p>
+            <h3 class="font-semibold mb-2">Free Forever</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">100% free, no ads, no subscriptions. Open source and community-driven.</p>
           </div>
 
           <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center" style="transition-delay: 0.3s;">

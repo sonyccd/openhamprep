@@ -123,6 +123,17 @@ export function Calculator({ className }: CalculatorProps) {
     ["0", ".", "="],
   ];
 
+  // Accessible labels for operator buttons
+  const buttonLabels: Record<string, string> = {
+    "C": "Clear",
+    "÷": "Divide",
+    "×": "Multiply",
+    "-": "Subtract",
+    "+": "Add",
+    "=": "Equals",
+    ".": "Decimal point",
+  };
+
   const handleButtonClick = useCallback((btn: string) => {
     if (btn === "C") {
       clear();
@@ -197,7 +208,12 @@ export function Calculator({ className }: CalculatorProps) {
             <span className="text-xs font-medium text-muted-foreground">Calculator</span>
           </div>
 
-          <div className="bg-secondary rounded-md p-3 mb-2 text-right">
+          <div
+            className="bg-secondary rounded-md p-3 mb-2 text-right"
+            role="status"
+            aria-live="polite"
+            aria-label="Calculator display"
+          >
             <span className="font-mono text-xl text-foreground">
               {display.length > 12 ? parseFloat(display).toExponential(6) : display}
             </span>
@@ -217,6 +233,7 @@ export function Calculator({ className }: CalculatorProps) {
                       btn === "C" && "col-span-3"
                     )}
                     onClick={() => handleButtonClick(btn)}
+                    aria-label={buttonLabels[btn] || btn}
                   >
                     {btn}
                   </Button>

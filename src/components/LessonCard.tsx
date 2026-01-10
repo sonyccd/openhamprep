@@ -18,13 +18,25 @@ interface LessonCardProps {
 export function LessonCard({ lesson, completion, onClick }: LessonCardProps) {
   const isComplete = completion.percentage === 100;
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <Card
       className={cn(
         "cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] group overflow-hidden",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         isComplete && "ring-2 ring-success/50"
       )}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`${lesson.title}, ${completion.percentage}% complete${isComplete ? ' (completed)' : ''}`}
     >
       {/* Thumbnail */}
       <div className="relative aspect-video bg-muted overflow-hidden">

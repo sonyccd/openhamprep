@@ -27,6 +27,17 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <link rel="stylesheet" href="/css/styles.css">
+  <!-- Prevent theme flash by setting theme class before page renders -->
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans antialiased">
 
@@ -287,13 +298,13 @@
             <p class="text-gray-600 dark:text-gray-400">Master ham radio terminology with spaced-repetition flashcards. Track which terms you know and which need review.</p>
           </div>
 
-          <!-- Feature: Built-in Calculator -->
+          <!-- Feature: Free Forever -->
           <div class="feature-card reveal bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6" style="transition-delay: 0.6s;">
             <div class="icon-glow w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-5">
-              <i data-lucide="calculator" aria-hidden="true" class="w-7 h-7 text-gray-600 dark:text-gray-400"></i>
+              <i data-lucide="heart" aria-hidden="true" class="w-7 h-7 text-rose-600 dark:text-rose-400"></i>
             </div>
-            <h3 class="text-xl font-semibold mb-2">Built-in Calculator</h3>
-            <p class="text-gray-600 dark:text-gray-400">Scientific calculator available during study for technical questions. No switching apps when you need to do the math.</p>
+            <h3 class="text-xl font-semibold mb-2">Free Forever</h3>
+            <p class="text-gray-600 dark:text-gray-400">100% free and open source. No subscriptions, no ads, no catch. Built by hams, for hams.</p>
           </div>
         </div>
 

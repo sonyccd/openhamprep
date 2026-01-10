@@ -99,6 +99,11 @@ export function useProgress() {
     // Skip if we recalculated recently (debounce)
     if (now - lastRecalcTime.current < RECALC_DEBOUNCE_MS) {
       console.debug('Skipping recalc: debounced');
+      // Invalidate queries even when debounced - the edge function may have completed
+      // from a previous call, or the database may have been updated by another source.
+      // This ensures the UI shows the latest cached data without triggering another
+      // expensive edge function call.
+      invalidateReadinessQueries();
       return false;
     }
 
@@ -107,9 +112,17 @@ export function useProgress() {
       lastRecalcTime.current = now;
 
       const success = await recalculateReadiness(testType);
-      if (success) {
-        invalidateReadinessQueries();
+
+      if (!success) {
+        // Log failed recalculations for monitoring - the edge function may have
+        // partial failures but still update the cache, so we don't throw here
+        console.warn('Readiness recalculation returned unsuccessful status');
       }
+
+      // Always invalidate queries after recalculation attempt. The database cache
+      // may have been updated even if the edge function reports an issue (e.g.,
+      // partial success, timeout after write, etc.)
+      invalidateReadinessQueries();
       return success;
     } finally {
       recalcInProgress.current = false;
