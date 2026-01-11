@@ -39,20 +39,55 @@ function extractTitle(html: string): string {
   return titleMatch ? titleMatch[1].trim() : '';
 }
 
+// Video hosting domains - check hostname ends with these (handles subdomains)
+const VIDEO_DOMAINS = [
+  'youtube.com',
+  'youtu.be',
+  'vimeo.com',
+  'dailymotion.com',
+  'twitch.tv',
+];
+
+/**
+ * Checks if a hostname matches an allowed domain.
+ * Handles subdomains correctly (e.g., www.youtube.com matches youtube.com).
+ */
+function isHostnameMatch(hostname: string, allowedDomain: string): boolean {
+  const normalizedHost = hostname.toLowerCase();
+  const normalizedDomain = allowedDomain.toLowerCase();
+  return normalizedHost === normalizedDomain ||
+         normalizedHost.endsWith('.' + normalizedDomain);
+}
+
 function detectType(url: string, html: string): 'video' | 'article' | 'website' {
-  const urlLower = url.toLowerCase();
-  if (urlLower.includes('youtube.com') || urlLower.includes('youtu.be') || 
-      urlLower.includes('vimeo.com') || urlLower.includes('dailymotion.com') ||
-      urlLower.includes('twitch.tv')) {
-    return 'video';
+  // Parse URL and check hostname against known video platforms
+  try {
+    const parsedUrl = new URL(url);
+    const hostname = parsedUrl.hostname;
+
+    if (VIDEO_DOMAINS.some(domain => isHostnameMatch(hostname, domain))) {
+      return 'video';
+    }
+  } catch {
+    // Invalid URL, fall through to other detection methods
   }
+
   const ogType = extractMetaContent(html, 'type');
   if (ogType.includes('video')) return 'video';
   if (ogType.includes('article')) return 'article';
-  if (html.includes('<article') || urlLower.includes('/blog/') || 
-      urlLower.includes('/article/') || urlLower.includes('/post/')) {
-    return 'article';
+
+  // Check for article indicators in HTML or URL path
+  try {
+    const parsedUrl = new URL(url);
+    const pathLower = parsedUrl.pathname.toLowerCase();
+    if (html.includes('<article') || pathLower.includes('/blog/') ||
+        pathLower.includes('/article/') || pathLower.includes('/post/')) {
+      return 'article';
+    }
+  } catch {
+    // Invalid URL, skip path-based detection
   }
+
   return 'website';
 }
 
