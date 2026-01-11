@@ -130,7 +130,7 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
           onTestChange={onTestChange}
           onSearch={onSearch}
         />
-        <main id="main-content" className="flex-1 overflow-y-auto pt-16 md:pt-0 flex flex-col">
+        <main id="main-content" className="flex-1 overflow-y-auto pt-safe-header md:pt-0 flex flex-col">
           {children}
         </main>
         <HelpButton />

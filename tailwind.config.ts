@@ -74,6 +74,11 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      spacing: {
+        // Safe area padding for iOS PWA - accounts for notch/Dynamic Island
+        'safe-header': 'max(4rem, calc(env(safe-area-inset-top, 0px) + 3rem))',
+        'safe-top': 'max(1rem, env(safe-area-inset-top, 1rem))',
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
