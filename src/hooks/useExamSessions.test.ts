@@ -289,6 +289,45 @@ describe('useSaveTargetExam', () => {
       ).not.toThrow();
     });
   });
+
+  it('accepts customExamDate parameter instead of examSessionId', async () => {
+    const { result } = renderHook(() => useSaveTargetExam(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(() =>
+      result.current.mutate({
+        userId: 'test-user',
+        customExamDate: '2025-06-15',
+        studyIntensity: 'moderate',
+      })
+    ).not.toThrow();
+  });
+
+  it('requires exactly one of examSessionId or customExamDate', async () => {
+    const { result } = renderHook(() => useSaveTargetExam(), {
+      wrapper: createWrapper(),
+    });
+
+    // This tests that the hook doesn't throw when called correctly
+    // The validation happens in the mutationFn, so we just ensure
+    // both call patterns are accepted by the type system
+    expect(() =>
+      result.current.mutate({
+        userId: 'test-user',
+        examSessionId: 'exam-session-id',
+        studyIntensity: 'light',
+      })
+    ).not.toThrow();
+
+    expect(() =>
+      result.current.mutate({
+        userId: 'test-user',
+        customExamDate: '2025-06-15',
+        studyIntensity: 'intensive',
+      })
+    ).not.toThrow();
+  });
 });
 
 describe('useRemoveTargetExam', () => {

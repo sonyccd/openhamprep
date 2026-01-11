@@ -34,6 +34,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      arrl_chapters: {
+        Row: {
+          chapter_number: number
+          created_at: string | null
+          description: string | null
+          display_order: number
+          id: string
+          license_type: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          chapter_number: number
+          created_at?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          license_type: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          chapter_number?: number
+          created_at?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          license_type?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       bookmarked_questions: {
         Row: {
           created_at: string
@@ -275,6 +308,7 @@ export type Database = {
           created_at: string
           definition: string
           edit_history: Json
+          fts: unknown
           id: string
           term: string
         }
@@ -282,6 +316,7 @@ export type Database = {
           created_at?: string
           definition: string
           edit_history?: Json
+          fts?: unknown
           id?: string
           term: string
         }
@@ -289,8 +324,241 @@ export type Database = {
           created_at?: string
           definition?: string
           edit_history?: Json
+          fts?: unknown
           id?: string
           term?: string
+        }
+        Relationships: []
+      }
+      ham_radio_tool_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          icon_name: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon_name?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon_name?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ham_radio_tools: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          description: string
+          display_order: number | null
+          edit_history: Json | null
+          fts: unknown
+          id: string
+          image_url: string | null
+          is_published: boolean | null
+          storage_path: string | null
+          title: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          description: string
+          display_order?: number | null
+          edit_history?: Json | null
+          fts?: unknown
+          id?: string
+          image_url?: string | null
+          is_published?: boolean | null
+          storage_path?: string | null
+          title: string
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          description?: string
+          display_order?: number | null
+          edit_history?: Json | null
+          fts?: unknown
+          id?: string
+          image_url?: string | null
+          is_published?: boolean | null
+          storage_path?: string | null
+          title?: string
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ham_radio_tools_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "ham_radio_tool_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          is_completed: boolean | null
+          lesson_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          lesson_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          lesson_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_topics: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          lesson_id: string | null
+          topic_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          lesson_id?: string | null
+          topic_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          lesson_id?: string | null
+          topic_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_topics_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_topics_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lessons: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          edit_history: Json | null
+          id: string
+          is_published: boolean | null
+          license_types: string[] | null
+          slug: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          edit_history?: Json | null
+          id?: string
+          is_published?: boolean | null
+          license_types?: string[] | null
+          slug: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          edit_history?: Json | null
+          id?: string
+          is_published?: boolean | null
+          license_types?: string[] | null
+          slug?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      mapbox_usage: {
+        Row: {
+          created_at: string
+          id: string
+          last_updated_at: string
+          request_count: number
+          year_month: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_updated_at?: string
+          request_count?: number
+          year_month: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_updated_at?: string
+          request_count?: number
+          year_month?: string
         }
         Relationships: []
       }
@@ -426,8 +694,70 @@ export type Database = {
           },
         ]
       }
+      question_mastery: {
+        Row: {
+          correct_attempts: number
+          created_at: string
+          first_attempt_at: string | null
+          id: string
+          incorrect_attempts: number
+          is_mastered: boolean | null
+          is_weak: boolean | null
+          last_attempt_at: string | null
+          question_id: string
+          total_attempts: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          correct_attempts?: number
+          created_at?: string
+          first_attempt_at?: string | null
+          id?: string
+          incorrect_attempts?: number
+          is_mastered?: boolean | null
+          is_weak?: boolean | null
+          last_attempt_at?: string | null
+          question_id: string
+          total_attempts?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          correct_attempts?: number
+          created_at?: string
+          first_attempt_at?: string | null
+          id?: string
+          incorrect_attempts?: number
+          is_mastered?: boolean | null
+          is_weak?: boolean | null
+          last_attempt_at?: string | null
+          question_id?: string
+          total_attempts?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_mastery_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_mastery_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       questions: {
         Row: {
+          arrl_chapter_id: string | null
+          arrl_page_reference: string | null
           correct_answer: number
           created_at: string
           discourse_sync_at: string | null
@@ -440,6 +770,7 @@ export type Database = {
           figure_reference: string | null
           figure_url: string | null
           forum_url: string | null
+          fts: unknown
           id: string
           links: Json
           options: Json
@@ -448,6 +779,8 @@ export type Database = {
           subelement: string
         }
         Insert: {
+          arrl_chapter_id?: string | null
+          arrl_page_reference?: string | null
           correct_answer: number
           created_at?: string
           discourse_sync_at?: string | null
@@ -460,6 +793,7 @@ export type Database = {
           figure_reference?: string | null
           figure_url?: string | null
           forum_url?: string | null
+          fts?: unknown
           id?: string
           links?: Json
           options: Json
@@ -468,6 +802,8 @@ export type Database = {
           subelement: string
         }
         Update: {
+          arrl_chapter_id?: string | null
+          arrl_page_reference?: string | null
           correct_answer?: number
           created_at?: string
           discourse_sync_at?: string | null
@@ -480,12 +816,48 @@ export type Database = {
           figure_reference?: string | null
           figure_url?: string | null
           forum_url?: string | null
+          fts?: unknown
           id?: string
           links?: Json
           options?: Json
           question?: string
           question_group?: string
           subelement?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_arrl_chapter_id_fkey"
+            columns: ["arrl_chapter_id"]
+            isOneToOne: false
+            referencedRelation: "arrl_chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      readiness_config: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
         }
         Relationships: []
       }
@@ -674,6 +1046,7 @@ export type Database = {
           description: string | null
           display_order: number | null
           edit_history: Json | null
+          fts: unknown
           id: string
           is_published: boolean | null
           license_types: string[] | null
@@ -689,6 +1062,7 @@ export type Database = {
           description?: string | null
           display_order?: number | null
           edit_history?: Json | null
+          fts?: unknown
           id?: string
           is_published?: boolean | null
           license_types?: string[] | null
@@ -704,6 +1078,7 @@ export type Database = {
           description?: string | null
           display_order?: number | null
           edit_history?: Json | null
+          fts?: unknown
           id?: string
           is_published?: boolean | null
           license_types?: string[] | null
@@ -713,6 +1088,145 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      user_readiness_cache: {
+        Row: {
+          calculated_at: string
+          config_version: string | null
+          coverage: number | null
+          created_at: string
+          exam_type: string
+          expected_exam_score: number | null
+          id: string
+          last_study_at: string | null
+          mastery: number | null
+          overall_accuracy: number | null
+          pass_probability: number | null
+          readiness_score: number | null
+          recent_accuracy: number | null
+          subelement_metrics: Json
+          tests_passed: number
+          tests_taken: number
+          total_attempts: number
+          unique_questions_seen: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calculated_at?: string
+          config_version?: string | null
+          coverage?: number | null
+          created_at?: string
+          exam_type: string
+          expected_exam_score?: number | null
+          id?: string
+          last_study_at?: string | null
+          mastery?: number | null
+          overall_accuracy?: number | null
+          pass_probability?: number | null
+          readiness_score?: number | null
+          recent_accuracy?: number | null
+          subelement_metrics?: Json
+          tests_passed?: number
+          tests_taken?: number
+          total_attempts?: number
+          unique_questions_seen?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calculated_at?: string
+          config_version?: string | null
+          coverage?: number | null
+          created_at?: string
+          exam_type?: string
+          expected_exam_score?: number | null
+          id?: string
+          last_study_at?: string | null
+          mastery?: number | null
+          overall_accuracy?: number | null
+          pass_probability?: number | null
+          readiness_score?: number | null
+          recent_accuracy?: number | null
+          subelement_metrics?: Json
+          tests_passed?: number
+          tests_taken?: number
+          total_attempts?: number
+          unique_questions_seen?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_readiness_cache_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_readiness_snapshots: {
+        Row: {
+          coverage: number | null
+          created_at: string
+          exam_type: string
+          id: string
+          mastery: number | null
+          overall_accuracy: number | null
+          pass_probability: number | null
+          questions_attempted: number
+          questions_correct: number
+          readiness_score: number | null
+          recent_accuracy: number | null
+          snapshot_date: string
+          tests_passed: number
+          tests_taken: number
+          user_id: string
+        }
+        Insert: {
+          coverage?: number | null
+          created_at?: string
+          exam_type: string
+          id?: string
+          mastery?: number | null
+          overall_accuracy?: number | null
+          pass_probability?: number | null
+          questions_attempted?: number
+          questions_correct?: number
+          readiness_score?: number | null
+          recent_accuracy?: number | null
+          snapshot_date: string
+          tests_passed?: number
+          tests_taken?: number
+          user_id: string
+        }
+        Update: {
+          coverage?: number | null
+          created_at?: string
+          exam_type?: string
+          id?: string
+          mastery?: number | null
+          overall_accuracy?: number | null
+          pass_probability?: number | null
+          questions_attempted?: number
+          questions_correct?: number
+          readiness_score?: number | null
+          recent_accuracy?: number | null
+          snapshot_date?: string
+          tests_passed?: number
+          tests_taken?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_readiness_snapshots_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -746,7 +1260,8 @@ export type Database = {
       user_target_exam: {
         Row: {
           created_at: string
-          exam_session_id: string
+          custom_exam_date: string | null
+          exam_session_id: string | null
           id: string
           study_intensity: string
           updated_at: string
@@ -754,7 +1269,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          exam_session_id: string
+          custom_exam_date?: string | null
+          exam_session_id?: string | null
           id?: string
           study_intensity?: string
           updated_at?: string
@@ -762,7 +1278,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          exam_session_id?: string
+          custom_exam_date?: string | null
+          exam_session_id?: string | null
           id?: string
           study_intensity?: string
           updated_at?: string
@@ -822,28 +1339,51 @@ export type Database = {
       }
     }
     Views: {
-      discourse_sync_overview: {
-        Row: {
-          errors: number | null
-          license_type: string | null
-          needs_verification: number | null
-          pending: number | null
-          synced: number | null
-          total_questions: number | null
-          with_forum_url: number | null
-          without_forum_url: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       delete_own_account: { Args: never; Returns: Json }
+      get_chapter_question_counts: {
+        Args: { license_prefix?: string }
+        Returns: {
+          chapter_id: string
+          question_count: number
+        }[]
+      }
+      get_discourse_sync_overview: {
+        Args: never
+        Returns: {
+          errors: number
+          license_type: string
+          needs_verification: number
+          pending: number
+          synced: number
+          total_questions: number
+          with_forum_url: number
+          without_forum_url: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_mapbox_usage: {
+        Args: { p_year_month: string }
+        Returns: number
+      }
+      search_content: {
+        Args: {
+          glossary_limit?: number
+          license_prefix?: string
+          questions_limit?: number
+          search_query: string
+          tools_limit?: number
+          topics_limit?: number
+        }
+        Returns: Json
       }
     }
     Enums: {

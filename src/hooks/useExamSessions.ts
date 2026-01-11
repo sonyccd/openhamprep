@@ -29,11 +29,12 @@ export interface ExamSession {
 export interface UserTargetExam {
   id: string;
   user_id: string;
-  exam_session_id: string;
+  exam_session_id: string | null;
+  custom_exam_date: string | null;
   study_intensity: 'light' | 'moderate' | 'intensive';
   created_at: string;
   updated_at: string;
-  exam_session?: ExamSession;
+  exam_session?: ExamSession | null;
 }
 
 export const useExamSessions = (filters?: {
@@ -148,7 +149,7 @@ export const useUserTargetExam = (userId?: string) => {
         .maybeSingle();
 
       if (error) throw error;
-      return data as (UserTargetExam & { exam_session: ExamSession }) | null;
+      return data as (UserTargetExam & { exam_session: ExamSession | null }) | null;
     },
     enabled: !!userId,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
@@ -169,19 +170,27 @@ export const useSaveTargetExam = () => {
     mutationFn: async ({
       userId,
       examSessionId,
+      customExamDate,
       studyIntensity,
     }: {
       userId: string;
-      examSessionId: string;
+      examSessionId?: string;
+      customExamDate?: string;
       studyIntensity: 'light' | 'moderate' | 'intensive';
     }) => {
+      // Validate: must have exactly one of examSessionId or customExamDate
+      if ((!examSessionId && !customExamDate) || (examSessionId && customExamDate)) {
+        throw new Error('Must provide either examSessionId or customExamDate, not both');
+      }
+
       // Upsert target exam
       const { data, error } = await supabase
         .from('user_target_exam')
         .upsert(
           {
             user_id: userId,
-            exam_session_id: examSessionId,
+            exam_session_id: examSessionId || null,
+            custom_exam_date: customExamDate || null,
             study_intensity: studyIntensity,
           },
           { onConflict: 'user_id' }

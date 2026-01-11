@@ -80,8 +80,10 @@ vi.mock('@/hooks/useExamSessions', () => ({
   useRemoveTargetExam: () => mockRemoveTargetMutation,
 }));
 
+const mockUseAuth = vi.fn(() => ({ user: null }));
+
 vi.mock('@/hooks/useAuth', () => ({
-  useAuth: () => ({ user: null }),
+  useAuth: () => mockUseAuth(),
 }));
 
 const createTestQueryClient = () =>
@@ -397,6 +399,103 @@ describe('ExamSessionSearch', () => {
       await waitFor(() => {
         const selectedCard = screen.getByText('Community Center').closest('[class*="border-primary"]');
         expect(selectedCard).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Custom Date Feature', () => {
+    beforeEach(() => {
+      // Mock authenticated user for custom date tests
+      mockUseAuth.mockReturnValue({ user: { id: 'test-user' } });
+      // Reset to no target by default
+      mockUseUserTargetExam.mockReturnValue({
+        data: null,
+        isLoading: false,
+      });
+    });
+
+    it('shows custom date button when user is logged in and has no target', async () => {
+      renderWithProviders(<ExamSessionSearch />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /add custom exam date/i })).toBeInTheDocument();
+      });
+    });
+
+    it('does not show custom date button when user already has a target', async () => {
+      mockUseUserTargetExam.mockReturnValue({
+        data: {
+          id: 'target-1',
+          user_id: 'test-user',
+          exam_session_id: 'session-1',
+          custom_exam_date: null,
+          study_intensity: 'moderate',
+          exam_session: mockExamSessions[0],
+        },
+        isLoading: false,
+      });
+
+      renderWithProviders(<ExamSessionSearch />);
+
+      await waitFor(() => {
+        expect(screen.queryByRole('button', { name: /add custom exam date/i })).not.toBeInTheDocument();
+      });
+    });
+
+    it('displays custom date target when user has custom_exam_date set', async () => {
+      mockUseUserTargetExam.mockReturnValue({
+        data: {
+          id: 'target-1',
+          user_id: 'test-user',
+          exam_session_id: null,
+          custom_exam_date: '2025-06-15',
+          study_intensity: 'intensive',
+          exam_session: null,
+        },
+        isLoading: false,
+      });
+
+      renderWithProviders(<ExamSessionSearch />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Custom Exam Date')).toBeInTheDocument();
+      });
+    });
+
+    it('opens custom date dialog when button is clicked', async () => {
+      renderWithProviders(<ExamSessionSearch />);
+
+      const customDateButton = screen.getByRole('button', { name: /add custom exam date/i });
+      fireEvent.click(customDateButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Set Custom Exam Date')).toBeInTheDocument();
+        expect(screen.getByText(/can't find your exam session/i)).toBeInTheDocument();
+      });
+    });
+
+    it('shows study intensity options in custom date dialog', async () => {
+      renderWithProviders(<ExamSessionSearch />);
+
+      const customDateButton = screen.getByRole('button', { name: /add custom exam date/i });
+      fireEvent.click(customDateButton);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/light/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/moderate/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/intensive/i)).toBeInTheDocument();
+      });
+    });
+
+    it('disables save button when no date is selected', async () => {
+      renderWithProviders(<ExamSessionSearch />);
+
+      const customDateButton = screen.getByRole('button', { name: /add custom exam date/i });
+      fireEvent.click(customDateButton);
+
+      await waitFor(() => {
+        const saveButton = screen.getByRole('button', { name: /save target/i });
+        expect(saveButton).toBeDisabled();
       });
     });
   });
