@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TestResults } from './TestResults';
 import { Question } from '@/hooks/useQuestions';
@@ -349,7 +349,15 @@ describe('TestResults', () => {
   });
 
   describe('Confetti celebration', () => {
-    it('fires confetti when user passes', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('fires confetti when user passes (after delay)', () => {
       const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
 
       render(
@@ -360,6 +368,12 @@ describe('TestResults', () => {
           {...defaultProps}
         />
       );
+
+      // Confetti should not fire immediately
+      expect(confetti).not.toHaveBeenCalled();
+
+      // Fast-forward past the 200ms delay
+      vi.advanceTimersByTime(200);
 
       expect(confetti).toHaveBeenCalledWith({
         particleCount: 100,
@@ -380,6 +394,8 @@ describe('TestResults', () => {
         />
       );
 
+      vi.advanceTimersByTime(200);
+
       expect(confetti).not.toHaveBeenCalled();
     });
 
@@ -395,6 +411,8 @@ describe('TestResults', () => {
         />
       );
 
+      vi.advanceTimersByTime(200);
+
       // Re-render with same props
       rerender(
         <TestResults
@@ -404,6 +422,8 @@ describe('TestResults', () => {
           {...defaultProps}
         />
       );
+
+      vi.advanceTimersByTime(200);
 
       expect(confetti).toHaveBeenCalledTimes(1);
     });
@@ -432,6 +452,8 @@ describe('TestResults', () => {
           {...defaultProps}
         />
       );
+
+      vi.advanceTimersByTime(200);
 
       expect(confetti).not.toHaveBeenCalled();
     });

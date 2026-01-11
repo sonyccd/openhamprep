@@ -155,7 +155,7 @@ export function QuestionCard({
         {/* Floating Action Buttons */}
         {user && (
           <div className="absolute top-4 right-4 flex items-center gap-1 opacity-40 hover:opacity-100 transition-opacity duration-200">
-            <Calculator />
+            <Calculator key={question.id} />
             <Popover open={isNoteOpen} onOpenChange={(open) => {
               setIsNoteOpen(open);
               if (open) {
@@ -255,7 +255,7 @@ export function QuestionCard({
         {/* Calculator for non-logged-in users */}
         {!user && (
           <div className="absolute top-4 right-4 opacity-40 hover:opacity-100 transition-opacity duration-200">
-            <Calculator />
+            <Calculator key={question.id} />
           </div>
         )}
 

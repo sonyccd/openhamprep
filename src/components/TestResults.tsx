@@ -32,12 +32,17 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (passed && !hasTriggeredConfetti.current && !prefersReducedMotion) {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
+      // Small delay to let the success banner animate in first
+      const timer = setTimeout(() => {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }, 200);
       hasTriggeredConfetti.current = true;
+
+      return () => clearTimeout(timer);
     }
   }, [passed]);
 
