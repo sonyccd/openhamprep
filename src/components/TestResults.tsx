@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import { Question } from "@/hooks/useQuestions";
 import { QuestionCard } from "@/components/QuestionCard";
@@ -23,9 +24,21 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
   const correctCount = questions.filter(
     (q) => answers[q.id] === q.correctAnswer
   ).length;
+  const passed = correctCount >= passingScore;
+  
+  // Fire confetti when user passes
+  useEffect(() => {
+    if (passed) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
+  }, [passed]);
+
   const totalQuestions = questions.length;
   const percentage = Math.round((correctCount / totalQuestions) * 100);
-  const passed = correctCount >= passingScore;
 
   const incorrectQuestions = questions.filter(
     (q) => answers[q.id] !== q.correctAnswer
