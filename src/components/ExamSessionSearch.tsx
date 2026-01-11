@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format, addMonths } from 'date-fns';
 import { motion } from 'framer-motion';
-import { MapPin, Calendar, List, Map, Clock, Phone, Mail, Users, Target, Loader2, ChevronLeft, ChevronRight, X, Filter, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { MapPin, Calendar as CalendarIcon, List, Map, Clock, Phone, Mail, Users, Target, Loader2, ChevronLeft, ChevronRight, X, Filter, ChevronDown, ChevronUp, ExternalLink, CalendarPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 import { ExamSessionMap } from './ExamSessionMap';
 import { useExamSessions, useSaveTargetExam, useUserTargetExam, useRemoveTargetExam, type ExamSession } from '@/hooks/useExamSessions';
 import { useAuth } from '@/hooks/useAuth';
@@ -110,6 +113,8 @@ export const ExamSessionSearch = () => {
   const [showAllOnMap, setShowAllOnMap] = useState(true);
   const [selectedSession, setSelectedSession] = useState<ExamSession | null>(null);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showCustomDateDialog, setShowCustomDateDialog] = useState(false);
+  const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
   const [studyIntensity, setStudyIntensity] = useState<'light' | 'moderate' | 'intensive'>('moderate');
   const [page, setPage] = useState(1);
   const [walkInsOnly, setWalkInsOnly] = useState(false);
@@ -173,6 +178,16 @@ export const ExamSessionSearch = () => {
     if (!user) return;
     removeTargetMutation.mutate(user.id);
   };
+  const handleSaveCustomDate = () => {
+    if (!user || !customDate) return;
+    saveTargetMutation.mutate({
+      userId: user.id,
+      customExamDate: format(customDate, 'yyyy-MM-dd'),
+      studyIntensity,
+    });
+    setShowCustomDateDialog(false);
+    setCustomDate(undefined);
+  };
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
       weekday: 'short',
@@ -203,10 +218,21 @@ export const ExamSessionSearch = () => {
           <CardContent>
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex-1">
-                <p className="font-medium">{userTarget.exam_session?.location_name || userTarget.exam_session?.title}</p>
-                <p className="text-sm text-muted-foreground">
-                  {userTarget.exam_session?.city}, {userTarget.exam_session?.state} • {formatDate(userTarget.exam_session?.exam_date || '')}
-                </p>
+                {userTarget.exam_session ? (
+                  <>
+                    <p className="font-medium">{userTarget.exam_session.location_name || userTarget.exam_session.title}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {userTarget.exam_session.city}, {userTarget.exam_session.state} • {formatDate(userTarget.exam_session.exam_date)}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium">Custom Exam Date</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatDate(userTarget.custom_exam_date || '')}
+                    </p>
+                  </>
+                )}
               </div>
               <Badge variant="secondary">
                 {STUDY_INTENSITIES.find(i => i.value === userTarget.study_intensity)?.label} Study Plan
@@ -320,6 +346,29 @@ export const ExamSessionSearch = () => {
       </Card>
       </motion.div>
 
+      {/* Custom Date Option */}
+      {user && !userTarget && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-sm text-muted-foreground">or</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+          <Button
+            variant="outline"
+            className="w-full mt-4"
+            onClick={() => setShowCustomDateDialog(true)}
+          >
+            <CalendarPlus className="h-4 w-4 mr-2" />
+            Add Custom Exam Date
+          </Button>
+        </motion.div>
+      )}
+
       {/* Results */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -388,7 +437,7 @@ export const ExamSessionSearch = () => {
                               </div>
                               <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                                 <div className="flex items-center gap-1">
-                                  <Calendar className="h-4 w-4" />
+                                  <CalendarIcon className="h-4 w-4" />
                                   <span>{formatDate(session.exam_date)}</span>
                                 </div>
                                 {session.exam_time && <div className="flex items-center gap-1">
@@ -494,6 +543,87 @@ export const ExamSessionSearch = () => {
             </Button>
             <Button onClick={handleSaveTarget} disabled={saveTargetMutation.isPending}>
               {saveTargetMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Save Target
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Date Dialog */}
+      <Dialog open={showCustomDateDialog} onOpenChange={setShowCustomDateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Set Custom Exam Date</DialogTitle>
+            <DialogDescription>
+              Can't find your exam session? Set a custom date to track your study progress.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-6">
+            {/* Date Picker */}
+            <div className="space-y-2">
+              <Label>Exam Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !customDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {customDate ? format(customDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={customDate}
+                    onSelect={setCustomDate}
+                    disabled={(date) => date < new Date()}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Study Intensity Selection */}
+            <div className="space-y-2">
+              <Label>Study Intensity</Label>
+              <RadioGroup
+                value={studyIntensity}
+                onValueChange={v => setStudyIntensity(v as 'light' | 'moderate' | 'intensive')}
+                className="space-y-3"
+              >
+                {STUDY_INTENSITIES.map(intensity => (
+                  <div
+                    key={intensity.value}
+                    className={cn(
+                      "flex items-center space-x-3 p-4 rounded-lg border transition-colors",
+                      studyIntensity === intensity.value
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:bg-accent/50'
+                    )}
+                  >
+                    <RadioGroupItem value={intensity.value} id={`custom-${intensity.value}`} />
+                    <Label htmlFor={`custom-${intensity.value}`} className="flex-1 cursor-pointer">
+                      <span className="font-medium">{intensity.label}</span>
+                      <p className="text-sm text-muted-foreground">{intensity.description}</p>
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCustomDateDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveCustomDate}
+              disabled={!customDate || saveTargetMutation.isPending}
+            >
+              {saveTargetMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Save Target
             </Button>
           </DialogFooter>

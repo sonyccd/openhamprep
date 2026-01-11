@@ -421,11 +421,13 @@ export default function Dashboard() {
           questionsGoal={questionsGoal}
           thisWeekTests={thisWeekTests}
           testsGoal={testsGoal}
-          examDate={userTarget?.exam_session?.exam_date}
+          examDate={userTarget?.exam_session?.exam_date || userTarget?.custom_exam_date}
           examLocation={
             userTarget?.exam_session
               ? `${userTarget.exam_session.city}, ${userTarget.exam_session.state}`
-              : undefined
+              : userTarget?.custom_exam_date
+                ? 'Custom date'
+                : undefined
           }
           onOpenGoalsModal={() => setShowGoalsModal(true)}
           onFindTestSite={() => changeView('find-test-site')}

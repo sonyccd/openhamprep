@@ -1,9 +1,31 @@
 import { createRoot } from "react-dom/client";
 import { injectSpeedInsights } from "@vercel/speed-insights";
 import { inject } from "@vercel/analytics";
+import * as Sentry from "@sentry/react";
 import { toast } from "sonner";
 import App from "./App.tsx";
 import "./index.css";
+
+// Initialize Sentry for error tracking
+Sentry.init({
+  dsn: "https://a76c9c54f9d06482d3232b5610f32842@o4510636271075328.ingest.us.sentry.io/4510689155678208",
+  // Setting this option to true will send default PII data to Sentry.
+  // For example, automatic IP address collection on events
+  sendDefaultPii: true,
+  integrations: [
+    Sentry.browserTracingIntegration(),
+    Sentry.replayIntegration(),
+  ],
+  // Tracing
+  tracesSampleRate: 1.0, // Capture 100% of the transactions
+  // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
+  tracePropagationTargets: ["localhost", /^https:\/\/.*\.openhamprep\.com/],
+  // Session Replay
+  replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
+  replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+  // Only enable in production
+  enabled: import.meta.env.PROD,
+});
 
 // Initialize Vercel Analytics only in production (they require Vercel's infrastructure)
 if (import.meta.env.PROD) {
