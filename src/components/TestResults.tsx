@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import { Question } from "@/hooks/useQuestions";
@@ -26,14 +26,16 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
   ).length;
   const passed = correctCount >= passingScore;
   
-  // Fire confetti when user passes
+  // Fire confetti once when user passes
+  const hasTriggeredConfetti = useRef(false);
   useEffect(() => {
-    if (passed) {
+    if (passed && !hasTriggeredConfetti.current) {
       confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 }
       });
+      hasTriggeredConfetti.current = true;
     }
   }, [passed]);
 

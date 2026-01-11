@@ -117,6 +117,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/jest-axe": "^3.5.9",
     "@types/katex": "^0.16.7",
     "@types/node": "^22.16.5",

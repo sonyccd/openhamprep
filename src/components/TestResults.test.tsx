@@ -1,7 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TestResults } from './TestResults';
 import { Question } from '@/hooks/useQuestions';
+import confetti from 'canvas-confetti';
+
+vi.mock('canvas-confetti', () => ({
+  default: vi.fn(),
+}));
 
 vi.mock('framer-motion', () => ({
   motion: {
@@ -62,6 +67,10 @@ describe('TestResults', () => {
     onRetake: vi.fn(),
     onBack: vi.fn(),
   };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   describe('Technician test (35 questions, 26 to pass)', () => {
     it('shows PASSED when score >= 26', () => {
@@ -336,6 +345,67 @@ describe('TestResults', () => {
       // Should use technician config: 26 out of 35
       expect(screen.getByText('Passing score: 26 out of 35 (74%)')).toBeInTheDocument();
       expect(screen.getByText('PASSED!')).toBeInTheDocument();
+    });
+  });
+
+  describe('Confetti celebration', () => {
+    it('fires confetti when user passes', () => {
+      const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
+
+      render(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      expect(confetti).toHaveBeenCalledWith({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    });
+
+    it('does not fire confetti when user fails', () => {
+      const { questions, answers } = createQuestionsAndAnswers(35, 25, 'T');
+
+      render(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      expect(confetti).not.toHaveBeenCalled();
+    });
+
+    it('fires confetti only once even on re-render', () => {
+      const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
+
+      const { rerender } = render(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      // Re-render with same props
+      rerender(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      expect(confetti).toHaveBeenCalledTimes(1);
     });
   });
 });
