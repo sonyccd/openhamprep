@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
@@ -243,9 +243,18 @@ export default function Dashboard() {
   // Get subelement metrics for focus areas
   const { data: readinessData } = useReadinessScore(selectedTest);
 
+  // Track if we've already attempted recalculation for this exam type to prevent infinite loops
+  const recalculationAttempted = useRef<Record<string, boolean>>({});
+
   // Trigger recalculation if cache exists but subelement_metrics is missing (legacy cache)
   useEffect(() => {
+    // Only attempt recalculation once per exam type per session
+    if (recalculationAttempted.current[selectedTest]) {
+      return;
+    }
+
     if (readinessData && (!readinessData.subelement_metrics || Object.keys(readinessData.subelement_metrics).length === 0)) {
+      recalculationAttempted.current[selectedTest] = true;
       recalculateReadiness(selectedTest).then(() => {
         queryClient.invalidateQueries({ queryKey: ['readiness', user?.id, selectedTest] });
       });

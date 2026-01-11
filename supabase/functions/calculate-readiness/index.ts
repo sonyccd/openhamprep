@@ -693,6 +693,11 @@ interface MasteryData {
   question_id: string;
 }
 
+interface SyllabusRow {
+  code: string;
+  exam_questions: number | null;
+}
+
 async function calculateSubelementMetrics(
   supabase: SupabaseClient,
   userId: string,
@@ -712,7 +717,7 @@ async function calculateSubelementMetrics(
     return {};
   }
 
-  const subelements: SubelementData[] = (syllabusData || []).map((s: { code: string; exam_questions: number | null }) => ({
+  const subelements: SubelementData[] = (syllabusData || []).map((s: SyllabusRow) => ({
     code: s.code,
     weight: s.exam_questions || 0,
   }));

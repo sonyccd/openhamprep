@@ -1,48 +1,15 @@
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getSubelementName } from '@/lib/subelementNames';
 import { SubelementMetric } from '@/hooks/useReadinessScore';
 import { TestType } from '@/types/navigation';
 
-// Subelement names by test type
-const SUBELEMENT_NAMES: Record<string, Record<string, string>> = {
-  technician: {
-    T0: "Safety",
-    T1: "Commission's Rules",
-    T2: "Operating Procedures",
-    T3: "Radio Wave Characteristics",
-    T4: "Amateur Radio Practices",
-    T5: "Electrical Principles",
-    T6: "Electronic Components",
-    T7: "Station Equipment",
-    T8: "Operating Activities",
-    T9: "Antennas & Feed Lines"
-  },
-  general: {
-    G0: "Safety",
-    G1: "Commission's Rules",
-    G2: "Operating Procedures",
-    G3: "Radio Wave Propagation",
-    G4: "Amateur Radio Practices",
-    G5: "Electrical Principles",
-    G6: "Circuit Components",
-    G7: "Practical Circuits",
-    G8: "Signals and Emissions",
-    G9: "Antennas & Feed Lines"
-  },
-  extra: {
-    E0: "Safety",
-    E1: "Commission's Rules",
-    E2: "Operating Procedures",
-    E3: "Radio Wave Propagation",
-    E4: "Amateur Practices",
-    E5: "Electrical Principles",
-    E6: "Circuit Components",
-    E7: "Practical Circuits",
-    E8: "Signals and Emissions",
-    E9: "Antennas & Transmission Lines"
-  }
-};
+/** Minimum risk score to display a section in Focus Areas */
+const MIN_RISK_SCORE_THRESHOLD = 0.1;
+
+/** Maximum number of focus areas to display */
+const MAX_FOCUS_AREAS = 3;
 
 interface FocusArea {
   subelement: string;
@@ -66,20 +33,18 @@ export function DashboardSectionInsights({
     return null;
   }
 
-  const subelementNames = SUBELEMENT_NAMES[testType] || {};
-
   // Sort by risk_score descending, take top 3
   const focusAreas: FocusArea[] = Object.entries(subelementMetrics)
     .sort((a, b) => b[1].risk_score - a[1].risk_score)
-    .slice(0, 3)
+    .slice(0, MAX_FOCUS_AREAS)
     .map(([code, metric]) => ({
       subelement: code,
-      name: subelementNames[code] || `Subelement ${code}`,
+      name: getSubelementName(testType, code),
       riskScore: metric.risk_score,
     }));
 
   // If all risk scores are 0 or very low, don't show the section
-  if (focusAreas.every(area => area.riskScore < 0.1)) {
+  if (focusAreas.every(area => area.riskScore < MIN_RISK_SCORE_THRESHOLD)) {
     return null;
   }
 
@@ -100,6 +65,7 @@ export function DashboardSectionInsights({
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.05 }}
             onClick={() => onPracticeSection(area.subelement)}
+            aria-label={`Practice ${area.name} section`}
             className={cn(
               'w-full flex items-center gap-3 px-4 py-3 rounded-xl',
               'border border-warning/30 bg-warning/5',

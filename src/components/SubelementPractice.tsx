@@ -10,6 +10,7 @@ import { QuestionListView } from "@/components/QuestionListView";
 import { SkipForward, RotateCcw, Loader2, ChevronRight, CheckCircle, ArrowLeft, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { getSubelementName } from "@/lib/subelementNames";
 import { TestType } from "@/types/navigation";
 import { PageContainer } from "@/components/ui/page-container";
 
@@ -25,45 +26,6 @@ interface SubelementPracticeProps {
 }
 
 type TopicView = 'list' | 'questions' | 'practice';
-
-const SUBELEMENT_NAMES: Record<string, Record<string, string>> = {
-  technician: {
-    T0: "Safety",
-    T1: "Commission's Rules",
-    T2: "Operating Procedures",
-    T3: "Radio Wave Characteristics",
-    T4: "Amateur Radio Practices",
-    T5: "Electrical Principles",
-    T6: "Electronic Components",
-    T7: "Station Equipment",
-    T8: "Operating Activities",
-    T9: "Antennas & Feed Lines"
-  },
-  general: {
-    G0: "Safety",
-    G1: "Commission's Rules",
-    G2: "Operating Procedures",
-    G3: "Radio Wave Propagation",
-    G4: "Amateur Radio Practices",
-    G5: "Electrical Principles",
-    G6: "Circuit Components",
-    G7: "Practical Circuits",
-    G8: "Signals and Emissions",
-    G9: "Antennas & Feed Lines"
-  },
-  extra: {
-    E0: "Safety",
-    E1: "Commission's Rules",
-    E2: "Operating Procedures",
-    E3: "Radio Wave Propagation",
-    E4: "Amateur Practices",
-    E5: "Electrical Principles",
-    E6: "Circuit Components",
-    E7: "Practical Circuits",
-    E8: "Signals and Emissions",
-    E9: "Antennas & Transmission Lines"
-  }
-};
 
 // Topic descriptions for each subelement
 const TOPIC_DESCRIPTIONS: Record<string, string> = {
@@ -97,9 +59,8 @@ export function SubelementPractice({
     saveRandomAttempt
   } = useProgress();
 
-  // Get subelement names for the current test type
-  const subelementNames = SUBELEMENT_NAMES[testType] || {};
-  const getSubelementName = (sub: string) => subelementNames[sub] || `Subelement ${sub}`;
+  // Get subelement name helper bound to current test type
+  const getSubelementNameForTest = (sub: string) => getSubelementName(testType, sub);
 
   const [selectedSubelement, setSelectedSubelement] = useState<string | null>(null);
   const [topicView, setTopicView] = useState<TopicView>('list');
@@ -385,7 +346,7 @@ export function SubelementPractice({
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground">
-                      {getSubelementName(sub)}
+                      {getSubelementNameForTest(sub)}
                     </h3>
                   </div>
                 </div>
@@ -402,7 +363,7 @@ export function SubelementPractice({
   if (topicView === 'questions') {
     return (
       <QuestionListView
-        title={getSubelementName(selectedSubelement)}
+        title={getSubelementNameForTest(selectedSubelement)}
         subtitle={`Subelement ${selectedSubelement}`}
         badge={selectedSubelement}
         questions={currentQuestions}
