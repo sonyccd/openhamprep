@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format, addMonths } from 'date-fns';
 import { motion } from 'framer-motion';
-import { MapPin, Calendar, List, Map, Clock, Phone, Mail, Users, Target, Loader2, ChevronLeft, ChevronRight, X, Filter, ChevronDown, ChevronUp } from 'lucide-react';
+import { MapPin, Calendar, List, Map, Clock, Phone, Mail, Users, Target, Loader2, ChevronLeft, ChevronRight, X, Filter, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -236,6 +236,19 @@ export const ExamSessionSearch = () => {
               <CardDescription className="hidden md:block">
                 Search for amateur radio exam sessions near you
               </CardDescription>
+              <p className="text-xs text-muted-foreground mt-1 hidden md:flex items-center gap-1">
+                Session data provided by the{' '}
+                <a
+                  href="https://www.arrl.org/find-an-amateur-radio-license-exam-session"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-0.5 text-primary hover:underline font-medium"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  ARRL
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </p>
             </div>
             <Button
               variant="ghost"
@@ -291,6 +304,18 @@ export const ExamSessionSearch = () => {
             <Checkbox id="walk-ins" checked={walkInsOnly} onCheckedChange={handleWalkInsChange} />
             <Label htmlFor="walk-ins" className="cursor-pointer">Walk-ins allowed only</Label>
           </div>
+          <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1 md:hidden">
+            Session data provided by the{' '}
+            <a
+              href="https://www.arrl.org/find-an-amateur-radio-license-exam-session"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-0.5 text-primary hover:underline font-medium"
+            >
+              ARRL
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </p>
         </CardContent>
       </Card>
       </motion.div>
