@@ -115,86 +115,98 @@ CREATE POLICY "Users can update their own readiness snapshots"
 
 -- ============================================================
 -- 5. FIX: ham_radio_tool_categories - Optimize admin policies
+-- Only run if table exists (may not exist on preview branches)
 -- ============================================================
 
-DROP POLICY IF EXISTS "Admins can insert ham radio tool categories" ON public.ham_radio_tool_categories;
-DROP POLICY IF EXISTS "Admins can update ham radio tool categories" ON public.ham_radio_tool_categories;
-DROP POLICY IF EXISTS "Admins can delete ham radio tool categories" ON public.ham_radio_tool_categories;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'ham_radio_tool_categories') THEN
+    DROP POLICY IF EXISTS "Admins can insert ham radio tool categories" ON public.ham_radio_tool_categories;
+    DROP POLICY IF EXISTS "Admins can update ham radio tool categories" ON public.ham_radio_tool_categories;
+    DROP POLICY IF EXISTS "Admins can delete ham radio tool categories" ON public.ham_radio_tool_categories;
 
-CREATE POLICY "Admins can insert ham radio tool categories"
-  ON public.ham_radio_tool_categories FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.user_roles
-      WHERE user_id = (SELECT auth.uid()) AND role = 'admin'
-    )
-  );
+    CREATE POLICY "Admins can insert ham radio tool categories"
+      ON public.ham_radio_tool_categories FOR INSERT
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM public.user_roles
+          WHERE user_id = (SELECT auth.uid()) AND role = 'admin'
+        )
+      );
 
-CREATE POLICY "Admins can update ham radio tool categories"
-  ON public.ham_radio_tool_categories FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.user_roles
-      WHERE user_id = (SELECT auth.uid()) AND role = 'admin'
-    )
-  );
+    CREATE POLICY "Admins can update ham radio tool categories"
+      ON public.ham_radio_tool_categories FOR UPDATE
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.user_roles
+          WHERE user_id = (SELECT auth.uid()) AND role = 'admin'
+        )
+      );
 
-CREATE POLICY "Admins can delete ham radio tool categories"
-  ON public.ham_radio_tool_categories FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.user_roles
-      WHERE user_id = (SELECT auth.uid()) AND role = 'admin'
-    )
-  );
+    CREATE POLICY "Admins can delete ham radio tool categories"
+      ON public.ham_radio_tool_categories FOR DELETE
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.user_roles
+          WHERE user_id = (SELECT auth.uid()) AND role = 'admin'
+        )
+      );
+  END IF;
+END $$;
 
 -- ============================================================
 -- 6. FIX: ham_radio_tools - Optimize all policies and consolidate SELECT
+-- Only run if table exists (may not exist on preview branches)
 -- ============================================================
 
-DROP POLICY IF EXISTS "Anyone can view published ham radio tools" ON public.ham_radio_tools;
-DROP POLICY IF EXISTS "Admins can view all ham radio tools" ON public.ham_radio_tools;
-DROP POLICY IF EXISTS "Admins can insert ham radio tools" ON public.ham_radio_tools;
-DROP POLICY IF EXISTS "Admins can update ham radio tools" ON public.ham_radio_tools;
-DROP POLICY IF EXISTS "Admins can delete ham radio tools" ON public.ham_radio_tools;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'ham_radio_tools') THEN
+    DROP POLICY IF EXISTS "Anyone can view published ham radio tools" ON public.ham_radio_tools;
+    DROP POLICY IF EXISTS "Admins can view all ham radio tools" ON public.ham_radio_tools;
+    DROP POLICY IF EXISTS "Admins can insert ham radio tools" ON public.ham_radio_tools;
+    DROP POLICY IF EXISTS "Admins can update ham radio tools" ON public.ham_radio_tools;
+    DROP POLICY IF EXISTS "Admins can delete ham radio tools" ON public.ham_radio_tools;
 
--- Create single SELECT policy that handles both public and admin access
-CREATE POLICY "Public and admin can view ham radio tools"
-  ON public.ham_radio_tools FOR SELECT
-  USING (
-    is_published = true
-    OR EXISTS (
-      SELECT 1 FROM public.user_roles
-      WHERE user_id = (SELECT auth.uid()) AND role = 'admin'
-    )
-  );
+    -- Create single SELECT policy that handles both public and admin access
+    CREATE POLICY "Public and admin can view ham radio tools"
+      ON public.ham_radio_tools FOR SELECT
+      USING (
+        is_published = true
+        OR EXISTS (
+          SELECT 1 FROM public.user_roles
+          WHERE user_id = (SELECT auth.uid()) AND role = 'admin'
+        )
+      );
 
-CREATE POLICY "Admins can insert ham radio tools"
-  ON public.ham_radio_tools FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.user_roles
-      WHERE user_id = (SELECT auth.uid()) AND role = 'admin'
-    )
-  );
+    CREATE POLICY "Admins can insert ham radio tools"
+      ON public.ham_radio_tools FOR INSERT
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM public.user_roles
+          WHERE user_id = (SELECT auth.uid()) AND role = 'admin'
+        )
+      );
 
-CREATE POLICY "Admins can update ham radio tools"
-  ON public.ham_radio_tools FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.user_roles
-      WHERE user_id = (SELECT auth.uid()) AND role = 'admin'
-    )
-  );
+    CREATE POLICY "Admins can update ham radio tools"
+      ON public.ham_radio_tools FOR UPDATE
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.user_roles
+          WHERE user_id = (SELECT auth.uid()) AND role = 'admin'
+        )
+      );
 
-CREATE POLICY "Admins can delete ham radio tools"
-  ON public.ham_radio_tools FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.user_roles
-      WHERE user_id = (SELECT auth.uid()) AND role = 'admin'
-    )
-  );
+    CREATE POLICY "Admins can delete ham radio tools"
+      ON public.ham_radio_tools FOR DELETE
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.user_roles
+          WHERE user_id = (SELECT auth.uid()) AND role = 'admin'
+        )
+      );
+  END IF;
+END $$;
 
 -- ============================================================
 -- 7. FIX: readiness_config - Consolidate duplicate SELECT policies
