@@ -1,14 +1,29 @@
 import type { View, TestType } from '@/types/navigation';
 
-export interface NavItem {
-  id: View | string;
+// Base properties shared by all nav items
+interface NavItemBase {
   label: string;
   icon: React.ElementType;
   badge?: number;
   badgeAriaLabel?: string;
-  disabled?: boolean;
-  external?: string; // External URL for links that open in new tab
 }
+
+// Internal navigation item (routes within the app)
+interface InternalNavItem extends NavItemBase {
+  id: View;
+  disabled?: boolean;
+  external?: never;
+}
+
+// External navigation item (opens in new tab)
+interface ExternalNavItem extends NavItemBase {
+  id: string;
+  external: string;
+  disabled?: never;
+}
+
+// Discriminated union: either internal or external nav item
+export type NavItem = InternalNavItem | ExternalNavItem;
 
 export interface NavGroup {
   id: string;

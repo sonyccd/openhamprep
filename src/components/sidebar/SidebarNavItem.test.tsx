@@ -102,4 +102,83 @@ describe('SidebarNavItem', () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
+  describe('External Links', () => {
+    const externalItem = {
+      id: 'forum',
+      label: 'Forum',
+      icon: BarChart3,
+      external: 'https://forum.example.com',
+    };
+
+    it('renders as anchor tag for external links', () => {
+      renderWithTooltip(
+        <SidebarNavItem
+          item={externalItem}
+          isActive={false}
+          showExpanded={true}
+          onClick={vi.fn()}
+        />
+      );
+      const link = screen.getByRole('link');
+      expect(link).toHaveAttribute('href', 'https://forum.example.com');
+    });
+
+    it('opens external links in new tab', () => {
+      renderWithTooltip(
+        <SidebarNavItem
+          item={externalItem}
+          isActive={false}
+          showExpanded={true}
+          onClick={vi.fn()}
+        />
+      );
+      const link = screen.getByRole('link');
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    });
+
+    it('shows external link icon when expanded', () => {
+      renderWithTooltip(
+        <SidebarNavItem
+          item={externalItem}
+          isActive={false}
+          showExpanded={true}
+          onClick={vi.fn()}
+        />
+      );
+      // Should have two SVGs: the item icon and the ExternalLink icon
+      const link = screen.getByRole('link');
+      const svgs = link.querySelectorAll('svg');
+      expect(svgs.length).toBe(2);
+    });
+
+    it('hides label and external icon when collapsed', () => {
+      renderWithTooltip(
+        <SidebarNavItem
+          item={externalItem}
+          isActive={false}
+          showExpanded={false}
+          onClick={vi.fn()}
+        />
+      );
+      expect(screen.queryByText('Forum')).not.toBeInTheDocument();
+      // Should only have one SVG (the item icon) when collapsed
+      const link = screen.getByRole('link');
+      const svgs = link.querySelectorAll('svg');
+      expect(svgs.length).toBe(1);
+    });
+
+    it('renders label for external links when expanded', () => {
+      renderWithTooltip(
+        <SidebarNavItem
+          item={externalItem}
+          isActive={false}
+          showExpanded={true}
+          onClick={vi.fn()}
+        />
+      );
+      expect(screen.getByText('Forum')).toBeInTheDocument();
+    });
+  });
+
 });

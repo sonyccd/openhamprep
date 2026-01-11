@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { PendoProvider } from "@/hooks/usePendo";
 import { AppNavigationProvider } from "@/hooks/useAppNavigation";
+import { useWindowControlsOverlay } from "@/hooks/useWindowControlsOverlay";
 import { ThemeProvider } from "next-themes";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
@@ -31,33 +32,45 @@ const PageLoader = () => (
   </div>
 );
 
+// Inner component that can use hooks
+const AppContent = () => {
+  // Enable Windows Controls Overlay detection for PWA title bar customization
+  useWindowControlsOverlay();
+
+  return (
+    <>
+      <Toaster />
+      <Sonner />
+      <PWAInstallBanner />
+      <BrowserRouter>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/oauth/consent" element={<OAuthConsent />} />
+            <Route path="/questions/:id" element={<QuestionPage />} />
+            {/* Short URL alias for question links - redirects to canonical URL */}
+            <Route path="/q/:id" element={<QuestionRedirect />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </>
+  );
+};
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <PendoProvider>
           <AppNavigationProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <PWAInstallBanner />
-                <BrowserRouter>
-                  <Suspense fallback={<PageLoader />}>
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/admin" element={<Admin />} />
-                      <Route path="/oauth/consent" element={<OAuthConsent />} />
-                      <Route path="/questions/:id" element={<QuestionPage />} />
-                      {/* Short URL alias for question links - redirects to canonical URL */}
-                      <Route path="/q/:id" element={<QuestionRedirect />} />
-                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                </BrowserRouter>
-              </TooltipProvider>
+            <TooltipProvider>
+              <AppContent />
+            </TooltipProvider>
           </AppNavigationProvider>
         </PendoProvider>
       </AuthProvider>
