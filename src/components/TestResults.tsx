@@ -30,10 +30,11 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
   const hasTriggeredConfetti = useRef(false);
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
     if (passed && !hasTriggeredConfetti.current && !prefersReducedMotion) {
       // Small delay to let the success banner animate in first
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         confetti({
           particleCount: 100,
           spread: 70,
@@ -41,9 +42,13 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
         });
       }, 200);
       hasTriggeredConfetti.current = true;
-
-      return () => clearTimeout(timer);
     }
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
   }, [passed]);
 
   const totalQuestions = questions.length;
