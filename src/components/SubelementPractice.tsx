@@ -83,7 +83,11 @@ export function SubelementPractice({
   onBack,
   testType
 }: SubelementPracticeProps) {
-  const { navigateToTopic } = useAppNavigation();
+  const {
+    navigateToTopic,
+    selectedSubelement: navSelectedSubelement,
+    setSelectedSubelement: setNavSelectedSubelement,
+  } = useAppNavigation();
   const {
     data: allQuestions,
     isLoading,
@@ -124,6 +128,15 @@ export function SubelementPractice({
     setStats({ correct: 0, total: 0 });
     setAskedIds([]);
   }, [testType]);
+
+  // Consume pre-selected subelement from navigation context
+  useEffect(() => {
+    if (navSelectedSubelement) {
+      setSelectedSubelement(navSelectedSubelement);
+      setTopicView('questions');
+      setNavSelectedSubelement(null); // Clear after consuming
+    }
+  }, [navSelectedSubelement, setNavSelectedSubelement]);
 
   // Group questions by subelement
   const questionsBySubelement = useMemo(() => {

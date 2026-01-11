@@ -6,6 +6,7 @@ import { useBookmarks } from '@/hooks/useBookmarks';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { useUserTargetExam } from '@/hooks/useExamSessions';
 import { useTestReadiness } from '@/hooks/useTestReadiness';
+import { useReadinessScore, recalculateReadiness } from '@/hooks/useReadinessScore';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
@@ -17,6 +18,7 @@ import {
   DashboardHero,
   DashboardNextSteps,
   DashboardProgress,
+  DashboardSectionInsights,
 } from '@/components/dashboard';
 import type { NextStep } from '@/components/dashboard/DashboardNextSteps';
 import { PracticeTest } from '@/components/PracticeTest';
@@ -57,6 +59,7 @@ export default function Dashboard() {
     selectedLessonSlug,
     navigateToLessons,
     navigateBackFromTopic,
+    navigateToSubelementPractice,
   } = useAppNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
   // Persist selectedTest in localStorage
@@ -237,6 +240,18 @@ export default function Dashboard() {
     testResults, // Fallback for when DB cache is empty
   });
 
+  // Get subelement metrics for focus areas
+  const { data: readinessData } = useReadinessScore(selectedTest);
+
+  // Trigger recalculation if cache exists but subelement_metrics is missing (legacy cache)
+  useEffect(() => {
+    if (readinessData && (!readinessData.subelement_metrics || Object.keys(readinessData.subelement_metrics).length === 0)) {
+      recalculateReadiness(selectedTest).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['readiness', user?.id, selectedTest] });
+      });
+    }
+  }, [readinessData, selectedTest, queryClient, user?.id]);
+
   // Handle view changes with test-in-progress check
   const handleViewChange = (view: typeof currentView) => {
     if (testInProgress && view !== 'practice-test') {
@@ -415,6 +430,12 @@ export default function Dashboard() {
         />
 
         <DashboardNextSteps steps={getNextSteps()} />
+
+        <DashboardSectionInsights
+          subelementMetrics={readinessData?.subelement_metrics}
+          testType={selectedTest}
+          onPracticeSection={navigateToSubelementPractice}
+        />
 
         <DashboardProgress
           thisWeekQuestions={thisWeekQuestions}

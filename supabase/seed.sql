@@ -933,6 +933,52 @@ INSERT INTO public.questions (display_name, question, options, correct_answer, s
 ON CONFLICT (id) DO NOTHING;
 
 -- =============================================================================
+-- SYLLABUS (subelement descriptions and exam weights)
+-- Source: NCVEC Question Pool Committee
+-- =============================================================================
+
+INSERT INTO public.syllabus (code, title, license_type, type, exam_questions) VALUES
+  -- Technician subelements (35 questions total)
+  ('T0', 'Safety', 'T', 'subelement', 1),
+  ('T1', 'Commission''s Rules', 'T', 'subelement', 6),
+  ('T2', 'Operating Procedures', 'T', 'subelement', 3),
+  ('T3', 'Radio Wave Characteristics', 'T', 'subelement', 3),
+  ('T4', 'Amateur Radio Practices', 'T', 'subelement', 2),
+  ('T5', 'Electrical Principles', 'T', 'subelement', 4),
+  ('T6', 'Electronic Components', 'T', 'subelement', 4),
+  ('T7', 'Station Equipment', 'T', 'subelement', 4),
+  ('T8', 'Operating Activities', 'T', 'subelement', 4),
+  ('T9', 'Antennas & Feed Lines', 'T', 'subelement', 4),
+
+  -- General subelements (35 questions total)
+  ('G0', 'Safety', 'G', 'subelement', 1),
+  ('G1', 'Commission''s Rules', 'G', 'subelement', 5),
+  ('G2', 'Operating Procedures', 'G', 'subelement', 5),
+  ('G3', 'Radio Wave Propagation', 'G', 'subelement', 4),
+  ('G4', 'Amateur Radio Practices', 'G', 'subelement', 5),
+  ('G5', 'Electrical Principles', 'G', 'subelement', 3),
+  ('G6', 'Circuit Components', 'G', 'subelement', 2),
+  ('G7', 'Practical Circuits', 'G', 'subelement', 3),
+  ('G8', 'Signals and Emissions', 'G', 'subelement', 3),
+  ('G9', 'Antennas & Feed Lines', 'G', 'subelement', 4),
+
+  -- Extra subelements (50 questions total)
+  ('E0', 'Safety', 'E', 'subelement', 1),
+  ('E1', 'Commission''s Rules', 'E', 'subelement', 6),
+  ('E2', 'Operating Procedures', 'E', 'subelement', 5),
+  ('E3', 'Radio Wave Propagation', 'E', 'subelement', 5),
+  ('E4', 'Amateur Practices', 'E', 'subelement', 5),
+  ('E5', 'Electrical Principles', 'E', 'subelement', 4),
+  ('E6', 'Circuit Components', 'E', 'subelement', 6),
+  ('E7', 'Practical Circuits', 'E', 'subelement', 8),
+  ('E8', 'Signals and Emissions', 'E', 'subelement', 4),
+  ('E9', 'Antennas & Transmission Lines', 'E', 'subelement', 6)
+
+ON CONFLICT (code) DO UPDATE SET
+  title = EXCLUDED.title,
+  exam_questions = EXCLUDED.exam_questions;
+
+-- =============================================================================
 -- GLOSSARY TERMS (expanded for comprehensive study)
 -- =============================================================================
 
@@ -2452,6 +2498,7 @@ BEGIN
   RAISE NOTICE 'Lesson-Topic Links: %', (SELECT COUNT(*) FROM public.lesson_topics);
   RAISE NOTICE 'ARRL Chapters: %', (SELECT COUNT(*) FROM public.arrl_chapters);
   RAISE NOTICE 'Questions with Chapter Links: %', (SELECT COUNT(*) FROM public.questions WHERE arrl_chapter_id IS NOT NULL);
+  RAISE NOTICE 'Syllabus Subelements: %', (SELECT COUNT(*) FROM public.syllabus WHERE type = 'subelement');
   RAISE NOTICE 'Readiness Config: %', (SELECT COUNT(*) FROM public.readiness_config);
   RAISE NOTICE 'Ham Radio Tool Categories: %', (SELECT COUNT(*) FROM public.ham_radio_tool_categories);
   RAISE NOTICE 'Ham Radio Tools: %', (SELECT COUNT(*) FROM public.ham_radio_tools);
