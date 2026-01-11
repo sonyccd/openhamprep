@@ -429,59 +429,179 @@ describe("extract-from-explanation action logic", () => {
 });
 
 // =============================================================================
-// TESTS: LINK TYPE DETECTION (simulated)
+// TESTS: LINK TYPE DETECTION (with security fixes)
 // =============================================================================
 
-describe("link type detection logic", () => {
-  /**
-   * Simulates the detectType function from the edge function.
-   */
-  function detectType(
-    url: string,
-    ogType: string = ""
-  ): "video" | "article" | "website" {
-    const urlLower = url.toLowerCase();
+// Video hosting domains - check hostname ends with these (handles subdomains)
+const VIDEO_DOMAINS = [
+  "youtube.com",
+  "youtu.be",
+  "vimeo.com",
+  "dailymotion.com",
+  "twitch.tv",
+];
 
-    // Video platforms
+/**
+ * Checks if a hostname matches an allowed domain.
+ * Handles subdomains correctly (e.g., www.youtube.com matches youtube.com).
+ * This is the SECURE implementation that prevents bypass attacks.
+ */
+function isHostnameMatch(hostname: string, allowedDomain: string): boolean {
+  const normalizedHost = hostname.toLowerCase();
+  const normalizedDomain = allowedDomain.toLowerCase();
+  return (
+    normalizedHost === normalizedDomain ||
+    normalizedHost.endsWith("." + normalizedDomain)
+  );
+}
+
+/**
+ * Secure detectType function that properly parses URLs.
+ * Mirrors the implementation in the edge function.
+ */
+function detectType(
+  url: string,
+  ogType: string = "",
+  hasArticleTag: boolean = false
+): "video" | "article" | "website" {
+  // Parse URL and check hostname against known video platforms
+  let parsedUrl: URL | null = null;
+  try {
+    parsedUrl = new URL(url);
+  } catch {
+    // Invalid URL, skip URL-based detection
+  }
+
+  // Check hostname for video platforms (SECURE method)
+  if (
+    parsedUrl &&
+    VIDEO_DOMAINS.some((domain) => isHostnameMatch(parsedUrl!.hostname, domain))
+  ) {
+    return "video";
+  }
+
+  // OpenGraph type
+  if (ogType.includes("video")) return "video";
+  if (ogType.includes("article")) return "article";
+
+  // Check for article indicators in URL path
+  if (parsedUrl) {
+    const pathLower = parsedUrl.pathname.toLowerCase();
     if (
-      urlLower.includes("youtube.com") ||
-      urlLower.includes("youtu.be") ||
-      urlLower.includes("vimeo.com") ||
-      urlLower.includes("dailymotion.com") ||
-      urlLower.includes("twitch.tv")
-    ) {
-      return "video";
-    }
-
-    // OpenGraph type
-    if (ogType.includes("video")) return "video";
-    if (ogType.includes("article")) return "article";
-
-    // URL patterns
-    if (
-      urlLower.includes("/blog/") ||
-      urlLower.includes("/article/") ||
-      urlLower.includes("/post/")
+      hasArticleTag ||
+      pathLower.includes("/blog/") ||
+      pathLower.includes("/article/") ||
+      pathLower.includes("/post/")
     ) {
       return "article";
     }
-
-    return "website";
   }
 
-  describe("video detection", () => {
+  return "website";
+}
+
+describe("isHostnameMatch security", () => {
+  describe("should reject malicious domains", () => {
+    it("should reject domains that contain allowed domain as substring", () => {
+      expect(isHostnameMatch("evil-youtube.com", "youtube.com")).toBe(false);
+      expect(isHostnameMatch("fakeyoutube.com", "youtube.com")).toBe(false);
+      expect(isHostnameMatch("notyoutube.com", "youtube.com")).toBe(false);
+    });
+
+    it("should reject domains where allowed domain appears as subdomain suffix", () => {
+      expect(isHostnameMatch("youtube.com.evil.com", "youtube.com")).toBe(
+        false
+      );
+      expect(isHostnameMatch("www.youtube.com.attacker.net", "youtube.com")).toBe(
+        false
+      );
+    });
+
+    it("should reject domains with allowed domain in different position", () => {
+      expect(isHostnameMatch("evil.com", "youtube.com")).toBe(false);
+      expect(isHostnameMatch("completely-different.org", "youtube.com")).toBe(
+        false
+      );
+    });
+  });
+
+  describe("should accept valid domains", () => {
+    it("should accept exact domain match", () => {
+      expect(isHostnameMatch("youtube.com", "youtube.com")).toBe(true);
+      expect(isHostnameMatch("vimeo.com", "vimeo.com")).toBe(true);
+      expect(isHostnameMatch("twitch.tv", "twitch.tv")).toBe(true);
+    });
+
+    it("should accept valid subdomains", () => {
+      expect(isHostnameMatch("www.youtube.com", "youtube.com")).toBe(true);
+      expect(isHostnameMatch("m.youtube.com", "youtube.com")).toBe(true);
+      expect(isHostnameMatch("music.youtube.com", "youtube.com")).toBe(true);
+      expect(isHostnameMatch("player.vimeo.com", "vimeo.com")).toBe(true);
+    });
+
+    it("should accept deeply nested subdomains", () => {
+      expect(isHostnameMatch("a.b.c.youtube.com", "youtube.com")).toBe(true);
+    });
+
+    it("should be case insensitive", () => {
+      expect(isHostnameMatch("WWW.YOUTUBE.COM", "youtube.com")).toBe(true);
+      expect(isHostnameMatch("YouTube.com", "youtube.com")).toBe(true);
+    });
+  });
+});
+
+describe("detectType with URL parsing (security)", () => {
+  describe("should reject URLs with video domains in path/query", () => {
+    it("should NOT detect video when domain is in path", () => {
+      expect(detectType("https://evil.com/youtube.com/video")).toBe("website");
+      expect(detectType("https://attacker.net/fake/youtube.com")).toBe(
+        "website"
+      );
+    });
+
+    it("should NOT detect video when domain is in query string", () => {
+      expect(detectType("https://evil.com/?redirect=youtube.com")).toBe(
+        "website"
+      );
+      expect(detectType("https://evil.com/?url=https://youtube.com")).toBe(
+        "website"
+      );
+    });
+
+    it("should NOT detect video for lookalike domains", () => {
+      expect(detectType("https://evil-youtube.com/watch")).toBe("website");
+      expect(detectType("https://youtube.com.evil.net/")).toBe("website");
+      expect(detectType("https://fakevimeo.com/video")).toBe("website");
+    });
+  });
+
+  describe("should correctly detect real video platforms", () => {
     it("should detect YouTube videos", () => {
       expect(detectType("https://youtube.com/watch?v=abc")).toBe("video");
       expect(detectType("https://www.youtube.com/watch?v=abc")).toBe("video");
-      expect(detectType("https://youtu.be/abc")).toBe("video");
+      expect(detectType("https://m.youtube.com/watch?v=abc")).toBe("video");
+      expect(detectType("https://music.youtube.com/watch?v=abc")).toBe("video");
+    });
+
+    it("should detect youtu.be short links", () => {
+      expect(detectType("https://youtu.be/abc123")).toBe("video");
     });
 
     it("should detect Vimeo videos", () => {
       expect(detectType("https://vimeo.com/123456")).toBe("video");
+      expect(detectType("https://player.vimeo.com/video/123456")).toBe("video");
+    });
+
+    it("should detect Dailymotion videos", () => {
+      expect(detectType("https://dailymotion.com/video/x123")).toBe("video");
+      expect(detectType("https://www.dailymotion.com/video/x123")).toBe(
+        "video"
+      );
     });
 
     it("should detect Twitch", () => {
       expect(detectType("https://twitch.tv/channel")).toBe("video");
+      expect(detectType("https://www.twitch.tv/videos/123")).toBe("video");
     });
 
     it("should detect video via OG type", () => {
@@ -490,14 +610,23 @@ describe("link type detection logic", () => {
   });
 
   describe("article detection", () => {
-    it("should detect articles via URL pattern", () => {
+    it("should detect articles via URL path pattern", () => {
       expect(detectType("https://example.com/blog/post")).toBe("article");
       expect(detectType("https://example.com/article/123")).toBe("article");
       expect(detectType("https://example.com/post/something")).toBe("article");
     });
 
+    it("should NOT detect article when pattern is in query string", () => {
+      // Path-based detection only checks pathname, not query
+      expect(detectType("https://example.com?path=/blog/")).toBe("website");
+    });
+
     it("should detect articles via OG type", () => {
       expect(detectType("https://example.com", "article")).toBe("article");
+    });
+
+    it("should detect articles via article tag", () => {
+      expect(detectType("https://example.com", "", true)).toBe("article");
     });
   });
 
@@ -506,6 +635,19 @@ describe("link type detection logic", () => {
       expect(detectType("https://arrl.org")).toBe("website");
       expect(detectType("https://fcc.gov")).toBe("website");
       expect(detectType("https://example.com/page")).toBe("website");
+    });
+  });
+
+  describe("error handling", () => {
+    it("should handle invalid URLs gracefully", () => {
+      expect(detectType("not-a-url")).toBe("website");
+      expect(detectType("")).toBe("website");
+      expect(detectType("javascript:alert(1)")).toBe("website");
+    });
+
+    it("should still use OG type for invalid URLs", () => {
+      expect(detectType("invalid-url", "video")).toBe("video");
+      expect(detectType("invalid-url", "article")).toBe("article");
     });
   });
 });
