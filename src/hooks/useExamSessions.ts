@@ -149,7 +149,7 @@ export const useUserTargetExam = (userId?: string) => {
         .maybeSingle();
 
       if (error) throw error;
-      return data as (UserTargetExam & { exam_session: ExamSession }) | null;
+      return data as (UserTargetExam & { exam_session: ExamSession | null }) | null;
     },
     enabled: !!userId,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes

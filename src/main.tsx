@@ -8,7 +8,7 @@ import "./index.css";
 
 // Initialize Sentry for error tracking
 Sentry.init({
-  dsn: "https://a76c9c54f9d06482d3232b5610f32842@o4510636271075328.ingest.us.sentry.io/4510689155678208",
+  dsn: import.meta.env.VITE_SENTRY_DSN,
   // Setting this option to true will send default PII data to Sentry.
   // For example, automatic IP address collection on events
   sendDefaultPii: true,

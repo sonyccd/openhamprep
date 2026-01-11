@@ -180,6 +180,12 @@ export const ExamSessionSearch = () => {
   };
   const handleSaveCustomDate = () => {
     if (!user || !customDate) return;
+    // Validate date is not in the past
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (customDate < today) {
+      return;
+    }
     saveTargetMutation.mutate({
       userId: user.id,
       customExamDate: format(customDate, 'yyyy-MM-dd'),
@@ -580,7 +586,11 @@ export const ExamSessionSearch = () => {
                     mode="single"
                     selected={customDate}
                     onSelect={setCustomDate}
-                    disabled={(date) => date < new Date()}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      return date < today;
+                    }}
                     initialFocus
                   />
                 </PopoverContent>
