@@ -21,7 +21,6 @@ describe('SidebarFooter', () => {
     isMobile: false,
     onProfileClick: vi.fn(),
     onAdminClick: vi.fn(),
-    onSignOutClick: vi.fn(),
   };
 
   describe('User Profile Section', () => {
@@ -84,20 +83,6 @@ describe('SidebarFooter', () => {
     });
   });
 
-  describe('Forum Link', () => {
-    it('renders forum link', () => {
-      renderWithTooltip(<SidebarFooter {...defaultProps} />);
-      expect(screen.getByText('Forum')).toBeInTheDocument();
-    });
-
-    it('forum link opens in new tab', () => {
-      renderWithTooltip(<SidebarFooter {...defaultProps} />);
-      const link = screen.getByText('Forum').closest('a');
-      expect(link).toHaveAttribute('target', '_blank');
-      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
-    });
-  });
-
   describe('Admin Link', () => {
     it('shows admin link when user is admin', () => {
       renderWithTooltip(<SidebarFooter {...defaultProps} isAdmin={true} />);
@@ -132,47 +117,27 @@ describe('SidebarFooter', () => {
     });
   });
 
-  describe('Sign Out', () => {
-    it('renders sign out button', () => {
-      renderWithTooltip(<SidebarFooter {...defaultProps} />);
-      expect(screen.getByText('Sign Out')).toBeInTheDocument();
-    });
-
-    it('calls onSignOutClick when sign out is clicked', async () => {
-      const user = userEvent.setup();
-      const onSignOutClick = vi.fn();
-      renderWithTooltip(
-        <SidebarFooter {...defaultProps} onSignOutClick={onSignOutClick} />
-      );
-
-      const signOutButton = screen.getByText('Sign Out').closest('button');
-      await user.click(signOutButton!);
-
-      expect(onSignOutClick).toHaveBeenCalledTimes(1);
-    });
-  });
-
   describe('Collapsed State', () => {
     it('hides text labels when collapsed on desktop', () => {
       renderWithTooltip(
-        <SidebarFooter {...defaultProps} isCollapsed={true} isMobile={false} />
+        <SidebarFooter {...defaultProps} isCollapsed={true} isMobile={false} isAdmin={true} />
       );
       // Text should not be visible in collapsed state
-      expect(screen.queryByText('Sign Out')).not.toBeInTheDocument();
+      expect(screen.queryByText('Admin')).not.toBeInTheDocument();
     });
 
     it('shows text labels when expanded', () => {
       renderWithTooltip(
-        <SidebarFooter {...defaultProps} isCollapsed={false} isMobile={false} />
+        <SidebarFooter {...defaultProps} isCollapsed={false} isMobile={false} isAdmin={true} />
       );
-      expect(screen.getByText('Sign Out')).toBeInTheDocument();
+      expect(screen.getByText('Admin')).toBeInTheDocument();
     });
 
     it('shows text labels on mobile even if isCollapsed is true', () => {
       renderWithTooltip(
-        <SidebarFooter {...defaultProps} isCollapsed={true} isMobile={true} />
+        <SidebarFooter {...defaultProps} isCollapsed={true} isMobile={true} isAdmin={true} />
       );
-      expect(screen.getByText('Sign Out')).toBeInTheDocument();
+      expect(screen.getByText('Admin')).toBeInTheDocument();
     });
   });
 });

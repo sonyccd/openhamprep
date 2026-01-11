@@ -1,14 +1,34 @@
 {
   "name": "Open Ham Prep",
-  "short_name": "Open Ham Prep",
+  "short_name": "Ham Prep",
   "description": "Free practice tests for US Amateur Radio License Exams. Technician, General, and Extra class preparation.",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#0f172a",
   "theme_color": "#b86800",
   "orientation": "any",
-  "scope": "/",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["education", "utilities"],
+  "iarc_rating_id": "REPLACE_WITH_YOUR_IARC_ID",
+  "prefer_related_applications": false,
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
   "icons": [
+    {
+      "src": "/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
@@ -46,7 +66,64 @@
       "purpose": "maskable"
     }
   ],
-  "categories": ["education", "utilities"],
-  "lang": "en-US",
-  "dir": "ltr"
+  "shortcuts": [
+    {
+      "name": "Practice Test",
+      "short_name": "Test",
+      "description": "Take a 35-question practice exam",
+      "url": "/dashboard?view=practice-test",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Random Practice",
+      "short_name": "Practice",
+      "description": "Practice random questions",
+      "url": "/dashboard?view=random-practice",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Find Exam Site",
+      "short_name": "Exams",
+      "description": "Find nearby exam sessions",
+      "url": "/dashboard?view=find-test-site",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Glossary",
+      "short_name": "Glossary",
+      "description": "Study ham radio terms",
+      "url": "/dashboard?view=glossary",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard showing study progress"
+    },
+    {
+      "src": "/screenshots/desktop-practice-test.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Practice test question view"
+    },
+    {
+      "src": "/screenshots/mobile-dashboard.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile dashboard view"
+    },
+    {
+      "src": "/screenshots/mobile-question.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile question view"
+    }
+  ]
 }

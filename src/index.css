@@ -519,3 +519,29 @@
   background: hsl(var(--muted) / 0.3);
 }
 
+/* Windows Controls Overlay support for PWA */
+@supports (app-region: drag) {
+  .app-titlebar {
+    position: fixed;
+    top: env(titlebar-area-y, 0);
+    left: env(titlebar-area-x, 0);
+    width: env(titlebar-area-width, 100%);
+    height: env(titlebar-area-height, 32px);
+    app-region: drag;
+    -webkit-app-region: drag;
+    background: hsl(var(--background));
+    z-index: 9999;
+  }
+
+  .app-titlebar button,
+  .app-titlebar a,
+  .app-titlebar input {
+    app-region: no-drag;
+    -webkit-app-region: no-drag;
+  }
+
+  /* Add padding to body when titlebar is present */
+  body.wco-enabled {
+    padding-top: env(titlebar-area-height, 0);
+  }
+}

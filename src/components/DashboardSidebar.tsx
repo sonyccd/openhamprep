@@ -16,6 +16,7 @@ import {
   LayoutGrid,
   Square,
   Wrench,
+  Users,
 } from 'lucide-react';
 import { getModifierKey } from '@/lib/searchUtils';
 import { cn } from '@/lib/utils';
@@ -133,6 +134,7 @@ export function DashboardSidebar({
     { id: 'glossary', label: 'Glossary', icon: BookText },
     { id: 'tools', label: 'Tools', icon: Wrench },
     { id: 'find-test-site', label: 'Find Test Site', icon: MapPin },
+    { id: 'forum', label: 'Forum', icon: Users, external: 'https://forum.openhamprep.com/auth/oidc' },
   ];
 
   const handleNavClick = (view: View, disabled?: boolean) => {
@@ -273,7 +275,6 @@ export function DashboardSidebar({
           isMobile={isMobile}
           onProfileClick={() => setProfileModalOpen(true)}
           onAdminClick={() => navigate('/admin')}
-          onSignOutClick={() => setSignOutDialogOpen(true)}
         />
       </>
     );
@@ -316,6 +317,7 @@ export function DashboardSidebar({
           }}
           userId={userId}
           onProfileUpdate={onProfileUpdate}
+          onSignOut={() => setSignOutDialogOpen(true)}
         />
       )}
 

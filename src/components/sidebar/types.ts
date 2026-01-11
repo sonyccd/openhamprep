@@ -1,12 +1,13 @@
 import type { View, TestType } from '@/types/navigation';
 
 export interface NavItem {
-  id: View;
+  id: View | string;
   label: string;
   icon: React.ElementType;
   badge?: number;
   badgeAriaLabel?: string;
   disabled?: boolean;
+  external?: string; // External URL for links that open in new tab
 }
 
 export interface NavGroup {

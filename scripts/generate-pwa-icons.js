@@ -8,7 +8,8 @@ const publicDir = join(__dirname, '..', 'public');
 const iconsDir = join(publicDir, 'icons');
 
 // PWA icon sizes: 192 and 512 are required, 384 is recommended
-const ICON_SIZES = [192, 384, 512];
+// 96 is needed for PWA shortcut icons
+const ICON_SIZES = [96, 192, 384, 512];
 
 // Maskable icons need safe zone padding (10-20% per PWA spec).
 // Using 10% as the minimum safe zone to maximize icon visibility.

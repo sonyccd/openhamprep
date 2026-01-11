@@ -275,7 +275,7 @@ describe('AppLayout', () => {
     });
   });
 
-  describe('Sign Out', () => {
+  describe('Sign Out (via Profile Modal)', () => {
     it('navigates to auth page and calls signOut when signing out', async () => {
       const mockSignOut = vi.fn().mockResolvedValue(undefined);
       mockUseAuth.mockReturnValue({
@@ -291,12 +291,21 @@ describe('AppLayout', () => {
         { wrapper: createWrapper() }
       );
 
-      // Wait for sidebar to render
+      // Wait for sidebar to render and click on user profile to open modal
+      await waitFor(() => {
+        expect(screen.getByText('User')).toBeInTheDocument();
+      });
+
+      // Click user profile to open profile modal
+      const userProfileButton = screen.getByText('User').closest('button');
+      fireEvent.click(userProfileButton!);
+
+      // Wait for profile modal and find Sign Out
       await waitFor(() => {
         expect(screen.getByText('Sign Out')).toBeInTheDocument();
       });
 
-      // Click sign out button
+      // Click sign out button in profile modal
       fireEvent.click(screen.getByText('Sign Out'));
 
       // Confirm sign out dialog should appear

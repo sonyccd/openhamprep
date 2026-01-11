@@ -1,3 +1,4 @@
+import { ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { NavItem } from './types';
@@ -17,6 +18,46 @@ export function SidebarNavItem({
 }: SidebarNavItemProps) {
   const Icon = item.icon;
 
+  // External link (opens in new tab)
+  if (item.external) {
+    const linkContent = (
+      <a
+        href={item.external}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cn(
+          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
+          'text-muted-foreground hover:text-foreground hover:bg-secondary',
+          !showExpanded && 'justify-center px-2'
+        )}
+      >
+        <div className="relative shrink-0">
+          <Icon className="w-5 h-5" />
+        </div>
+        {showExpanded && (
+          <span className="text-base font-medium truncate flex items-center gap-1">
+            {item.label}
+            <ExternalLink className="w-3 h-3" />
+          </span>
+        )}
+      </a>
+    );
+
+    if (!showExpanded) {
+      return (
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+          <TooltipContent side="right" className="bg-popover border-border">
+            <p>{item.label}</p>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return <div>{linkContent}</div>;
+  }
+
+  // Internal nav button
   const buttonContent = (
     <button
       onClick={onClick}
