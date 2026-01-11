@@ -2,3 +2,4 @@
 export { DashboardHero } from './DashboardHero';
 export { DashboardNextSteps } from './DashboardNextSteps';
 export { DashboardProgress } from './DashboardProgress';
+export { DashboardSectionInsights } from './DashboardSectionInsights';

@@ -14,6 +14,8 @@ interface AppNavigationContextType {
   setSelectedLessonSlug: (slug: string | null) => void;
   selectedGlossaryTermId: string | null;
   setSelectedGlossaryTermId: (id: string | null) => void;
+  selectedSubelement: string | null;
+  setSelectedSubelement: (subelement: string | null) => void;
   topicSource: TopicSource;
   navigateToTopic: (slug: string, source?: TopicSource) => void;
   navigateToTopics: () => void;
@@ -21,6 +23,7 @@ interface AppNavigationContextType {
   navigateToLessons: () => void;
   navigateToGlossaryTerm: (termId: string) => void;
   navigateBackFromTopic: () => void;
+  navigateToSubelementPractice: (subelement?: string) => void;
 }
 
 const AppNavigationContext = createContext<AppNavigationContextType | undefined>(undefined);
@@ -31,6 +34,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const [selectedTopicSlug, setSelectedTopicSlug] = useState<string | null>(null);
   const [selectedLessonSlug, setSelectedLessonSlug] = useState<string | null>(null);
   const [selectedGlossaryTermId, setSelectedGlossaryTermId] = useState<string | null>(null);
+  const [selectedSubelement, setSelectedSubelement] = useState<string | null>(null);
   const [topicSource, setTopicSource] = useState<TopicSource>('topics');
 
   const navigateToTopic = (slug: string, source: TopicSource = 'topics') => {
@@ -70,6 +74,13 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const navigateToSubelementPractice = (subelement?: string) => {
+    if (subelement) {
+      setSelectedSubelement(subelement);
+    }
+    setCurrentView('subelement-practice');
+  };
+
   return (
     <AppNavigationContext.Provider value={{
       currentView,
@@ -82,6 +93,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       setSelectedLessonSlug,
       selectedGlossaryTermId,
       setSelectedGlossaryTermId,
+      selectedSubelement,
+      setSelectedSubelement,
       topicSource,
       navigateToTopic,
       navigateToTopics,
@@ -89,6 +102,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       navigateToLessons,
       navigateToGlossaryTerm,
       navigateBackFromTopic,
+      navigateToSubelementPractice,
     }}>
       {children}
     </AppNavigationContext.Provider>

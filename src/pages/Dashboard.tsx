@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,6 +6,7 @@ import { useBookmarks } from '@/hooks/useBookmarks';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { useUserTargetExam } from '@/hooks/useExamSessions';
 import { useTestReadiness } from '@/hooks/useTestReadiness';
+import { useReadinessScore, recalculateReadiness } from '@/hooks/useReadinessScore';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
@@ -17,6 +18,7 @@ import {
   DashboardHero,
   DashboardNextSteps,
   DashboardProgress,
+  DashboardSectionInsights,
 } from '@/components/dashboard';
 import type { NextStep } from '@/components/dashboard/DashboardNextSteps';
 import { PracticeTest } from '@/components/PracticeTest';
@@ -57,6 +59,7 @@ export default function Dashboard() {
     selectedLessonSlug,
     navigateToLessons,
     navigateBackFromTopic,
+    navigateToSubelementPractice,
   } = useAppNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
   // Persist selectedTest in localStorage
@@ -237,6 +240,27 @@ export default function Dashboard() {
     testResults, // Fallback for when DB cache is empty
   });
 
+  // Get subelement metrics for focus areas
+  const { data: readinessData } = useReadinessScore(selectedTest);
+
+  // Track if we've already attempted recalculation for this exam type to prevent infinite loops
+  const recalculationAttempted = useRef<Record<string, boolean>>({});
+
+  // Trigger recalculation if cache exists but subelement_metrics is missing (legacy cache)
+  useEffect(() => {
+    // Only attempt recalculation once per exam type per session
+    if (recalculationAttempted.current[selectedTest]) {
+      return;
+    }
+
+    if (readinessData && (!readinessData.subelement_metrics || Object.keys(readinessData.subelement_metrics).length === 0)) {
+      recalculationAttempted.current[selectedTest] = true;
+      recalculateReadiness(selectedTest).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['readiness', user?.id, selectedTest] });
+      });
+    }
+  }, [readinessData, selectedTest, queryClient, user?.id]);
+
   // Handle view changes with test-in-progress check
   const handleViewChange = (view: typeof currentView) => {
     if (testInProgress && view !== 'practice-test') {
@@ -415,6 +439,12 @@ export default function Dashboard() {
         />
 
         <DashboardNextSteps steps={getNextSteps()} />
+
+        <DashboardSectionInsights
+          subelementMetrics={readinessData?.subelement_metrics}
+          testType={selectedTest}
+          onPracticeSection={navigateToSubelementPractice}
+        />
 
         <DashboardProgress
           thisWeekQuestions={thisWeekQuestions}

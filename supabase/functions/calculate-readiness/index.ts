@@ -252,6 +252,30 @@ Deno.serve(async (req: Request) => {
       requestId
     );
 
+    // Log subelement metrics summary
+    const subelementCount = Object.keys(subelementMetrics).length;
+    if (subelementCount > 0) {
+      // Sort by risk_score descending for logging
+      const sortedByRisk = Object.entries(subelementMetrics)
+        .sort((a, b) => b[1].risk_score - a[1].risk_score);
+
+      const allRiskScores = sortedByRisk
+        .map(([code, m]) => `${code}:${m.risk_score.toFixed(2)}`)
+        .join(', ');
+
+      const totalExpectedScore = Object.values(subelementMetrics)
+        .reduce((sum, m) => sum + m.expected_score, 0);
+
+      console.log(
+        `[${requestId}] Subelements: count=${subelementCount}, totalExpected=${totalExpectedScore.toFixed(1)}`
+      );
+      console.log(
+        `[${requestId}] Risk scores (sorted desc): ${allRiskScores}`
+      );
+    } else {
+      console.warn(`[${requestId}] No subelement metrics calculated`);
+    }
+
     // Calculate expected exam score from subelement metrics
     const expectedExamScore = Object.values(subelementMetrics).reduce(
       (sum, m) => sum + m.expected_score,
@@ -669,6 +693,11 @@ interface MasteryData {
   question_id: string;
 }
 
+interface SyllabusRow {
+  code: string;
+  exam_questions: number | null;
+}
+
 async function calculateSubelementMetrics(
   supabase: SupabaseClient,
   userId: string,
@@ -688,12 +717,13 @@ async function calculateSubelementMetrics(
     return {};
   }
 
-  const subelements: SubelementData[] = (syllabusData || []).map((s) => ({
+  const subelements: SubelementData[] = (syllabusData || []).map((s: SyllabusRow) => ({
     code: s.code,
     weight: s.exam_questions || 0,
   }));
 
   if (subelements.length === 0) {
+    console.warn(`[${requestId}] No subelements found in syllabus for prefix ${prefix}`);
     return {};
   }
 
