@@ -1,7 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TestResults } from './TestResults';
 import { Question } from '@/hooks/useQuestions';
+import confetti from 'canvas-confetti';
+
+vi.mock('canvas-confetti', () => ({
+  default: vi.fn(),
+}));
 
 vi.mock('framer-motion', () => ({
   motion: {
@@ -62,6 +67,10 @@ describe('TestResults', () => {
     onRetake: vi.fn(),
     onBack: vi.fn(),
   };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   describe('Technician test (35 questions, 26 to pass)', () => {
     it('shows PASSED when score >= 26', () => {
@@ -336,6 +345,117 @@ describe('TestResults', () => {
       // Should use technician config: 26 out of 35
       expect(screen.getByText('Passing score: 26 out of 35 (74%)')).toBeInTheDocument();
       expect(screen.getByText('PASSED!')).toBeInTheDocument();
+    });
+  });
+
+  describe('Confetti celebration', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('fires confetti when user passes (after delay)', () => {
+      const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
+
+      render(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      // Confetti should not fire immediately
+      expect(confetti).not.toHaveBeenCalled();
+
+      // Fast-forward past the 200ms delay
+      vi.advanceTimersByTime(200);
+
+      expect(confetti).toHaveBeenCalledWith({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    });
+
+    it('does not fire confetti when user fails', () => {
+      const { questions, answers } = createQuestionsAndAnswers(35, 25, 'T');
+
+      render(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      vi.advanceTimersByTime(200);
+
+      expect(confetti).not.toHaveBeenCalled();
+    });
+
+    it('fires confetti only once even on re-render', () => {
+      const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
+
+      const { rerender } = render(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      vi.advanceTimersByTime(200);
+
+      // Re-render with same props
+      rerender(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      vi.advanceTimersByTime(200);
+
+      expect(confetti).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not fire confetti when user prefers reduced motion', () => {
+      const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
+
+      // Mock prefers-reduced-motion
+      const matchMediaMock = vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(prefers-reduced-motion: reduce)',
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
+      window.matchMedia = matchMediaMock;
+
+      render(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      vi.advanceTimersByTime(200);
+
+      expect(confetti).not.toHaveBeenCalled();
     });
   });
 });

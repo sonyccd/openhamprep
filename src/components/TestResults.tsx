@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import { Question } from "@/hooks/useQuestions";
 import { QuestionCard } from "@/components/QuestionCard";
@@ -23,9 +24,35 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
   const correctCount = questions.filter(
     (q) => answers[q.id] === q.correctAnswer
   ).length;
+  const passed = correctCount >= passingScore;
+  
+  // Fire confetti once when user passes (respects reduced motion preference)
+  const hasTriggeredConfetti = useRef(false);
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    if (passed && !hasTriggeredConfetti.current && !prefersReducedMotion) {
+      // Small delay to let the success banner animate in first
+      timer = setTimeout(() => {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }, 200);
+      hasTriggeredConfetti.current = true;
+    }
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [passed]);
+
   const totalQuestions = questions.length;
   const percentage = Math.round((correctCount / totalQuestions) * 100);
-  const passed = correctCount >= passingScore;
 
   const incorrectQuestions = questions.filter(
     (q) => answers[q.id] !== q.correctAnswer
