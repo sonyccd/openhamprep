@@ -26,10 +26,12 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
   ).length;
   const passed = correctCount >= passingScore;
   
-  // Fire confetti once when user passes
+  // Fire confetti once when user passes (respects reduced motion preference)
   const hasTriggeredConfetti = useRef(false);
   useEffect(() => {
-    if (passed && !hasTriggeredConfetti.current) {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (passed && !hasTriggeredConfetti.current && !prefersReducedMotion) {
       confetti({
         particleCount: 100,
         spread: 70,

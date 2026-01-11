@@ -407,5 +407,33 @@ describe('TestResults', () => {
 
       expect(confetti).toHaveBeenCalledTimes(1);
     });
+
+    it('does not fire confetti when user prefers reduced motion', () => {
+      const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
+
+      // Mock prefers-reduced-motion
+      const matchMediaMock = vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(prefers-reduced-motion: reduce)',
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
+      window.matchMedia = matchMediaMock;
+
+      render(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      expect(confetti).not.toHaveBeenCalled();
+    });
   });
 });
