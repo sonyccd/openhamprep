@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Check,
   Loader2,
+  LogOut,
 } from "lucide-react";
 import { validateForumUsername } from "@/lib/validation";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ interface ProfileModalProps {
   };
   userId: string;
   onProfileUpdate: () => void;
+  onSignOut?: () => void;
 }
 
 type SettingsView = "main" | "account" | "appearance" | "danger";
@@ -48,6 +50,7 @@ export function ProfileModal({
   userInfo,
   userId,
   onProfileUpdate,
+  onSignOut,
 }: ProfileModalProps) {
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<SettingsView>("main");
@@ -431,6 +434,23 @@ export function ProfileModal({
           variant="danger"
         />
       </div>
+
+      {/* Sign Out button */}
+      {onSignOut && (
+        <div className="pt-4 mt-4 border-t border-border">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              onOpenChange(false);
+              onSignOut();
+            }}
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="text-base font-medium">Sign Out</span>
+          </Button>
+        </div>
+      )}
     </div>
   );
 

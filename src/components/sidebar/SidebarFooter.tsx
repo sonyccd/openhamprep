@@ -1,4 +1,4 @@
-import { LogOut, Shield, Users, ExternalLink } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -13,7 +13,6 @@ interface SidebarFooterProps {
   isMobile: boolean;
   onProfileClick: () => void;
   onAdminClick: () => void;
-  onSignOutClick: () => void;
 }
 
 export function SidebarFooter({
@@ -24,7 +23,6 @@ export function SidebarFooter({
   isMobile,
   onProfileClick,
   onAdminClick,
-  onSignOutClick,
 }: SidebarFooterProps) {
   const showExpanded = isMobile || !isCollapsed;
 
@@ -43,94 +41,8 @@ export function SidebarFooter({
     return 'U';
   };
 
-  // Forum link component
-  const forumLink = (
-    <a
-      href="https://forum.openhamprep.com/auth/oidc"
-      target="_blank"
-      rel="noopener noreferrer"
-      className={cn(
-        'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
-        'text-muted-foreground hover:text-foreground hover:bg-secondary',
-        !showExpanded && 'justify-center px-2'
-      )}
-    >
-      <div className="relative shrink-0">
-        <Users className="w-5 h-5" />
-      </div>
-      {showExpanded && (
-        <span className="text-base font-medium truncate flex items-center gap-1">
-          Forum
-          <ExternalLink className="w-3 h-3" />
-        </span>
-      )}
-    </a>
-  );
-
   return (
     <div className="border-t border-border">
-      {/* Forum Link */}
-      <div className="px-2 pt-2">
-        {!showExpanded ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>{forumLink}</TooltipTrigger>
-            <TooltipContent side="right" className="bg-popover border-border">
-              <p>Forum</p>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          forumLink
-        )}
-      </div>
-
-      {/* User Profile Section */}
-      <div
-        className={cn(
-          'p-3 border-b border-border',
-          !isMobile && isCollapsed && 'flex justify-center'
-        )}
-      >
-        {showExpanded ? (
-          <button
-            onClick={onProfileClick}
-            className="w-full flex items-center gap-3 p-2 -m-2 rounded-lg hover:bg-secondary transition-colors"
-          >
-            <Avatar className="h-9 w-9 shrink-0">
-              <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-medium text-foreground truncate">
-                {userInfo?.displayName || 'User'}
-              </p>
-              <p className="text-sm text-muted-foreground truncate">
-                {userInfo?.email || ''}
-              </p>
-            </div>
-          </button>
-        ) : (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <button
-                onClick={onProfileClick}
-                className="rounded-full hover:ring-2 hover:ring-primary/20 transition-all"
-              >
-                <Avatar className="h-8 w-8 cursor-pointer">
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                    {getInitials()}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="bg-popover border-border">
-              <p className="font-medium">{userInfo?.displayName || 'User'}</p>
-              <p className="text-xs text-muted-foreground">{userInfo?.email}</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-
       {/* Admin Link */}
       {isAdmin && (
         <div
@@ -178,33 +90,51 @@ export function SidebarFooter({
         </div>
       )}
 
-      {/* Sign Out */}
-      <div className="p-2">
-        {!showExpanded ? (
+      {/* User Profile Section */}
+      <div
+        className={cn(
+          'p-3',
+          !isMobile && isCollapsed && 'flex justify-center'
+        )}
+      >
+        {showExpanded ? (
+          <button
+            onClick={onProfileClick}
+            className="w-full flex items-center gap-3 p-2 -m-2 rounded-lg hover:bg-secondary transition-colors"
+          >
+            <Avatar className="h-9 w-9 shrink-0">
+              <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                {getInitials()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-sm font-medium text-foreground truncate">
+                {userInfo?.displayName || 'User'}
+              </p>
+              <p className="text-sm text-muted-foreground truncate">
+                {userInfo?.email || ''}
+              </p>
+            </div>
+          </button>
+        ) : (
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onSignOutClick}
-                className="w-full h-10 text-muted-foreground hover:text-destructive"
+              <button
+                onClick={onProfileClick}
+                className="rounded-full hover:ring-2 hover:ring-primary/20 transition-all"
               >
-                <LogOut className="w-5 h-5" />
-              </Button>
+                <Avatar className="h-8 w-8 cursor-pointer">
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
             </TooltipTrigger>
             <TooltipContent side="right" className="bg-popover border-border">
-              <p>Sign Out</p>
+              <p className="font-medium">{userInfo?.displayName || 'User'}</p>
+              <p className="text-xs text-muted-foreground">{userInfo?.email}</p>
             </TooltipContent>
           </Tooltip>
-        ) : (
-          <Button
-            variant="ghost"
-            onClick={onSignOutClick}
-            className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
-          >
-            <LogOut className="w-5 h-5" />
-            <span className="text-base font-medium">Sign Out</span>
-          </Button>
         )}
       </div>
     </div>

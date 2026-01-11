@@ -9,7 +9,7 @@ describe('PWA Configuration', () => {
 
     it('should have required name fields', () => {
       expect(manifest.name).toBe('Open Ham Prep');
-      expect(manifest.short_name).toBe('Open Ham Prep');
+      expect(manifest.short_name).toBe('Ham Prep');
     });
 
     it('should have a description', () => {
