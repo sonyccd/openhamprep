@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { toast } from '@/hooks/use-toast';
 interface ShortcutItem {
   keys: string[];
   description: string;
@@ -100,18 +101,46 @@ export function HelpButton() {
 
   const handleSubmitBug = () => {
     const url = buildForumUrl('bug', bugTitle, bugDescription);
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+
+    if (newWindow) {
+      toast({
+        title: 'Opening forum',
+        description: 'Complete your bug report in the new tab.',
+      });
+      resetForms();
+    } else {
+      toast({
+        title: 'Popup blocked',
+        description: 'Please allow popups to submit your report.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleSubmitFeedback = () => {
     const url = buildForumUrl('feature', feedbackTitle, feedbackDescription);
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+
+    if (newWindow) {
+      toast({
+        title: 'Opening forum',
+        description: 'Complete your feedback in the new tab.',
+      });
+      resetForms();
+    } else {
+      toast({
+        title: 'Popup blocked',
+        description: 'Please allow popups to submit your feedback.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return <>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="default" size="icon" className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg z-50 [&_svg]:size-7" onClick={() => setOpen(true)} aria-label="Open help dialog">
+          <Button variant="default" size="icon" className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg z-50 [&_svg]:size-8" onClick={() => setOpen(true)} aria-label="Open help dialog">
             <HelpCircle aria-hidden="true" />
           </Button>
         </TooltipTrigger>
@@ -144,7 +173,7 @@ export function HelpButton() {
               </TabsTrigger>
             </TabsList>
 
-              <TabsContent value="shortcuts" className="mt-4 space-y-4">
+              <TabsContent value="shortcuts" className="mt-4 space-y-4 min-h-[340px]">
                 {shortcutGroups.map(group => <div key={group.title}>
                     <h3 className="text-sm font-medium text-muted-foreground mb-2">
                       {group.title}
@@ -164,7 +193,7 @@ export function HelpButton() {
                   </div>)}
               </TabsContent>
 
-              <TabsContent value="feedback" className="mt-4 space-y-4 min-h-[280px]">
+              <TabsContent value="feedback" className="mt-4 space-y-4 min-h-[340px]">
                 {activeForm === null ? (
                   <>
                     <p className="text-sm text-muted-foreground">
