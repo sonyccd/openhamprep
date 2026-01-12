@@ -1,5 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  truncateText,
+  isCrawler,
+  escapeHtml,
+  isValidDisplayName,
+  isUUID,
+  isValidQuestionId,
+  getLicenseName,
+} from "./logic.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,107 +19,6 @@ const SITE_URL = 'https://app.openhamprep.com';
 const SITE_NAME = 'Open Ham Prep';
 const DEFAULT_IMAGE = `${SITE_URL}/icons/icon-512.png`;
 const MAX_DESCRIPTION_LENGTH = 200;
-
-/**
- * Truncate text to a maximum length, adding ellipsis if needed.
- * Tries to break at word boundaries.
- */
-function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-
-  // Find the last space before maxLength
-  const truncated = text.slice(0, maxLength);
-  const lastSpace = truncated.lastIndexOf(' ');
-
-  if (lastSpace > maxLength * 0.7) {
-    return truncated.slice(0, lastSpace) + '...';
-  }
-
-  return truncated.slice(0, maxLength - 3) + '...';
-}
-
-// Known crawler/bot User-Agent patterns
-const CRAWLER_PATTERNS = [
-  'Discourse',
-  'Discoursebot',
-  'facebookexternalhit',
-  'Facebot',
-  'Twitterbot',
-  'LinkedInBot',
-  'Slackbot',
-  'TelegramBot',
-  'WhatsApp',
-  'Googlebot',
-  'bingbot',
-  'Baiduspider',
-  'YandexBot',
-  'DuckDuckBot',
-  'Applebot',
-  'PinterestBot',
-  'redditbot',
-  'Embedly',
-  'Quora Link Preview',
-  'Rogerbot',
-  'Showyoubot',
-  'outbrain',
-  'vkShare',
-  'W3C_Validator',
-];
-
-/**
- * Check if the User-Agent indicates a crawler/bot
- */
-function isCrawler(userAgent: string | null): boolean {
-  if (!userAgent) return false;
-  const ua = userAgent.toLowerCase();
-  return CRAWLER_PATTERNS.some(pattern => ua.includes(pattern.toLowerCase()));
-}
-
-/**
- * Escape HTML special characters to prevent XSS in meta tags
- */
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-/**
- * Validate display name format (T1A01, G2B03, E3C12, etc.)
- */
-function isValidDisplayName(id: string): boolean {
-  return /^[TGE]\d[A-Z]\d{2}$/i.test(id);
-}
-
-/**
- * Check if a string is a valid UUID format
- */
-function isUUID(id: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-}
-
-/**
- * Validate question ID format (accepts both display_name and UUID)
- */
-function isValidQuestionId(id: string): boolean {
-  return isValidDisplayName(id) || isUUID(id);
-}
-
-/**
- * Get human-readable license name from question ID prefix
- */
-function getLicenseName(questionId: string): string {
-  const prefix = questionId[0].toUpperCase();
-  switch (prefix) {
-    case 'T': return 'Technician';
-    case 'G': return 'General';
-    case 'E': return 'Extra';
-    default: return 'Amateur Radio';
-  }
-}
 
 serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);

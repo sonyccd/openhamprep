@@ -1,6 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { isValidUuid } from "../_shared/constants.ts";
+import {
+  isValidUuid,
+  isServiceRoleToken,
+  DISCOURSE_URL,
+  getCorsHeaders,
+} from "../_shared/constants.ts";
+import {
+  extractTopicId,
+  formatTopicBody,
+  buildExternalIdUrl,
+  isValidDiscourseUrl,
+} from "./logic.ts";
 
 /**
  * Update Discourse Post Edge Function
@@ -11,14 +22,6 @@ import { isValidUuid } from "../_shared/constants.ts";
  *
  * Security: Requires admin role or service_role token.
  */
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
-
-const DISCOURSE_URL = "https://forum.openhamprep.com";
 
 interface Question {
   id: string;  // UUID
@@ -36,45 +39,6 @@ interface RequestBody {
 }
 
 /**
- * Decode a JWT and extract the payload without verifying the signature.
- * The signature is already verified by Supabase's API gateway.
- */
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-
-    const payload = parts[1];
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
-    const decoded = atob(padded);
-    return JSON.parse(decoded);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Check if a JWT token has the service_role claim.
- */
-function isServiceRoleToken(token: string): boolean {
-  const payload = decodeJwtPayload(token);
-  return payload?.role === "service_role";
-}
-
-/**
- * Extract topic ID from a Discourse forum URL.
- * Handles formats like:
- * - https://forum.openhamprep.com/t/topic-slug/123
- * - https://forum.openhamprep.com/t/123
- */
-function extractTopicId(forumUrl: string): number | null {
-  // Match /t/anything/123 or /t/123
-  const match = forumUrl.match(/\/t\/(?:[^/]+\/)?(\d+)/);
-  return match ? parseInt(match[1], 10) : null;
-}
-
-/**
  * Look up a Discourse topic by its external_id (question UUID).
  * Returns topic ID and first post ID if found.
  */
@@ -84,9 +48,7 @@ async function getTopicByExternalId(
   questionId: string
 ): Promise<{ topicId: number; postId: number } | null> {
   try {
-    const response = await fetch(
-      `${DISCOURSE_URL}/t/external_id/${questionId}.json`,
-      {
+    const response = await fetch(buildExternalIdUrl(DISCOURSE_URL, questionId), {
         headers: {
           "Api-Key": apiKey,
           "Api-Username": username,
@@ -113,41 +75,9 @@ async function getTopicByExternalId(
   }
 }
 
-/**
- * Format the topic body to match sync-discourse-topics format.
- * This ensures the webhook can correctly parse explanations back.
- */
-function formatTopicBody(question: Question, newExplanation: string): string {
-  const letters = ["A", "B", "C", "D"];
-  const correctLetter = letters[question.correct_answer];
-
-  const optionsText = question.options
-    .map((opt, i) => `- **${letters[i]})** ${opt}`)
-    .join("\n");
-
-  const explanationText = newExplanation
-    ? newExplanation
-    : "_No explanation yet. Help improve this by contributing below!_";
-
-  return `## Question
-${question.question}
-
-## Answer Options
-${optionsText}
-
-**Correct Answer: ${correctLetter}**
-
----
-
-## Explanation
-${explanationText}
-
----
-_This topic was automatically created to facilitate community discussion about this exam question. Feel free to share study tips, memory tricks, or additional explanations!_`;
-}
-
 serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
+  const corsHeaders = getCorsHeaders();
 
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -408,7 +338,13 @@ serve(async (req) => {
     // 5. UPDATE THE POST IN DISCOURSE
     // ==========================================================================
 
-    const newBody = formatTopicBody(question as Question, explanation);
+    // Use formatTopicBody from logic.ts
+    const newBody = formatTopicBody(
+      question.question,
+      question.options,
+      question.correct_answer,
+      explanation
+    );
 
     const updateResponse = await fetch(`${DISCOURSE_URL}/posts/${postId}.json`, {
       method: "PUT",

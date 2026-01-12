@@ -1,5 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  extractMetaContent,
+  extractTitle,
+  detectType,
+  extractSiteName,
+  extractUrlsFromText,
+  isLooseUUID,
+} from "./logic.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,126 +22,6 @@ interface UnfurledLink {
   type: 'video' | 'article' | 'website';
   siteName: string;
   unfurledAt: string;
-}
-
-function extractMetaContent(html: string, property: string): string {
-  const ogMatch = html.match(new RegExp(`<meta[^>]*property=["']og:${property}["'][^>]*content=["']([^"']+)["']`, 'i')) ||
-                  html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:${property}["']`, 'i'));
-  if (ogMatch) return ogMatch[1];
-
-  const twitterMatch = html.match(new RegExp(`<meta[^>]*name=["']twitter:${property}["'][^>]*content=["']([^"']+)["']`, 'i')) ||
-                       html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:${property}["']`, 'i'));
-  if (twitterMatch) return twitterMatch[1];
-
-  const metaMatch = html.match(new RegExp(`<meta[^>]*name=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i')) ||
-                    html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*name=["']${property}["']`, 'i'));
-  if (metaMatch) return metaMatch[1];
-
-  return '';
-}
-
-function extractTitle(html: string): string {
-  const ogTitle = extractMetaContent(html, 'title');
-  if (ogTitle) return ogTitle;
-  const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-  return titleMatch ? titleMatch[1].trim() : '';
-}
-
-// Video hosting domains - check hostname ends with these (handles subdomains)
-const VIDEO_DOMAINS = [
-  'youtube.com',
-  'youtu.be',
-  'vimeo.com',
-  'dailymotion.com',
-  'twitch.tv',
-];
-
-/**
- * Checks if a hostname matches an allowed domain.
- * Handles subdomains correctly (e.g., www.youtube.com matches youtube.com).
- */
-function isHostnameMatch(hostname: string, allowedDomain: string): boolean {
-  const normalizedHost = hostname.toLowerCase();
-  const normalizedDomain = allowedDomain.toLowerCase();
-  return normalizedHost === normalizedDomain ||
-         normalizedHost.endsWith('.' + normalizedDomain);
-}
-
-function detectType(url: string, html: string): 'video' | 'article' | 'website' {
-  // Parse URL and check hostname against known video platforms
-  try {
-    const parsedUrl = new URL(url);
-    const hostname = parsedUrl.hostname;
-
-    if (VIDEO_DOMAINS.some(domain => isHostnameMatch(hostname, domain))) {
-      return 'video';
-    }
-  } catch {
-    // Invalid URL, fall through to other detection methods
-  }
-
-  const ogType = extractMetaContent(html, 'type');
-  if (ogType.includes('video')) return 'video';
-  if (ogType.includes('article')) return 'article';
-
-  // Check for article indicators in HTML or URL path
-  try {
-    const parsedUrl = new URL(url);
-    const pathLower = parsedUrl.pathname.toLowerCase();
-    if (html.includes('<article') || pathLower.includes('/blog/') ||
-        pathLower.includes('/article/') || pathLower.includes('/post/')) {
-      return 'article';
-    }
-  } catch {
-    // Invalid URL, skip path-based detection
-  }
-
-  return 'website';
-}
-
-function extractSiteName(url: string, html: string): string {
-  const ogSiteName = extractMetaContent(html, 'site_name');
-  if (ogSiteName) return ogSiteName;
-  try {
-    return new URL(url).hostname.replace('www.', '');
-  } catch {
-    return '';
-  }
-}
-
-/**
- * Extracts all URLs from explanation text.
- * Handles both markdown links [text](url) and bare URLs (https://...).
- */
-function extractUrlsFromText(text: string): string[] {
-  if (!text) return [];
-
-  const urls: string[] = [];
-  const seen = new Set<string>();
-
-  // Extract URLs from markdown links [text](url)
-  const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/gi;
-  let match;
-  while ((match = markdownLinkRegex.exec(text)) !== null) {
-    const url = match[2];
-    if (!seen.has(url)) {
-      seen.add(url);
-      urls.push(url);
-    }
-  }
-
-  // Extract bare URLs (not inside markdown links)
-  const textWithoutMarkdownLinks = text.replace(markdownLinkRegex, '');
-  const bareUrlRegex = /https?:\/\/[^\s<>[\]()]+/gi;
-  while ((match = bareUrlRegex.exec(textWithoutMarkdownLinks)) !== null) {
-    const url = match[0].replace(/[.,;:!?'"]+$/, ''); // Clean trailing punctuation
-    if (!seen.has(url)) {
-      seen.add(url);
-      urls.push(url);
-    }
-  }
-
-  return urls;
 }
 
 async function unfurlUrl(url: string): Promise<UnfurledLink> {
@@ -181,13 +69,6 @@ async function unfurlUrl(url: string): Promise<UnfurledLink> {
   }
 }
 
-/**
- * Helper to detect if a string is a UUID format.
- */
-function isUUID(str: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-}
-
 serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
 
@@ -204,7 +85,7 @@ serve(async (req) => {
 
     // Helper to get question by ID (supports both UUID and display_name)
     const getQuestionById = async (qId: string, selectColumns: string = 'id, links') => {
-      const lookupColumn = isUUID(qId) ? 'id' : 'display_name';
+      const lookupColumn = isLooseUUID(qId) ? 'id' : 'display_name';
       const { data, error } = await supabase
         .from('questions')
         .select(selectColumns)

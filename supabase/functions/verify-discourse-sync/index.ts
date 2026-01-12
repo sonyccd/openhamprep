@@ -10,6 +10,11 @@ import {
   isServiceRoleToken,
   fetchWithBackoff,
 } from "../_shared/constants.ts";
+import {
+  extractQuestionIdFromTitle,
+  extractTopicId,
+  buildTopicUrl,
+} from "./logic.ts";
 
 /**
  * Verify Discourse Sync Edge Function
@@ -79,31 +84,6 @@ interface VerifyResult {
     missingStatus: DiscrepancyMissingStatus[];
   };
   repaired?: number;
-}
-
-// =============================================================================
-// HELPER FUNCTIONS
-// =============================================================================
-
-/**
- * Extract question ID from topic title.
- * Format: "T1A01 - Question text..."
- */
-function extractQuestionIdFromTitle(title: string): string | null {
-  if (!title) return null;
-  const match = title.match(QUESTION_ID_PATTERN);
-  return match ? match[1] : null;
-}
-
-/**
- * Extract topic ID from a forum URL.
- * Handles formats like:
- * - https://forum.openhamprep.com/t/topic-slug/123
- * - https://forum.openhamprep.com/t/123
- */
-function extractTopicId(forumUrl: string): number | null {
-  const match = forumUrl.match(/\/t\/(?:[^/]+\/)?(\d+)/);
-  return match ? parseInt(match[1], 10) : null;
 }
 
 // =============================================================================
