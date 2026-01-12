@@ -1,4 +1,5 @@
 /// <reference lib="deno.ns" />
+/// <reference lib="dom" />
 
 // ============================================================
 // PURE LOGIC FOR DISCOURSE-WEBHOOK
@@ -86,7 +87,8 @@ export function extractQuestionIdFromTitle(
  * - https://forum.openhamprep.com/t/123
  *
  * SECURITY: Validates that the URL is from the expected Discourse domain
- * to prevent SSRF attacks.
+ * to prevent SSRF attacks. Uses proper URL parsing to compare hostnames
+ * and protocols, preventing attacks like forum.openhamprep.com.evil.com.
  */
 export function extractTopicIdFromUrl(forumUrl: string | null | undefined): number | null {
   if (!forumUrl) {
@@ -94,7 +96,17 @@ export function extractTopicIdFromUrl(forumUrl: string | null | undefined): numb
   }
 
   // SECURITY: Validate URL is from our Discourse instance to prevent SSRF
-  if (!forumUrl.startsWith(DISCOURSE_URL)) {
+  // Use proper URL parsing to compare hostname and protocol
+  try {
+    const inputUrl = new URL(forumUrl);
+    const expectedUrl = new URL(DISCOURSE_URL);
+
+    // Must match both hostname AND protocol (https)
+    if (inputUrl.hostname !== expectedUrl.hostname || inputUrl.protocol !== expectedUrl.protocol) {
+      return null;
+    }
+  } catch {
+    // Invalid URL format
     return null;
   }
 
