@@ -32,6 +32,8 @@
     "dev:full": "npm run supabase:start && npm run dev",
     "supabase:functions": "npx supabase functions serve --no-verify-jwt --env-file supabase/functions/.env.local",
     "supabase:functions:debug": "npx supabase functions serve --no-verify-jwt --env-file supabase/functions/.env.local --debug",
+    "supabase:functions:test": "cd supabase/functions && deno test --allow-env --allow-net",
+    "supabase:functions:test:watch": "cd supabase/functions && deno test --allow-env --allow-net --watch",
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
