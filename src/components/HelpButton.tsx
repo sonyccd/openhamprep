@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { HelpCircle, Keyboard, Lightbulb, ExternalLink, Activity } from 'lucide-react';
+import { HelpCircle, Keyboard, Lightbulb, ExternalLink, Activity, Bug, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 interface ShortcutItem {
   keys: string[];
   description: string;
@@ -49,8 +52,57 @@ const shortcutGroups: ShortcutGroup[] = [{
     description: 'Show this help dialog'
   }]
 }];
+type FormType = 'bug' | 'feedback' | null;
+
+const buildForumUrl = (type: 'bug' | 'feature', title: string, description: string) => {
+  const tag = type === 'bug' ? 'bug' : 'feature';
+  const bodyTemplate = type === 'bug'
+    ? `**Issue Description:**\n${description}\n\n**Steps to Reproduce:**\n1. \n2. \n3. \n\n**Expected Behavior:**\n\n**Actual Behavior:**\n`
+    : `**Feedback:**\n${description}\n\n**Why this would help:**\n`;
+
+  const params = new URLSearchParams({
+    category: 'feedback',
+    title: title,
+    tags: tag,
+    body: bodyTemplate
+  });
+
+  return `https://forum.openhamprep.com/new-topic?${params.toString()}`;
+};
+
 export function HelpButton() {
   const [open, setOpen] = useState(false);
+  const [activeForm, setActiveForm] = useState<FormType>(null);
+  const [bugTitle, setBugTitle] = useState('');
+  const [bugDescription, setBugDescription] = useState('');
+  const [feedbackTitle, setFeedbackTitle] = useState('');
+  const [feedbackDescription, setFeedbackDescription] = useState('');
+
+  const resetForms = () => {
+    setActiveForm(null);
+    setBugTitle('');
+    setBugDescription('');
+    setFeedbackTitle('');
+    setFeedbackDescription('');
+  };
+
+  const handleDialogChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      resetForms();
+    }
+  };
+
+  const handleSubmitBug = () => {
+    const url = buildForumUrl('bug', bugTitle, bugDescription);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleSubmitFeedback = () => {
+    const url = buildForumUrl('feature', feedbackTitle, feedbackDescription);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   return <>
       <Tooltip>
         <TooltipTrigger asChild>
@@ -63,7 +115,7 @@ export function HelpButton() {
         </TooltipContent>
       </Tooltip>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleDialogChange}>
         <DialogContent className="sm:max-w-lg min-h-[420px]" aria-describedby="help-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -108,39 +160,162 @@ export function HelpButton() {
               </TabsContent>
 
               <TabsContent value="feedback" className="mt-4 space-y-4 min-h-[280px]">
-                <p className="text-sm text-muted-foreground">
-                  Found a bug or have an idea to improve the app? Let us know on our community forum!
-                </p>
+                {activeForm === null ? (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      Found a bug or have an idea to improve the app? Let us know on our community forum!
+                    </p>
 
-                <div className="space-y-3">
-                  <a href="https://forum.openhamprep.com/c/feedback/2" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 text-primary">
-                      <Lightbulb className="h-5 w-5" aria-hidden="true" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-foreground">Give Feedback</div>
-                      <div className="text-sm text-muted-foreground">
-                        Share ideas, report bugs, or suggest features
-                      </div>
-                    </div>
-                    <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                    <span className="sr-only">(opens in new window)</span>
-                  </a>
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => setActiveForm('bug')}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors text-left"
+                      >
+                        <div className="flex items-center justify-center h-10 w-10 rounded-full bg-destructive/10 text-destructive">
+                          <Bug className="h-5 w-5" aria-hidden="true" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-foreground">Report a Bug</div>
+                          <div className="text-sm text-muted-foreground">
+                            Something not working? Let us know
+                          </div>
+                        </div>
+                      </button>
 
-                  <a href="https://openhamprep.statuspage.io/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-success/10 text-success">
-                      <Activity className="h-5 w-5" aria-hidden="true" />
+                      <button
+                        type="button"
+                        onClick={() => setActiveForm('feedback')}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors text-left"
+                      >
+                        <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 text-primary">
+                          <Lightbulb className="h-5 w-5" aria-hidden="true" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-foreground">Give Feedback</div>
+                          <div className="text-sm text-muted-foreground">
+                            Share ideas or suggest features
+                          </div>
+                        </div>
+                      </button>
+
+                      <a href="https://openhamprep.statuspage.io/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
+                        <div className="flex items-center justify-center h-10 w-10 rounded-full bg-success/10 text-success">
+                          <Activity className="h-5 w-5" aria-hidden="true" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-foreground">System Status</div>
+                          <div className="text-sm text-muted-foreground">
+                            Check if services are running smoothly
+                          </div>
+                        </div>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        <span className="sr-only">(opens in new window)</span>
+                      </a>
                     </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-foreground">System Status</div>
-                      <div className="text-sm text-muted-foreground">
-                        Check if services are running smoothly
+                  </>
+                ) : activeForm === 'bug' ? (
+                  <div className="space-y-4">
+                    <button
+                      type="button"
+                      onClick={() => setActiveForm(null)}
+                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                      Back to options
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center h-8 w-8 rounded-full bg-destructive/10 text-destructive">
+                        <Bug className="h-4 w-4" aria-hidden="true" />
                       </div>
+                      <h3 className="font-medium text-foreground">Report a Bug</h3>
                     </div>
-                    <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                    <span className="sr-only">(opens in new window)</span>
-                  </a>
-                </div>
+
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="bug-title">Title</Label>
+                        <Input
+                          id="bug-title"
+                          placeholder="Brief summary of the issue"
+                          value={bugTitle}
+                          onChange={(e) => setBugTitle(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="bug-description">Description</Label>
+                        <Textarea
+                          id="bug-description"
+                          placeholder="What happened? What were you trying to do?"
+                          rows={4}
+                          value={bugDescription}
+                          onChange={(e) => setBugDescription(e.target.value)}
+                        />
+                      </div>
+
+                      <Button
+                        onClick={handleSubmitBug}
+                        disabled={!bugTitle.trim()}
+                        variant="destructive"
+                        className="w-full"
+                      >
+                        Submit to Forum
+                        <ExternalLink className="h-4 w-4 ml-2" aria-hidden="true" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <button
+                      type="button"
+                      onClick={() => setActiveForm(null)}
+                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                      Back to options
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 text-primary">
+                        <Lightbulb className="h-4 w-4" aria-hidden="true" />
+                      </div>
+                      <h3 className="font-medium text-foreground">Give Feedback</h3>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="feedback-title">Title</Label>
+                        <Input
+                          id="feedback-title"
+                          placeholder="Brief summary of your idea"
+                          value={feedbackTitle}
+                          onChange={(e) => setFeedbackTitle(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="feedback-description">Description</Label>
+                        <Textarea
+                          id="feedback-description"
+                          placeholder="Tell us more about your idea or suggestion"
+                          rows={4}
+                          value={feedbackDescription}
+                          onChange={(e) => setFeedbackDescription(e.target.value)}
+                        />
+                      </div>
+
+                      <Button
+                        onClick={handleSubmitFeedback}
+                        disabled={!feedbackTitle.trim()}
+                        className="w-full"
+                      >
+                        Submit to Forum
+                        <ExternalLink className="h-4 w-4 ml-2" aria-hidden="true" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
           </Tabs>
         </DialogContent>
