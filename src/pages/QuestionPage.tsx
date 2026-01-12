@@ -134,7 +134,7 @@ export default function QuestionPage() {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-3xl mx-auto mb-6"
           >
-            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 border border-primary/20 rounded-xl p-5 backdrop-blur-sm">
+            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 border border-primary/20 rounded-xl p-5 backdrop-blur-sm" role="region" aria-label="Sign up call to action">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-center sm:text-left">
                   <p className="font-medium text-foreground">
@@ -171,19 +171,13 @@ export default function QuestionPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="max-w-3xl mx-auto mt-8 flex flex-col sm:flex-row justify-center gap-4"
+          className="max-w-3xl mx-auto mt-8 flex justify-center"
         >
           {user ? (
-            <>
-              <Button variant="outline" onClick={() => navigate('/dashboard')}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <Button onClick={() => navigate('/dashboard?view=random-practice')}>
-                <Zap className="w-4 h-4 mr-2" />
-                Practice More Questions
-              </Button>
-            </>
+            <Button onClick={() => navigate('/dashboard?view=random-practice')}>
+              <Zap className="w-4 h-4 mr-2" />
+              Practice More Questions
+            </Button>
           ) : (
             <Button onClick={() => navigate('/auth?returnTo=/dashboard?view=random-practice')}>
               <Zap className="w-4 h-4 mr-2" />
