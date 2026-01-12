@@ -54,15 +54,20 @@ const shortcutGroups: ShortcutGroup[] = [{
 }];
 type FormType = 'bug' | 'feedback' | null;
 
+const MAX_TITLE_LENGTH = 200;
+const MAX_DESCRIPTION_LENGTH = 5000;
+
 const buildForumUrl = (type: 'bug' | 'feature', title: string, description: string) => {
   const tag = type === 'bug' ? 'bug' : 'feature';
+  const truncatedTitle = title.slice(0, MAX_TITLE_LENGTH);
+  const truncatedDescription = description.slice(0, MAX_DESCRIPTION_LENGTH);
   const bodyTemplate = type === 'bug'
-    ? `**Issue Description:**\n${description}\n\n**Steps to Reproduce:**\n1. \n2. \n3. \n\n**Expected Behavior:**\n\n**Actual Behavior:**\n`
-    : `**Feedback:**\n${description}\n\n**Why this would help:**\n`;
+    ? `**Issue Description:**\n${truncatedDescription}\n\n**Steps to Reproduce:**\n1. \n2. \n3. \n\n**Expected Behavior:**\n\n**Actual Behavior:**\n`
+    : `**Feedback:**\n${truncatedDescription}\n\n**Why this would help:**\n`;
 
   const params = new URLSearchParams({
     category: 'feedback',
-    title: title,
+    title: truncatedTitle,
     tags: tag,
     body: bodyTemplate
   });
@@ -106,7 +111,7 @@ export function HelpButton() {
   return <>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="default" size="icon" className="fixed bottom-4 right-4 h-9 w-9 rounded-full shadow-lg z-50 [&_svg]:size-7" onClick={() => setOpen(true)} aria-label="Open help dialog">
+          <Button variant="default" size="icon" className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg z-50 [&_svg]:size-7" onClick={() => setOpen(true)} aria-label="Open help dialog">
             <HelpCircle aria-hidden="true" />
           </Button>
         </TooltipTrigger>
@@ -240,6 +245,7 @@ export function HelpButton() {
                           placeholder="Brief summary of the issue"
                           value={bugTitle}
                           onChange={(e) => setBugTitle(e.target.value)}
+                          maxLength={MAX_TITLE_LENGTH}
                         />
                       </div>
 
@@ -251,12 +257,13 @@ export function HelpButton() {
                           rows={4}
                           value={bugDescription}
                           onChange={(e) => setBugDescription(e.target.value)}
+                          maxLength={MAX_DESCRIPTION_LENGTH}
                         />
                       </div>
 
                       <Button
                         onClick={handleSubmitBug}
-                        disabled={!bugTitle.trim()}
+                        disabled={!bugTitle.trim() || !bugDescription.trim()}
                         variant="destructive"
                         className="w-full"
                       >
@@ -291,6 +298,7 @@ export function HelpButton() {
                           placeholder="Brief summary of your idea"
                           value={feedbackTitle}
                           onChange={(e) => setFeedbackTitle(e.target.value)}
+                          maxLength={MAX_TITLE_LENGTH}
                         />
                       </div>
 
@@ -302,12 +310,13 @@ export function HelpButton() {
                           rows={4}
                           value={feedbackDescription}
                           onChange={(e) => setFeedbackDescription(e.target.value)}
+                          maxLength={MAX_DESCRIPTION_LENGTH}
                         />
                       </div>
 
                       <Button
                         onClick={handleSubmitFeedback}
-                        disabled={!feedbackTitle.trim()}
+                        disabled={!feedbackTitle.trim() || !feedbackDescription.trim()}
                         className="w-full"
                       >
                         Submit to Forum

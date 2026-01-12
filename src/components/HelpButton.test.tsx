@@ -133,21 +133,26 @@ describe('HelpButton', () => {
     });
   });
 
-  describe('Feedback Links', () => {
-    it('has correct feedback forum link', async () => {
+  describe('Feedback Options', () => {
+    it('shows Report a Bug button', async () => {
       const user = userEvent.setup();
       renderHelpButton();
 
       await user.click(screen.getByRole('button', { name: /open help dialog/i }));
 
       await waitFor(() => {
-        const feedbackLink = screen.getByRole('link', { name: /give feedback/i });
-        expect(feedbackLink).toHaveAttribute(
-          'href',
-          'https://forum.openhamprep.com/c/feedback/2'
-        );
-        expect(feedbackLink).toHaveAttribute('target', '_blank');
-        expect(feedbackLink).toHaveAttribute('rel', 'noopener noreferrer');
+        expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
+      });
+    });
+
+    it('shows Give Feedback button', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /give feedback/i })).toBeInTheDocument();
       });
     });
 
@@ -165,6 +170,237 @@ describe('HelpButton', () => {
         );
         expect(statusLink).toHaveAttribute('target', '_blank');
         expect(statusLink).toHaveAttribute('rel', 'noopener noreferrer');
+      });
+    });
+  });
+
+  describe('Bug Report Form', () => {
+    it('shows bug report form when Report a Bug is clicked', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /report a bug/i }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /submit to forum/i })).toBeInTheDocument();
+      });
+    });
+
+    it('shows back button in bug report form', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /report a bug/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /back to options/i })).toBeInTheDocument();
+      });
+    });
+
+    it('returns to options when back button is clicked', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /report a bug/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /back to options/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /back to options/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /give feedback/i })).toBeInTheDocument();
+      });
+    });
+
+    it('disables submit when title is empty', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /report a bug/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /submit to forum/i })).toBeDisabled();
+      });
+    });
+
+    it('disables submit when description is empty', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /report a bug/i }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
+      });
+
+      await user.type(screen.getByLabelText(/title/i), 'Test bug title');
+
+      expect(screen.getByRole('button', { name: /submit to forum/i })).toBeDisabled();
+    });
+
+    it('enables submit when both title and description have content', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /report a bug/i }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
+      });
+
+      await user.type(screen.getByLabelText(/title/i), 'Test bug title');
+      await user.type(screen.getByLabelText(/description/i), 'Test bug description');
+
+      expect(screen.getByRole('button', { name: /submit to forum/i })).not.toBeDisabled();
+    });
+
+    it('opens forum URL when submit is clicked', async () => {
+      const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /report a bug/i }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
+      });
+
+      await user.type(screen.getByLabelText(/title/i), 'Test bug');
+      await user.type(screen.getByLabelText(/description/i), 'Bug description');
+      await user.click(screen.getByRole('button', { name: /submit to forum/i }));
+
+      expect(windowOpenSpy).toHaveBeenCalledWith(
+        expect.stringContaining('https://forum.openhamprep.com/new-topic'),
+        '_blank',
+        'noopener,noreferrer'
+      );
+      expect(windowOpenSpy).toHaveBeenCalledWith(
+        expect.stringContaining('tags=bug'),
+        '_blank',
+        'noopener,noreferrer'
+      );
+
+      windowOpenSpy.mockRestore();
+    });
+  });
+
+  describe('Feedback Form', () => {
+    it('shows feedback form when Give Feedback is clicked', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /give feedback/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /give feedback/i }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /submit to forum/i })).toBeInTheDocument();
+      });
+    });
+
+    it('opens forum URL with feature tag when feedback is submitted', async () => {
+      const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /give feedback/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /give feedback/i }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
+      });
+
+      await user.type(screen.getByLabelText(/title/i), 'Feature idea');
+      await user.type(screen.getByLabelText(/description/i), 'Feature description');
+      await user.click(screen.getByRole('button', { name: /submit to forum/i }));
+
+      expect(windowOpenSpy).toHaveBeenCalledWith(
+        expect.stringContaining('tags=feature'),
+        '_blank',
+        'noopener,noreferrer'
+      );
+
+      windowOpenSpy.mockRestore();
+    });
+  });
+
+  describe('Form Reset', () => {
+    it('resets form when dialog is closed', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      // Open dialog and fill bug form
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('button', { name: /report a bug/i }));
+      await waitFor(() => {
+        expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
+      });
+
+      await user.type(screen.getByLabelText(/title/i), 'Test title');
+      await user.type(screen.getByLabelText(/description/i), 'Test description');
+
+      // Close dialog by clicking outside or pressing escape
+      await user.keyboard('{Escape}');
+
+      // Re-open dialog
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+
+      // Should show options view, not the form
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /give feedback/i })).toBeInTheDocument();
       });
     });
   });
