@@ -53,10 +53,26 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  edge-functions:
+    name: Edge Function Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Run Edge Function tests
+        run: cd supabase/functions && deno test --allow-env --allow-net
+
   build:
     name: Build Check
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, edge-functions]
 
     steps:
       - name: Checkout code

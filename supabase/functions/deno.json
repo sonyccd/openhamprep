@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.ns", "deno.unstable"]
+  },
+  "imports": {
+    "@supabase/supabase-js": "jsr:@supabase/supabase-js@2",
+    "@supabase/functions-js/edge-runtime.d.ts": "jsr:@supabase/functions-js/edge-runtime.d.ts",
+    "@std/assert": "jsr:@std/assert@1",
+    "@std/testing": "jsr:@std/testing@1"
+  },
+  "tasks": {
+    "test": "deno test --allow-env --allow-net",
+    "test:watch": "deno test --allow-env --allow-net --watch"
+  }
+}

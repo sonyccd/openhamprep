@@ -1,105 +1,28 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, SupabaseClient } from "jsr:@supabase/supabase-js@2";
 import { getCorsHeaders } from "../_shared/constants.ts";
+import {
+  validateExamType,
+  calculateReadiness,
+  DEFAULT_CONFIG,
+  type Config,
+  type Metrics,
+  type SubelementMetric,
+  type ReadinessResult,
+  type FormulaWeights,
+  type PassProbabilityConfig,
+  type RecencyPenaltyConfig,
+  type CoverageBetaConfig,
+  type BlendConfig,
+  type ThresholdsConfig,
+} from "./logic.ts";
 
 // ============================================================
-// TYPE DEFINITIONS
+// REQUEST TYPE
 // ============================================================
 
 interface ReadinessRequest {
   exam_type: "technician" | "general" | "extra";
-}
-
-interface FormulaWeights {
-  recent_accuracy: number;
-  overall_accuracy: number;
-  coverage: number;
-  mastery: number;
-  test_rate: number;
-}
-
-interface PassProbabilityConfig {
-  k: number;
-  r0: number;
-}
-
-interface RecencyPenaltyConfig {
-  max_penalty: number;
-  decay_rate: number;
-}
-
-interface CoverageBetaConfig {
-  low: number;
-  mid: number;
-  high: number;
-  low_threshold: number;
-  high_threshold: number;
-}
-
-interface BlendConfig {
-  min_recent_for_blend: number;
-  recent_window: number;
-}
-
-interface ThresholdsConfig {
-  min_attempts: number;
-  min_per_subelement: number;
-  recent_window: number;
-  subelement_recent_window: number;
-}
-
-interface Config {
-  formula_weights: FormulaWeights;
-  pass_probability: PassProbabilityConfig;
-  recency_penalty: RecencyPenaltyConfig;
-  coverage_beta: CoverageBetaConfig;
-  blend: BlendConfig;
-  thresholds: ThresholdsConfig;
-  version: string;
-}
-
-interface Metrics {
-  recentAccuracy: number | null;
-  overallAccuracy: number | null;
-  coverage: number;
-  mastery: number;
-  testsPassed: number;
-  testsTaken: number;
-  testPassRate: number;
-  daysSinceStudy: number;
-  lastStudyAt: string | null;
-  totalAttempts: number;
-  uniqueQuestionsSeen: number;
-  totalPoolSize: number;
-}
-
-interface SubelementMetric {
-  accuracy: number | null;
-  recent_accuracy: number | null;
-  coverage: number;
-  mastery: number;
-  risk_score: number;
-  expected_score: number;
-  weight: number;
-  pool_size: number;
-  attempts_count: number;
-  recent_attempts_count: number;
-}
-
-interface ReadinessResult {
-  readinessScore: number;
-  passProbability: number;
-  recencyPenalty: number;
-  expectedExamScore: number;
-}
-
-// ============================================================
-// INPUT VALIDATION
-// ============================================================
-
-function validateExamType(examType: unknown): examType is "technician" | "general" | "extra" {
-  return typeof examType === "string" &&
-    ["technician", "general", "extra"].includes(examType);
 }
 
 function validateRequest(body: unknown): ReadinessRequest {
@@ -340,46 +263,6 @@ Deno.serve(async (req: Request) => {
 });
 
 // ============================================================
-// DEFAULT CONFIGURATION (fallback if DB config unavailable)
-// ============================================================
-
-const DEFAULT_CONFIG: Config = {
-  formula_weights: {
-    recent_accuracy: 35,
-    overall_accuracy: 20,
-    coverage: 15,
-    mastery: 15,
-    test_rate: 15,
-  },
-  pass_probability: {
-    k: 0.15,
-    r0: 65,
-  },
-  recency_penalty: {
-    max_penalty: 10,
-    decay_rate: 0.5,
-  },
-  coverage_beta: {
-    low: 1.2,
-    mid: 1.0,
-    high: 0.9,
-    low_threshold: 0.3,
-    high_threshold: 0.7,
-  },
-  blend: {
-    min_recent_for_blend: 5,
-    recent_window: 20,
-  },
-  thresholds: {
-    min_attempts: 50,
-    min_per_subelement: 2,
-    recent_window: 50,
-    subelement_recent_window: 20,
-  },
-  version: "v1.0.0-default",
-};
-
-// ============================================================
 // RATE LIMITING (cache freshness check)
 // ============================================================
 
@@ -557,18 +440,16 @@ async function gatherMetrics(
   const coverage = totalPoolSize ? uniqueQuestionsSeen / totalPoolSize : 0;
 
   // Mastery (questions correct 2+ times)
+  // Use a join instead of .in() with many IDs to avoid URL length limits
   let masteredCount = 0;
   try {
-    const questionIds = await getQuestionIdsForPrefix(supabase, prefix);
-    if (questionIds.length > 0) {
-      const { count } = await supabase
-        .from("question_mastery")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("is_mastered", true)
-        .in("question_id", questionIds);
-      masteredCount = count || 0;
-    }
+    const { count } = await supabase
+      .from("question_mastery")
+      .select("question_id, questions!inner(display_name)", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("is_mastered", true)
+      .like("questions.display_name", `${prefix}%`);
+    masteredCount = count || 0;
   } catch (err) {
     console.warn(`[${requestId}] Failed to get mastery:`, err);
   }
@@ -617,56 +498,8 @@ async function gatherMetrics(
   };
 }
 
-async function getQuestionIdsForPrefix(
-  supabase: SupabaseClient,
-  prefix: string
-): Promise<string[]> {
-  const { data } = await supabase
-    .from("questions")
-    .select("id")
-    .like("display_name", `${prefix}%`);
-  return data?.map((q) => q.id) || [];
-}
-
 function prefixToExamType(prefix: string): string {
   return prefix === "T" ? "technician" : prefix === "G" ? "general" : "extra";
-}
-
-// ============================================================
-// READINESS CALCULATION - ALL FORMULAS CENTRALIZED HERE
-// ============================================================
-
-function calculateReadiness(metrics: Metrics, config: Config): ReadinessResult {
-  const w = config.formula_weights;
-
-  // Readiness Score: R = w1*A_r + w2*A_o + w3*C + w4*M + w5*T_rate - penalty
-  // Note: weights are already scaled (35, 20, 15, 15, 15) and metrics are 0-1
-  const rawScore =
-    w.recent_accuracy * (metrics.recentAccuracy ?? 0) +
-    w.overall_accuracy * (metrics.overallAccuracy ?? 0) +
-    w.coverage * metrics.coverage +
-    w.mastery * metrics.mastery +
-    w.test_rate * metrics.testPassRate;
-
-  // Recency penalty: penalty = min(max_penalty, decay_rate * days)
-  const recencyPenalty = Math.min(
-    config.recency_penalty.max_penalty,
-    config.recency_penalty.decay_rate * metrics.daysSinceStudy
-  );
-
-  // Clamp final score to 0-100
-  const readinessScore = Math.max(0, Math.min(100, rawScore - recencyPenalty));
-
-  // Pass probability using logistic function: P = 1 / (1 + e^(-k(R - R_0)))
-  const { k, r0 } = config.pass_probability;
-  const passProbability = 1 / (1 + Math.exp(-k * (readinessScore - r0)));
-
-  return {
-    readinessScore,
-    passProbability,
-    recencyPenalty,
-    expectedExamScore: 0, // Calculated from subelements later
-  };
 }
 
 // ============================================================
@@ -741,7 +574,6 @@ async function calculateSubelementMetrics(
   }
 
   const questions: QuestionData[] = questionsData || [];
-  const questionIds = questions.map((q) => q.id);
 
   // Group questions by subelement for pool size
   const poolSizeBySubelement = new Map<string, number>();
@@ -760,13 +592,14 @@ async function calculateSubelementMetrics(
   }
 
   // ===== BATCH 3: Get all attempts for these questions =====
+  // Use a join instead of .in() with many IDs to avoid URL length limits
   let attempts: AttemptData[] = [];
-  if (questionIds.length > 0) {
+  if (subelementCodes.length > 0) {
     const { data: attemptsData, error: attemptsError } = await supabase
       .from("question_attempts")
-      .select("question_id, is_correct, attempted_at")
+      .select("question_id, is_correct, attempted_at, questions!inner(subelement)")
       .eq("user_id", userId)
-      .in("question_id", questionIds)
+      .in("questions.subelement", subelementCodes)
       .order("attempted_at", { ascending: false });
 
     if (attemptsError) {
@@ -791,14 +624,15 @@ async function calculateSubelementMetrics(
   }
 
   // ===== BATCH 4: Get all mastery data for these questions =====
+  // Use a join instead of .in() with many IDs to avoid URL length limits
   let masteryData: MasteryData[] = [];
-  if (questionIds.length > 0) {
+  if (subelementCodes.length > 0) {
     const { data: masteryResult, error: masteryError } = await supabase
       .from("question_mastery")
-      .select("question_id")
+      .select("question_id, questions!inner(subelement)")
       .eq("user_id", userId)
       .eq("is_mastered", true)
-      .in("question_id", questionIds);
+      .in("questions.subelement", subelementCodes);
 
     if (masteryError) {
       console.warn(`[${requestId}] Failed to get mastery:`, masteryError);
