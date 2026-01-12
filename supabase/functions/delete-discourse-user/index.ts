@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  buildUserLookupUrl,
+  buildUserDeleteUrl,
+  type DiscourseConfig,
+} from "./logic.ts";
 
 /**
  * Edge function to delete a user from Discourse forum.
@@ -98,16 +103,13 @@ async function findDiscourseUserByExternalId(
   externalId: string
 ): Promise<DiscourseUser | null> {
   try {
-    // Discourse provides an endpoint to look up users by external_id
-    const response = await fetch(
-      `${config.url}/u/by-external/${encodeURIComponent(externalId)}.json`,
-      {
-        headers: {
-          'Api-Key': config.apiKey,
-          'Api-Username': config.username,
-        },
-      }
-    );
+    // Use buildUserLookupUrl from logic.ts
+    const response = await fetch(buildUserLookupUrl(config.url, externalId), {
+      headers: {
+        'Api-Key': config.apiKey,
+        'Api-Username': config.username,
+      },
+    });
 
     if (response.status === 404) {
       // User not found in Discourse - they may have never logged in to forum
@@ -151,16 +153,13 @@ async function deleteDiscourseUser(
   } = {}
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Build query parameters
-    const params = new URLSearchParams();
-    if (options.deletePosts) {
-      params.append('delete_posts', 'true');
-    }
-    if (options.blockEmail) {
-      params.append('block_email', 'true');
-    }
-
-    const url = `${config.url}/admin/users/${discourseUserId}.json${params.toString() ? '?' + params.toString() : ''}`;
+    // Use buildUserDeleteUrl from logic.ts
+    const url = buildUserDeleteUrl(
+      config.url,
+      discourseUserId,
+      options.deletePosts ?? false,
+      options.blockEmail ?? false
+    );
 
     const response = await fetch(url, {
       method: 'DELETE',

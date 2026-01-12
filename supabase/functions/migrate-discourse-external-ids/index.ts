@@ -5,6 +5,10 @@ import {
   DISCOURSE_URL,
   isServiceRoleToken,
 } from "../_shared/constants.ts";
+import {
+  isValidDiscourseUrl,
+  extractTopicId,
+} from "./logic.ts";
 
 /**
  * Migrate Discourse External IDs Edge Function
@@ -48,28 +52,6 @@ interface MigrationResult {
   topicId: number;
   status: "updated" | "error";
   reason?: string;
-}
-
-/**
- * Validate that a forum_url is a trusted Discourse URL.
- * Prevents SSRF attacks where malicious forum_url could point to internal servers.
- */
-function isValidDiscourseUrl(forumUrl: string): boolean {
-  if (!forumUrl) return false;
-  return forumUrl.startsWith(DISCOURSE_URL);
-}
-
-/**
- * Extract topic ID from a Discourse forum URL.
- * Returns null if URL is not from our Discourse instance (security check).
- */
-function extractTopicId(forumUrl: string): number | null {
-  // Security: Only process URLs from our Discourse instance
-  if (!isValidDiscourseUrl(forumUrl)) {
-    return null;
-  }
-  const match = forumUrl.match(/\/t\/(?:[^/]+\/)?(\d+)/);
-  return match ? parseInt(match[1], 10) : null;
 }
 
 /**

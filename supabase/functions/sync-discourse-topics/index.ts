@@ -10,6 +10,11 @@ import {
   isServiceRoleToken,
   fetchWithBackoff,
 } from "../_shared/constants.ts";
+import {
+  formatTopicBody,
+  formatTopicTitle,
+  type Question as LogicQuestion,
+} from "./logic.ts";
 
 // Sync-specific configuration
 const DEFAULT_BATCH_SIZE = 50;
@@ -190,35 +195,6 @@ async function fetchExistingTopicsInCategory(
   return existingQuestionIds;
 }
 
-function formatTopicBody(question: Question): string {
-  const letters = ['A', 'B', 'C', 'D'];
-  const correctLetter = letters[question.correct_answer];
-
-  const optionsText = question.options
-    .map((opt, i) => `- **${letters[i]})** ${opt}`)
-    .join('\n');
-
-  const explanationText = question.explanation
-    ? question.explanation
-    : '_No explanation yet. Help improve this by contributing below!_';
-
-  return `## Question
-${question.question}
-
-## Answer Options
-${optionsText}
-
-**Correct Answer: ${correctLetter}**
-
----
-
-## Explanation
-${explanationText}
-
----
-_This topic was automatically created to facilitate community discussion about this exam question. Feel free to share study tips, memory tricks, or additional explanations!_`;
-}
-
 async function createDiscourseTopic(
   apiKey: string,
   username: string,
@@ -226,14 +202,9 @@ async function createDiscourseTopic(
   question: Question,
   requestId: string
 ): Promise<{ success: boolean; topicId?: number; topicUrl?: string; error?: string; wasExisting?: boolean }> {
-  // Truncate title if needed (Discourse has a 255 char limit)
-  // Use display_name (e.g., T1A01) in the topic title for human readability
-  let title = `${question.display_name} - ${question.question}`;
-  if (title.length > MAX_TITLE_LENGTH) {
-    title = title.substring(0, MAX_TITLE_LENGTH - 3) + '...';
-  }
-
-  const body = formatTopicBody(question);
+  // Use formatTopicTitle from logic.ts for consistent title truncation
+  const title = formatTopicTitle(question.display_name, question.question);
+  const body = formatTopicBody(question as LogicQuestion);
 
   try {
     const response = await fetchWithBackoff(
@@ -489,11 +460,9 @@ serve(async (req) => {
         const prefix = question.display_name[0];
         const countForPrefix = exampleTopics.filter(e => e.questionId[0] === prefix).length;
         if (countForPrefix < 3) {
-          let title = `${question.display_name} - ${question.question}`;
-          if (title.length > MAX_TITLE_LENGTH) {
-            title = title.substring(0, MAX_TITLE_LENGTH - 3) + '...';
-          }
-          const body = formatTopicBody(question);
+          // Use formatTopicTitle from logic.ts
+          const title = formatTopicTitle(question.display_name, question.question);
+          const body = formatTopicBody(question as LogicQuestion);
           exampleTopics.push({
             questionId: question.display_name,
             category: CATEGORY_MAP[prefix],

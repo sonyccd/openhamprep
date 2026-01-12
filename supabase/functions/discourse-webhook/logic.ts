@@ -5,7 +5,7 @@
 // Extracted for testability
 // ============================================================
 
-import { QUESTION_ID_PATTERN } from "../_shared/constants.ts";
+import { QUESTION_ID_PATTERN, DISCOURSE_URL } from "../_shared/constants.ts";
 
 /**
  * Extract the explanation text from the Discourse post markdown.
@@ -84,9 +84,17 @@ export function extractQuestionIdFromTitle(
  * Handles URLs like:
  * - https://forum.openhamprep.com/t/topic-slug/123
  * - https://forum.openhamprep.com/t/123
+ *
+ * SECURITY: Validates that the URL is from the expected Discourse domain
+ * to prevent SSRF attacks.
  */
 export function extractTopicIdFromUrl(forumUrl: string | null | undefined): number | null {
   if (!forumUrl) {
+    return null;
+  }
+
+  // SECURITY: Validate URL is from our Discourse instance to prevent SSRF
+  if (!forumUrl.startsWith(DISCOURSE_URL)) {
     return null;
   }
 

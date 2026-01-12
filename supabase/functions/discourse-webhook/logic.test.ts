@@ -221,6 +221,27 @@ Deno.test("extractTopicIdFromUrl - returns null for URL without topic ID", () =>
   );
 });
 
+Deno.test("extractTopicIdFromUrl - returns null for wrong domain (SSRF prevention)", () => {
+  assertEquals(
+    extractTopicIdFromUrl("https://evil.com/t/topic-slug/123"),
+    null
+  );
+});
+
+Deno.test("extractTopicIdFromUrl - returns null for similar but different domain", () => {
+  assertEquals(
+    extractTopicIdFromUrl("https://forum.openhamprep.com.evil.com/t/123"),
+    null
+  );
+});
+
+Deno.test("extractTopicIdFromUrl - returns null for different protocol", () => {
+  assertEquals(
+    extractTopicIdFromUrl("http://forum.openhamprep.com/t/123"),
+    null
+  );
+});
+
 // ============================================================
 // isValidSignatureFormat Tests
 // ============================================================
