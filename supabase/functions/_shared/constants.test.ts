@@ -130,6 +130,28 @@ Deno.test("decodeJwtPayload - returns null for invalid base64", () => {
   assertEquals(decodeJwtPayload("header.!!!invalid!!.signature"), null);
 });
 
+Deno.test("decodeJwtPayload - handles base64url with different padding requirements", () => {
+  // Test payloads that result in different padding lengths (0, 1, 2 '=' chars)
+  // Single char payload requires 2 padding chars
+  const shortPayload = { a: 1 };
+  const encoded1 = btoa(JSON.stringify(shortPayload))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+  const result1 = decodeJwtPayload(`header.${encoded1}.signature`);
+  assertEquals(result1?.a, 1);
+
+  // Longer payload with different padding requirement
+  const mediumPayload = { role: "authenticated", sub: "user-123" };
+  const encoded2 = btoa(JSON.stringify(mediumPayload))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+  const result2 = decodeJwtPayload(`header.${encoded2}.signature`);
+  assertEquals(result2?.role, "authenticated");
+  assertEquals(result2?.sub, "user-123");
+});
+
 Deno.test("decodeJwtPayload - returns null for non-JSON payload", () => {
   const nonJson = btoa("not json");
   assertEquals(decodeJwtPayload(`header.${nonJson}.signature`), null);

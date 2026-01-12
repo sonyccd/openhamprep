@@ -34,6 +34,13 @@ export const CRAWLER_PATTERNS = [
 ];
 
 /**
+ * Minimum ratio of text to preserve when breaking at word boundary.
+ * If the last space is less than this fraction of maxLength, we truncate
+ * at maxLength instead of at the word boundary to avoid losing too much text.
+ */
+const WORD_BREAK_MIN_RATIO = 0.7;
+
+/**
  * Truncate text to a maximum length, adding ellipsis if needed.
  * Tries to break at word boundaries.
  */
@@ -44,8 +51,8 @@ export function truncateText(text: string, maxLength: number): string {
   const truncated = text.slice(0, maxLength);
   const lastSpace = truncated.lastIndexOf(" ");
 
-  // Only break at word boundary if it's reasonably far into the string
-  if (lastSpace > maxLength * 0.7) {
+  // Only break at word boundary if it preserves enough text
+  if (lastSpace > maxLength * WORD_BREAK_MIN_RATIO) {
     return truncated.slice(0, lastSpace) + "...";
   }
 

@@ -6,7 +6,7 @@ import {
   detectType,
   extractSiteName,
   extractUrlsFromText,
-  isUUID,
+  isLooseUUID,
 } from "./logic.ts";
 
 const corsHeaders = {
@@ -85,7 +85,7 @@ serve(async (req) => {
 
     // Helper to get question by ID (supports both UUID and display_name)
     const getQuestionById = async (qId: string, selectColumns: string = 'id, links') => {
-      const lookupColumn = isUUID(qId) ? 'id' : 'display_name';
+      const lookupColumn = isLooseUUID(qId) ? 'id' : 'display_name';
       const { data, error } = await supabase
         .from('questions')
         .select(selectColumns)

@@ -10,7 +10,7 @@ import {
   detectType,
   extractSiteName,
   extractUrlsFromText,
-  isUUID,
+  isLooseUUID,
   cleanTrailingPunctuation,
   VIDEO_DOMAINS,
 } from "./logic.ts";
@@ -283,25 +283,25 @@ Deno.test("extractUrlsFromText - handles URLs with fragments", () => {
 });
 
 // ============================================================
-// isUUID Tests
+// isLooseUUID Tests
 // ============================================================
 
-Deno.test("isUUID - returns true for valid UUID", () => {
-  assertEquals(isUUID("550e8400-e29b-41d4-a716-446655440000"), true);
-  assertEquals(isUUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8"), true);
+Deno.test("isLooseUUID - returns true for valid UUID", () => {
+  assertEquals(isLooseUUID("550e8400-e29b-41d4-a716-446655440000"), true);
+  assertEquals(isLooseUUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8"), true);
 });
 
-Deno.test("isUUID - returns true for uppercase UUID", () => {
-  assertEquals(isUUID("550E8400-E29B-41D4-A716-446655440000"), true);
+Deno.test("isLooseUUID - returns true for uppercase UUID", () => {
+  assertEquals(isLooseUUID("550E8400-E29B-41D4-A716-446655440000"), true);
 });
 
-Deno.test("isUUID - returns false for invalid format", () => {
-  assertEquals(isUUID("not-a-uuid"), false);
-  assertEquals(isUUID("T1A01"), false);
+Deno.test("isLooseUUID - returns false for invalid format", () => {
+  assertEquals(isLooseUUID("not-a-uuid"), false);
+  assertEquals(isLooseUUID("T1A01"), false);
 });
 
-Deno.test("isUUID - returns false for wrong length", () => {
-  assertEquals(isUUID("550e8400-e29b-41d4-a716-44665544000"), false);
+Deno.test("isLooseUUID - returns false for wrong length", () => {
+  assertEquals(isLooseUUID("550e8400-e29b-41d4-a716-44665544000"), false);
 });
 
 // ============================================================

@@ -183,8 +183,9 @@ export function extractUrlsFromText(text: string | null | undefined): string[] {
   }
 
   // Extract bare URLs (not inside markdown links)
+  // Limit URL length to prevent ReDoS attacks
   const textWithoutMarkdownLinks = text.replace(markdownLinkRegex, "");
-  const bareUrlRegex = /https?:\/\/[^\s<>[\]()]+/gi;
+  const bareUrlRegex = /https?:\/\/[^\s<>[\]()]{1,2048}/gi;
   while ((match = bareUrlRegex.exec(textWithoutMarkdownLinks)) !== null) {
     const url = match[0].replace(/[.,;:!?'"]+$/, ""); // Clean trailing punctuation
     if (!seen.has(url)) {
@@ -198,9 +199,10 @@ export function extractUrlsFromText(text: string | null | undefined): string[] {
 
 /**
  * Helper to detect if a string is a UUID format.
- * Note: This is a loose check (any UUID version), not strict v4.
+ * This is a loose check that matches any UUID version, not strict v4 validation.
+ * Use isValidUuid from constants.ts for strict v4 validation.
  */
-export function isUUID(str: string): boolean {
+export function isLooseUUID(str: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     str
   );
