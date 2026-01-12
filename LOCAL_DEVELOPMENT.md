@@ -2,6 +2,27 @@
 
 This guide shows you how to run the entire Open Ham Prep stack locally, including a local Supabase instance. This is perfect for contributors who want to develop without needing access to the hosted Supabase project.
 
+## Quick Start (2 Minutes)
+
+**Prerequisites:** Node.js 20+, Docker Desktop (running)
+
+```bash
+git clone https://github.com/sonyccd/openhamprep.git
+cd openhamprep
+npm install
+npm run dev:full
+```
+
+**What You Get:**
+- **Application**: http://localhost:8080
+- **Database GUI**: http://localhost:54323 (Supabase Studio)
+- **Email Testing**: http://localhost:54324
+- **PostgreSQL**: localhost:54322
+
+**Sample Data Included:** 40 Technician questions, 35 General, 35 Extra, 30 glossary terms, 5 exam sessions.
+
+---
+
 ## Prerequisites
 
 - **Node.js 20+** (Supabase CLI requires Node 20)

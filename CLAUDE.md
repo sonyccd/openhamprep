@@ -56,8 +56,7 @@ The app is wrapped in multiple providers in this order:
 1. ThemeProvider (next-themes)
 2. QueryClientProvider (TanStack Query)
 3. AuthProvider (custom Supabase auth)
-4. PostHogProvider (analytics)
-5. AppNavigationProvider (global license filter state)
+4. AppNavigationProvider (global license filter state)
 
 **Data Hooks Pattern**:
 - `useQuestions()` - Fetches all questions, caches for 1 hour
@@ -223,7 +222,7 @@ This starts:
 - Supabase Studio (GUI) at http://localhost:54323
 - Dev server at http://localhost:8080
 
-See `LOCAL_SETUP_QUICKSTART.md` and `LOCAL_DEVELOPMENT.md` for details.
+See `LOCAL_DEVELOPMENT.md` for details.
 
 ### Sample Data
 
@@ -251,13 +250,6 @@ The app uses Supabase as the backend:
 - **Edge Functions**: Deployed via `supabase functions deploy`
 - **Migrations**: Applied via `supabase db push`
 - **Production URL**: https://app.openhamprep.com
-
-### Migration from Lovable Cloud
-
-To migrate from Lovable Cloud to a standalone Supabase project:
-1. Run the migration script: `./migrate-to-supabase.sh`
-2. Follow the prompts to link your project and apply migrations
-3. See `docs/SUPABASE_MIGRATION.md` for detailed instructions
 
 ### Preview Branches (Vercel + Supabase)
 
