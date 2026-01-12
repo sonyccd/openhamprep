@@ -134,13 +134,13 @@ export function HelpButton() {
 
           <Tabs defaultValue="feedback" className="mt-2">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="shortcuts" className="flex items-center gap-2">
-                <Keyboard className="h-4 w-4" aria-hidden="true" />
-                Shortcuts
-              </TabsTrigger>
               <TabsTrigger value="feedback" className="flex items-center gap-2">
                 <Lightbulb className="h-4 w-4" aria-hidden="true" />
                 Feedback
+              </TabsTrigger>
+              <TabsTrigger value="shortcuts" className="flex items-center gap-2">
+                <Keyboard className="h-4 w-4" aria-hidden="true" />
+                Shortcuts
               </TabsTrigger>
             </TabsList>
 
