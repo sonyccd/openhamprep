@@ -117,13 +117,44 @@ export default function QuestionPage() {
       </div>
 
       <div className="py-8 px-4 pb-24 md:pb-8">
-        {/* Back button */}
-        <div className="max-w-3xl mx-auto mb-6">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
-        </div>
+        {/* Dashboard button for logged-in users only */}
+        {user && (
+          <div className="max-w-3xl mx-auto mb-6">
+            <Button variant="ghost" onClick={() => navigate('/dashboard')} className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Dashboard
+            </Button>
+          </div>
+        )}
+
+        {/* Sign-up CTA for anonymous users - shown at top */}
+        {!user && !authLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-3xl mx-auto mb-6"
+          >
+            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 border border-primary/20 rounded-xl p-5 backdrop-blur-sm">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-center sm:text-left">
+                  <p className="font-medium text-foreground">
+                    Want to track your progress?
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Create a free account to bookmark questions & access study tools.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => navigate(`/auth?returnTo=/questions/${id}`)}
+                  className="shrink-0 shadow-md hover:shadow-lg transition-shadow"
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Create Free Account
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Question Card - showing result immediately */}
         <QuestionCard
@@ -134,26 +165,6 @@ export default function QuestionPage() {
           enableGlossaryHighlight
           onTopicClick={handleTopicClick}
         />
-
-        {/* Sign-up CTA for anonymous users */}
-        {!user && !authLoading && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="max-w-3xl mx-auto mt-6"
-          >
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-center">
-              <p className="text-muted-foreground mb-3">
-                Create a free account to track your progress, bookmark questions, and access more study tools.
-              </p>
-              <Button onClick={() => navigate(`/auth?returnTo=/questions/${id}`)}>
-                <UserPlus className="w-4 h-4 mr-2" />
-                Create Free Account
-              </Button>
-            </div>
-          </motion.div>
-        )}
 
         {/* Navigation actions */}
         <motion.div
@@ -174,16 +185,10 @@ export default function QuestionPage() {
               </Button>
             </>
           ) : (
-            <>
-              <Button variant="outline" onClick={() => navigate('/')}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Home
-              </Button>
-              <Button onClick={() => navigate('/auth?returnTo=/dashboard?view=random-practice')}>
-                <Zap className="w-4 h-4 mr-2" />
-                Start Practicing
-              </Button>
-            </>
+            <Button onClick={() => navigate('/auth?returnTo=/dashboard?view=random-practice')}>
+              <Zap className="w-4 h-4 mr-2" />
+              Start Practicing
+            </Button>
           )}
         </motion.div>
       </div>
