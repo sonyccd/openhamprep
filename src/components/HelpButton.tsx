@@ -17,21 +17,6 @@ interface ShortcutGroup {
   shortcuts: ShortcutItem[];
 }
 const shortcutGroups: ShortcutGroup[] = [{
-  title: 'Answering Questions',
-  shortcuts: [{
-    keys: ['A'],
-    description: 'Select answer A'
-  }, {
-    keys: ['B'],
-    description: 'Select answer B'
-  }, {
-    keys: ['C'],
-    description: 'Select answer C'
-  }, {
-    keys: ['D'],
-    description: 'Select answer D'
-  }]
-}, {
   title: 'Navigation',
   shortcuts: [{
     keys: ['→'],
@@ -41,18 +26,18 @@ const shortcutGroups: ShortcutGroup[] = [{
     description: 'Previous question'
   }, {
     keys: ['S'],
-    description: 'Skip question (Random Practice)'
+    description: 'Skip question'
   }, {
     keys: ['Esc'],
     description: 'Go back / Close'
-  }]
-}, {
-  title: 'Tools',
-  shortcuts: [{
+  }, {
     keys: ['?'],
-    description: 'Show this help dialog'
+    description: 'Show help'
   }]
 }];
+
+// Answer keys shown separately in a compact grid
+const answerKeys = ['A', 'B', 'C', 'D'];
 type FormType = 'bug' | 'feedback' | null;
 
 const MAX_TITLE_LENGTH = 200;
@@ -155,27 +140,51 @@ export function HelpButton() {
               </TabsTrigger>
             </TabsList>
 
-              <TabsContent value="shortcuts" className="mt-4 space-y-4 h-[340px] overflow-y-auto">
-                {shortcutGroups.map(group => <div key={group.title}>
+              <TabsContent value="shortcuts" className="mt-4 space-y-4 h-[340px]">
+                {/* Answer keys in compact grid */}
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                    Answer Selection
+                  </h3>
+                  <div className="flex gap-2">
+                    {answerKeys.map(key => (
+                      <div key={key} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted/50">
+                        <kbd className="inline-flex items-center justify-center w-6 h-6 text-xs font-mono font-medium bg-background border border-border rounded">
+                          {key}
+                        </kbd>
+                        <span className="text-sm text-muted-foreground">Answer {key}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Navigation shortcuts */}
+                {shortcutGroups.map(group => (
+                  <div key={group.title}>
                     <h3 className="text-sm font-medium text-muted-foreground mb-2">
                       {group.title}
                     </h3>
-                    <div className="space-y-1.5">
-                      {group.shortcuts.map((shortcut, index) => <div key={index} className="flex items-center justify-between py-1">
+                    <div className="space-y-1">
+                      {group.shortcuts.map((shortcut, index) => (
+                        <div key={index} className="flex items-center justify-between py-0.5">
                           <span className="text-sm text-foreground">
                             {shortcut.description}
                           </span>
                           <div className="flex items-center gap-1">
-                            {shortcut.keys.map((key, keyIndex) => <kbd key={keyIndex} className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 text-xs font-mono font-medium bg-muted border border-border rounded">
+                            {shortcut.keys.map((key, keyIndex) => (
+                              <kbd key={keyIndex} className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 text-xs font-mono font-medium bg-muted border border-border rounded">
                                 {key}
-                              </kbd>)}
+                              </kbd>
+                            ))}
                           </div>
-                        </div>)}
+                        </div>
+                      ))}
                     </div>
-                  </div>)}
+                  </div>
+                ))}
               </TabsContent>
 
-              <TabsContent value="feedback" className="mt-4 h-[340px] overflow-y-auto">
+              <TabsContent value="feedback" className="mt-4 h-[340px]">
                 {activeForm === null ? (
                   <div className="space-y-4">
                     <p className="text-sm text-muted-foreground">

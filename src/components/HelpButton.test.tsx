@@ -89,9 +89,8 @@ describe('HelpButton', () => {
       await user.click(screen.getByRole('tab', { name: /shortcuts/i }));
 
       await waitFor(() => {
-        expect(screen.getByText('Answering Questions')).toBeInTheDocument();
+        expect(screen.getByText('Answer Selection')).toBeInTheDocument();
         expect(screen.getByText('Navigation')).toBeInTheDocument();
-        expect(screen.getByText('Tools')).toBeInTheDocument();
       });
     });
 
@@ -108,8 +107,8 @@ describe('HelpButton', () => {
       await user.click(screen.getByRole('tab', { name: /shortcuts/i }));
 
       await waitFor(() => {
-        expect(screen.getByText('Select answer A')).toBeInTheDocument();
-        expect(screen.getByText('Select answer B')).toBeInTheDocument();
+        expect(screen.getByText('Answer A')).toBeInTheDocument();
+        expect(screen.getByText('Answer B')).toBeInTheDocument();
         expect(screen.getByText('Next question')).toBeInTheDocument();
       });
     });
@@ -127,7 +126,7 @@ describe('HelpButton', () => {
       await user.click(screen.getByRole('tab', { name: /shortcuts/i }));
 
       await waitFor(() => {
-        expect(screen.getByText('Answering Questions')).toBeInTheDocument();
+        expect(screen.getByText('Answer Selection')).toBeInTheDocument();
         expect(screen.getByText('Navigation')).toBeInTheDocument();
       });
     });
