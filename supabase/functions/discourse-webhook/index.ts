@@ -1,6 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { QUESTION_ID_PATTERN, isValidUuid } from "../_shared/constants.ts";
+import { isValidUuid } from "../_shared/constants.ts";
+import {
+  parseExplanationFromPost,
+  extractQuestionIdFromTitle,
+  isValidSignatureFormat,
+  toHexString,
+  constantTimeEquals,
+} from "./logic.ts";
 
 /**
  * Discourse Webhook Handler for Explanation Sync
@@ -35,8 +42,8 @@ async function verifyDiscourseSignature(
   secret: string
 ): Promise<boolean> {
   try {
-    // Discourse sends signature as "sha256=HEXDIGEST"
-    if (!signature.startsWith("sha256=")) {
+    // Validate signature format
+    if (!isValidSignatureFormat(signature)) {
       console.error("Invalid signature format: missing sha256= prefix");
       return false;
     }
@@ -60,96 +67,14 @@ async function verifyDiscourseSignature(
     );
 
     // Convert to hex string
-    const computedDigest = Array.from(new Uint8Array(signatureBuffer))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+    const computedDigest = toHexString(new Uint8Array(signatureBuffer));
 
     // Constant-time comparison to prevent timing attacks
-    if (providedDigest.length !== computedDigest.length) {
-      return false;
-    }
-
-    let result = 0;
-    for (let i = 0; i < providedDigest.length; i++) {
-      result |= providedDigest.charCodeAt(i) ^ computedDigest.charCodeAt(i);
-    }
-
-    return result === 0;
+    return constantTimeEquals(providedDigest, computedDigest);
   } catch (error) {
     console.error("Signature verification error:", error);
     return false;
   }
-}
-
-// =============================================================================
-// EXPLANATION PARSING
-// =============================================================================
-
-/**
- * Extract the explanation text from the Discourse post markdown.
- *
- * Expected format (created by sync-discourse-topics):
- * ## Question
- * {question text}
- *
- * ## Answer Options
- * ...
- *
- * ## Explanation
- * {explanation text}
- *
- * ---
- * _This topic was automatically created..._
- *
- * @returns The explanation text, or null if not found/parseable
- */
-function parseExplanationFromPost(rawContent: string): string | null {
-  // Handle null/undefined input
-  if (!rawContent) {
-    return null;
-  }
-
-  // Find the "## Explanation" section - capture until --- or next ## or end
-  const explanationMatch = rawContent.match(
-    /##\s*Explanation\s*\n([\s\S]*?)(?:\n---|\n##|$)/i
-  );
-
-  if (!explanationMatch) {
-    return null;
-  }
-
-  let explanation = explanationMatch[1].trim();
-
-  // Handle the placeholder text that means "no explanation"
-  if (
-    explanation === "_No explanation yet. Help improve this by contributing below!_"
-  ) {
-    return null;
-  }
-
-  // Clean up any trailing whitespace or empty lines
-  explanation = explanation.replace(/\s+$/, "");
-
-  // Return null for empty or whitespace-only content, or if it's just "---"
-  if (!explanation || explanation === "---") {
-    return null;
-  }
-
-  return explanation;
-}
-
-/**
- * Extract question ID from topic title.
- * Format: "T1A01 - Question text..."
- */
-function extractQuestionIdFromTitle(title: string): string | null {
-  // Handle null/undefined input
-  if (!title) {
-    return null;
-  }
-
-  const match = title.match(QUESTION_ID_PATTERN);
-  return match ? match[1] : null;
 }
 
 // =============================================================================
