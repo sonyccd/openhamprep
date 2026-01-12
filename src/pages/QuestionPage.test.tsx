@@ -168,14 +168,14 @@ describe('QuestionPage', () => {
       expect(screen.queryByText(/create a free account/i)).not.toBeInTheDocument();
     });
 
-    it('shows Back to Home button for anonymous users', () => {
+    it('hides back button for anonymous users', () => {
       mockUser = null;
       mockAuthLoading = false;
 
       renderQuestionPage('T1A01');
 
-      expect(screen.getByRole('button', { name: /back to home/i })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /back to dashboard/i })).not.toBeInTheDocument();
+      // Anonymous users from shared URLs should not see a back button since we don't know where they came from
+      expect(screen.queryByRole('button', { name: /^dashboard$/i })).not.toBeInTheDocument();
     });
 
     it('shows Start Practicing button for anonymous users', () => {
@@ -272,23 +272,13 @@ describe('QuestionPage', () => {
   });
 
   describe('Navigation', () => {
-    it('renders back button', () => {
-      renderQuestionPage('T1A01');
-
-      expect(screen.getByRole('button', { name: /back$/i })).toBeInTheDocument();
-    });
-
-    it('renders Back to Dashboard button for logged-in users', () => {
+    it('renders Dashboard button for logged-in users', () => {
       mockUser = { id: 'test-user', email: 'test@example.com' };
       renderQuestionPage('T1A01');
 
-      expect(screen.getByRole('button', { name: /back to dashboard/i })).toBeInTheDocument();
-    });
-
-    it('renders Practice More Questions button for logged-in users', () => {
-      mockUser = { id: 'test-user', email: 'test@example.com' };
-      renderQuestionPage('T1A01');
-
+      // Should show "Dashboard" button at top
+      expect(screen.getByRole('button', { name: /^dashboard$/i })).toBeInTheDocument();
+      // Should show "Practice More Questions" as primary action
       expect(screen.getByRole('button', { name: /practice more questions/i })).toBeInTheDocument();
     });
   });
