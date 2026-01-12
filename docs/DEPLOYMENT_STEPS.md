@@ -307,7 +307,7 @@ on:
 
 1. **Test on Mobile:** Verify responsive design works
 2. **SEO:** Submit sitemap to Google Search Console
-3. **Analytics:** Verify PostHog tracking works in app
+3. **Analytics:** Verify Pendo tracking works in app
 4. **Monitoring:** Set up uptime monitoring (e.g., UptimeRobot)
 5. **Documentation:** Update any hardcoded URLs in docs
 

@@ -11,7 +11,7 @@ export default defineConfig(() => ({
   build: {
     target: "esnext", // Target modern browsers to avoid legacy polyfills
   },
-  // Expose env vars: NEXT_PUBLIC_ (Supabase) and VITE_ (PostHog, Pendo)
+  // Expose env vars: NEXT_PUBLIC_ (Supabase) and VITE_ (Pendo, Sentry)
   envPrefix: ["NEXT_PUBLIC_", "VITE_"],
   plugins: [react()],
   resolve: {
