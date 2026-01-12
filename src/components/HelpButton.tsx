@@ -101,40 +101,22 @@ export function HelpButton() {
 
   const handleSubmitBug = () => {
     const url = buildForumUrl('bug', bugTitle, bugDescription);
-    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
-
-    if (newWindow) {
-      toast({
-        title: 'Opening forum',
-        description: 'Complete your bug report in the new tab.',
-      });
-      resetForms();
-    } else {
-      toast({
-        title: 'Popup blocked',
-        description: 'Please allow popups to submit your report.',
-        variant: 'destructive',
-      });
-    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+    toast({
+      title: 'Opening forum',
+      description: 'Complete your bug report in the new tab.',
+    });
+    resetForms();
   };
 
   const handleSubmitFeedback = () => {
     const url = buildForumUrl('feature', feedbackTitle, feedbackDescription);
-    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
-
-    if (newWindow) {
-      toast({
-        title: 'Opening forum',
-        description: 'Complete your feedback in the new tab.',
-      });
-      resetForms();
-    } else {
-      toast({
-        title: 'Popup blocked',
-        description: 'Please allow popups to submit your feedback.',
-        variant: 'destructive',
-      });
-    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+    toast({
+      title: 'Opening forum',
+      description: 'Complete your feedback in the new tab.',
+    });
+    resetForms();
   };
 
   return <>
@@ -150,7 +132,7 @@ export function HelpButton() {
       </Tooltip>
 
       <Dialog open={open} onOpenChange={handleDialogChange}>
-        <DialogContent className="sm:max-w-lg min-h-[420px]" aria-describedby="help-description">
+        <DialogContent className="sm:max-w-lg" aria-describedby="help-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <HelpCircle className="h-5 w-5" aria-hidden="true" />
@@ -173,7 +155,7 @@ export function HelpButton() {
               </TabsTrigger>
             </TabsList>
 
-              <TabsContent value="shortcuts" className="mt-4 space-y-4 min-h-[340px]">
+              <TabsContent value="shortcuts" className="mt-4 space-y-4 h-[340px] overflow-y-auto">
                 {shortcutGroups.map(group => <div key={group.title}>
                     <h3 className="text-sm font-medium text-muted-foreground mb-2">
                       {group.title}
@@ -193,9 +175,9 @@ export function HelpButton() {
                   </div>)}
               </TabsContent>
 
-              <TabsContent value="feedback" className="mt-4 space-y-4 min-h-[340px]">
+              <TabsContent value="feedback" className="mt-4 h-[340px] overflow-y-auto">
                 {activeForm === null ? (
-                  <>
+                  <div className="space-y-4">
                     <p className="text-sm text-muted-foreground">
                       Found a bug or have an idea to improve the app? Let us know on our community forum!
                     </p>
@@ -247,7 +229,7 @@ export function HelpButton() {
                         <span className="sr-only">(opens in new window)</span>
                       </a>
                     </div>
-                  </>
+                  </div>
                 ) : activeForm === 'bug' ? (
                   <div className="space-y-4">
                     <button

@@ -319,7 +319,7 @@ describe('HelpButton', () => {
       windowOpenSpy.mockRestore();
     });
 
-    it('shows error toast when popup is blocked', async () => {
+    it('resets form after submit', async () => {
       const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
       const user = userEvent.setup();
       renderHelpButton();
@@ -339,34 +339,7 @@ describe('HelpButton', () => {
       await user.type(screen.getByLabelText(/description/i), 'Bug description');
       await user.click(screen.getByRole('button', { name: /submit to forum/i }));
 
-      // Form should still be visible (not reset) when popup is blocked
-      expect(screen.getByLabelText(/title/i)).toHaveValue('Test bug');
-
-      windowOpenSpy.mockRestore();
-    });
-
-    it('resets form after successful submit', async () => {
-      const mockWindow = {} as Window;
-      const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => mockWindow);
-      const user = userEvent.setup();
-      renderHelpButton();
-
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByRole('button', { name: /report a bug/i }));
-
-      await waitFor(() => {
-        expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
-      });
-
-      await user.type(screen.getByLabelText(/title/i), 'Test bug');
-      await user.type(screen.getByLabelText(/description/i), 'Bug description');
-      await user.click(screen.getByRole('button', { name: /submit to forum/i }));
-
-      // Form should reset and return to options view after successful submit
+      // Form should reset and return to options view after submit
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /give feedback/i })).toBeInTheDocument();
