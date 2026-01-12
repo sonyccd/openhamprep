@@ -2,6 +2,9 @@
 // UNIT TESTS FOR SHARED CONSTANTS
 // ============================================================
 
+/// <reference lib="deno.ns" />
+/// <reference lib="dom" />
+
 import { assertEquals } from "jsr:@std/assert@1";
 import {
   isValidUuid,

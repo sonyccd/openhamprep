@@ -1,3 +1,6 @@
+/// <reference lib="deno.ns" />
+/// <reference lib="dom" />
+
 /**
  * Shared constants for Supabase Edge Functions
  */

@@ -1,3 +1,6 @@
+/// <reference lib="deno.ns" />
+/// <reference lib="dom" />
+
 // ============================================================
 // PURE LOGIC FOR VERIFY-DISCOURSE-SYNC
 // Extracted for testability

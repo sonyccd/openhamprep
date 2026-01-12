@@ -1,3 +1,6 @@
+/// <reference lib="deno.ns" />
+/// <reference lib="dom" />
+
 // ============================================================
 // PURE LOGIC FOR MANAGE-QUESTION-LINKS
 // Extracted for testability

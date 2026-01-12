@@ -1,3 +1,5 @@
+/// <reference lib="deno.ns" />
+
 // ============================================================
 // PURE LOGIC FOR DISCOURSE-WEBHOOK
 // Extracted for testability

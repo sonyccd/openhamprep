@@ -1,3 +1,6 @@
+/// <reference lib="deno.ns" />
+/// <reference lib="dom" />
+
 // ============================================================
 // PURE LOGIC FOR UPDATE-DISCOURSE-POST
 // Extracted for testability

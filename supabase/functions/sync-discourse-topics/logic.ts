@@ -1,3 +1,5 @@
+/// <reference lib="deno.ns" />
+
 // ============================================================
 // PURE LOGIC FOR SYNC-DISCOURSE-TOPICS
 // Extracted for testability
