@@ -83,6 +83,65 @@ describe('useCommunityPromoToast', () => {
     expect(mockToast).not.toHaveBeenCalled();
   });
 
+  it('does not show toast when profile is still loading (forumUsername undefined)', () => {
+    renderHook(() =>
+      useCommunityPromoToast({
+        userCreatedAt: getDateDaysAgo(5),
+        forumUsername: undefined, // Profile hasn't loaded yet
+        isAuthenticated: true,
+      })
+    );
+
+    vi.advanceTimersByTime(2000);
+    expect(mockToast).not.toHaveBeenCalled();
+  });
+
+  it('shows toast only after profile loads with null forum_username', () => {
+    const { rerender } = renderHook(
+      ({ forumUsername }) =>
+        useCommunityPromoToast({
+          userCreatedAt: getDateDaysAgo(5),
+          forumUsername,
+          isAuthenticated: true,
+        }),
+      {
+        initialProps: { forumUsername: undefined as string | null | undefined },
+      }
+    );
+
+    // Profile still loading - should not show toast
+    vi.advanceTimersByTime(2000);
+    expect(mockToast).not.toHaveBeenCalled();
+
+    // Profile loads with null forum_username - should show toast
+    rerender({ forumUsername: null });
+    vi.advanceTimersByTime(2000);
+    expect(mockToast).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not show toast when profile loads with existing forum_username', () => {
+    const { rerender } = renderHook(
+      ({ forumUsername }) =>
+        useCommunityPromoToast({
+          userCreatedAt: getDateDaysAgo(5),
+          forumUsername,
+          isAuthenticated: true,
+        }),
+      {
+        initialProps: { forumUsername: undefined as string | null | undefined },
+      }
+    );
+
+    // Profile still loading - should not show toast
+    vi.advanceTimersByTime(2000);
+    expect(mockToast).not.toHaveBeenCalled();
+
+    // Profile loads with existing forum_username - should NOT show toast
+    rerender({ forumUsername: 'existingUser' });
+    vi.advanceTimersByTime(2000);
+    expect(mockToast).not.toHaveBeenCalled();
+  });
+
   it('does not show toast when less than 3 days since signup', () => {
     renderHook(() =>
       useCommunityPromoToast({
