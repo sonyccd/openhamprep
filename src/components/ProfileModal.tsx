@@ -476,7 +476,7 @@ export function ProfileModal({
 
       <EditableField
         icon={MessageSquare}
-        label="Forum Username"
+        label="Community Username"
         value={forumUsername}
         displayValue={userInfo.forumUsername || ""}
         onChange={setForumUsername}
@@ -489,7 +489,7 @@ export function ProfileModal({
         }}
         isSaving={isUpdatingForumUsername}
         placeholder="Enter username"
-        helperText="Visible on the Open Ham Prep forum"
+        helperText="Visible on the Open Ham Prep community"
       />
 
       <div className="space-y-2">

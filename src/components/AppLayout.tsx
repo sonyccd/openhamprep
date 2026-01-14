@@ -12,6 +12,7 @@ import { HelpButton } from '@/components/HelpButton';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
 import { SkipLink } from '@/components/SkipLink';
+import { useCommunityPromoToast } from '@/hooks/useCommunityPromoToast';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -78,6 +79,13 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
     selectedTest,
     (b) => b.display_name
   );
+
+  // Show community promo toast for eligible users
+  useCommunityPromoToast({
+    userCreatedAt: user?.created_at,
+    forumUsername: profile?.forum_username,
+    isAuthenticated: !!user,
+  });
 
   const handleSignOut = async () => {
     // Navigate first to ensure we redirect before state changes trigger re-renders

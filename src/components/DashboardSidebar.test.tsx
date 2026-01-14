@@ -390,20 +390,20 @@ describe('DashboardSidebar', () => {
     });
   });
 
-  describe('Forum Link', () => {
-    it('displays Forum link', () => {
+  describe('Community Link', () => {
+    it('displays Community link', () => {
       render(<DashboardSidebar {...defaultProps} />, { wrapper: createWrapper() });
 
-      expect(screen.getByText('Forum')).toBeInTheDocument();
+      expect(screen.getByText('Community')).toBeInTheDocument();
     });
 
-    it('has correct href for Forum link', () => {
+    it('has correct href for Community link', () => {
       render(<DashboardSidebar {...defaultProps} />, { wrapper: createWrapper() });
 
-      const forumLink = screen.getByText('Forum').closest('a');
-      expect(forumLink).toHaveAttribute('href', 'https://forum.openhamprep.com/auth/oidc');
-      expect(forumLink).toHaveAttribute('target', '_blank');
-      expect(forumLink).toHaveAttribute('rel', 'noopener noreferrer');
+      const communityLink = screen.getByText('Community').closest('a');
+      expect(communityLink).toHaveAttribute('href', 'https://forum.openhamprep.com/auth/oidc');
+      expect(communityLink).toHaveAttribute('target', '_blank');
+      expect(communityLink).toHaveAttribute('rel', 'noopener noreferrer');
     });
   });
 
