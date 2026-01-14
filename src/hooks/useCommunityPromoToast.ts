@@ -33,6 +33,12 @@ export function useCommunityPromoToast({
       return;
     }
 
+    // Guard: Wait for profile to load before deciding
+    // undefined = profile still loading, null = profile loaded but no forum username
+    if (forumUsername === undefined) {
+      return;
+    }
+
     // Guard: User has already authenticated with Discourse
     if (forumUsername) {
       return;
