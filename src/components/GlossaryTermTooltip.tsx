@@ -50,6 +50,9 @@ interface GlossaryTermTooltipProps {
 }
 
 export function GlossaryTermTooltip({ term, children }: GlossaryTermTooltipProps) {
+  // Note: useIsMobile returns false during SSR/initial render, then updates after hydration.
+  // This means mobile users briefly see Tooltip (hover) behavior before Popover activates.
+  // This is acceptable UX since the content is still visible and accessible.
   const isMobile = useIsMobile();
   const context = useContext(GlossaryTermContext);
 
