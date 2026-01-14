@@ -105,7 +105,7 @@ describe('SidebarNavItem', () => {
   describe('External Links', () => {
     const externalItem = {
       id: 'forum',
-      label: 'Forum',
+      label: 'Community',
       icon: BarChart3,
       external: 'https://forum.example.com',
     };
@@ -161,7 +161,7 @@ describe('SidebarNavItem', () => {
           onClick={vi.fn()}
         />
       );
-      expect(screen.queryByText('Forum')).not.toBeInTheDocument();
+      expect(screen.queryByText('Community')).not.toBeInTheDocument();
       // Should only have one SVG (the item icon) when collapsed
       const link = screen.getByRole('link');
       const svgs = link.querySelectorAll('svg');
@@ -177,7 +177,7 @@ describe('SidebarNavItem', () => {
           onClick={vi.fn()}
         />
       );
-      expect(screen.getByText('Forum')).toBeInTheDocument();
+      expect(screen.getByText('Community')).toBeInTheDocument();
     });
   });
 

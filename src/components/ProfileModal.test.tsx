@@ -123,7 +123,7 @@ describe('ProfileModal', () => {
       await user.click(accountMenuItem!);
 
       expect(screen.getByText('Display Name')).toBeInTheDocument();
-      expect(screen.getByText('Forum Username')).toBeInTheDocument();
+      expect(screen.getByText('Community Username')).toBeInTheDocument();
       expect(screen.getByText('Email Address')).toBeInTheDocument();
       expect(screen.getByText('Password')).toBeInTheDocument();
     });

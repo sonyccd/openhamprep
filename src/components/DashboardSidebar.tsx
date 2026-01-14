@@ -134,7 +134,7 @@ export function DashboardSidebar({
     { id: 'glossary', label: 'Glossary', icon: BookText },
     { id: 'tools', label: 'Tools', icon: Wrench },
     { id: 'find-test-site', label: 'Find Test Site', icon: MapPin },
-    { id: 'forum', label: 'Forum', icon: Users, external: 'https://forum.openhamprep.com/auth/oidc' },
+    { id: 'forum', label: 'Community', icon: Users, external: 'https://forum.openhamprep.com/auth/oidc' },
   ];
 
   const handleNavClick = (view: View, disabled?: boolean) => {
