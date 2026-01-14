@@ -1,11 +1,7 @@
 import { useMemo } from "react";
 import { useGlossaryTerms, GlossaryTerm } from "@/hooks/useGlossaryTerms";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { GlossaryTermProvider, GlossaryTermTooltip } from "@/components/GlossaryTermTooltip";
 
 interface GlossaryHighlightedTextProps {
   text: string;
@@ -73,13 +69,13 @@ export function GlossaryHighlightedText({ text }: GlossaryHighlightedTextProps) 
   }, [text, terms]);
 
   return (
-    <TooltipProvider delayDuration={200}>
-      <span>
-        {segments.map((segment, index) => {
-          if (segment.term) {
-            return (
-              <Tooltip key={index}>
-                <TooltipTrigger asChild>
+    <GlossaryTermProvider>
+      <TooltipProvider delayDuration={200}>
+        <span>
+          {segments.map((segment, index) => {
+            if (segment.term) {
+              return (
+                <GlossaryTermTooltip key={index} term={segment.term}>
                   <span
                     className="underline decoration-primary/50 decoration-dotted underline-offset-2 cursor-help text-primary/90 hover:text-primary hover:decoration-primary transition-colors"
                     role="button"
@@ -88,20 +84,13 @@ export function GlossaryHighlightedText({ text }: GlossaryHighlightedTextProps) 
                   >
                     {segment.text}
                   </span>
-                </TooltipTrigger>
-                <TooltipContent 
-                  className="max-w-xs text-sm"
-                  side="top"
-                >
-                  <p className="font-semibold text-primary mb-1">{segment.term.term}</p>
-                  <p className="text-popover-foreground">{segment.term.definition}</p>
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
-          return <span key={index}>{segment.text}</span>;
-        })}
-      </span>
-    </TooltipProvider>
+                </GlossaryTermTooltip>
+              );
+            }
+            return <span key={index}>{segment.text}</span>;
+          })}
+        </span>
+      </TooltipProvider>
+    </GlossaryTermProvider>
   );
 }
