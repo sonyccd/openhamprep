@@ -71,6 +71,11 @@ export function useCommunityPromoToast({
     // Mark as scheduled (don't clear this on re-render)
     hasScheduledRef.current = true;
 
+    // Clear any existing timeout before scheduling a new one (prevents memory leak)
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
     // Small delay to ensure the page is fully loaded
     timeoutRef.current = setTimeout(() => {
       toast({
@@ -90,8 +95,13 @@ export function useCommunityPromoToast({
           altText: 'Visit the Open Ham Prep community forum',
           className: 'bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-4 py-2 h-auto rounded-lg',
           onClick: () => {
-            window.open(COMMUNITY_URL, '_blank', 'noopener,noreferrer');
-            localStorage.setItem(STORAGE_KEY, 'true');
+            const newWindow = window.open(COMMUNITY_URL, '_blank', 'noopener,noreferrer');
+            if (!newWindow) {
+              // Popup was blocked - still mark as shown since user attempted to visit
+              // The toast will close via onOpenChange which also sets localStorage
+              console.warn('Popup blocked. Please allow popups to visit the community forum.');
+            }
+            // Note: localStorage is set via onOpenChange when toast closes, avoiding duplicate writes
           },
         },
           createElement('span', { className: 'flex items-center gap-2' },

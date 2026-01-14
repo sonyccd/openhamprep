@@ -151,9 +151,10 @@ function toast({ ...props }: Toast) {
       id,
       open: true,
       onOpenChange: (open) => {
-        if (!open) dismiss();
-        // Call the custom onOpenChange if provided
+        // Call custom onOpenChange first to allow side effects (e.g., localStorage writes)
+        // before the toast is dismissed from the UI
         props.onOpenChange?.(open);
+        if (!open) dismiss();
       },
     },
   });

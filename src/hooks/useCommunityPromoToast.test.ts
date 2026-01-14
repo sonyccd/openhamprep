@@ -245,4 +245,65 @@ describe('useCommunityPromoToast', () => {
     vi.advanceTimersByTime(2000);
     expect(mockToast).not.toHaveBeenCalled();
   });
+
+  it('clears timeout on unmount before toast is shown', () => {
+    const { unmount } = renderHook(() =>
+      useCommunityPromoToast({
+        userCreatedAt: getDateDaysAgo(5),
+        forumUsername: null,
+        isAuthenticated: true,
+      })
+    );
+
+    // Unmount before the toast timeout fires
+    unmount();
+    vi.advanceTimersByTime(2000);
+
+    // Toast should not be called after unmount
+    expect(mockToast).not.toHaveBeenCalled();
+  });
+
+  it('handles popup blocker gracefully when action button is clicked', async () => {
+    // Reset PWA mock to default (not showing) - previous test may have changed it
+    const { usePWAInstall } = await import('@/hooks/usePWAInstall');
+    vi.mocked(usePWAInstall).mockReturnValue({
+      showPrompt: false,
+      canInstall: false,
+      isInstalled: false,
+      isIOS: false,
+      triggerInstall: vi.fn(),
+      dismissPrompt: vi.fn(),
+    });
+
+    // Mock window.open to return null (simulating popup blocker)
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const windowOpenSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+
+    renderHook(() =>
+      useCommunityPromoToast({
+        userCreatedAt: getDateDaysAgo(5),
+        forumUsername: null,
+        isAuthenticated: true,
+      })
+    );
+
+    vi.advanceTimersByTime(2000);
+
+    // Get the action element and simulate click
+    const toastCall = mockToast.mock.calls[0][0];
+    expect(toastCall.action).toBeDefined();
+
+    // The action is a createElement result, so we need to get the onClick from props
+    const actionProps = toastCall.action.props;
+    actionProps.onClick();
+
+    // Should log a warning about popup blocker
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'Popup blocked. Please allow popups to visit the community forum.'
+    );
+
+    // Cleanup
+    consoleWarnSpy.mockRestore();
+    windowOpenSpy.mockRestore();
+  });
 });
