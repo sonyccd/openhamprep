@@ -117,14 +117,19 @@ export function useCommunityPromoToast({
         },
       });
     }, 1500);
+  // Note: Only props are in deps array. isTestMode is read from localStorage inside
+  // the effect and doesn't need to trigger re-runs (it's checked fresh each time).
   }, [userCreatedAt, forumUsername, isAuthenticated, isPWABannerShowing]);
 
-  // Cleanup only on unmount
+  // Cleanup on unmount - reset refs so remounting can re-schedule if needed
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      // Reset scheduled flag so remounting allows toast to show again
+      // (if localStorage wasn't set, the toast should still be shown)
+      hasScheduledRef.current = false;
     };
   }, []);
 }
