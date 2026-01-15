@@ -134,43 +134,59 @@
 
 }
 
-/* Accessibility: Font modes */
+/* Accessibility: Font modes
+   Note: Excludes code, pre, .mono, and .katex elements to preserve
+   monospace fonts for code blocks and math notation readability */
 html.font-dyslexic body,
+html.font-dyslexic p,
+html.font-dyslexic span:not(.katex):not(.katex-html):not(.katex *),
+html.font-dyslexic div:not(.katex):not(.katex-html):not(.katex *),
 html.font-dyslexic h1,
 html.font-dyslexic h2,
 html.font-dyslexic h3,
 html.font-dyslexic h4,
 html.font-dyslexic h5,
 html.font-dyslexic h6,
-html.font-dyslexic code,
-html.font-dyslexic pre,
-html.font-dyslexic .mono,
+html.font-dyslexic li,
+html.font-dyslexic td,
+html.font-dyslexic th,
+html.font-dyslexic label,
 html.font-dyslexic input,
 html.font-dyslexic textarea,
 html.font-dyslexic button,
-html.font-dyslexic select {
+html.font-dyslexic select,
+html.font-dyslexic a {
   font-family: 'OpenDyslexic', sans-serif !important;
 }
 
 html.font-arimo body,
+html.font-arimo p,
+html.font-arimo span:not(.katex):not(.katex-html):not(.katex *),
+html.font-arimo div:not(.katex):not(.katex-html):not(.katex *),
 html.font-arimo h1,
 html.font-arimo h2,
 html.font-arimo h3,
 html.font-arimo h4,
 html.font-arimo h5,
 html.font-arimo h6,
+html.font-arimo li,
+html.font-arimo td,
+html.font-arimo th,
+html.font-arimo label,
 html.font-arimo input,
 html.font-arimo textarea,
 html.font-arimo button,
-html.font-arimo select {
+html.font-arimo select,
+html.font-arimo a {
   font-family: 'Arimo', sans-serif !important;
 }
 
-/* Accessibility: Bold all text mode */
+/* Accessibility: Bold all text mode
+   Note: Excludes code, pre, .mono, and .katex elements */
 html.font-bold body,
 html.font-bold p,
-html.font-bold span,
-html.font-bold div,
+html.font-bold span:not(.katex):not(.katex-html):not(.katex *),
+html.font-bold div:not(.katex):not(.katex-html):not(.katex *),
 html.font-bold li,
 html.font-bold td,
 html.font-bold th,

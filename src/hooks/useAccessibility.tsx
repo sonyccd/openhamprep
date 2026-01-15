@@ -7,6 +7,12 @@ const STORAGE_KEY_LARGE = 'accessibility-large-font';
 
 export type FontFamily = 'default' | 'dyslexic' | 'arimo';
 
+const VALID_FONT_FAMILIES: FontFamily[] = ['default', 'dyslexic', 'arimo'];
+
+function isValidFontFamily(value: string): value is FontFamily {
+  return VALID_FONT_FAMILIES.includes(value as FontFamily);
+}
+
 interface AccessibilityContextType {
   fontFamily: FontFamily;
   setFontFamily: (font: FontFamily) => void;
@@ -34,10 +40,11 @@ function getStoredValue<T>(key: string, defaultValue: T): T {
 }
 
 export function AccessibilityProvider({ children }: { children: ReactNode }) {
-  // Initialize state from localStorage
-  const [fontFamily, setFontFamilyState] = useState<FontFamily>(() =>
-    getStoredValue(STORAGE_KEY_FONT, 'default') as FontFamily
-  );
+  // Initialize state from localStorage with validation
+  const [fontFamily, setFontFamilyState] = useState<FontFamily>(() => {
+    const stored = getStoredValue(STORAGE_KEY_FONT, 'default');
+    return isValidFontFamily(stored) ? stored : 'default';
+  });
   const [boldText, setBoldTextState] = useState(() =>
     getStoredValue(STORAGE_KEY_BOLD, false)
   );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -76,6 +76,14 @@ export function ProfileModal({
   // Edit states
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingForumUsername, setIsEditingForumUsername] = useState(false);
+
+  // Reset delete confirmation when navigating away from account view
+  useEffect(() => {
+    if (currentView !== "account") {
+      setShowDeleteConfirm(false);
+      setDeleteConfirmText("");
+    }
+  }, [currentView]);
 
   const handleUpdateDisplayName = async () => {
     if (!displayName.trim()) {
