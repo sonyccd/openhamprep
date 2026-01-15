@@ -69,13 +69,26 @@
         to { transform: rotate(360deg); }
       }
     </style>
-    <!-- Prevent theme flash by setting theme class before React loads -->
+    <!-- Prevent theme and accessibility flash by setting classes before React loads -->
     <script>
       (function() {
         try {
+          // Theme
           var theme = localStorage.getItem('theme');
           if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
+          }
+          // Accessibility: Font family
+          var font = localStorage.getItem('accessibility-font-family');
+          if (font === 'dyslexic') document.documentElement.classList.add('font-dyslexic');
+          if (font === 'arimo') document.documentElement.classList.add('font-arimo');
+          // Accessibility: Bold text
+          if (localStorage.getItem('accessibility-bold-text') === 'true') {
+            document.documentElement.classList.add('font-bold');
+          }
+          // Accessibility: Large font
+          if (localStorage.getItem('accessibility-large-font') === 'true') {
+            document.documentElement.classList.add('font-xl');
           }
         } catch (e) {}
       })();

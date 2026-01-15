@@ -3,6 +3,7 @@ import { render, screen, waitFor, within, fireEvent } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { ProfileModal } from './ProfileModal';
 import { BrowserRouter } from 'react-router-dom';
+import { AccessibilityProvider } from '@/hooks/useAccessibility';
 import React from 'react';
 
 // Mock react-router-dom's useNavigate
@@ -63,7 +64,9 @@ const defaultProps = {
 const renderProfileModal = (props = {}) => {
   return render(
     <BrowserRouter>
-      <ProfileModal {...defaultProps} {...props} />
+      <AccessibilityProvider>
+        <ProfileModal {...defaultProps} {...props} />
+      </AccessibilityProvider>
     </BrowserRouter>
   );
 };
@@ -80,6 +83,20 @@ const clickMenuItem = async (user: ReturnType<typeof userEvent.setup>, label: st
   }
 };
 
+// Helper to navigate to Delete Account confirmation (now inline in Account view)
+const navigateToDeleteConfirm = async (user: ReturnType<typeof userEvent.setup>) => {
+  // Navigate to Account view first
+  const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+  await user.click(accountMenuItem!);
+  // Click Delete Account button to show the inline confirmation
+  const deleteButton = screen.getByRole('button', { name: /^delete account$/i });
+  await user.click(deleteButton);
+  // Wait for the confirmation to appear
+  await waitFor(() => {
+    expect(screen.getByText(/delete your account permanently/i)).toBeInTheDocument();
+  });
+};
+
 describe('ProfileModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -93,8 +110,7 @@ describe('ProfileModal', () => {
       expect(screen.getByText('Settings')).toBeInTheDocument();
       expect(screen.getByText('Account')).toBeInTheDocument();
       expect(screen.getByText('Appearance')).toBeInTheDocument();
-      // The delete account menu item
-      expect(screen.getByText('Delete Account')).toBeInTheDocument();
+      expect(screen.getByText('Accessibility')).toBeInTheDocument();
     });
 
     it('displays user info', () => {
@@ -139,14 +155,30 @@ describe('ProfileModal', () => {
       expect(screen.getByText('Theme')).toBeInTheDocument();
     });
 
-    it('navigates to Delete Account view when Delete Account is clicked', async () => {
+    it('navigates to Accessibility view when Accessibility is clicked', async () => {
       const user = userEvent.setup();
       renderProfileModal();
 
-      // Find the Delete Account menu item in main view (not the destructive button in danger view)
-      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
-      await user.click(deleteMenuItem!);
+      // Find and click the Accessibility menu item
+      const accessibilityMenuItem = screen.getByText('Fonts, text size, contrast').closest('button');
+      await user.click(accessibilityMenuItem!);
 
+      expect(screen.getByText('Customize the app for your needs')).toBeInTheDocument();
+    });
+
+    it('opens Delete Account dialog from Account view', async () => {
+      const user = userEvent.setup();
+      renderProfileModal();
+
+      // Navigate to Account view first
+      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      await user.click(accountMenuItem!);
+
+      // Click Delete Account button to open the AlertDialog
+      const deleteButton = screen.getByRole('button', { name: /delete account/i });
+      await user.click(deleteButton);
+
+      // AlertDialog should open
       expect(screen.getByText(/delete your account permanently/i)).toBeInTheDocument();
       expect(screen.getByPlaceholderText('DELETE')).toBeInTheDocument();
     });
@@ -263,13 +295,11 @@ describe('ProfileModal', () => {
   });
 
   describe('Account Deletion', () => {
-    it('shows delete confirmation when navigating to Delete Account', async () => {
+    it('shows delete confirmation dialog from Account view', async () => {
       const user = userEvent.setup();
       renderProfileModal();
 
-      // Find and click the Delete Account menu item
-      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
-      await user.click(deleteMenuItem!);
+      await navigateToDeleteConfirm(user);
 
       expect(screen.getByText(/delete your account permanently/i)).toBeInTheDocument();
       expect(screen.getByPlaceholderText('DELETE')).toBeInTheDocument();
@@ -279,12 +309,11 @@ describe('ProfileModal', () => {
       const user = userEvent.setup();
       renderProfileModal();
 
-      // Navigate to Delete Account view
-      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
-      await user.click(deleteMenuItem!);
+      await navigateToDeleteConfirm(user);
 
       // The delete button should be disabled initially
-      expect(screen.getByRole('button', { name: /delete account forever/i })).toBeDisabled();
+      const deleteBtn = await screen.findByText(/Delete Forever/i);
+      expect(deleteBtn.closest('button')).toBeDisabled();
 
       // The input should have DELETE placeholder
       expect(screen.getByPlaceholderText('DELETE')).toBeInTheDocument();
@@ -296,14 +325,13 @@ describe('ProfileModal', () => {
 
       renderProfileModal();
 
-      // Navigate to Delete Account view
-      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
-      await user.click(deleteMenuItem!);
+      await navigateToDeleteConfirm(user);
 
       // Type DELETE and confirm
-      const confirmInput = screen.getByRole('textbox');
+      const confirmInput = screen.getByPlaceholderText('DELETE');
       fireEvent.change(confirmInput, { target: { value: 'DELETE' } });
-      await user.click(screen.getByRole('button', { name: /delete account forever/i }));
+      const deleteForeverBtn = await screen.findByText(/Delete Forever/i);
+      await user.click(deleteForeverBtn.closest('button')!);
 
       await waitFor(() => {
         expect(mockRpc).toHaveBeenCalledWith('delete_own_account');
@@ -316,11 +344,11 @@ describe('ProfileModal', () => {
 
       renderProfileModal();
 
-      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
-      await user.click(deleteMenuItem!);
-      const confirmInput = screen.getByRole('textbox');
+      await navigateToDeleteConfirm(user);
+      const confirmInput = screen.getByPlaceholderText('DELETE');
       fireEvent.change(confirmInput, { target: { value: 'DELETE' } });
-      await user.click(screen.getByRole('button', { name: /delete account forever/i }));
+      const deleteForeverBtn = await screen.findByText(/Delete Forever/i);
+      await user.click(deleteForeverBtn.closest('button')!);
 
       await waitFor(() => {
         expect(mockSignOut).toHaveBeenCalled();
@@ -333,11 +361,11 @@ describe('ProfileModal', () => {
 
       renderProfileModal();
 
-      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
-      await user.click(deleteMenuItem!);
-      const confirmInput = screen.getByRole('textbox');
+      await navigateToDeleteConfirm(user);
+      const confirmInput = screen.getByPlaceholderText('DELETE');
       fireEvent.change(confirmInput, { target: { value: 'DELETE' } });
-      await user.click(screen.getByRole('button', { name: /delete account forever/i }));
+      const deleteForeverBtn = await screen.findByText(/Delete Forever/i);
+      await user.click(deleteForeverBtn.closest('button')!);
 
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith('/');
@@ -354,11 +382,11 @@ describe('ProfileModal', () => {
 
       renderProfileModal();
 
-      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
-      await user.click(deleteMenuItem!);
-      const confirmInput = screen.getByRole('textbox');
+      await navigateToDeleteConfirm(user);
+      const confirmInput = screen.getByPlaceholderText('DELETE');
       fireEvent.change(confirmInput, { target: { value: 'DELETE' } });
-      await user.click(screen.getByRole('button', { name: /delete account forever/i }));
+      const deleteForeverBtn = await screen.findByText(/Delete Forever/i);
+      await user.click(deleteForeverBtn.closest('button')!);
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith('Database error');
@@ -375,11 +403,11 @@ describe('ProfileModal', () => {
 
       renderProfileModal();
 
-      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
-      await user.click(deleteMenuItem!);
-      const confirmInput = screen.getByRole('textbox');
+      await navigateToDeleteConfirm(user);
+      const confirmInput = screen.getByPlaceholderText('DELETE');
       fireEvent.change(confirmInput, { target: { value: 'DELETE' } });
-      await user.click(screen.getByRole('button', { name: /delete account forever/i }));
+      const deleteForeverBtn = await screen.findByText(/Delete Forever/i);
+      await user.click(deleteForeverBtn.closest('button')!);
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith('Not authenticated');
@@ -389,22 +417,18 @@ describe('ProfileModal', () => {
       expect(mockSignOut).not.toHaveBeenCalled();
     });
 
-    it('can go back from delete view', async () => {
+    it('can cancel delete dialog', async () => {
       const user = userEvent.setup();
       renderProfileModal();
 
-      // Navigate to Delete Account view
-      const deleteMenuItem = screen.getByText('Delete Account').closest('button');
-      await user.click(deleteMenuItem!);
+      await navigateToDeleteConfirm(user);
       expect(screen.getByText(/delete your account permanently/i)).toBeInTheDocument();
 
-      // Find and click back button
-      const backButtons = screen.getAllByRole('button');
-      const backButton = backButtons.find(btn => btn.querySelector('.rotate-180'));
-      await user.click(backButton!);
+      // Click Cancel button in the AlertDialog
+      await user.click(screen.getByRole('button', { name: /cancel/i }));
 
-      // Should be back on main view
-      expect(screen.getByText('Settings')).toBeInTheDocument();
+      // Dialog should close, we should still be in Account view
+      expect(screen.getByText('Display Name')).toBeInTheDocument();
     });
   });
 });

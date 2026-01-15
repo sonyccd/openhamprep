@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -25,7 +25,9 @@ import {
   Check,
   Loader2,
   LogOut,
+  Accessibility,
 } from "lucide-react";
+import { AccessibilitySettings } from "@/components/AccessibilitySettings";
 import { validateForumUsername } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +44,7 @@ interface ProfileModalProps {
   onSignOut?: () => void;
 }
 
-type SettingsView = "main" | "account" | "appearance" | "danger";
+type SettingsView = "main" | "account" | "appearance" | "accessibility";
 
 export function ProfileModal({
   open,
@@ -62,6 +64,7 @@ export function ProfileModal({
   );
   const [newEmail, setNewEmail] = useState("");
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Loading states
   const [isUpdatingName, setIsUpdatingName] = useState(false);
@@ -73,6 +76,14 @@ export function ProfileModal({
   // Edit states
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingForumUsername, setIsEditingForumUsername] = useState(false);
+
+  // Reset delete confirmation when navigating away from account view
+  useEffect(() => {
+    if (currentView !== "account") {
+      setShowDeleteConfirm(false);
+      setDeleteConfirmText("");
+    }
+  }, [currentView]);
 
   const handleUpdateDisplayName = async () => {
     if (!displayName.trim()) {
@@ -428,10 +439,10 @@ export function ProfileModal({
           onClick={() => setCurrentView("appearance")}
         />
         <MenuItem
-          icon={Trash2}
-          label="Delete Account"
-          onClick={() => setCurrentView("danger")}
-          variant="danger"
+          icon={Accessibility}
+          label="Accessibility"
+          description="Fonts, text size, contrast"
+          onClick={() => setCurrentView("accessibility")}
         />
       </div>
 
@@ -547,6 +558,96 @@ export function ProfileModal({
           We'll send a password reset link to your email
         </p>
       </div>
+
+      {/* Danger Zone */}
+      <div className="pt-4 mt-2 border-t border-border">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Trash2 className="w-4 h-4" />
+            Danger Zone
+          </div>
+          {!showDeleteConfirm ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full h-10 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Account
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                This action cannot be undone
+              </p>
+            </>
+          ) : (
+            <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/20 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-destructive" />
+                </div>
+                <div className="space-y-1">
+                  <p className="font-semibold text-destructive text-sm">
+                    Delete your account permanently
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    All your data including practice history, bookmarks, test results,
+                    and forum account will be permanently deleted. This cannot be undone.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="delete-confirm" className="text-sm font-medium">
+                    Type <span className="font-mono font-bold text-destructive">DELETE</span> to confirm
+                  </Label>
+                  <Input
+                    id="delete-confirm"
+                    value={deleteConfirmText}
+                    onChange={(e) =>
+                      setDeleteConfirmText(e.target.value.toUpperCase())
+                    }
+                    placeholder="DELETE"
+                    className="font-mono h-11 uppercase"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeleteConfirmText("");
+                    }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteAccount}
+                    disabled={deleteConfirmText !== "DELETE" || isDeleting}
+                    className="flex-1"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Forever
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 
@@ -566,62 +667,13 @@ export function ProfileModal({
     </div>
   );
 
-  // Danger zone view - extracted as inline JSX to avoid focus loss from function recreation
-  const dangerViewContent = (
+  // Accessibility settings view
+  const AccessibilityView = () => (
     <div className="space-y-4">
-      <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/20 space-y-4">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
-            <AlertTriangle className="w-5 h-5 text-destructive" />
-          </div>
-          <div className="space-y-1">
-            <p className="font-semibold text-destructive text-sm">
-              Delete your account permanently
-            </p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              All your data including practice history, bookmarks, test results,
-              and forum account will be permanently deleted. This cannot be
-              undone.
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <div className="space-y-2">
-            <Label htmlFor="delete-confirm" className="text-sm font-medium">
-              Type <span className="font-mono font-bold text-destructive">DELETE</span> to confirm
-            </Label>
-            <Input
-              id="delete-confirm"
-              value={deleteConfirmText}
-              onChange={(e) =>
-                setDeleteConfirmText(e.target.value.toUpperCase())
-              }
-              placeholder="DELETE"
-              className="font-mono h-11 uppercase"
-            />
-          </div>
-
-          <Button
-            variant="destructive"
-            onClick={handleDeleteAccount}
-            disabled={deleteConfirmText !== "DELETE" || isDeleting}
-            className="w-full h-11"
-          >
-            {isDeleting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                Deleting...
-              </>
-            ) : (
-              <>
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete Account Forever
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
+      <p className="text-sm text-muted-foreground">
+        Customize the app for your needs
+      </p>
+      <AccessibilitySettings />
     </div>
   );
 
@@ -629,7 +681,7 @@ export function ProfileModal({
     main: "Settings",
     account: "Account",
     appearance: "Appearance",
-    danger: "Delete Account",
+    accessibility: "Accessibility",
   };
 
   return (
@@ -664,7 +716,7 @@ export function ProfileModal({
           {currentView === "main" && <MainView />}
           {currentView === "account" && <AccountView />}
           {currentView === "appearance" && <AppearanceView />}
-          {currentView === "danger" && dangerViewContent}
+          {currentView === "accessibility" && <AccessibilityView />}
         </div>
       </DialogContent>
     </Dialog>
