@@ -1,5 +1,5 @@
   
-**OpenHamPrep**
+# **OpenHamPrep**
 
 Event System Architecture
 
@@ -225,6 +225,7 @@ Benefits:
 
 Rather than explicit session\_start/session\_end events, we reconstruct sessions from question\_attempt timestamps:
 
+```
 \-- Reconstruct sessions: gap \> 30 minutes \= new session  
 WITH attempt\_gaps AS (  
   SELECT   
@@ -249,7 +250,7 @@ SELECT
   timestamp,  
   ...  
 FROM session\_boundaries;
-
+```
 Benefits:
 
 * Definition changes (e.g., 30 min → 15 min gap) don't invalidate historical data
@@ -309,7 +310,7 @@ This section shows the math proving the architecture fits within Supabase Pro pl
 ## **3.2 Event Size Analysis**
 
 A typical question\_attempt event:
-
+```
 Payload (\~250 bytes):  
 {  
   "session\_id": "uuid",           // 36 bytes  
@@ -325,7 +326,7 @@ Payload (\~250 bytes):
   "time\_raw\_ms": 48000,           // 5 bytes  
   "mode": "drill"                 // 5 bytes  
 }  
-   
+```   
 Row overhead: \~100 bytes (id, timestamp, user\_id, created\_at)  
 JSONB overhead: \~50 bytes  
 Index overhead: \~200 bytes  
@@ -409,7 +410,7 @@ Content hash enables tracking the 'same' question across pools regardless of cod
 ## 
 
 ## **4.4 Content Hash Generation**
-
+```
 function generateContentHash(question) {  
   const normalized \= \[  
     normalize(question.question),  
@@ -431,22 +432,22 @@ function normalize(text) {
     .replace(/\[''\]/g, "'")  
     .replace(/\[""\]/g, '"');  
 }
-
+```
 # **5\. Database Schema**
 
 ## **5.1 Questions Table Modifications**
 
 Add pool versioning and content hash to existing questions table:
-
+```
 ALTER TABLE questions   
 ADD COLUMN IF NOT EXISTS content\_hash TEXT,  
 ADD COLUMN IF NOT EXISTS pool\_version TEXT DEFAULT '2022-2026';  
    
 CREATE INDEX idx\_questions\_content\_hash ON questions (content\_hash);  
 CREATE INDEX idx\_questions\_pool\_version ON questions (pool\_version);
-
+```
 ## **5.2 Question Pools Table**
-
+```
 CREATE TABLE question\_pools (  
   id UUID PRIMARY KEY DEFAULT gen\_random\_uuid(),  
   pool\_version TEXT NOT NULL,  
@@ -460,9 +461,9 @@ CREATE TABLE question\_pools (
     
   UNIQUE (pool\_version, exam\_type)  
 );
-
+```
 ## **5.3 Events Table**
-
+```
 CREATE TABLE events (  
   id UUID PRIMARY KEY DEFAULT gen\_random\_uuid(),  
   event\_type TEXT NOT NULL,  
@@ -488,9 +489,9 @@ CREATE INDEX idx\_events\_content\_hash
 CREATE INDEX idx\_events\_is\_correct  
   ON events ((payload-\>\>'is\_correct'))  
   WHERE event\_type \= 'question\_attempt';
-
+```
 ## **5.4 Row-Level Security**
-
+```
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;  
    
 CREATE POLICY "Users insert own events" ON events  
@@ -498,7 +499,7 @@ CREATE POLICY "Users insert own events" ON events
    
 CREATE POLICY "Users read own events" ON events  
   FOR SELECT USING (auth.uid() \= user\_id);
-
+```
 # **6\. Event Types**
 
 The system captures three event types. Session information is reconstructed from question timestamps rather than captured as separate events.
@@ -521,7 +522,7 @@ Captured every time a user answers a question. This is the most frequent and mos
 | time\_raw\_ms | Integer | Actual elapsed time (for outlier analysis) |
 | mode | String | 'drill', 'practice\_test', or 'review' |
 | practice\_test\_id | UUID|null | If part of a practice test |
-
+```
 // Example payload  
 {  
   "question\_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",  
@@ -537,7 +538,7 @@ Captured every time a user answers a question. This is the most frequent and mos
   "mode": "drill",  
   "practice\_test\_id": null  
 }
-
+```
 ### **Time Tracking**
 
 Two time fields handle the background-tab problem:
@@ -564,7 +565,7 @@ Captured when a user finishes a full practice exam.
 | percentage | Number | Score as percentage |
 | duration\_seconds | Integer | Time to complete |
 | subelement\_breakdown | Object | Results by subelement |
-
+```
 // Example payload  
 {  
   "practice\_test\_id": "e5f6g7h8-i9j0-k1l2-m3n4-o5p6q7r8s9t0",  
@@ -582,7 +583,7 @@ Captured when a user finishes a full practice exam.
     "T5": { "correct": 2, "total": 4 }  
   }  
 }
-
+```
 Note: No 'passed' boolean — derive it as (score / total\_questions \>= passing\_threshold). Storing the threshold enables 'passed by how much' analysis and handles threshold changes over time.
 
 ## **6.3 exam\_outcome**
@@ -601,7 +602,7 @@ Captured when a real exam result is recorded. Most valuable for model calibratio
 | exam\_date | Date | When they took the exam |
 | confidence\_level | String|null | How confident they felt |
 | state\_snapshot | Object | User's readiness state at exam time |
-
+```
 // Example payload  
 {  
   "source": "user\_reported",  
@@ -622,13 +623,13 @@ Captured when a real exam result is recorded. Most valuable for model calibratio
     "practice\_tests\_taken": 10  
   }  
 }
-
+```
 The state\_snapshot captures everything known about the user's preparation at exam time. This enables correlation analysis: 'Users with readiness \> 0.8 passed 94% of the time.'
 
 # **7\. Client Integration**
 
 ## **7.1 Configuration**
-
+```
 // lib/config.ts  
 export const POOL\_CONFIG \= {  
   technician: {  
@@ -644,9 +645,9 @@ export const POOL\_CONFIG \= {
     passingThreshold: 0.74,  
   }  
 } as const;
-
+```
 ## **7.2 Core Event Recording**
-
+```
 // lib/events.ts  
 export async function recordEvent({ eventType, payload }) {  
   const { data: { user } } \= await supabase.auth.getUser();  
@@ -671,9 +672,9 @@ export async function recordEvent({ eventType, payload }) {
    
   return { success: true };  
 }
-
+```
 ## **7.3 Question Attempt Helper**
-
+```
 // lib/events.ts  
 const TIME\_CAP\_MS \= 180000; // 3 minutes  
    
@@ -704,9 +705,9 @@ export async function recordQuestionAttempt({
     }  
   });  
 }
-
+```
 ## **7.4 Practice Test Helper**
-
+```
 // lib/events.ts  
 export async function recordPracticeTestCompleted({  
   practiceTestId,  
@@ -737,9 +738,9 @@ export async function recordPracticeTestCompleted({
     }  
   });  
 }
-
+```
 ## **7.5 Usage Example**
-
+```
 // components/QuestionCard.tsx  
 export function QuestionCard({ question, onNext }) {  
   const \[startTime\] \= useState(Date.now());  
@@ -764,7 +765,7 @@ export function QuestionCard({ question, onNext }) {
    
   return (/\* render question UI \*/);  
 }
-
+```
 # **8\. Data Lifecycle (Hot & Cold Storage)**
 
 Events are never deleted. They flow through two tiers:
@@ -791,7 +792,7 @@ event-archive/
 Archives are date-based (one file per week). This is simpler than user-based organization and sufficient since rehydration is rare.
 
 ### **Archive Job (Weekly)**
-
+```
 // supabase/functions/archive-events/index.ts  
 Deno.serve(async (req) \=\> {  
   // 1\. Find events to archive (beyond 500 per user, older than 7 days)  
@@ -824,11 +825,11 @@ Deno.serve(async (req) \=\> {
    
   return Response.json({ archived: eventsToArchive.length });  
 });
-
+```
 ## **8.2 On-Demand Rehydration**
 
 When a calculation needs more events than are in the database:
-
+```
 // lib/rehydration.ts  
 export async function ensureEventsAvailable(userId, minCount) {  
   // Check current event count  
@@ -881,9 +882,9 @@ async function fetchArchivedEvents(userId, limit) {
    
   return events.slice(0, limit);  
 }
-
+```
 ## **8.3 Database Function**
-
+```
 CREATE OR REPLACE FUNCTION get\_events\_to\_archive(  
   keep\_count INTEGER DEFAULT 500,  
   min\_age\_days INTEGER DEFAULT 7  
@@ -908,9 +909,9 @@ BEGIN
   LIMIT 50000;  
 END;  
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
+```
 ## **8.4 Scheduling**
-
+```
 \-- Weekly archive job (Sunday 4 AM UTC)  
 SELECT cron.schedule(  
   'archive-old-events',  
@@ -922,7 +923,7 @@ SELECT cron.schedule(
   );  
   $$  
 );
-
+```
 # **9\. Querying Events**
 
 ## **9.1 Common Access Patterns**
@@ -937,7 +938,7 @@ SELECT cron.schedule(
 ## **9.2 Example Queries**
 
 ### **User's Overall Accuracy**
-
+```
 SELECT   
   COUNT(\*) as attempts,  
   SUM(CASE WHEN (payload-\>\>'is\_correct')::boolean THEN 1 ELSE 0 END) as correct,  
@@ -945,9 +946,9 @@ SELECT
 FROM events  
 WHERE user\_id \= $1  
   AND event\_type \= 'question\_attempt';
-
+```
 ### **Accuracy by Subelement**
-
+```
 SELECT   
   LEFT(payload-\>\>'topic\_code', 2\) as subelement,  
   COUNT(\*) as attempts,  
@@ -957,9 +958,9 @@ WHERE user\_id \= $1
   AND event\_type \= 'question\_attempt'  
 GROUP BY LEFT(payload-\>\>'topic\_code', 2\)  
 ORDER BY subelement;
-
+```
 ### **Reconstruct Sessions**
-
+```
 WITH gaps AS (  
   SELECT   
     \*,  
@@ -974,9 +975,9 @@ SELECT
     OVER (ORDER BY timestamp) as session\_num,  
   \*  
 FROM gaps;
-
+```
 ### **Practice Test Pass Rate**
-
+```
 SELECT   
   COUNT(\*) as tests\_taken,  
   SUM(CASE   
@@ -988,7 +989,7 @@ SELECT
 FROM events  
 WHERE user\_id \= $1  
   AND event\_type \= 'practice\_test\_completed';
-
+```
 # **10\. Migration Plan**
 
 ## **10.1 Phases**
@@ -1003,7 +1004,7 @@ WHERE user\_id \= $1
 | 6\. Archive Setup | 1 day | Deploy archive job and storage bucket |
 
 ## **10.2 Backfill Script**
-
+```
 \-- Migrate recent question\_attempts to events  
 INSERT INTO events (event\_type, timestamp, user\_id, payload)  
 SELECT   
@@ -1027,7 +1028,7 @@ SELECT
 FROM question\_attempts qa  
 JOIN questions q ON q.id \= qa.question\_id  
 WHERE qa.attempted\_at \> NOW() \- INTERVAL '60 days';
-
+```
 # **11\. Pool Transitions**
 
 ## **11.1 When a New Pool is Released**
@@ -1055,7 +1056,7 @@ WHERE qa.attempted\_at \> NOW() \- INTERVAL '60 days';
 * Events from multiple pools coexist; filter by pool\_version
 
 ## **11.3 Finding Moved Questions**
-
+```
 SELECT   
   q1.display\_name as old\_code,  
   q1.question\_group as old\_topic,  
@@ -1066,11 +1067,11 @@ JOIN questions q2 ON q1.content\_hash \= q2.content\_hash
 WHERE q1.pool\_version \= '2022-2026'  
   AND q2.pool\_version \= '2026-2030'  
   AND q1.display\_name \!= q2.display\_name;
-
+```
 # **12\. Monitoring**
 
 ## **12.1 Health Check**
-
+```
 SELECT   
   (SELECT COUNT(\*) FROM events) as total\_events,  
   (SELECT COUNT(\*) FROM events   
@@ -1080,7 +1081,7 @@ SELECT
   (SELECT pg\_size\_pretty(pg\_total\_relation\_size('events'))) as events\_size,  
   (SELECT COUNT(\*) FROM questions   
    WHERE content\_hash IS NULL) as questions\_missing\_hash;
-
+```
 ## **12.2 Alerts**
 
 | Condition | Threshold | Action |
@@ -1091,7 +1092,7 @@ SELECT
 | Archive job failure | Any | Check edge function logs |
 
 # **Appendix A: Complete Schema SQL**
-
+```
 \-- \=============================================  
 \-- OpenHamPrep Event System Schema v1.6  
 \-- \=============================================  
@@ -1186,7 +1187,7 @@ VALUES
   ('2023-2027', 'general', '2023-07-01', 454, 0.74, true),  
   ('2024-2028', 'extra', '2024-07-01', 693, 0.74, true)  
 ON CONFLICT (pool\_version, exam\_type) DO NOTHING;
-
+```
 # **Appendix B: Existing Tables Reference**
 
 | Table | Key Column | Event System Relationship |
