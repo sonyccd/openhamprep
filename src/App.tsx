@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { PendoProvider } from "@/hooks/usePendo";
 import { AppNavigationProvider } from "@/hooks/useAppNavigation";
+import { AccessibilityProvider } from "@/hooks/useAccessibility";
 import { useWindowControlsOverlay } from "@/hooks/useWindowControlsOverlay";
 import { ThemeProvider } from "next-themes";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
@@ -64,17 +65,19 @@ const AppContent = () => {
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <PendoProvider>
-          <AppNavigationProvider>
-            <TooltipProvider>
-              <AppContent />
-            </TooltipProvider>
-          </AppNavigationProvider>
-        </PendoProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <AccessibilityProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <PendoProvider>
+            <AppNavigationProvider>
+              <TooltipProvider>
+                <AppContent />
+              </TooltipProvider>
+            </AppNavigationProvider>
+          </PendoProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </AccessibilityProvider>
   </ThemeProvider>
 );
 

@@ -1,5 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "katex/dist/katex.min.css";
+
+/* OpenDyslexic font - self-hosted for accessibility */
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
@@ -114,6 +131,67 @@
     --sidebar-border: 222 25% 20%;
     --sidebar-ring: 45 90% 55%;
   }
+
+}
+
+/* Accessibility: Font modes */
+html.font-dyslexic body,
+html.font-dyslexic h1,
+html.font-dyslexic h2,
+html.font-dyslexic h3,
+html.font-dyslexic h4,
+html.font-dyslexic h5,
+html.font-dyslexic h6,
+html.font-dyslexic code,
+html.font-dyslexic pre,
+html.font-dyslexic .mono,
+html.font-dyslexic input,
+html.font-dyslexic textarea,
+html.font-dyslexic button,
+html.font-dyslexic select {
+  font-family: 'OpenDyslexic', sans-serif !important;
+}
+
+html.font-arimo body,
+html.font-arimo h1,
+html.font-arimo h2,
+html.font-arimo h3,
+html.font-arimo h4,
+html.font-arimo h5,
+html.font-arimo h6,
+html.font-arimo input,
+html.font-arimo textarea,
+html.font-arimo button,
+html.font-arimo select {
+  font-family: 'Arimo', sans-serif !important;
+}
+
+/* Accessibility: Bold all text mode */
+html.font-bold body,
+html.font-bold p,
+html.font-bold span,
+html.font-bold div,
+html.font-bold li,
+html.font-bold td,
+html.font-bold th,
+html.font-bold label,
+html.font-bold button,
+html.font-bold input,
+html.font-bold textarea,
+html.font-bold select,
+html.font-bold a,
+html.font-bold h1,
+html.font-bold h2,
+html.font-bold h3,
+html.font-bold h4,
+html.font-bold h5,
+html.font-bold h6 {
+  font-weight: 700 !important;
+}
+
+/* Accessibility: Extra large font mode - 125% scaling */
+html.font-xl {
+  font-size: 125%;
 }
 
 @layer base {
