@@ -146,6 +146,41 @@ interface RuleEditorProps {
   isSaving: boolean;
 }
 
+// Validate regex pattern for ReDoS risks (basic check for dangerous patterns)
+function isValidRegexPattern(pattern: string): { valid: boolean; error?: string } {
+  if (!pattern) return { valid: false, error: 'Pattern is required' };
+
+  // Check for potentially dangerous patterns that could cause ReDoS
+  const dangerousPatterns = [
+    /(\+\+|\*\*|\?\?)/, // Nested quantifiers
+    /\([^)]*\)\+\+/, // Quantified group with nested quantifier
+    /\(\?:[^)]*\)\{\d+,\}/, // Non-capturing group with large repetition
+  ];
+
+  for (const dangerous of dangerousPatterns) {
+    if (dangerous.test(pattern)) {
+      return { valid: false, error: 'Pattern contains potentially dangerous quantifiers' };
+    }
+  }
+
+  // Try to compile the regex
+  try {
+    new RegExp(pattern);
+    return { valid: true };
+  } catch {
+    return { valid: false, error: 'Invalid regex pattern' };
+  }
+}
+
+interface ValidationErrors {
+  name?: string;
+  pattern?: string;
+  threshold?: string;
+  window_minutes?: string;
+  cooldown_minutes?: string;
+  consecutive_failures?: string;
+}
+
 function RuleEditor({ rule, open, onClose, onSave, isSaving }: RuleEditorProps) {
   const [formData, setFormData] = useState<RuleFormData>(() => {
     if (rule) {
@@ -168,9 +203,61 @@ function RuleEditor({ rule, open, onClose, onSave, isSaving }: RuleEditorProps) 
     return DEFAULT_FORM_DATA;
   });
 
+  const [errors, setErrors] = useState<ValidationErrors>({});
+
+  // Validate form data
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {};
+
+    // Name is required
+    if (!formData.name.trim()) {
+      newErrors.name = 'Rule name is required';
+    }
+
+    // Cooldown must be at least 1 minute
+    if (formData.cooldown_minutes < 1) {
+      newErrors.cooldown_minutes = 'Cooldown must be at least 1 minute';
+    }
+
+    // Rule-type specific validation
+    switch (formData.rule_type) {
+      case 'error_rate':
+        if (formData.threshold < 1) {
+          newErrors.threshold = 'Threshold must be at least 1';
+        }
+        if (formData.window_minutes < 1) {
+          newErrors.window_minutes = 'Window must be at least 1 minute';
+        }
+        // Optional error_pattern validation
+        if (formData.error_pattern) {
+          const patternCheck = isValidRegexPattern(formData.error_pattern);
+          if (!patternCheck.valid) {
+            newErrors.pattern = patternCheck.error;
+          }
+        }
+        break;
+      case 'error_pattern':
+        const patternCheck = isValidRegexPattern(formData.pattern);
+        if (!patternCheck.valid) {
+          newErrors.pattern = patternCheck.error;
+        }
+        break;
+      case 'function_health':
+        if (formData.consecutive_failures < 1) {
+          newErrors.consecutive_failures = 'Must be at least 1 consecutive failure';
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    if (validateForm()) {
+      onSave(formData);
+    }
   };
 
   const updateField = <K extends keyof RuleFormData>(field: K, value: RuleFormData[K]) => {
@@ -198,7 +285,9 @@ function RuleEditor({ rule, open, onClose, onSave, isSaving }: RuleEditorProps) 
                 onChange={(e) => updateField('name', e.target.value)}
                 placeholder="High Error Rate"
                 required
+                className={errors.name ? 'border-destructive' : ''}
               />
+              {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
             </div>
 
             {/* Description */}
@@ -258,7 +347,9 @@ function RuleEditor({ rule, open, onClose, onSave, isSaving }: RuleEditorProps) 
                       min={1}
                       value={formData.threshold}
                       onChange={(e) => updateField('threshold', parseInt(e.target.value) || 1)}
+                      className={errors.threshold ? 'border-destructive' : ''}
                     />
+                    {errors.threshold && <p className="text-xs text-destructive">{errors.threshold}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="window_minutes">Time Window (minutes)</Label>
@@ -268,7 +359,9 @@ function RuleEditor({ rule, open, onClose, onSave, isSaving }: RuleEditorProps) 
                       min={1}
                       value={formData.window_minutes}
                       onChange={(e) => updateField('window_minutes', parseInt(e.target.value) || 1)}
+                      className={errors.window_minutes ? 'border-destructive' : ''}
                     />
+                    {errors.window_minutes && <p className="text-xs text-destructive">{errors.window_minutes}</p>}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -278,10 +371,12 @@ function RuleEditor({ rule, open, onClose, onSave, isSaving }: RuleEditorProps) 
                     value={formData.error_pattern}
                     onChange={(e) => updateField('error_pattern', e.target.value)}
                     placeholder="database|connection (regex)"
+                    className={errors.pattern && formData.error_pattern ? 'border-destructive' : ''}
                   />
                   <p className="text-xs text-muted-foreground">
                     Only count errors matching this pattern (regex supported)
                   </p>
+                  {errors.pattern && formData.error_pattern && <p className="text-xs text-destructive">{errors.pattern}</p>}
                 </div>
               </div>
             )}
@@ -296,10 +391,12 @@ function RuleEditor({ rule, open, onClose, onSave, isSaving }: RuleEditorProps) 
                     onChange={(e) => updateField('pattern', e.target.value)}
                     placeholder="timeout|timed out|deadline exceeded"
                     required
+                    className={errors.pattern ? 'border-destructive' : ''}
                   />
                   <p className="text-xs text-muted-foreground">
                     Regex pattern to search for in error messages
                   </p>
+                  {errors.pattern && <p className="text-xs text-destructive">{errors.pattern}</p>}
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch
@@ -322,10 +419,12 @@ function RuleEditor({ rule, open, onClose, onSave, isSaving }: RuleEditorProps) 
                     min={1}
                     value={formData.consecutive_failures}
                     onChange={(e) => updateField('consecutive_failures', parseInt(e.target.value) || 1)}
+                    className={errors.consecutive_failures ? 'border-destructive' : ''}
                   />
                   <p className="text-xs text-muted-foreground">
                     Alert when a function fails this many times in a row
                   </p>
+                  {errors.consecutive_failures && <p className="text-xs text-destructive">{errors.consecutive_failures}</p>}
                 </div>
               </div>
             )}
@@ -372,10 +471,12 @@ function RuleEditor({ rule, open, onClose, onSave, isSaving }: RuleEditorProps) 
                 min={1}
                 value={formData.cooldown_minutes}
                 onChange={(e) => updateField('cooldown_minutes', parseInt(e.target.value) || 1)}
+                className={errors.cooldown_minutes ? 'border-destructive' : ''}
               />
               <p className="text-xs text-muted-foreground">
                 Minimum time between repeated alerts for the same condition
               </p>
+              {errors.cooldown_minutes && <p className="text-xs text-destructive">{errors.cooldown_minutes}</p>}
             </div>
 
             {/* Target Functions */}

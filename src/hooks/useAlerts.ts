@@ -2,6 +2,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 // ============================================================
+// CONSTANTS
+// ============================================================
+
+/** Time window for resolved alerts count (24 hours in ms) */
+const RESOLVED_LOOKBACK_MS = 24 * 60 * 60 * 1000;
+
+/** Delay before refetching after triggering monitor (5 seconds) */
+const TRIGGER_REFETCH_DELAY_MS = 5_000;
+
+// ============================================================
 // TYPE DEFINITIONS
 // ============================================================
 
@@ -145,7 +155,7 @@ export function useAlertCounts() {
           .from('alerts')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'resolved')
-          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()), // Last 24h
+          .gte('created_at', new Date(Date.now() - RESOLVED_LOOKBACK_MS).toISOString()),
       ]);
 
       if (pendingResult.error) throw pendingResult.error;
@@ -387,11 +397,12 @@ export function useTriggerMonitor() {
       return data;
     },
     onSuccess: () => {
-      // Invalidate related queries after a short delay to allow the function to complete
+      // Invalidate related queries after a delay to allow the edge function to complete
+      // Edge function has 30s timeout, so 5s delay gives time for fast runs
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['alerts'] });
         queryClient.invalidateQueries({ queryKey: ['monitor-runs'] });
-      }, 2000);
+      }, TRIGGER_REFETCH_DELAY_MS);
     },
   });
 }

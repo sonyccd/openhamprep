@@ -1,6 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, SupabaseClient } from "jsr:@supabase/supabase-js@2";
-import { getCorsHeaders, isServiceRoleToken } from "../_shared/constants.ts";
+import {
+  getCorsHeaders,
+  isServiceRoleToken,
+  ALERT_LOOKBACK_MS,
+  MAX_LOG_ENTRIES,
+  ANALYTICS_API_TIMEOUT_MS,
+} from "../_shared/constants.ts";
 import {
   evaluateAllRules,
   findAlertsToAutoResolve,
@@ -20,6 +26,7 @@ interface MonitorResponse {
   alerts_created: number;
   alerts_auto_resolved: number;
   logs_analyzed: number;
+  log_limit_reached?: boolean;
   duration_ms: number;
   errors?: string[];
 }
@@ -154,7 +161,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // 2. Fetch Edge Function logs
-    const logs = await fetchEdgeFunctionLogs(requestId);
+    const { logs, limitReached: logLimitReached } = await fetchEdgeFunctionLogs(requestId);
     console.log(`[${requestId}] Fetched ${logs.length} log entries`);
 
     // 3. Load existing pending alerts (for cooldown checks)
@@ -202,6 +209,7 @@ Deno.serve(async (req: Request) => {
       alerts_created: alertsCreated,
       alerts_auto_resolved: alertsResolved,
       logs_analyzed: logs.length,
+      log_limit_reached: logLimitReached || undefined,
       duration_ms: Date.now() - startTime,
     };
 
@@ -277,13 +285,13 @@ async function loadAlertRules(supabase: SupabaseClient, requestId: string): Prom
 }
 
 async function loadExistingAlerts(supabase: SupabaseClient, requestId: string): Promise<Alert[]> {
-  // Load alerts from the last 24 hours for cooldown checking
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  // Load alerts from the lookback window for cooldown checking
+  const cutoffTime = new Date(Date.now() - ALERT_LOOKBACK_MS).toISOString();
 
   const { data, error } = await supabase
     .from("alerts")
     .select("*")
-    .gte("created_at", oneDayAgo)
+    .gte("created_at", cutoffTime)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -351,17 +359,23 @@ async function autoResolveAlertsBatch(supabase: SupabaseClient, alertIds: string
 // LOG FETCHING
 // ============================================================
 
+interface LogFetchResult {
+  logs: LogEntry[];
+  limitReached: boolean;
+}
+
 /**
  * Fetch Edge Function logs by querying Supabase's edge_logs via the Analytics API.
  * Uses the same query format as the Supabase Dashboard Logs Explorer.
+ * Returns logs and a flag indicating if the query limit was reached.
  */
-async function fetchEdgeFunctionLogs(requestId: string): Promise<LogEntry[]> {
+async function fetchEdgeFunctionLogs(requestId: string): Promise<LogFetchResult> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!supabaseUrl || !serviceRoleKey) {
     console.warn(`[${requestId}] Missing env vars for log fetching`);
-    return [];
+    return { logs: [], limitReached: false };
   }
 
   // Extract project ref from URL (format: https://<project-ref>.supabase.co)
@@ -369,7 +383,7 @@ async function fetchEdgeFunctionLogs(requestId: string): Promise<LogEntry[]> {
   if (!projectRefMatch) {
     console.warn(`[${requestId}] Could not extract project ref from URL: ${supabaseUrl}`);
     console.warn(`[${requestId}] Local development detected - no logs to query`);
-    return [];
+    return { logs: [], limitReached: false };
   }
 
   const projectRef = projectRefMatch[1];
@@ -397,7 +411,7 @@ async function fetchEdgeFunctionLogs(requestId: string): Promise<LogEntry[]> {
         or event_message ilike '%exception%'
       )
     order by timestamp desc
-    limit 500
+    limit ${MAX_LOG_ENTRIES}
   `;
 
   // The Analytics API endpoint
@@ -413,7 +427,7 @@ async function fetchEdgeFunctionLogs(requestId: string): Promise<LogEntry[]> {
         "apikey": serviceRoleKey,
       },
       body: JSON.stringify({ query }),
-      signal: AbortSignal.timeout(10000), // 10 second timeout
+      signal: AbortSignal.timeout(ANALYTICS_API_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -423,9 +437,9 @@ async function fetchEdgeFunctionLogs(requestId: string): Promise<LogEntry[]> {
       // If analytics API isn't available, return empty (not an error)
       if (response.status === 404 || response.status === 401) {
         console.warn(`[${requestId}] Analytics API not available - alerting will be limited`);
-        return [];
+        return { logs: [], limitReached: false };
       }
-      return [];
+      return { logs: [], limitReached: false };
     }
 
     const data = await response.json();
@@ -455,11 +469,21 @@ async function fetchEdgeFunctionLogs(requestId: string): Promise<LogEntry[]> {
       }
     }
 
-    console.log(`[${requestId}] Fetched ${logs.length} error logs from edge_logs`);
-    return logs;
+    // Warn if we hit the log limit - some errors may have been missed
+    const limitReached = logs.length >= MAX_LOG_ENTRIES;
+    if (limitReached) {
+      console.warn(
+        `[${requestId}] WARNING: Fetched ${logs.length} logs (limit reached). ` +
+        `Some errors may have been missed. Consider reducing the time window or increasing limits.`
+      );
+    } else {
+      console.log(`[${requestId}] Fetched ${logs.length} error logs from edge_logs`);
+    }
+
+    return { logs, limitReached };
 
   } catch (error) {
     console.error(`[${requestId}] Error fetching logs:`, error);
-    return [];
+    return { logs: [], limitReached: false };
   }
 }

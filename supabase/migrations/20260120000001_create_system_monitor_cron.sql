@@ -147,14 +147,22 @@ CREATE OR REPLACE FUNCTION public.cleanup_old_monitor_runs()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
+DECLARE
+  cutoff_time TIMESTAMPTZ;
 BEGIN
-  -- Delete runs older than the 100 most recent
-  DELETE FROM public.system_monitor_runs
-  WHERE id NOT IN (
-    SELECT id FROM public.system_monitor_runs
-    ORDER BY started_at DESC
-    LIMIT 100
-  );
+  -- Find the timestamp of the 100th most recent run (more efficient than NOT IN)
+  SELECT started_at INTO cutoff_time
+  FROM public.system_monitor_runs
+  ORDER BY started_at DESC
+  OFFSET 100
+  LIMIT 1;
+
+  -- Delete runs older than the cutoff (if we have more than 100)
+  IF cutoff_time IS NOT NULL THEN
+    DELETE FROM public.system_monitor_runs
+    WHERE started_at < cutoff_time;
+  END IF;
+
   RETURN NEW;
 END;
 $$;

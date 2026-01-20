@@ -154,3 +154,22 @@ export function isServiceRoleToken(token: string): boolean {
   const payload = decodeJwtPayload(token);
   return payload?.role === 'service_role';
 }
+
+// ============================================================
+// System Monitoring Constants
+// ============================================================
+
+/** Time window for loading existing alerts (24 hours in ms) */
+export const ALERT_LOOKBACK_MS = 24 * 60 * 60 * 1000;
+
+/** Time window for log analysis (30 minutes in ms) */
+export const LOG_ANALYSIS_WINDOW_MS = 30 * 60 * 1000;
+
+/** Maximum number of log entries to fetch from Analytics API */
+export const MAX_LOG_ENTRIES = 500;
+
+/** Timeout for Analytics API requests (10 seconds) */
+export const ANALYTICS_API_TIMEOUT_MS = 10_000;
+
+/** Delay before refetching after triggering monitor (5 seconds) */
+export const TRIGGER_REFETCH_DELAY_MS = 5_000;
