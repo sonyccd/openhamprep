@@ -1,5 +1,22 @@
 -- Create pg_cron job to invoke system-monitor Edge Function every 5 minutes
 -- This migration depends on pg_cron and pg_net extensions being enabled
+--
+-- ============================================================
+-- REQUIRED CONFIGURATION (per environment):
+-- ============================================================
+-- These settings must be configured for each environment after migration:
+--
+-- Production:
+--   ALTER DATABASE postgres SET app.settings.supabase_url = 'https://wghfvormohhmqijcxbzq.supabase.co';
+--   ALTER DATABASE postgres SET app.settings.service_role_key = '<your-service-role-key>';
+--
+-- Preview branches: Set automatically by Supabase preview infrastructure
+-- Local development: Set in local Supabase config or via SQL
+--
+-- To verify settings:
+--   SELECT current_setting('app.settings.supabase_url', true);
+--   SELECT current_setting('app.settings.service_role_key', true);
+-- ============================================================
 
 -- ============================================================
 -- 1. CREATE THE CRON JOB
@@ -13,22 +30,16 @@ WHERE EXISTS (
 
 -- Schedule the system-monitor function to run every 5 minutes
 -- Uses pg_net to make HTTP request to the Edge Function
+-- NOTE: Will fail loudly if app.settings.supabase_url is not configured
 SELECT cron.schedule(
   'system-monitor-check',  -- job name
   '*/5 * * * *',           -- every 5 minutes
   $$
   SELECT net.http_post(
-    url := COALESCE(
-      current_setting('app.settings.supabase_url', true),
-      'https://wghfvormohhmqijcxbzq.supabase.co'
-    ) || '/functions/v1/system-monitor',
+    url := current_setting('app.settings.supabase_url') || '/functions/v1/system-monitor',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || COALESCE(
-        current_setting('app.settings.service_role_key', true),
-        current_setting('supabase.service_role_key', true),
-        ''
-      )
+      'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key')
     ),
     body := '{}'::jsonb,
     timeout_milliseconds := 30000
@@ -42,6 +53,7 @@ SELECT cron.schedule(
 
 -- Create a function that admins can call to manually trigger the monitor
 -- This is useful for testing or when you want an immediate check
+-- Includes rate limiting to prevent abuse
 CREATE OR REPLACE FUNCTION public.trigger_system_monitor()
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -59,19 +71,22 @@ BEGIN
     RAISE EXCEPTION 'Admin access required';
   END IF;
 
+  -- Rate limiting: prevent triggering if a monitor run started within the last minute
+  IF EXISTS (
+    SELECT 1 FROM public.system_monitor_runs
+    WHERE started_at > now() - interval '1 minute'
+      AND status = 'running'
+  ) THEN
+    RAISE EXCEPTION 'Monitor already running. Please wait for it to complete.';
+  END IF;
+
   -- Make HTTP request to the Edge Function
+  -- NOTE: Requires app.settings.supabase_url and app.settings.service_role_key to be configured
   SELECT net.http_post(
-    url := COALESCE(
-      current_setting('app.settings.supabase_url', true),
-      'https://wghfvormohhmqijcxbzq.supabase.co'
-    ) || '/functions/v1/system-monitor',
+    url := current_setting('app.settings.supabase_url') || '/functions/v1/system-monitor',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || COALESCE(
-        current_setting('app.settings.service_role_key', true),
-        current_setting('supabase.service_role_key', true),
-        ''
-      )
+      'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key')
     ),
     body := '{}'::jsonb,
     timeout_milliseconds := 30000

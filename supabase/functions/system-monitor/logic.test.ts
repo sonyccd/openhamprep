@@ -442,7 +442,7 @@ Deno.test("parseLogLine - handles lines with error keyword", () => {
 Deno.test("parseLogs - filters invalid lines", () => {
   const lines = [
     JSON.stringify({ timestamp: "2026-01-20T12:00:00Z", level: "error", msg: "Error 1", function_name: "fn1" }),
-    "not a valid log line without error keyword",
+    "not a valid log line gibberish xyz",  // No keywords, should be filtered
     JSON.stringify({ timestamp: "2026-01-20T12:00:00Z", level: "info", msg: "Info 1", function_name: "fn2" }),
   ];
 

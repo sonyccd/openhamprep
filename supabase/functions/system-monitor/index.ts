@@ -39,17 +39,20 @@ Deno.serve(async (req: Request) => {
 
   const errors: string[] = [];
 
+  // Create admin client outside try-catch so we can record failures
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  // Track run ID for failure recording
+  let runId: string | undefined;
+
   try {
     // This function should only be called by:
     // 1. pg_cron (via pg_net with service role)
     // 2. Admin manual trigger (with service role or admin user)
     const authHeader = req.headers.get("Authorization");
-
-    // Create admin client with service role for database operations
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     // If auth header present, verify it's service role or admin
     if (authHeader) {
@@ -71,14 +74,14 @@ Deno.serve(async (req: Request) => {
         }
 
         // Check admin role
-        const { data: roleData } = await supabaseUser
+        const { data: roleData, error: roleError } = await supabaseUser
           .from("user_roles")
           .select("role")
           .eq("user_id", user.id)
           .eq("role", "admin")
           .single();
 
-        if (!roleData) {
+        if (roleError || !roleData) {
           return new Response(
             JSON.stringify({ error: "Admin access required" }),
             { status: 403, headers: { ...getCorsHeaders(), "Content-Type": "application/json" } }
@@ -89,20 +92,65 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[${requestId}] Starting system monitor check`);
 
+    // Record that a monitor run has started
+    const { data: runRecord, error: runError } = await supabaseAdmin
+      .from("system_monitor_runs")
+      .insert({
+        status: "running",
+        started_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+
+    if (runError) {
+      console.error(`[${requestId}] Failed to create monitor run record:`, runError);
+      // Continue anyway - monitoring is more important than tracking
+    }
+
+    runId = runRecord?.id;
+
+    // Helper to update run status
+    const updateRunStatus = async (
+      status: "completed" | "failed",
+      stats: Partial<MonitorResponse>,
+      errorMessage?: string
+    ) => {
+      if (!runId) return;
+      try {
+        await supabaseAdmin
+          .from("system_monitor_runs")
+          .update({
+            status,
+            completed_at: new Date().toISOString(),
+            rules_evaluated: stats.rules_evaluated ?? 0,
+            alerts_created: stats.alerts_created ?? 0,
+            alerts_auto_resolved: stats.alerts_auto_resolved ?? 0,
+            logs_analyzed: stats.logs_analyzed ?? 0,
+            duration_ms: stats.duration_ms ?? (Date.now() - startTime),
+            error_message: errorMessage,
+          })
+          .eq("id", runId);
+      } catch (err) {
+        console.error(`[${requestId}] Failed to update run status:`, err);
+      }
+    };
+
     // 1. Load enabled alert rules
     const rules = await loadAlertRules(supabaseAdmin, requestId);
     console.log(`[${requestId}] Loaded ${rules.length} enabled alert rules`);
 
     if (rules.length === 0) {
       console.log(`[${requestId}] No enabled rules, skipping`);
-      return createResponse({
+      const emptyResponse: MonitorResponse = {
         success: true,
         rules_evaluated: 0,
         alerts_created: 0,
         alerts_auto_resolved: 0,
         logs_analyzed: 0,
         duration_ms: Date.now() - startTime,
-      });
+      };
+      await updateRunStatus("completed", emptyResponse);
+      return createResponse(emptyResponse);
     }
 
     // 2. Fetch Edge Function logs
@@ -161,12 +209,36 @@ Deno.serve(async (req: Request) => {
       response.errors = errors;
     }
 
+    // Record successful completion
+    await updateRunStatus(
+      "completed",
+      response,
+      errors.length > 0 ? errors.join("; ") : undefined
+    );
+
     console.log(`[${requestId}] Completed in ${response.duration_ms}ms`);
     return createResponse(response);
 
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : "Unknown error";
     console.error(`[${requestId}] Error:`, error);
+
+    // Record failed run if we have a run ID
+    if (runId) {
+      try {
+        await supabaseAdmin
+          .from("system_monitor_runs")
+          .update({
+            status: "failed",
+            completed_at: new Date().toISOString(),
+            duration_ms: Date.now() - startTime,
+            error_message: errMsg,
+          })
+          .eq("id", runId);
+      } catch (updateErr) {
+        console.error(`[${requestId}] Failed to record run failure:`, updateErr);
+      }
+    }
 
     return new Response(
       JSON.stringify({
@@ -304,6 +376,10 @@ async function fetchEdgeFunctionLogs(requestId: string): Promise<LogEntry[]> {
 
   // Query edge_logs for errors in the last 30 minutes
   // This uses the same SQL-like syntax as the Supabase Dashboard Logs Explorer
+  //
+  // LIMITATION: This query returns at most 500 entries. During high-error-rate
+  // incidents, some errors may be missed. Consider reducing the time window or
+  // implementing pagination for high-volume scenarios.
   const query = `
     select
       cast(timestamp as datetime) as timestamp,
@@ -328,6 +404,7 @@ async function fetchEdgeFunctionLogs(requestId: string): Promise<LogEntry[]> {
   const analyticsUrl = `https://${projectRef}.supabase.co/analytics/v1/query`;
 
   try {
+    // Add 10-second timeout to prevent hanging if Analytics API is slow
     const response = await fetch(analyticsUrl, {
       method: "POST",
       headers: {
@@ -336,6 +413,7 @@ async function fetchEdgeFunctionLogs(requestId: string): Promise<LogEntry[]> {
         "apikey": serviceRoleKey,
       },
       body: JSON.stringify({ query }),
+      signal: AbortSignal.timeout(10000), // 10 second timeout
     });
 
     if (!response.ok) {
