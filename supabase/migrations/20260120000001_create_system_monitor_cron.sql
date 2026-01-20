@@ -62,6 +62,8 @@ SET search_path = public
 AS $$
 DECLARE
   result JSONB;
+  supabase_url TEXT;
+  service_key TEXT;
 BEGIN
   -- Check if caller is admin
   IF NOT EXISTS (
@@ -80,8 +82,21 @@ BEGIN
     RAISE EXCEPTION 'Monitor already running. Please wait for it to complete.';
   END IF;
 
+  -- Verify configuration is present before attempting HTTP call
+  supabase_url := current_setting('app.settings.supabase_url', true);
+  service_key := current_setting('app.settings.service_role_key', true);
+
+  IF supabase_url IS NULL OR supabase_url = '' THEN
+    RAISE EXCEPTION 'System monitoring not configured. Missing app.settings.supabase_url. '
+      'Run: ALTER DATABASE postgres SET app.settings.supabase_url = ''https://your-project.supabase.co'';';
+  END IF;
+
+  IF service_key IS NULL OR service_key = '' THEN
+    RAISE EXCEPTION 'System monitoring not configured. Missing app.settings.service_role_key. '
+      'Run: ALTER DATABASE postgres SET app.settings.service_role_key = ''your-service-role-key'';';
+  END IF;
+
   -- Make HTTP request to the Edge Function
-  -- NOTE: Requires app.settings.supabase_url and app.settings.service_role_key to be configured
   SELECT net.http_post(
     url := current_setting('app.settings.supabase_url') || '/functions/v1/system-monitor',
     headers := jsonb_build_object(

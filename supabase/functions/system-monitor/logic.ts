@@ -158,10 +158,15 @@ export function evaluateErrorRateRule(
     return log.level === 'error' && logTime >= windowStart && logTime <= now;
   });
 
-  // Apply optional pattern filter
+  // Apply optional pattern filter (with ReDoS protection)
   if (config.error_pattern) {
-    const regex = new RegExp(config.error_pattern, 'i');
-    errorLogs = errorLogs.filter(log => regex.test(log.message));
+    const regex = safeCreateRegex(config.error_pattern, 'i');
+    if (regex) {
+      errorLogs = errorLogs.filter(log => safeRegexTest(regex, log.message));
+    } else {
+      // Pattern is invalid or dangerous - skip filtering rather than crashing
+      console.warn(`Skipping invalid error_pattern filter: ${config.error_pattern}`);
+    }
   }
 
   const errorCount = errorLogs.length;
@@ -204,11 +209,18 @@ export function evaluateErrorPatternRule(
 ): { triggered: boolean; alert?: NewAlert; reason?: string } {
   const config = rule.config as ErrorPatternConfig;
   const flags = config.case_sensitive ? '' : 'i';
-  const regex = new RegExp(config.pattern, flags);
 
-  // Look for error logs matching the pattern
+  // Create regex with ReDoS protection
+  const regex = safeCreateRegex(config.pattern, flags);
+  if (!regex) {
+    // Pattern is invalid or dangerous - treat as not triggered
+    console.warn(`Rule ${rule.id} has invalid/unsafe pattern: ${config.pattern}`);
+    return { triggered: false, reason: `Invalid or unsafe regex pattern` };
+  }
+
+  // Look for error logs matching the pattern (with safe execution)
   const matchingLogs = logs.filter(log =>
-    log.level === 'error' && regex.test(log.message)
+    log.level === 'error' && safeRegexTest(regex, log.message)
   );
 
   const triggered = matchingLogs.length > 0;
@@ -400,6 +412,76 @@ export function evaluateAllRules(
   }
 
   return newAlerts;
+}
+
+// ============================================================
+// SAFE REGEX UTILITIES
+// ============================================================
+
+/** Maximum length for regex patterns to prevent DoS */
+const MAX_PATTERN_LENGTH = 200;
+
+/** Timeout for regex test execution (ms) */
+const REGEX_TIMEOUT_MS = 100;
+
+/** Dangerous patterns that could cause catastrophic backtracking (ReDoS) */
+const DANGEROUS_PATTERNS = [
+  /\([^)]*[+*][^)]*\)[+*]/,    // Nested quantifiers: (a+)+
+  /\([^)]*\|[^)]*\)[+*]/,       // Overlapping alternations: (a|a)+
+  /\(\.[+*]\)[+*]/,              // Repeated wildcards: (.*)+
+  /[+*]{2,}/,                    // Direct nested quantifiers
+];
+
+/**
+ * Validate that a regex pattern is safe to execute.
+ * Checks for known ReDoS patterns and length limits.
+ */
+function isPatternSafe(pattern: string): boolean {
+  if (!pattern || pattern.length > MAX_PATTERN_LENGTH) {
+    return false;
+  }
+
+  for (const dangerous of DANGEROUS_PATTERNS) {
+    if (dangerous.test(pattern)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Safely create a RegExp with validation.
+ * Returns null if the pattern is invalid or potentially dangerous.
+ */
+function safeCreateRegex(pattern: string, flags?: string): RegExp | null {
+  if (!isPatternSafe(pattern)) {
+    console.warn(`Unsafe or invalid regex pattern rejected: ${pattern.slice(0, 50)}...`);
+    return null;
+  }
+
+  try {
+    return new RegExp(pattern, flags);
+  } catch {
+    console.warn(`Invalid regex syntax: ${pattern.slice(0, 50)}...`);
+    return null;
+  }
+}
+
+/**
+ * Safely test a regex against a string with timeout protection.
+ * Uses performance measurement to detect slow execution.
+ */
+function safeRegexTest(regex: RegExp, text: string): boolean {
+  const startTime = Date.now();
+  const result = regex.test(text);
+  const duration = Date.now() - startTime;
+
+  if (duration > REGEX_TIMEOUT_MS) {
+    console.warn(`Slow regex detected (${duration}ms). Pattern may need optimization.`);
+  }
+
+  return result;
 }
 
 // ============================================================

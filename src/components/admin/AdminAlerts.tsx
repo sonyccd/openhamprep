@@ -480,12 +480,34 @@ export function AdminAlerts() {
                     })()}
                   </span>
                 </div>
+                {lastRun.logs_analyzed !== null && (
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Logs: </span>
+                    <span className={`text-foreground ${lastRun.logs_analyzed >= 500 ? 'text-amber-500' : ''}`}>
+                      {lastRun.logs_analyzed}
+                      {lastRun.logs_analyzed >= 500 && ' (limit)'}
+                    </span>
+                  </div>
+                )}
               </>
             ) : (
               <span className="text-sm text-muted-foreground">No runs yet</span>
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Log limitation notice */}
+      <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
+        <Info className="w-4 h-4 shrink-0 mt-0.5" />
+        <p>
+          The system monitor analyzes up to 500 error logs per check. During high-error incidents,
+          some errors may not be captured. If you see "(limit)" above, consider checking the{' '}
+          <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+            Supabase Dashboard Logs
+          </a>
+          {' '}for complete data.
+        </p>
       </div>
 
       {/* Filter tabs */}

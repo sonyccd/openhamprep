@@ -146,30 +146,80 @@ interface RuleEditorProps {
   isSaving: boolean;
 }
 
-// Validate regex pattern for ReDoS risks (basic check for dangerous patterns)
+// Maximum allowed pattern length to prevent complexity attacks
+const MAX_PATTERN_LENGTH = 200;
+
+// Test string for ReDoS detection - triggers backtracking on vulnerable patterns
+const REDOS_TEST_STRING = 'a'.repeat(25);
+
+// Maximum time allowed for regex test execution (ms)
+const REGEX_TEST_TIMEOUT_MS = 50;
+
+/**
+ * Validate regex pattern for ReDoS risks.
+ * Uses multiple layers of protection:
+ * 1. Length limit
+ * 2. Dangerous pattern detection (nested quantifiers, overlapping alternations)
+ * 3. Timed test execution to catch actual backtracking
+ */
 function isValidRegexPattern(pattern: string): { valid: boolean; error?: string } {
   if (!pattern) return { valid: false, error: 'Pattern is required' };
 
-  // Check for potentially dangerous patterns that could cause ReDoS
+  // 1. Length limit
+  if (pattern.length > MAX_PATTERN_LENGTH) {
+    return { valid: false, error: `Pattern too long (max ${MAX_PATTERN_LENGTH} characters)` };
+  }
+
+  // 2. Detect dangerous patterns that commonly cause ReDoS
   const dangerousPatterns = [
-    /(\+\+|\*\*|\?\?)/, // Nested quantifiers
-    /\([^)]*\)\+\+/, // Quantified group with nested quantifier
-    /\(\?:[^)]*\)\{\d+,\}/, // Non-capturing group with large repetition
+    // Nested quantifiers: (a+)+, (a*)+, (a+)*, etc.
+    /\([^)]*[+*][^)]*\)[+*]/,
+    // Overlapping alternations in quantified groups: (a|a)+, (a|ab)+
+    /\([^)]*\|[^)]*\)[+*]/,
+    // Repeated wildcards: (.*)+, (.+)+, (.*)*
+    /\(\.[+*]\)[+*]/,
+    // Nested groups with quantifiers: ((a+))+
+    /\(\([^)]*[+*]\)[^)]*\)[+*]/,
+    // Direct nested quantifiers: a++, a**
+    /[+*]{2,}/,
+    // Backreferences in quantified contexts can be slow
+    /\\[1-9][+*]/,
   ];
 
   for (const dangerous of dangerousPatterns) {
     if (dangerous.test(pattern)) {
-      return { valid: false, error: 'Pattern contains potentially dangerous quantifiers' };
+      return {
+        valid: false,
+        error: 'Pattern contains constructs that could cause performance issues. Simplify nested quantifiers or alternations.'
+      };
     }
   }
 
-  // Try to compile the regex
+  // 3. Try to compile the regex
+  let regex: RegExp;
   try {
-    new RegExp(pattern);
-    return { valid: true };
+    regex = new RegExp(pattern);
   } catch {
-    return { valid: false, error: 'Invalid regex pattern' };
+    return { valid: false, error: 'Invalid regex syntax' };
   }
+
+  // 4. Test execution with timing to catch patterns that slip through static analysis
+  try {
+    const startTime = performance.now();
+    regex.test(REDOS_TEST_STRING);
+    const duration = performance.now() - startTime;
+
+    if (duration > REGEX_TEST_TIMEOUT_MS) {
+      return {
+        valid: false,
+        error: 'Pattern is too slow to execute. Simplify the pattern.'
+      };
+    }
+  } catch {
+    return { valid: false, error: 'Pattern caused an error during testing' };
+  }
+
+  return { valid: true };
 }
 
 interface ValidationErrors {
