@@ -436,7 +436,7 @@ const DANGEROUS_PATTERNS = [
  * Validate that a regex pattern is safe to execute.
  * Checks for known ReDoS patterns and length limits.
  */
-function isPatternSafe(pattern: string): boolean {
+export function isPatternSafe(pattern: string): boolean {
   if (!pattern || pattern.length > MAX_PATTERN_LENGTH) {
     return false;
   }
@@ -454,7 +454,7 @@ function isPatternSafe(pattern: string): boolean {
  * Safely create a RegExp with validation.
  * Returns null if the pattern is invalid or potentially dangerous.
  */
-function safeCreateRegex(pattern: string, flags?: string): RegExp | null {
+export function safeCreateRegex(pattern: string, flags?: string): RegExp | null {
   if (!isPatternSafe(pattern)) {
     console.warn(`Unsafe or invalid regex pattern rejected: ${pattern.slice(0, 50)}...`);
     return null;
@@ -472,7 +472,7 @@ function safeCreateRegex(pattern: string, flags?: string): RegExp | null {
  * Safely test a regex against a string with timeout protection.
  * Uses performance measurement to detect slow execution.
  */
-function safeRegexTest(regex: RegExp, text: string): boolean {
+export function safeRegexTest(regex: RegExp, text: string): boolean {
   const startTime = Date.now();
   const result = regex.test(text);
   const duration = Date.now() - startTime;

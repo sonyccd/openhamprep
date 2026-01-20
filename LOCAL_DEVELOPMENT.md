@@ -231,6 +231,55 @@ Local Supabase includes Inbucket for email testing:
 
 ## Edge Functions
 
+### Edge Functions Environment File
+
+When you run `npm run supabase:start`, it automatically creates `supabase/functions/.env.local` with:
+
+```env
+SUPABASE_URL=http://localhost:54321
+SUPABASE_ANON_KEY=<anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+```
+
+**⚠️ SECURITY WARNING:** This file contains the service role key which has **full admin access** to your database, bypassing Row Level Security. This file is gitignored, but:
+- Never commit this file
+- Never share this key
+- Only use for local development
+
+### Running Edge Functions Locally
+
+The `dev:full` command runs both Vite and Edge Functions concurrently:
+
+```bash
+npm run dev:full
+```
+
+This starts:
+- Vite dev server on http://localhost:8080
+- Edge Functions server on http://localhost:54321/functions/v1/
+
+To run Edge Functions separately:
+
+```bash
+# Serve functions with hot reload
+npm run supabase:functions
+
+# Or with debug output
+npm run supabase:functions:debug
+```
+
+### Testing Edge Functions
+
+The project includes Deno as an npm dependency for running tests without global installation:
+
+```bash
+# Run all Edge Function tests
+npm run supabase:functions:test
+
+# Watch mode
+npm run supabase:functions:test:watch
+```
+
 ### Developing Edge Functions
 
 ```bash
