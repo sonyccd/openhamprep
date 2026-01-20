@@ -11,6 +11,9 @@ import {
   evaluateAllRules,
   parseLogLine,
   parseLogs,
+  isPatternSafe,
+  safeCreateRegex,
+  safeRegexTest,
   type AlertRule,
   type Alert,
   type LogEntry,
@@ -449,4 +452,130 @@ Deno.test("parseLogs - filters invalid lines", () => {
   const result = parseLogs(lines);
 
   assertEquals(result.length, 2);
+});
+
+// ============================================================
+// SAFE REGEX UTILITIES TESTS
+// ============================================================
+
+Deno.test("isPatternSafe - accepts valid simple patterns", () => {
+  assertEquals(isPatternSafe("error"), true);
+  assertEquals(isPatternSafe("timeout|failed"), true);
+  assertEquals(isPatternSafe("database.*connection"), true);
+  assertEquals(isPatternSafe("[0-9]+"), true);
+  assertEquals(isPatternSafe("^Error:"), true);
+});
+
+Deno.test("isPatternSafe - rejects empty or null patterns", () => {
+  assertEquals(isPatternSafe(""), false);
+});
+
+Deno.test("isPatternSafe - rejects patterns exceeding max length", () => {
+  const longPattern = "a".repeat(201);
+  assertEquals(isPatternSafe(longPattern), false);
+
+  // 200 chars should be OK
+  const maxPattern = "a".repeat(200);
+  assertEquals(isPatternSafe(maxPattern), true);
+});
+
+Deno.test("isPatternSafe - rejects nested quantifiers (ReDoS pattern)", () => {
+  // (a+)+ - classic ReDoS
+  assertEquals(isPatternSafe("(a+)+"), false);
+
+  // (.*)*
+  assertEquals(isPatternSafe("(.*)*"), false);
+
+  // ([a-z]+)*
+  assertEquals(isPatternSafe("([a-z]+)*"), false);
+});
+
+Deno.test("isPatternSafe - rejects overlapping alternations", () => {
+  // (a|a)+ - overlapping alternation
+  assertEquals(isPatternSafe("(a|a)+"), false);
+
+  // (foo|foo)*
+  assertEquals(isPatternSafe("(foo|foo)*"), false);
+});
+
+Deno.test("isPatternSafe - rejects repeated wildcards", () => {
+  // (.*)+ - repeated wildcard
+  assertEquals(isPatternSafe("(.*)+"), false);
+
+  // (.+)*
+  assertEquals(isPatternSafe("(.+)*"), false);
+});
+
+Deno.test("isPatternSafe - rejects direct nested quantifiers", () => {
+  // a++ style
+  assertEquals(isPatternSafe("a++"), false);
+  assertEquals(isPatternSafe("a**"), false);
+  assertEquals(isPatternSafe("a+*"), false);
+});
+
+Deno.test("safeCreateRegex - returns regex for valid patterns", () => {
+  const regex = safeCreateRegex("error|warning", "i");
+
+  assertExists(regex);
+  assertEquals(regex.test("Error occurred"), true);
+  assertEquals(regex.test("Warning: low memory"), true);
+  assertEquals(regex.test("Info message"), false);
+});
+
+Deno.test("safeCreateRegex - returns null for unsafe patterns", () => {
+  assertEquals(safeCreateRegex("(a+)+"), null);
+  assertEquals(safeCreateRegex("(.*)*"), null);
+  assertEquals(safeCreateRegex("a".repeat(201)), null);
+});
+
+Deno.test("safeCreateRegex - returns null for invalid regex syntax", () => {
+  assertEquals(safeCreateRegex("[unclosed"), null);
+  assertEquals(safeCreateRegex("(unbalanced"), null);
+  assertEquals(safeCreateRegex("*invalid"), null);
+});
+
+Deno.test("safeRegexTest - executes regex test correctly", () => {
+  const regex = new RegExp("error", "i");
+
+  assertEquals(safeRegexTest(regex, "Error occurred"), true);
+  assertEquals(safeRegexTest(regex, "Success"), false);
+});
+
+Deno.test("evaluateErrorPatternRule - handles unsafe pattern gracefully", () => {
+  const rule = createErrorPatternRule({
+    config: { pattern: "(a+)+", case_sensitive: false }, // Unsafe ReDoS pattern
+  });
+
+  const logs: LogEntry[] = [
+    createLogEntry({ message: "aaaaaaaaaaaaaaaaaa" }),
+  ];
+
+  const result = evaluateErrorPatternRule(rule, logs, NOW);
+
+  // Should not trigger - pattern is rejected as unsafe
+  assertEquals(result.triggered, false);
+  assertEquals(result.reason, "Invalid or unsafe regex pattern");
+});
+
+Deno.test("evaluateErrorRateRule - handles unsafe error_pattern gracefully", () => {
+  const rule = createErrorRateRule({
+    config: {
+      threshold: 1,
+      window_minutes: 15,
+      error_pattern: "(a+)+" // Unsafe pattern
+    },
+  });
+
+  const logs: LogEntry[] = [
+    createLogEntry({ message: "aaaaaaaaaaaaa" }),
+    createLogEntry({ message: "bbbbbbbbbbbbb" }),
+    createLogEntry({ message: "Error with aaaaa" }),
+  ];
+
+  const result = evaluateErrorRateRule(rule, logs, NOW);
+
+  // Should still work - unsafe pattern is skipped, all errors count
+  // All 3 logs are errors, threshold is 1, so it should trigger
+  assertEquals(result.triggered, true);
+  assertEquals(result.alert?.context.error_count, 3);
 });

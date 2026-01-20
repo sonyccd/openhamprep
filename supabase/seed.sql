@@ -2474,6 +2474,196 @@ SELECT c.id, 'N1MM Logger+',
 FROM public.ham_radio_tool_categories c WHERE c.slug = 'contest-tools';
 
 -- =============================================================================
+-- SYSTEM MONITORING ALERTS (Development Seed Data)
+-- =============================================================================
+
+-- Sample alerts with various statuses and severities for development testing
+-- These alerts demonstrate the different states admins will encounter
+
+-- Get rule IDs for linking alerts
+DO $$
+DECLARE
+  v_error_rate_rule_id UUID;
+  v_timeout_rule_id UUID;
+  v_consecutive_rule_id UUID;
+  v_db_connection_rule_id UUID;
+BEGIN
+  -- Get rule IDs
+  SELECT id INTO v_error_rate_rule_id FROM public.alert_rules WHERE name = 'High Error Rate' LIMIT 1;
+  SELECT id INTO v_timeout_rule_id FROM public.alert_rules WHERE name = 'Timeout Pattern Detection' LIMIT 1;
+  SELECT id INTO v_consecutive_rule_id FROM public.alert_rules WHERE name = 'Consecutive Function Failures' LIMIT 1;
+  SELECT id INTO v_db_connection_rule_id FROM public.alert_rules WHERE name = 'Database Connection Errors' LIMIT 1;
+
+  -- Alert 1: Critical pending alert (most urgent)
+  INSERT INTO public.alerts (
+    rule_id, title, message, severity, status, context, created_at, updated_at
+  ) VALUES (
+    v_error_rate_rule_id,
+    'High Error Rate: 12 errors in 15 minutes',
+    'Detected 12 errors (threshold: 5) in the last 15 minutes. Affected functions: calculate-readiness, sync-discourse.',
+    'critical',
+    'pending',
+    '{
+      "function_names": ["calculate-readiness", "sync-discourse"],
+      "error_count": 12,
+      "sample_errors": [
+        "Error: Database connection timeout after 30000ms",
+        "Error: Failed to fetch user data: connection refused",
+        "Error: Query failed: too many connections"
+      ],
+      "time_window_start": "2026-01-20T11:30:00Z",
+      "time_window_end": "2026-01-20T11:45:00Z"
+    }'::jsonb,
+    NOW() - INTERVAL '25 minutes',
+    NOW() - INTERVAL '25 minutes'
+  );
+
+  -- Alert 2: Warning pending alert
+  INSERT INTO public.alerts (
+    rule_id, title, message, severity, status, context, created_at, updated_at
+  ) VALUES (
+    v_timeout_rule_id,
+    'Timeout Pattern Detection: Pattern detected in 3 error(s)',
+    'Detected 3 error(s) matching pattern "timeout|timed out". Affected functions: sync-discourse.',
+    'warning',
+    'pending',
+    '{
+      "function_names": ["sync-discourse"],
+      "error_count": 3,
+      "sample_errors": [
+        "Request timed out after 30s waiting for Discourse API",
+        "Connection timeout: unable to reach forum.openhamprep.com"
+      ],
+      "matched_pattern": "timeout|timed out",
+      "time_window_end": "2026-01-20T11:50:00Z"
+    }'::jsonb,
+    NOW() - INTERVAL '15 minutes',
+    NOW() - INTERVAL '15 minutes'
+  );
+
+  -- Alert 3: Acknowledged alert (admin has seen it)
+  INSERT INTO public.alerts (
+    rule_id, title, message, severity, status, context,
+    acknowledged_at, acknowledgment_note,
+    created_at, updated_at
+  ) VALUES (
+    v_consecutive_rule_id,
+    'Consecutive Function Failures: 1 function(s) failing consecutively',
+    'Detected 1 function(s) with 3+ consecutive failures. Functions: calculate-readiness. Max consecutive: 4.',
+    'critical',
+    'acknowledged',
+    '{
+      "function_names": ["calculate-readiness"],
+      "consecutive_failures": 4,
+      "sample_errors": [
+        "Error: Cannot read property ''user_id'' of undefined",
+        "TypeError: null is not an object",
+        "Error: Unexpected end of JSON input"
+      ],
+      "time_window_end": "2026-01-20T10:30:00Z"
+    }'::jsonb,
+    NOW() - INTERVAL '1 hour',
+    'Investigating - appears to be related to the recent deployment. Rolling back.',
+    NOW() - INTERVAL '2 hours',
+    NOW() - INTERVAL '1 hour'
+  );
+
+  -- Alert 4: Resolved alert (manually resolved)
+  INSERT INTO public.alerts (
+    rule_id, title, message, severity, status, context,
+    acknowledged_at, acknowledgment_note,
+    resolved_at, auto_resolved,
+    created_at, updated_at
+  ) VALUES (
+    v_db_connection_rule_id,
+    'Database Connection Errors: Pattern detected in 5 error(s)',
+    'Detected 5 error(s) matching pattern "connection refused|ECONNREFUSED". Affected functions: calculate-readiness.',
+    'critical',
+    'resolved',
+    '{
+      "function_names": ["calculate-readiness"],
+      "error_count": 5,
+      "sample_errors": [
+        "Error: ECONNREFUSED - Connection refused to database",
+        "Error: connection pool exhausted"
+      ],
+      "matched_pattern": "connection refused|ECONNREFUSED|too many connections|connection pool",
+      "time_window_end": "2026-01-20T08:00:00Z"
+    }'::jsonb,
+    NOW() - INTERVAL '5 hours',
+    'Database was restarted during maintenance window.',
+    NOW() - INTERVAL '4 hours',
+    false,
+    NOW() - INTERVAL '6 hours',
+    NOW() - INTERVAL '4 hours'
+  );
+
+  -- Alert 5: Auto-resolved alert
+  INSERT INTO public.alerts (
+    rule_id, title, message, severity, status, context,
+    resolved_at, auto_resolved,
+    created_at, updated_at
+  ) VALUES (
+    v_error_rate_rule_id,
+    'High Error Rate: 6 errors in 15 minutes',
+    'Detected 6 errors (threshold: 5) in the last 15 minutes. Affected functions: sync-discourse.',
+    'critical',
+    'resolved',
+    '{
+      "function_names": ["sync-discourse"],
+      "error_count": 6,
+      "sample_errors": [
+        "Error: Discourse API rate limited (429)"
+      ],
+      "time_window_start": "2026-01-19T14:00:00Z",
+      "time_window_end": "2026-01-19T14:15:00Z"
+    }'::jsonb,
+    NOW() - INTERVAL '1 day',
+    true,
+    NOW() - INTERVAL '1 day' - INTERVAL '30 minutes',
+    NOW() - INTERVAL '1 day'
+  );
+
+  -- Alert 6: Info-level pending alert
+  INSERT INTO public.alerts (
+    rule_id, title, message, severity, status, context, created_at, updated_at
+  ) VALUES (
+    NULL,  -- Manual alert, no rule
+    'System Monitor: First successful run',
+    'The system monitor completed its first successful run after deployment.',
+    'info',
+    'pending',
+    '{
+      "logs_analyzed": 150,
+      "rules_evaluated": 5,
+      "duration_ms": 1234
+    }'::jsonb,
+    NOW() - INTERVAL '10 minutes',
+    NOW() - INTERVAL '10 minutes'
+  );
+
+END $$;
+
+-- Sample system monitor runs for history display
+INSERT INTO public.system_monitor_runs (
+  started_at, completed_at, rules_evaluated, alerts_created, alerts_auto_resolved,
+  logs_analyzed, duration_ms, status
+) VALUES
+  (NOW() - INTERVAL '5 minutes', NOW() - INTERVAL '5 minutes' + INTERVAL '2 seconds', 5, 0, 0, 42, 1823, 'completed'),
+  (NOW() - INTERVAL '10 minutes', NOW() - INTERVAL '10 minutes' + INTERVAL '1 second', 5, 1, 0, 38, 1456, 'completed'),
+  (NOW() - INTERVAL '15 minutes', NOW() - INTERVAL '15 minutes' + INTERVAL '3 seconds', 5, 0, 0, 51, 2134, 'completed'),
+  (NOW() - INTERVAL '20 minutes', NOW() - INTERVAL '20 minutes' + INTERVAL '2 seconds', 5, 2, 0, 67, 1987, 'completed'),
+  (NOW() - INTERVAL '25 minutes', NOW() - INTERVAL '25 minutes' + INTERVAL '1 second', 5, 0, 1, 45, 1654, 'completed'),
+  (NOW() - INTERVAL '30 minutes', NULL, 5, NULL, NULL, NULL, NULL, 'failed'),
+  (NOW() - INTERVAL '35 minutes', NOW() - INTERVAL '35 minutes' + INTERVAL '2 seconds', 5, 1, 0, 52, 1789, 'completed'),
+  (NOW() - INTERVAL '40 minutes', NOW() - INTERVAL '40 minutes' + INTERVAL '1 second', 5, 0, 0, 39, 1432, 'completed');
+
+-- Add error message to the failed run
+UPDATE public.system_monitor_runs
+SET error_message = 'Error: Failed to fetch Edge Function logs: Management API returned 503'
+WHERE status = 'failed';
+
+-- =============================================================================
 -- SUMMARY
 -- =============================================================================
 
@@ -2502,5 +2692,11 @@ BEGIN
   RAISE NOTICE 'Readiness Config: %', (SELECT COUNT(*) FROM public.readiness_config);
   RAISE NOTICE 'Ham Radio Tool Categories: %', (SELECT COUNT(*) FROM public.ham_radio_tool_categories);
   RAISE NOTICE 'Ham Radio Tools: %', (SELECT COUNT(*) FROM public.ham_radio_tools);
+  RAISE NOTICE 'Alert Rules: %', (SELECT COUNT(*) FROM public.alert_rules);
+  RAISE NOTICE 'Alerts: %', (SELECT COUNT(*) FROM public.alerts);
+  RAISE NOTICE '  - Pending: %', (SELECT COUNT(*) FROM public.alerts WHERE status = 'pending');
+  RAISE NOTICE '  - Acknowledged: %', (SELECT COUNT(*) FROM public.alerts WHERE status = 'acknowledged');
+  RAISE NOTICE '  - Resolved: %', (SELECT COUNT(*) FROM public.alerts WHERE status = 'resolved');
+  RAISE NOTICE 'Monitor Runs: %', (SELECT COUNT(*) FROM public.system_monitor_runs);
   RAISE NOTICE '========================================';
 END $$;

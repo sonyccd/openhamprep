@@ -23,6 +23,7 @@ dist-ssr
 supabase/.temp/
 supabase/.branches/
 supabase/functions/.env
+supabase/functions/.env.local
 
 # Claude Code local settings
 .claude/
