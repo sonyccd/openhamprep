@@ -51,6 +51,38 @@ vi.mock('@/components/admin/AdminExamSessions', () => ({
   AdminExamSessions: () => <div data-testid="admin-exam-sessions">Admin Exam Sessions</div>,
 }));
 
+vi.mock('@/components/admin/AdminTopics', () => ({
+  AdminTopics: () => <div data-testid="admin-topics">Admin Topics</div>,
+}));
+
+vi.mock('@/components/admin/AdminLessons', () => ({
+  AdminLessons: () => <div data-testid="admin-lessons">Admin Lessons</div>,
+}));
+
+vi.mock('@/components/admin/AdminChapters', () => ({
+  AdminChapters: () => <div data-testid="admin-chapters">Admin Chapters</div>,
+}));
+
+vi.mock('@/components/admin/AdminHamRadioTools', () => ({
+  AdminHamRadioTools: () => <div data-testid="admin-tools">Admin Ham Radio Tools</div>,
+}));
+
+vi.mock('@/components/admin/DiscourseSyncDashboard', () => ({
+  DiscourseSyncDashboard: () => <div data-testid="admin-discourse">Discourse Sync Dashboard</div>,
+}));
+
+vi.mock('@/components/admin/AdminAlerts', () => ({
+  AdminAlerts: () => <div data-testid="admin-alerts">Admin Alerts</div>,
+}));
+
+vi.mock('@/components/admin/AdminAlertRules', () => ({
+  AdminAlertRules: () => <div data-testid="admin-alert-rules">Admin Alert Rules</div>,
+}));
+
+vi.mock('@/hooks/useAlerts', () => ({
+  useUnacknowledgedAlertCount: () => ({ data: 3 }),
+}));
+
 // Mock AppLayout
 vi.mock('@/components/AppLayout', () => ({
   AppLayout: ({ children }: { children: React.ReactNode }) => <div data-testid="app-layout">{children}</div>,
@@ -243,6 +275,135 @@ describe('Admin', () => {
       await user.click(screen.getByText('General'));
 
       expect(screen.getByTestId('admin-stats')).toHaveTextContent('general');
+    });
+  });
+
+  describe('Learning Section', () => {
+    it('displays Learning section button', () => {
+      renderAdmin();
+
+      expect(screen.getByRole('button', { name: /learning/i })).toBeInTheDocument();
+    });
+
+    it('switches to Learning section with Lessons tab by default', async () => {
+      const user = userEvent.setup();
+      renderAdmin();
+
+      await user.click(screen.getByRole('button', { name: /learning/i }));
+
+      expect(screen.getByTestId('admin-lessons')).toBeInTheDocument();
+    });
+
+    it('shows Lessons and Topics tabs in Learning section', async () => {
+      const user = userEvent.setup();
+      renderAdmin();
+
+      await user.click(screen.getByRole('button', { name: /learning/i }));
+
+      expect(screen.getByRole('tab', { name: /lessons/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /topics/i })).toBeInTheDocument();
+    });
+
+    it('switches to Topics tab when clicked', async () => {
+      const user = userEvent.setup();
+      renderAdmin();
+
+      await user.click(screen.getByRole('button', { name: /learning/i }));
+      await user.click(screen.getByRole('tab', { name: /topics/i }));
+
+      expect(screen.getByTestId('admin-topics')).toBeInTheDocument();
+    });
+  });
+
+  describe('Alerts Section', () => {
+    it('displays Alerts section button', () => {
+      renderAdmin();
+
+      expect(screen.getByRole('button', { name: /alerts/i })).toBeInTheDocument();
+    });
+
+    it('shows unacknowledged alert count badge', () => {
+      renderAdmin();
+
+      // The badge should show "3" from our mock
+      const alertsButton = screen.getByRole('button', { name: /alerts/i });
+      expect(alertsButton).toContainHTML('3');
+    });
+
+    it('switches to Alerts section with Alerts tab by default', async () => {
+      const user = userEvent.setup();
+      renderAdmin();
+
+      await user.click(screen.getByRole('button', { name: /alerts/i }));
+
+      expect(screen.getByTestId('admin-alerts')).toBeInTheDocument();
+    });
+
+    it('shows Alerts and Alert Rules tabs in Alerts section', async () => {
+      const user = userEvent.setup();
+      renderAdmin();
+
+      await user.click(screen.getByRole('button', { name: /alerts/i }));
+
+      expect(screen.getByRole('tab', { name: /^alerts$/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /alert rules/i })).toBeInTheDocument();
+    });
+
+    it('switches to Alert Rules tab when clicked', async () => {
+      const user = userEvent.setup();
+      renderAdmin();
+
+      await user.click(screen.getByRole('button', { name: /alerts/i }));
+      await user.click(screen.getByRole('tab', { name: /alert rules/i }));
+
+      expect(screen.getByTestId('admin-alert-rules')).toBeInTheDocument();
+    });
+  });
+
+  describe('Additional Sections', () => {
+    it('displays Chapters section button', () => {
+      renderAdmin();
+
+      expect(screen.getByRole('button', { name: /chapters/i })).toBeInTheDocument();
+    });
+
+    it('switches to Chapters section when clicked', async () => {
+      const user = userEvent.setup();
+      renderAdmin();
+
+      await user.click(screen.getByRole('button', { name: /chapters/i }));
+
+      expect(screen.getByTestId('admin-chapters')).toBeInTheDocument();
+    });
+
+    it('displays Tools section button', () => {
+      renderAdmin();
+
+      expect(screen.getByRole('button', { name: /tools/i })).toBeInTheDocument();
+    });
+
+    it('switches to Tools section when clicked', async () => {
+      const user = userEvent.setup();
+      renderAdmin();
+
+      await user.click(screen.getByRole('button', { name: /tools/i }));
+
+      expect(screen.getByTestId('admin-tools')).toBeInTheDocument();
+    });
+
+    it('displays Discourse section button', () => {
+      renderAdmin();
+
+      expect(screen.getByRole('button', { name: /discourse/i })).toBeInTheDocument();
+    });
+
+    it('switches to Discourse section when clicked', async () => {
+      const user = userEvent.setup();
+      renderAdmin();
+
+      await user.click(screen.getByRole('button', { name: /discourse/i }));
+
+      expect(screen.getByTestId('admin-discourse')).toBeInTheDocument();
     });
   });
 });

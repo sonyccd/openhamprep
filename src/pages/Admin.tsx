@@ -12,7 +12,10 @@ import { AdminLessons } from "@/components/admin/AdminLessons";
 import { AdminChapters } from "@/components/admin/AdminChapters";
 import { AdminHamRadioTools } from "@/components/admin/AdminHamRadioTools";
 import { DiscourseSyncDashboard } from "@/components/admin/DiscourseSyncDashboard";
-import { Loader2, ShieldAlert, BookText, MapPin, FileText, MessageSquare, FileQuestion, Book, Route, Wrench } from "lucide-react";
+import { AdminAlerts } from "@/components/admin/AdminAlerts";
+import { AdminAlertRules } from "@/components/admin/AdminAlertRules";
+import { useUnacknowledgedAlertCount } from "@/hooks/useAlerts";
+import { Loader2, ShieldAlert, BookText, MapPin, MessageSquare, FileQuestion, Book, Wrench, Bell, GraduationCap } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { TestType } from "@/types/navigation";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -29,7 +32,8 @@ export default function Admin() {
   const [sidebarTest, setSidebarTest] = useState<TestType>('technician');
   const [adminExamType, setAdminExamType] = useState<TestType>('technician');
   const [activeTab, setActiveTab] = useState("stats");
-  const [activeSection, setActiveSection] = useState<"exam" | "glossary" | "sessions" | "topics" | "lessons" | "chapters" | "tools" | "discourse">("exam");
+  const [activeSection, setActiveSection] = useState<"exam" | "glossary" | "sessions" | "learning" | "chapters" | "tools" | "discourse" | "alerts">("exam");
+  const { data: unacknowledgedCount = 0 } = useUnacknowledgedAlertCount();
   const [linkQuestionId, setLinkQuestionId] = useState("");
   useEffect(() => {
     if (!authLoading && !user) {
@@ -64,7 +68,7 @@ export default function Admin() {
     extra: 'Extra'
   };
   // Stats tab needs full page scroll, Questions/Glossary need fixed viewport with internal scroll
-  const needsFixedHeight = activeSection === "glossary" || activeSection === "sessions" || activeSection === "topics" || activeSection === "lessons" || activeSection === "chapters" || activeSection === "tools" || activeSection === "discourse" || (activeSection === "exam" && activeTab === "questions");
+  const needsFixedHeight = activeSection === "glossary" || activeSection === "sessions" || activeSection === "learning" || activeSection === "chapters" || activeSection === "tools" || activeSection === "discourse" || activeSection === "alerts" || (activeSection === "exam" && activeTab === "questions");
 
   return <AppLayout currentView="dashboard" onViewChange={handleViewChange} selectedTest={sidebarTest} onTestChange={setSidebarTest}>
       <div className={`flex-1 p-6 md:p-8 flex flex-col ${needsFixedHeight ? 'h-full overflow-hidden' : 'overflow-y-auto'}`}>
@@ -109,26 +113,15 @@ export default function Admin() {
                 <span className="hidden sm:inline">Sessions</span>
               </button>
               <button
-                onClick={() => setActiveSection("topics")}
+                onClick={() => setActiveSection("learning")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  activeSection === "topics"
+                  activeSection === "learning"
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                 }`}
               >
-                <FileText className="w-4 h-4" />
-                <span className="hidden sm:inline">Topics</span>
-              </button>
-              <button
-                onClick={() => setActiveSection("lessons")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  activeSection === "lessons"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                }`}
-              >
-                <Route className="w-4 h-4" />
-                <span className="hidden sm:inline">Lessons</span>
+                <GraduationCap className="w-4 h-4" />
+                <span className="hidden sm:inline">Learning</span>
               </button>
               <button
                 onClick={() => setActiveSection("chapters")}
@@ -162,6 +155,22 @@ export default function Admin() {
               >
                 <MessageSquare className="w-4 h-4" />
                 <span className="hidden sm:inline">Discourse</span>
+              </button>
+              <button
+                onClick={() => setActiveSection("alerts")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all relative ${
+                  activeSection === "alerts"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                }`}
+              >
+                <Bell className="w-4 h-4" />
+                <span className="hidden sm:inline">Alerts</span>
+                {unacknowledgedCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                    {unacknowledgedCount > 9 ? '9+' : unacknowledgedCount}
+                  </span>
+                )}
               </button>
             </nav>
           </div>
@@ -207,13 +216,20 @@ export default function Admin() {
               <div className="flex-1 flex flex-col min-h-0">
                 <AdminExamSessions />
               </div>
-            ) : activeSection === "topics" ? (
-              <div className="flex-1 flex flex-col min-h-0">
-                <AdminTopics />
-              </div>
-            ) : activeSection === "lessons" ? (
-              <div className="flex-1 flex flex-col min-h-0">
-                <AdminLessons />
+            ) : activeSection === "learning" ? (
+              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+                <Tabs key="learning-tabs" defaultValue="lessons" className="w-full">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="lessons">Lessons</TabsTrigger>
+                    <TabsTrigger value="topics">Topics</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="lessons" className="mt-0">
+                    <AdminLessons />
+                  </TabsContent>
+                  <TabsContent value="topics" className="mt-0">
+                    <AdminTopics />
+                  </TabsContent>
+                </Tabs>
               </div>
             ) : activeSection === "chapters" ? (
               <div className="flex-1 flex flex-col min-h-0">
@@ -222,6 +238,21 @@ export default function Admin() {
             ) : activeSection === "tools" ? (
               <div className="flex-1 flex flex-col min-h-0">
                 <AdminHamRadioTools />
+              </div>
+            ) : activeSection === "alerts" ? (
+              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+                <Tabs key="alerts-tabs" defaultValue="alerts" className="w-full">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="alerts">Alerts</TabsTrigger>
+                    <TabsTrigger value="rules">Alert Rules</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="alerts" className="mt-0">
+                    <AdminAlerts />
+                  </TabsContent>
+                  <TabsContent value="rules" className="mt-0">
+                    <AdminAlertRules />
+                  </TabsContent>
+                </Tabs>
               </div>
             ) : (
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
