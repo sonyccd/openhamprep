@@ -221,7 +221,7 @@ function RuleEditor({ rule, open, onClose, onSave, isSaving }: RuleEditorProps) 
 
     // Rule-type specific validation
     switch (formData.rule_type) {
-      case 'error_rate':
+      case 'error_rate': {
         if (formData.threshold < 1) {
           newErrors.threshold = 'Threshold must be at least 1';
         }
@@ -236,17 +236,20 @@ function RuleEditor({ rule, open, onClose, onSave, isSaving }: RuleEditorProps) 
           }
         }
         break;
-      case 'error_pattern':
+      }
+      case 'error_pattern': {
         const patternCheck = isValidRegexPattern(formData.pattern);
         if (!patternCheck.valid) {
           newErrors.pattern = patternCheck.error;
         }
         break;
-      case 'function_health':
+      }
+      case 'function_health': {
         if (formData.consecutive_failures < 1) {
           newErrors.consecutive_failures = 'Must be at least 1 consecutive failure';
         }
         break;
+      }
     }
 
     setErrors(newErrors);
