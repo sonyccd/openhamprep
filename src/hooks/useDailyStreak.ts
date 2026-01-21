@@ -1,17 +1,29 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { getLocalDateString, STREAK_QUESTIONS_THRESHOLD } from '@/lib/streakConstants';
 
+/**
+ * Streak information returned by the hook.
+ */
 export interface StreakInfo {
+  /** Current consecutive days with qualifying activity */
   currentStreak: number;
+  /** All-time best streak */
   longestStreak: number;
+  /** Date of last qualifying activity (YYYY-MM-DD) */
   lastActivityDate: string | null;
+  /** Whether today's activity qualifies for the streak */
   todayQualifies: boolean;
+  /** Number of questions answered today */
   questionsToday: number;
+  /** Questions still needed to qualify today */
   questionsNeeded: number;
+  /** True if user has a streak but hasn't qualified today yet */
   streakAtRisk: boolean;
 }
 
+/** Raw response from the get_streak_info RPC */
 interface RawStreakInfo {
   current_streak: number;
   longest_streak: number;
@@ -25,6 +37,17 @@ interface RawStreakInfo {
 /**
  * Hook to fetch and manage daily streak information.
  * Uses the get_streak_info RPC for efficient single-query data retrieval.
+ *
+ * @returns Object containing streak data, loading state, and actions
+ *
+ * @example
+ * ```tsx
+ * const { currentStreak, streakAtRisk, questionsNeeded } = useDailyStreak();
+ *
+ * if (streakAtRisk) {
+ *   console.log(`Answer ${questionsNeeded} more questions to keep your streak!`);
+ * }
+ * ```
  */
 export function useDailyStreak() {
   const { user } = useAuth();
@@ -68,39 +91,71 @@ export function useDailyStreak() {
   };
 
   return {
-    // Streak data with sensible defaults
+    /** Current consecutive days with qualifying activity (default: 0) */
     currentStreak: data?.currentStreak ?? 0,
+    /** All-time best streak (default: 0) */
     longestStreak: data?.longestStreak ?? 0,
+    /** Date of last qualifying activity, or null if never (default: null) */
     lastActivityDate: data?.lastActivityDate ?? null,
+    /** Whether today's activity qualifies for the streak (default: false) */
     todayQualifies: data?.todayQualifies ?? false,
+    /** Number of questions answered today (default: 0) */
     questionsToday: data?.questionsToday ?? 0,
-    questionsNeeded: data?.questionsNeeded ?? 5,
+    /** Questions still needed to qualify today (default: threshold) */
+    questionsNeeded: data?.questionsNeeded ?? STREAK_QUESTIONS_THRESHOLD,
+    /** True if user has a streak but hasn't qualified today yet (default: false) */
     streakAtRisk: data?.streakAtRisk ?? false,
 
-    // Query state
+    /** Whether the query is currently loading */
     isLoading,
+    /** Error object if the query failed */
     error,
 
-    // Actions
+    /** Invalidate the streak cache to trigger a refresh */
     invalidateStreak,
   };
 }
 
 /**
+ * Options for incrementing daily activity.
+ */
+export interface IncrementActivityOptions {
+  /** Number of questions answered */
+  questions?: number;
+  /** Number of correct answers */
+  correct?: number;
+  /** Number of tests completed */
+  tests?: number;
+  /** Number of tests passed */
+  testsPassed?: number;
+  /** Number of glossary terms studied */
+  glossary?: number;
+}
+
+/**
  * Increment daily activity for the current user.
  * This is called from useProgress after saving question attempts.
+ *
+ * Uses the user's local date to ensure consistent timezone handling.
+ *
+ * @param userId - The user's UUID
+ * @param options - Activity counts to increment
+ * @returns true if successful, false if an error occurred
+ *
+ * @example
+ * ```ts
+ * await incrementDailyActivity(user.id, {
+ *   questions: 1,
+ *   correct: 1,
+ * });
+ * ```
  */
 export async function incrementDailyActivity(
   userId: string,
-  options: {
-    questions?: number;
-    correct?: number;
-    tests?: number;
-    testsPassed?: number;
-    glossary?: number;
-  }
+  options: IncrementActivityOptions
 ): Promise<boolean> {
-  const today = new Date().toISOString().split('T')[0];
+  // Use local date to ensure consistent timezone handling
+  const today = getLocalDateString();
 
   const { error } = await supabase.rpc('increment_daily_activity', {
     p_user_id: userId,

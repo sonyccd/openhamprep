@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Flame, AlertCircle, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDailyStreak } from '@/hooks/useDailyStreak';
+import { STREAK_QUESTIONS_THRESHOLD } from '@/lib/streakConstants';
 
 interface StreakDisplayProps {
   className?: string;
@@ -18,7 +19,13 @@ export function StreakDisplay({ className, variant = 'full' }: StreakDisplayProp
     questionsNeeded,
     streakAtRisk,
     isLoading,
+    error,
   } = useDailyStreak();
+
+  // Handle error state gracefully - show nothing rather than crash
+  if (error) {
+    return null;
+  }
 
   if (isLoading) {
     return (
@@ -43,7 +50,7 @@ export function StreakDisplay({ className, variant = 'full' }: StreakDisplayProp
         <Flame
           className={cn(
             'w-4 h-4',
-            currentStreak > 0 && 'text-orange-500'
+            currentStreak > 0 && 'text-warning'
           )}
         />
         <span className="font-mono font-bold text-sm">
@@ -54,7 +61,7 @@ export function StreakDisplay({ className, variant = 'full' }: StreakDisplayProp
   }
 
   // Full variant - shows progress and warnings
-  const progressPercent = Math.min(100, (questionsToday / 5) * 100);
+  const progressPercent = Math.min(100, (questionsToday / STREAK_QUESTIONS_THRESHOLD) * 100);
   const isNewRecord = currentStreak > 0 && currentStreak === longestStreak;
 
   return (
@@ -78,14 +85,14 @@ export function StreakDisplay({ className, variant = 'full' }: StreakDisplayProp
             className={cn(
               'p-2 rounded-lg',
               currentStreak > 0
-                ? 'bg-gradient-to-br from-orange-500/20 to-orange-600/10'
+                ? 'bg-gradient-to-br from-warning/20 to-warning/10'
                 : 'bg-muted'
             )}
           >
             <Flame
               className={cn(
                 'w-5 h-5',
-                currentStreak > 0 ? 'text-orange-500' : 'text-muted-foreground'
+                currentStreak > 0 ? 'text-warning' : 'text-muted-foreground'
               )}
             />
           </div>
@@ -139,7 +146,7 @@ export function StreakDisplay({ className, variant = 'full' }: StreakDisplayProp
             <span className="text-success font-medium">Complete!</span>
           ) : (
             <span className="font-mono text-muted-foreground">
-              {questionsToday}/5 questions
+              {questionsToday}/{STREAK_QUESTIONS_THRESHOLD} questions
             </span>
           )}
         </div>

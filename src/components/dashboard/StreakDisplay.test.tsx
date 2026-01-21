@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { StreakDisplay } from './StreakDisplay';
+import { STREAK_QUESTIONS_THRESHOLD } from '@/lib/streakConstants';
 
 // Mock the useDailyStreak hook
 const mockUseDailyStreak = vi.fn();
@@ -20,13 +21,32 @@ describe('StreakDisplay', () => {
         longestStreak: 0,
         todayQualifies: false,
         questionsToday: 0,
-        questionsNeeded: 5,
+        questionsNeeded: STREAK_QUESTIONS_THRESHOLD,
         streakAtRisk: false,
         isLoading: true,
+        error: null,
       });
 
       const { container } = render(<StreakDisplay />);
       expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+    });
+  });
+
+  describe('Error State', () => {
+    it('renders nothing when there is an error', () => {
+      mockUseDailyStreak.mockReturnValue({
+        currentStreak: 0,
+        longestStreak: 0,
+        todayQualifies: false,
+        questionsToday: 0,
+        questionsNeeded: STREAK_QUESTIONS_THRESHOLD,
+        streakAtRisk: false,
+        isLoading: false,
+        error: new Error('Failed to fetch'),
+      });
+
+      const { container } = render(<StreakDisplay />);
+      expect(container.firstChild).toBeNull();
     });
   });
 
@@ -40,6 +60,7 @@ describe('StreakDisplay', () => {
         questionsNeeded: 0,
         streakAtRisk: false,
         isLoading: false,
+        error: null,
       });
 
       render(<StreakDisplay variant="compact" />);
@@ -52,9 +73,10 @@ describe('StreakDisplay', () => {
         longestStreak: 0,
         todayQualifies: false,
         questionsToday: 0,
-        questionsNeeded: 5,
+        questionsNeeded: STREAK_QUESTIONS_THRESHOLD,
         streakAtRisk: false,
         isLoading: false,
+        error: null,
       });
 
       const { container } = render(<StreakDisplay variant="compact" />);
@@ -72,6 +94,7 @@ describe('StreakDisplay', () => {
         questionsNeeded: 0,
         streakAtRisk: false,
         isLoading: false,
+        error: null,
       });
     });
 
@@ -109,9 +132,10 @@ describe('StreakDisplay', () => {
         longestStreak: 0,
         todayQualifies: false,
         questionsToday: 0,
-        questionsNeeded: 5,
+        questionsNeeded: STREAK_QUESTIONS_THRESHOLD,
         streakAtRisk: false,
         isLoading: false,
+        error: null,
       });
     });
 
@@ -125,9 +149,9 @@ describe('StreakDisplay', () => {
       expect(screen.getByText('Start a streak!')).toBeInTheDocument();
     });
 
-    it('shows progress toward 5 questions', () => {
+    it('shows progress toward threshold questions', () => {
       render(<StreakDisplay />);
-      expect(screen.getByText('0/5 questions')).toBeInTheDocument();
+      expect(screen.getByText(`0/${STREAK_QUESTIONS_THRESHOLD} questions`)).toBeInTheDocument();
     });
 
     it('does not show best streak badge when no history', () => {
@@ -148,6 +172,7 @@ describe('StreakDisplay', () => {
         questionsNeeded: 3,
         streakAtRisk: true,
         isLoading: false,
+        error: null,
       });
     });
 
@@ -158,7 +183,7 @@ describe('StreakDisplay', () => {
 
     it('shows current progress', () => {
       render(<StreakDisplay />);
-      expect(screen.getByText('2/5 questions')).toBeInTheDocument();
+      expect(screen.getByText(`2/${STREAK_QUESTIONS_THRESHOLD} questions`)).toBeInTheDocument();
     });
 
     it('displays current streak count', () => {
@@ -177,10 +202,11 @@ describe('StreakDisplay', () => {
         questionsNeeded: 2,
         streakAtRisk: true,
         isLoading: false,
+        error: null,
       });
 
       render(<StreakDisplay />);
-      expect(screen.getByText('3/5 questions')).toBeInTheDocument();
+      expect(screen.getByText(`3/${STREAK_QUESTIONS_THRESHOLD} questions`)).toBeInTheDocument();
       expect(screen.getByText(/Answer 2 more questions/)).toBeInTheDocument();
     });
 
@@ -193,6 +219,7 @@ describe('StreakDisplay', () => {
         questionsNeeded: 1,
         streakAtRisk: true,
         isLoading: false,
+        error: null,
       });
 
       render(<StreakDisplay />);
@@ -210,6 +237,7 @@ describe('StreakDisplay', () => {
         questionsNeeded: 0,
         streakAtRisk: false,
         isLoading: false,
+        error: null,
       });
 
       const { container } = render(<StreakDisplay />);
@@ -224,10 +252,11 @@ describe('StreakDisplay', () => {
         currentStreak: 1,
         longestStreak: 1,
         todayQualifies: true,
-        questionsToday: 5,
+        questionsToday: STREAK_QUESTIONS_THRESHOLD,
         questionsNeeded: 0,
         streakAtRisk: false,
         isLoading: false,
+        error: null,
       });
 
       render(<StreakDisplay />);
@@ -239,10 +268,11 @@ describe('StreakDisplay', () => {
         currentStreak: 5,
         longestStreak: 5,
         todayQualifies: true,
-        questionsToday: 5,
+        questionsToday: STREAK_QUESTIONS_THRESHOLD,
         questionsNeeded: 0,
         streakAtRisk: false,
         isLoading: false,
+        error: null,
       });
 
       render(<StreakDisplay />);

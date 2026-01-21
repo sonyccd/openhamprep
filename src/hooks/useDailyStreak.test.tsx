@@ -264,17 +264,19 @@ describe('incrementDailyActivity', () => {
     expect(result).toBe(false);
   });
 
-  it('uses current date for activity', async () => {
+  it('uses local date for activity (not UTC)', async () => {
     mockRpc.mockReturnValue(Promise.resolve({ error: null }));
 
-    const today = new Date().toISOString().split('T')[0];
+    // getLocalDateString uses local timezone, not UTC
+    const now = new Date();
+    const expectedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     await incrementDailyActivity('user-123', { questions: 1 });
 
     expect(mockRpc).toHaveBeenCalledWith(
       'increment_daily_activity',
       expect.objectContaining({
-        p_date: today,
+        p_date: expectedDate,
       })
     );
   });

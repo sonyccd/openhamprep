@@ -70,11 +70,12 @@ export function useProgress() {
     if (!user) return;
 
     // Invalidate all queries that depend on user progress data
+    // Note: daily-streak is invalidated separately after successful activity increment
+    // to avoid race conditions with the RPC call
     queryClient.invalidateQueries({ queryKey: ['test-results', user.id] });
     queryClient.invalidateQueries({ queryKey: ['question-attempts', user.id] });
     queryClient.invalidateQueries({ queryKey: ['profile-stats', user.id] });
     queryClient.invalidateQueries({ queryKey: ['weekly-goals', user.id] });
-    queryClient.invalidateQueries({ queryKey: ['daily-streak', user.id] });
   }, [queryClient, user]);
 
   /**
@@ -240,12 +241,17 @@ export function useProgress() {
       });
     }
 
-    // Track daily activity for streaks (fire-and-forget)
+    // Track daily activity for streaks
+    // Invalidate streak cache only after successful increment to avoid stale data race
     incrementDailyActivity(user.id, {
       questions: totalQuestions,
       correct: correctCount,
       tests: 1,
       testsPassed: passed ? 1 : 0,
+    }).then(success => {
+      if (success) {
+        queryClient.invalidateQueries({ queryKey: ['daily-streak', user.id] });
+      }
     }).catch(err => console.error('Daily activity tracking failed:', err));
 
     // Invalidate cached queries so UI updates immediately
@@ -304,10 +310,15 @@ export function useProgress() {
       });
     }
 
-    // Track daily activity for streaks (fire-and-forget)
+    // Track daily activity for streaks
+    // Invalidate streak cache only after successful increment to avoid stale data race
     incrementDailyActivity(user.id, {
       questions: 1,
       correct: selectedAnswer === question.correctAnswer ? 1 : 0,
+    }).then(success => {
+      if (success) {
+        queryClient.invalidateQueries({ queryKey: ['daily-streak', user.id] });
+      }
     }).catch(err => console.error('Daily activity tracking failed:', err));
 
     // Invalidate cached queries so UI updates immediately
@@ -393,10 +404,15 @@ export function useProgress() {
       });
     }
 
-    // Track daily activity for streaks (fire-and-forget)
+    // Track daily activity for streaks
+    // Invalidate streak cache only after successful increment to avoid stale data race
     incrementDailyActivity(user.id, {
       questions: attempts.length,
       correct: correctCount,
+    }).then(success => {
+      if (success) {
+        queryClient.invalidateQueries({ queryKey: ['daily-streak', user.id] });
+      }
     }).catch(err => console.error('Daily activity tracking failed:', err));
 
     // Invalidate cached queries so UI updates immediately
