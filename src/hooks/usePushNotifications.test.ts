@@ -146,8 +146,8 @@ describe('usePushNotifications', () => {
         result.current.sendNotification('Test Title', { body: 'Test Body' });
 
         expect(MockNotification).toHaveBeenCalledWith('Test Title', {
-          icon: '/icons/icon-192x192.png',
-          badge: '/icons/badge-72x72.png',
+          icon: '/icons/icon-192.png',
+          badge: '/icons/icon-96.png',
           body: 'Test Body',
         });
       });

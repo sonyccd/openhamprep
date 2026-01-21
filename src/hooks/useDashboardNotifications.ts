@@ -5,11 +5,12 @@ import { useReadinessScore } from '@/hooks/useReadinessScore';
 import { useReadinessSnapshots, calculateTrend } from '@/hooks/useReadinessSnapshots';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { getLocalDateString } from '@/lib/streakConstants';
+import { safeGetItem, safeSetItem } from '@/lib/localStorage';
 import { TestType, View } from '@/types/navigation';
 import type { UserTargetExam } from '@/hooks/useExamSessions';
 
 // ============================================================================
-// Constants
+// Constants (exported for use in components)
 // ============================================================================
 
 const DISMISS_PREFIX = 'notification-dismissed-';
@@ -19,7 +20,7 @@ const PUSH_SENT_PREFIX = 'push-sent-';
 const MILESTONE_THRESHOLDS = [70, 80, 90] as const;
 
 /** Maximum priority level for push notifications (1-3 get push, 4+ don't) */
-const PUSH_NOTIFICATION_PRIORITY_THRESHOLD = 3;
+export const PUSH_NOTIFICATION_PRIORITY_THRESHOLD = 3;
 
 /** Days of inactivity before showing inactivity notification */
 const INACTIVITY_THRESHOLD_DAYS = 3;
@@ -32,34 +33,6 @@ const EXAM_URGENCY_READINESS_THRESHOLD = 75;
 
 /** Weekly goal progress percentage to show "almost there" notification */
 const WEEKLY_GOAL_CLOSE_THRESHOLD = 80;
-
-// ============================================================================
-// localStorage Helpers
-// ============================================================================
-
-/**
- * Safely get item from localStorage.
- * Returns null if localStorage is unavailable (private browsing, storage full).
- */
-function safeGetItem(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Safely set item in localStorage.
- * Silently fails if localStorage is unavailable.
- */
-function safeSetItem(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value);
-  } catch (error) {
-    console.warn('Failed to save to localStorage:', error);
-  }
-}
 
 // ============================================================================
 // Types
@@ -300,17 +273,26 @@ export function useDashboardNotifications(
     ? Math.round((thisWeekQuestions / questionsGoal) * 100)
     : 0;
 
-  // Listen for cross-tab dismissal changes
+  // Listen for cross-tab dismissal changes with debouncing
+  // Debouncing prevents excessive re-renders if multiple dismissals happen rapidly
   useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key?.startsWith(DISMISS_PREFIX)) {
-        // Trigger re-render to update notification list
-        setDismissalVersion((v) => v + 1);
+        // Debounce to prevent rapid re-renders from multiple storage events
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          setDismissalVersion((v) => v + 1);
+        }, 100);
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
   }, []);
 
   /**
@@ -465,6 +447,18 @@ export function useDashboardNotifications(
       const key = getDismissKey('readiness-milestone', milestone);
       safeSetItem(key, 'true');
     } else {
+      // Validate that id is a known notification type before casting
+      const validTypes: NotificationType[] = [
+        'exam-urgent',
+        'declining-performance',
+        'inactivity',
+        'weekly-goal-close',
+        'readiness-milestone',
+      ];
+      if (!validTypes.includes(id as NotificationType)) {
+        console.warn(`Unknown notification type: ${id}`);
+        return;
+      }
       const type = id as NotificationType;
       const key = getDismissKey(type);
       if (key) {

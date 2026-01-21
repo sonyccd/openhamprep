@@ -8,6 +8,7 @@ import type { DashboardNotification, NotificationVariant } from '@/hooks/useDash
 const mockUseDashboardNotifications = vi.fn();
 vi.mock('@/hooks/useDashboardNotifications', () => ({
   useDashboardNotifications: () => mockUseDashboardNotifications(),
+  PUSH_NOTIFICATION_PRIORITY_THRESHOLD: 3,
 }));
 
 // Helper to create mock notifications

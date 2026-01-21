@@ -5,14 +5,12 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   useDashboardNotifications,
+  PUSH_NOTIFICATION_PRIORITY_THRESHOLD,
   type DashboardNotification,
   type NotificationVariant,
 } from '@/hooks/useDashboardNotifications';
 import { TestType, View } from '@/types/navigation';
 import type { UserTargetExam } from '@/hooks/useExamSessions';
-
-/** Priority threshold for showing push notification prompt */
-const PUSH_PROMPT_PRIORITY_THRESHOLD = 3;
 
 /**
  * Props for the DashboardNotifications component.
@@ -226,7 +224,7 @@ export function DashboardNotifications({
     push.isSupported &&
     push.permission === 'default' &&
     !push.hasAskedPermission &&
-    topNotification.priority <= PUSH_PROMPT_PRIORITY_THRESHOLD;
+    topNotification.priority <= PUSH_NOTIFICATION_PRIORITY_THRESHOLD;
 
   return (
     <div className={cn('mb-6 space-y-3', className)}>

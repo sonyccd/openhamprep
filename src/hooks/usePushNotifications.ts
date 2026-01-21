@@ -1,30 +1,14 @@
 import { useState, useCallback, useEffect } from 'react';
+import { safeGetItem, safeSetItem } from '@/lib/localStorage';
 
 const PERMISSION_ASKED_KEY = 'notification-permission-asked';
 
 /**
- * Safely get item from localStorage.
- * Returns null if localStorage is unavailable (private browsing, storage full).
+ * Default notification icon paths.
+ * These must match actual files in public/icons/
  */
-function safeGetItem(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Safely set item in localStorage.
- * Silently fails if localStorage is unavailable.
- */
-function safeSetItem(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value);
-  } catch (error) {
-    console.warn('Failed to save to localStorage:', error);
-  }
-}
+const NOTIFICATION_ICON = '/icons/icon-192.png';
+const NOTIFICATION_BADGE = '/icons/icon-96.png';
 
 /**
  * Result returned by the usePushNotifications hook.
@@ -47,6 +31,17 @@ export interface UsePushNotificationsResult {
  *
  * Provides permission state, request flow, and notification sending.
  * Tracks whether permission has been asked to avoid re-prompting.
+ *
+ * ## Browser Compatibility Notes
+ *
+ * - **Safari on iOS**: Does not support the `new Notification()` constructor.
+ *   Notifications require Service Worker + Push API. We catch and log this gracefully.
+ * - **Firefox**: Requires HTTPS for Notification API (not an issue in production).
+ * - **Chrome/Edge**: Full support, but user gesture required for permission request.
+ * - **Safari on macOS**: Supported with some limitations on options.
+ *
+ * The hook handles all these cases gracefully - unsupported browsers will
+ * simply have `isSupported: false` or fail silently when sending.
  *
  * @example
  * ```tsx
@@ -124,12 +119,13 @@ export function usePushNotifications(): UsePushNotificationsResult {
 
       try {
         new Notification(title, {
-          icon: '/icons/icon-192x192.png',
-          badge: '/icons/badge-72x72.png',
+          icon: NOTIFICATION_ICON,
+          badge: NOTIFICATION_BADGE,
           ...options,
         });
       } catch (error) {
-        // Safari on iOS doesn't support the Notification constructor
+        // Safari on iOS doesn't support the Notification constructor (requires Service Worker)
+        // Other browsers may also fail for various reasons (permissions, settings)
         console.warn('Failed to create notification:', error);
       }
     },
