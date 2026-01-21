@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { QuestionAttemptPayload, PracticeTestCompletedPayload, ExamOutcomePayload } from './events';
+import { Question } from '@/hooks/useQuestions';
 
 // Mock supabase client
 vi.mock('@/integrations/supabase/client', () => ({
@@ -470,11 +471,16 @@ describe('Event System Spec Compliance (docs/event-system.md section 6)', () => 
       const { recordQuestionAttempt } = await import('./events');
 
       // Create a question with undefined displayName
-      const questionWithNoDisplayName = {
+      // Using type assertion to simulate a malformed question from database edge case
+      const questionWithNoDisplayName: Question = {
         id: 'test-id',
         displayName: undefined as unknown as string,
-        correctAnswer: 'A' as const,
+        question: 'Test question',
+        options: { A: 'A', B: 'B', C: 'C', D: 'D' },
+        correctAnswer: 'A',
+        subelement: 'T5',
         group: 'T5A',
+        links: [],
         contentHash: null,
         poolVersion: null
       };
@@ -482,7 +488,7 @@ describe('Event System Spec Compliance (docs/event-system.md section 6)', () => 
       // Should not throw when displayName is undefined
       await expect(
         recordQuestionAttempt({
-          question: questionWithNoDisplayName as any,
+          question: questionWithNoDisplayName,
           answerSelected: 0,
           timeElapsedMs: 1000,
           mode: 'test',
@@ -532,11 +538,15 @@ describe('Event System Spec Compliance (docs/event-system.md section 6)', () => 
     it('accepts userId parameter to avoid redundant auth calls', async () => {
       const { recordQuestionAttempt } = await import('./events');
 
-      const mockQuestion = {
+      const mockQuestion: Question = {
         id: 'test-id',
         displayName: 'T5A03',
-        correctAnswer: 'A' as const,
+        question: 'Test question',
+        options: { A: 'A', B: 'B', C: 'C', D: 'D' },
+        correctAnswer: 'A',
+        subelement: 'T5',
         group: 'T5A',
+        links: [],
         contentHash: 'abc123',
         poolVersion: '2022-2026'
       };
@@ -544,7 +554,7 @@ describe('Event System Spec Compliance (docs/event-system.md section 6)', () => 
       // Should accept userId parameter without error
       await expect(
         recordQuestionAttempt({
-          question: mockQuestion as any,
+          question: mockQuestion,
           answerSelected: 0,
           timeElapsedMs: 1000,
           mode: 'test',
