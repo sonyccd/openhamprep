@@ -19,6 +19,7 @@ import {
   DashboardNextSteps,
   DashboardProgress,
   DashboardSectionInsights,
+  StreakDisplay,
 } from '@/components/dashboard';
 import type { NextStep } from '@/components/dashboard/DashboardNextSteps';
 import { PracticeTest } from '@/components/PracticeTest';
@@ -437,6 +438,10 @@ export default function Dashboard() {
           nextAction={nextAction}
           onAction={handlePrimaryAction}
         />
+
+        <div className="mb-6">
+          <StreakDisplay />
+        </div>
 
         <DashboardNextSteps steps={getNextSteps()} />
 
