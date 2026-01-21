@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,6 +62,14 @@ export function WeakQuestionsReview({
   );
   // Use the just-cleared question if we're viewing it, otherwise use the active list
   const currentQuestion = justClearedQuestion || (currentIndex !== null ? activeWeakQuestions[currentIndex] : null);
+
+  // Timer for tracking time spent on current question
+  const questionStartTimeRef = useRef<number>(Date.now());
+
+  // Reset timer when question changes
+  useEffect(() => {
+    questionStartTimeRef.current = Date.now();
+  }, [currentQuestion?.id]);
 
   // Navigation helpers
   const canGoPrev = currentIndex !== null && currentIndex > 0;
@@ -145,6 +153,10 @@ export function WeakQuestionsReview({
 
   const handleSelectAnswer = useCallback(async (answer: 'A' | 'B' | 'C' | 'D') => {
     if (showResult || !currentQuestion) return;
+
+    // Capture elapsed time before any state updates
+    const timeElapsedMs = Date.now() - questionStartTimeRef.current;
+
     setSelectedAnswer(answer);
     setShowResult(true);
     const isCorrect = answer === currentQuestion.correctAnswer;
@@ -184,7 +196,7 @@ export function WeakQuestionsReview({
 
     // Save attempt with error handling
     try {
-      await saveRandomAttempt(currentQuestion, answer, 'weak_questions');
+      await saveRandomAttempt(currentQuestion, answer, 'weak_questions', timeElapsedMs);
       // Invalidate cache so weak questions list updates
       if (user) {
         queryClient.invalidateQueries({ queryKey: ['question-attempts', user.id] });

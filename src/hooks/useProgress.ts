@@ -5,6 +5,7 @@ import { TestType, testConfig } from '@/types/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef } from 'react';
 import { recalculateReadiness } from '@/hooks/useReadinessScore';
+import { recordQuestionAttempt, recordPracticeTestCompleted, recordTopicQuizCompleted } from '@/lib/events';
 
 /** Number of questions to batch before triggering a readiness recalculation */
 const RECALC_QUESTION_THRESHOLD = 10;
@@ -183,6 +184,47 @@ export function useProgress() {
       console.error('Error saving question attempts:', attemptsError);
     }
 
+    // Record individual question attempt events (fire-and-forget)
+    for (const question of questions) {
+      recordQuestionAttempt({
+        question,
+        answerSelected: answerToIndex[answers[question.id]] ?? 0,
+        timeElapsedMs: 0, // Per-question timing not tracked in practice tests
+        mode: 'practice_test',
+        practiceTestId: testResult.id
+      }).catch(err => console.error('Event recording failed:', err));
+    }
+
+    // Compute subelement breakdown for event recording
+    const subelementBreakdown: Record<string, { correct: number; total: number }> = {};
+    for (const question of questions) {
+      // Extract subelement from question display name (e.g., 'T1' from 'T1A01')
+      // Fall back to question.id if displayName is not available
+      const displayName = question.displayName || question.id || '';
+      const subelement = displayName.slice(0, 2);
+      if (subelement && !subelementBreakdown[subelement]) {
+        subelementBreakdown[subelement] = { correct: 0, total: 0 };
+      }
+      if (subelement) {
+        subelementBreakdown[subelement].total++;
+        if (answers[question.id] === question.correctAnswer) {
+          subelementBreakdown[subelement].correct++;
+        }
+      }
+    }
+
+    // Record practice test completed event (fire-and-forget)
+    recordPracticeTestCompleted({
+      practiceTestId: testResult.id,
+      testResultId: testResult.id,
+      examType: testType,
+      totalQuestions,
+      score: correctCount,
+      percentage,
+      durationSeconds: 0, // Total time not tracked at test level yet
+      subelementBreakdown
+    }).catch(err => console.error('Event recording failed:', err));
+
     // Track test completion event in Pendo
     if (window.pendo?.track) {
       window.pendo.track('Test Completed', {
@@ -212,7 +254,8 @@ export function useProgress() {
   const saveRandomAttempt = async (
     question: Question,
     selectedAnswer: 'A' | 'B' | 'C' | 'D',
-    attemptType: 'random_practice' | 'weak_questions' | 'subelement_practice' | 'chapter_practice' | 'topic_quiz' = 'random_practice'
+    attemptType: 'random_practice' | 'weak_questions' | 'subelement_practice' | 'chapter_practice' | 'topic_quiz' = 'random_practice',
+    timeElapsedMs?: number
   ) => {
     if (!user) return;
 
@@ -231,6 +274,14 @@ export function useProgress() {
     if (error) {
       console.error('Error saving attempt:', error);
     }
+
+    // Record event (fire-and-forget, doesn't block UI)
+    recordQuestionAttempt({
+      question,
+      answerSelected: answerToIndex[selectedAnswer],
+      timeElapsedMs: timeElapsedMs ?? 0,
+      mode: attemptType
+    }).catch(err => console.error('Event recording failed:', err));
 
     // Track question answered event in Pendo
     if (window.pendo?.track) {
@@ -259,8 +310,9 @@ export function useProgress() {
    * More efficient than individual saves and avoids thundering herd issues.
    */
   const saveQuizAttempts = async (
-    attempts: Array<{ question: Question; selectedAnswer: 'A' | 'B' | 'C' | 'D' }>,
-    attemptType: 'topic_quiz' | 'chapter_practice' = 'topic_quiz'
+    attempts: Array<{ question: Question; selectedAnswer: 'A' | 'B' | 'C' | 'D'; timeElapsedMs?: number }>,
+    attemptType: 'topic_quiz' | 'chapter_practice' = 'topic_quiz',
+    topicInfo?: { topicId: string; topicSlug: string }
   ): Promise<{ success: boolean; error?: string }> => {
     if (!user) return { success: false, error: 'Not authenticated' };
     if (attempts.length === 0) return { success: true };
@@ -284,13 +336,38 @@ export function useProgress() {
       return { success: false, error: error.message };
     }
 
+    // Record events for each question attempt (fire-and-forget)
+    for (const attempt of attempts) {
+      recordQuestionAttempt({
+        question: attempt.question,
+        answerSelected: answerToIndex[attempt.selectedAnswer],
+        timeElapsedMs: attempt.timeElapsedMs ?? 0,
+        mode: attemptType
+      }).catch(err => console.error('Event recording failed:', err));
+    }
+
+    // Record quiz completion event if topic info provided
+    const correctCount = attempts.filter(a => a.selectedAnswer === a.question.correctAnswer).length;
+    const percentage = Math.round((correctCount / attempts.length) * 100);
+    const passed = percentage >= 80; // Topic quizzes require 80% to pass
+
+    if (topicInfo && attemptType === 'topic_quiz') {
+      recordTopicQuizCompleted({
+        topicId: topicInfo.topicId,
+        topicSlug: topicInfo.topicSlug,
+        totalQuestions: attempts.length,
+        correctCount,
+        percentage,
+        passed
+      }).catch(err => console.error('Event recording failed:', err));
+    }
+
     // Track quiz completion event in Pendo
     if (window.pendo?.track) {
-      const correctCount = attempts.filter(a => a.selectedAnswer === a.question.correctAnswer).length;
       window.pendo.track('Quiz Completed', {
         total_questions: attempts.length,
         correct_count: correctCount,
-        percentage: Math.round((correctCount / attempts.length) * 100),
+        percentage,
         attempt_type: attemptType
       });
     }

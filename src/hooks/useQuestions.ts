@@ -39,6 +39,8 @@ export interface Question {
   topics?: QuestionTopic[];  // Related topics for this question
   arrlChapterId?: string | null;  // ARRL textbook chapter reference
   arrlPageReference?: string | null;  // Page number or range in ARRL textbook
+  contentHash?: string | null;  // SHA-256 hash for content versioning
+  poolVersion?: string | null;  // Question pool version (e.g., '2022-2026')
 }
 
 interface DbTopicQuestion {
@@ -65,6 +67,8 @@ interface DbQuestion {
   topic_questions?: DbTopicQuestion[];
   arrl_chapter_id: string | null;
   arrl_page_reference: string | null;
+  content_hash: string | null;
+  pool_version: string | null;
 }
 
 const answerMap: Record<number, 'A' | 'B' | 'C' | 'D'> = {
@@ -107,6 +111,8 @@ function transformQuestion(dbQuestion: DbQuestion): Question {
     topics: topics.length > 0 ? topics : undefined,
     arrlChapterId: dbQuestion.arrl_chapter_id,
     arrlPageReference: dbQuestion.arrl_page_reference,
+    contentHash: dbQuestion.content_hash,
+    poolVersion: dbQuestion.pool_version,
   };
 }
 

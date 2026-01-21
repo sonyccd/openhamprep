@@ -6,6 +6,7 @@ import { useProgress } from "@/hooks/useProgress";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
+import { useQuestionTimer } from "@/hooks/useQuestionTimer";
 import { QuestionListView } from "@/components/QuestionListView";
 import { SkipForward, RotateCcw, Loader2, ChevronRight, CheckCircle, ArrowLeft, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
@@ -79,6 +80,9 @@ export function SubelementPractice({
   const question = currentEntry?.question || null;
   const selectedAnswer = currentEntry?.selectedAnswer || null;
   const showResult = currentEntry?.showResult || false;
+
+  // Timer for tracking time spent on current question
+  const { getElapsedMs } = useQuestionTimer(question?.id);
 
   // Reset state when test type changes
   useEffect(() => {
@@ -199,6 +203,9 @@ export function SubelementPractice({
   const handleSelectAnswer = async (answer: 'A' | 'B' | 'C' | 'D') => {
     if (showResult || !question) return;
 
+    // Capture elapsed time before any state updates
+    const timeElapsedMs = getElapsedMs();
+
     updateCurrentEntry({ selectedAnswer: answer, showResult: true });
 
     const isCorrect = answer === question.correctAnswer;
@@ -206,7 +213,7 @@ export function SubelementPractice({
       correct: prev.correct + (isCorrect ? 1 : 0),
       total: prev.total + 1
     }));
-    await saveRandomAttempt(question, answer);
+    await saveRandomAttempt(question, answer, 'subelement_practice', timeElapsedMs);
   };
 
   const handleNextQuestion = () => {

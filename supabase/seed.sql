@@ -2667,6 +2667,14 @@ WHERE status = 'failed';
 -- SUMMARY
 -- =============================================================================
 
+-- =============================================================================
+-- UPDATE POOL VERSIONS
+-- Set correct pool version for each question type based on display_name prefix
+-- =============================================================================
+UPDATE public.questions SET pool_version = '2022-2026' WHERE display_name LIKE 'T%';
+UPDATE public.questions SET pool_version = '2023-2027' WHERE display_name LIKE 'G%';
+UPDATE public.questions SET pool_version = '2024-2028' WHERE display_name LIKE 'E%';
+
 ANALYZE;
 
 DO $$
