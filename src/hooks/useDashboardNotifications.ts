@@ -16,22 +16,45 @@ import type { UserTargetExam } from '@/hooks/useExamSessions';
 const DISMISS_PREFIX = 'notification-dismissed-';
 const PUSH_SENT_PREFIX = 'push-sent-';
 
+/**
+ * Number of days to keep localStorage keys before cleanup.
+ * Old dismissal/push-sent keys are removed to prevent localStorage bloat.
+ */
+const STORAGE_KEY_MAX_AGE_DAYS = 30;
+
 /** Readiness milestones that trigger celebration notifications */
 const MILESTONE_THRESHOLDS = [70, 80, 90] as const;
 
 /** Maximum priority level for push notifications (1-3 get push, 4+ don't) */
 export const PUSH_NOTIFICATION_PRIORITY_THRESHOLD = 3;
 
-/** Days of inactivity before showing inactivity notification */
+/**
+ * Days of inactivity before showing inactivity notification.
+ * Research shows 3 days is when habit formation breaks and churn risk increases.
+ * @see https://jamesclear.com/habit-guide
+ */
 const INACTIVITY_THRESHOLD_DAYS = 3;
 
-/** Days before exam to show urgent notification */
+/**
+ * Days before exam to show urgent notification.
+ * 7 days gives users enough time to meaningfully improve readiness
+ * while creating urgency to motivate action.
+ */
 const EXAM_URGENCY_THRESHOLD_DAYS = 7;
 
-/** Readiness threshold below which exam urgency notification shows */
+/**
+ * Readiness threshold below which exam urgency notification shows.
+ * 75% is the minimum passing score for ham radio exams (26/35 questions).
+ * Users below this threshold need extra motivation to prepare.
+ */
 const EXAM_URGENCY_READINESS_THRESHOLD = 75;
 
-/** Weekly goal progress percentage to show "almost there" notification */
+/**
+ * Weekly goal progress percentage to show "almost there" notification.
+ * 80% is the psychological "near completion" threshold that motivates
+ * finishing (goal gradient effect).
+ * @see https://en.wikipedia.org/wiki/Goal_gradient_effect
+ */
 const WEEKLY_GOAL_CLOSE_THRESHOLD = 80;
 
 // ============================================================================
@@ -158,28 +181,89 @@ function isDismissed(type: NotificationType, milestone?: number): boolean {
 }
 
 /**
- * Calculate days until a date.
+ * Clean up stale localStorage keys to prevent storage bloat.
+ * Removes day-based dismissal keys and push-sent keys older than STORAGE_KEY_MAX_AGE_DAYS.
+ * Should be called once on app initialization.
  */
-function daysUntil(dateStr: string): number {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(dateStr);
-  target.setHours(0, 0, 0, 0);
-  const diff = target.getTime() - today.getTime();
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+function cleanupStaleStorageKeys(): void {
+  try {
+    const keysToRemove: string[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+
+      // Check if it's a notification-related key with a date suffix
+      if (key.startsWith(DISMISS_PREFIX) || key.startsWith(PUSH_SENT_PREFIX)) {
+        // Extract date from key (format: prefix-type-YYYY-MM-DD)
+        const dateMatch = key.match(/(\d{4}-\d{2}-\d{2})$/);
+        if (dateMatch) {
+          const keyDate = new Date(dateMatch[1]);
+          keyDate.setHours(0, 0, 0, 0);
+
+          const ageInDays = Math.floor(
+            (today.getTime() - keyDate.getTime()) / (1000 * 60 * 60 * 24)
+          );
+
+          if (ageInDays > STORAGE_KEY_MAX_AGE_DAYS) {
+            keysToRemove.push(key);
+          }
+        }
+      }
+    }
+
+    // Remove stale keys
+    keysToRemove.forEach((key) => {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // Ignore removal errors
+      }
+    });
+  } catch {
+    // Ignore errors (localStorage may be unavailable)
+  }
 }
 
 /**
- * Calculate days since last activity.
+ * Calculate the number of whole days between two dates.
+ * Uses floor rounding for consistency (partial days don't count).
+ * Both dates are normalized to midnight local time to avoid timezone issues.
+ *
+ * @param fromDate - Start date (or null, returns Infinity)
+ * @param toDate - End date
+ * @returns Number of whole days between dates (negative if toDate is before fromDate)
+ */
+function daysBetween(fromDate: string | null, toDate: Date): number {
+  if (!fromDate) return Infinity;
+
+  // Normalize both dates to midnight local time
+  const from = new Date(fromDate);
+  from.setHours(0, 0, 0, 0);
+
+  const to = new Date(toDate);
+  to.setHours(0, 0, 0, 0);
+
+  const diffMs = to.getTime() - from.getTime();
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Calculate days until a future date.
+ * Returns negative if the date is in the past.
+ */
+function daysUntil(dateStr: string): number {
+  return -daysBetween(dateStr, new Date());
+}
+
+/**
+ * Calculate days since a past date.
+ * Returns Infinity if dateStr is null.
  */
 function daysSince(dateStr: string | null): number {
-  if (!dateStr) return Infinity;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const lastDate = new Date(dateStr);
-  lastDate.setHours(0, 0, 0, 0);
-  const diff = today.getTime() - lastDate.getTime();
-  return Math.floor(diff / (1000 * 60 * 60 * 24));
+  return daysBetween(dateStr, new Date());
 }
 
 /**
@@ -256,6 +340,10 @@ export function useDashboardNotifications(
   // Track which push notifications we've sent this session
   const sentPushRef = useRef<Set<string>>(new Set());
 
+  // Stable ref for sendNotification to prevent effect re-runs
+  const sendNotificationRef = useRef(sendNotification);
+  sendNotificationRef.current = sendNotification;
+
   const isLoading = streakLoading || readinessLoading || snapshotsLoading;
 
   // Calculate derived values
@@ -293,6 +381,11 @@ export function useDashboardNotifications(
       window.removeEventListener('storage', handleStorageChange);
       if (debounceTimer) clearTimeout(debounceTimer);
     };
+  }, []);
+
+  // Clean up stale localStorage keys on mount (runs once)
+  useEffect(() => {
+    cleanupStaleStorageKeys();
   }, []);
 
   /**
@@ -473,6 +566,9 @@ export function useDashboardNotifications(
   /**
    * Send push notifications for high-priority items (once per day).
    * Only sends when tab is hidden to avoid interrupting active users.
+   *
+   * Uses a ref for sendNotification to avoid effect re-runs when the callback
+   * reference changes (which would cause notification spam).
    */
   useEffect(() => {
     if (permission !== 'granted' || allNotifications.length === 0) return;
@@ -491,8 +587,8 @@ export function useDashboardNotifications(
     // Check both localStorage and our session ref
     if (safeGetItem(pushKey) || sentPushRef.current.has(pushKey)) return;
 
-    // Send the push notification
-    sendNotification(topNotification.title, {
+    // Send the push notification using the stable ref
+    sendNotificationRef.current(topNotification.title, {
       body: topNotification.description,
       tag: topNotification.id, // Prevents duplicate notifications
     });
@@ -500,7 +596,7 @@ export function useDashboardNotifications(
     // Mark as sent
     safeSetItem(pushKey, 'true');
     sentPushRef.current.add(pushKey);
-  }, [allNotifications, permission, sendNotification]);
+  }, [allNotifications, permission]);
 
   return {
     notifications: allNotifications,

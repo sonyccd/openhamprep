@@ -114,17 +114,30 @@ function NotificationItem({
 
         {/* Actions */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Push notification prompt */}
+          {/* Push notification prompt - icon only on mobile, full button on desktop */}
           {showPushPrompt && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onRequestPush}
-              className="hidden sm:flex"
-            >
-              <Bell className="w-4 h-4 mr-1.5" />
-              Enable alerts
-            </Button>
+            <>
+              {/* Mobile: icon-only button */}
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={onRequestPush}
+                className="sm:hidden"
+                aria-label="Enable notifications"
+              >
+                <Bell className="w-4 h-4" />
+              </Button>
+              {/* Desktop: full button with text */}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onRequestPush}
+                className="hidden sm:flex"
+              >
+                <Bell className="w-4 h-4 mr-1.5" />
+                Enable alerts
+              </Button>
+            </>
           )}
 
           {/* Main action */}
