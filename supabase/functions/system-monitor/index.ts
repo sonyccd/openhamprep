@@ -28,6 +28,7 @@ interface MonitorResponse {
   logs_analyzed: number;
   log_limit_reached?: boolean;
   duration_ms: number;
+  heartbeat_sent?: boolean;
   errors?: string[];
 }
 
@@ -203,6 +204,9 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // 7. Send heartbeat ping if configured
+    const heartbeatSent = await sendHeartbeat(requestId);
+
     const response: MonitorResponse = {
       success: true,
       rules_evaluated: rules.length,
@@ -211,6 +215,7 @@ Deno.serve(async (req: Request) => {
       logs_analyzed: logs.length,
       log_limit_reached: logLimitReached || undefined,
       duration_ms: Date.now() - startTime,
+      heartbeat_sent: heartbeatSent || undefined,
     };
 
     if (errors.length > 0) {
@@ -353,6 +358,53 @@ async function autoResolveAlertsBatch(supabase: SupabaseClient, alertIds: string
   }
 
   return data?.length ?? 0;
+}
+
+// ============================================================
+// HEARTBEAT
+// ============================================================
+
+/**
+ * Send a heartbeat ping to the configured URL (if any).
+ * This notifies external monitoring services that the system monitor ran successfully.
+ * Reads URL from HEARTBEAT_URL environment variable.
+ * Returns true if heartbeat was sent, false otherwise.
+ */
+async function sendHeartbeat(requestId: string): Promise<boolean> {
+  try {
+    const heartbeatUrl = Deno.env.get("HEARTBEAT_URL");
+
+    if (!heartbeatUrl) {
+      console.log(`[${requestId}] No HEARTBEAT_URL configured, skipping`);
+      return false;
+    }
+
+    // Validate URL format
+    try {
+      new URL(heartbeatUrl);
+    } catch {
+      console.warn(`[${requestId}] Invalid HEARTBEAT_URL: ${heartbeatUrl}`);
+      return false;
+    }
+
+    // Send heartbeat ping with 5-second timeout
+    console.log(`[${requestId}] Sending heartbeat to ${heartbeatUrl}`);
+    const response = await fetch(heartbeatUrl, {
+      method: "GET",
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (response.ok) {
+      console.log(`[${requestId}] Heartbeat sent successfully (${response.status})`);
+      return true;
+    } else {
+      console.warn(`[${requestId}] Heartbeat failed with status ${response.status}`);
+      return false;
+    }
+  } catch (error) {
+    console.error(`[${requestId}] Heartbeat error:`, error);
+    return false;
+  }
 }
 
 // ============================================================

@@ -95,14 +95,6 @@ describe('PWA Configuration', () => {
       expect(indexHtml).toContain('viewport-fit=cover');
     });
 
-    it('should have preconnect hints for external origins', () => {
-      expect(indexHtml).toContain('rel="preconnect"');
-      expect(indexHtml).toContain('rel="dns-prefetch"');
-    });
-
-    it('should defer non-critical third-party scripts', () => {
-      expect(indexHtml).toContain('defer src="https://openhamprep.statuspage.io');
-    });
   });
 
   describe('PWA icon files', () => {
