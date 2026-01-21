@@ -3,6 +3,30 @@ import { useState, useCallback, useEffect } from 'react';
 const PERMISSION_ASKED_KEY = 'notification-permission-asked';
 
 /**
+ * Safely get item from localStorage.
+ * Returns null if localStorage is unavailable (private browsing, storage full).
+ */
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Safely set item in localStorage.
+ * Silently fails if localStorage is unavailable.
+ */
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    console.warn('Failed to save to localStorage:', error);
+  }
+}
+
+/**
  * Result returned by the usePushNotifications hook.
  */
 export interface UsePushNotificationsResult {
@@ -35,33 +59,41 @@ export interface UsePushNotificationsResult {
  */
 export function usePushNotifications(): UsePushNotificationsResult {
   // Check if Notification API is supported
-  const isSupported = typeof window !== 'undefined' && 'Notification' in window;
+  const isSupported = typeof window !== 'undefined' && 'Notification' in window && typeof Notification !== 'undefined';
 
   // Track permission state
   const [permission, setPermission] = useState<NotificationPermission>(() => {
-    if (!isSupported) return 'denied';
+    if (!isSupported || typeof Notification === 'undefined') return 'denied';
     return Notification.permission;
   });
 
   // Track if we've asked before
   const [hasAskedPermission, setHasAskedPermission] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem(PERMISSION_ASKED_KEY) === 'true';
+    return safeGetItem(PERMISSION_ASKED_KEY) === 'true';
   });
 
-  // Keep permission state in sync if it changes externally
+  // Check permission when tab regains focus (instead of polling)
   useEffect(() => {
     if (!isSupported) return;
 
-    // Update state if permission changed (e.g., user changed in browser settings)
     const checkPermission = () => {
-      setPermission(Notification.permission);
+      const currentPermission = Notification.permission;
+      if (currentPermission !== permission) {
+        setPermission(currentPermission);
+      }
     };
 
-    // Check periodically since there's no event for permission changes
-    const interval = setInterval(checkPermission, 5000);
-    return () => clearInterval(interval);
-  }, [isSupported]);
+    // Check on visibility change (when user returns to tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkPermission();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isSupported, permission]);
 
   /**
    * Request notification permission from the user.
@@ -74,7 +106,7 @@ export function usePushNotifications(): UsePushNotificationsResult {
       const result = await Notification.requestPermission();
       setPermission(result);
       setHasAskedPermission(true);
-      localStorage.setItem(PERMISSION_ASKED_KEY, 'true');
+      safeSetItem(PERMISSION_ASKED_KEY, 'true');
       return result;
     } catch (error) {
       console.error('Error requesting notification permission:', error);

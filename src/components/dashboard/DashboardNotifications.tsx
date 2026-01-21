@@ -11,6 +11,9 @@ import {
 import { TestType, View } from '@/types/navigation';
 import type { UserTargetExam } from '@/hooks/useExamSessions';
 
+/** Priority threshold for showing push notification prompt */
+const PUSH_PROMPT_PRIORITY_THRESHOLD = 3;
+
 /**
  * Props for the DashboardNotifications component.
  */
@@ -23,10 +26,6 @@ export interface DashboardNotificationsProps {
   thisWeekQuestions: number;
   /** Weekly question goal */
   questionsGoal: number;
-  /** Tests completed this week */
-  thisWeekTests: number;
-  /** Weekly test goal */
-  testsGoal: number;
   /** User's target exam */
   userTarget: UserTargetExam | null;
   /** Navigation handler */
@@ -168,8 +167,6 @@ function NotificationItem({
  *   userId={user?.id}
  *   thisWeekQuestions={thisWeekQuestions}
  *   questionsGoal={questionsGoal}
- *   thisWeekTests={thisWeekTests}
- *   testsGoal={testsGoal}
  *   userTarget={userTarget}
  *   onNavigate={changeView}
  * />
@@ -180,8 +177,6 @@ export function DashboardNotifications({
   userId,
   thisWeekQuestions,
   questionsGoal,
-  thisWeekTests,
-  testsGoal,
   userTarget,
   onNavigate,
   maxVisible = 1,
@@ -197,8 +192,6 @@ export function DashboardNotifications({
     userId,
     thisWeekQuestions,
     questionsGoal,
-    thisWeekTests,
-    testsGoal,
     userTarget,
     onNavigate,
     maxVisible,
@@ -233,7 +226,7 @@ export function DashboardNotifications({
     push.isSupported &&
     push.permission === 'default' &&
     !push.hasAskedPermission &&
-    topNotification.priority <= 3;
+    topNotification.priority <= PUSH_PROMPT_PRIORITY_THRESHOLD;
 
   return (
     <div className={cn('mb-6 space-y-3', className)}>

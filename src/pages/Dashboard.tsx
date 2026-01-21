@@ -445,8 +445,6 @@ export default function Dashboard() {
           userId={user?.id}
           thisWeekQuestions={thisWeekQuestions}
           questionsGoal={questionsGoal}
-          thisWeekTests={thisWeekTests}
-          testsGoal={testsGoal}
           userTarget={userTarget}
           onNavigate={changeView}
           maxVisible={1}

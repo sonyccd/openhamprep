@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useEffect, useRef } from 'react';
+import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { LucideIcon, AlertTriangle, TrendingDown, Clock, Target, Trophy } from 'lucide-react';
 import { useDailyStreak } from '@/hooks/useDailyStreak';
 import { useReadinessScore } from '@/hooks/useReadinessScore';
@@ -8,9 +8,62 @@ import { getLocalDateString } from '@/lib/streakConstants';
 import { TestType, View } from '@/types/navigation';
 import type { UserTargetExam } from '@/hooks/useExamSessions';
 
+// ============================================================================
+// Constants
+// ============================================================================
+
 const DISMISS_PREFIX = 'notification-dismissed-';
 const PUSH_SENT_PREFIX = 'push-sent-';
+
+/** Readiness milestones that trigger celebration notifications */
 const MILESTONE_THRESHOLDS = [70, 80, 90] as const;
+
+/** Maximum priority level for push notifications (1-3 get push, 4+ don't) */
+const PUSH_NOTIFICATION_PRIORITY_THRESHOLD = 3;
+
+/** Days of inactivity before showing inactivity notification */
+const INACTIVITY_THRESHOLD_DAYS = 3;
+
+/** Days before exam to show urgent notification */
+const EXAM_URGENCY_THRESHOLD_DAYS = 7;
+
+/** Readiness threshold below which exam urgency notification shows */
+const EXAM_URGENCY_READINESS_THRESHOLD = 75;
+
+/** Weekly goal progress percentage to show "almost there" notification */
+const WEEKLY_GOAL_CLOSE_THRESHOLD = 80;
+
+// ============================================================================
+// localStorage Helpers
+// ============================================================================
+
+/**
+ * Safely get item from localStorage.
+ * Returns null if localStorage is unavailable (private browsing, storage full).
+ */
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Safely set item in localStorage.
+ * Silently fails if localStorage is unavailable.
+ */
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    console.warn('Failed to save to localStorage:', error);
+  }
+}
+
+// ============================================================================
+// Types
+// ============================================================================
 
 /**
  * Types of notifications the system can generate.
@@ -36,7 +89,7 @@ export interface DashboardNotification {
   id: string;
   /** Type of notification for tracking/analytics */
   type: NotificationType;
-  /** Priority (lower = more important, 1-6) */
+  /** Priority (lower = more important, 1-5) */
   priority: number;
   /** Main heading */
   title: string;
@@ -67,10 +120,6 @@ export interface UseDashboardNotificationsOptions {
   thisWeekQuestions: number;
   /** Weekly question goal */
   questionsGoal: number;
-  /** Tests completed this week */
-  thisWeekTests: number;
-  /** Weekly test goal */
-  testsGoal: number;
   /** User's target exam (for exam urgency) */
   userTarget: UserTargetExam | null;
   /** Navigation handler */
@@ -97,6 +146,10 @@ export interface UseDashboardNotificationsResult {
     requestPermission: () => Promise<NotificationPermission>;
   };
 }
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
 
 /**
  * Get the dismissal key for a notification.
@@ -128,7 +181,7 @@ function getDismissKey(type: NotificationType, milestone?: number): string {
 function isDismissed(type: NotificationType, milestone?: number): boolean {
   const key = getDismissKey(type, milestone);
   if (!key) return false;
-  return localStorage.getItem(key) === 'true';
+  return safeGetItem(key) === 'true';
 }
 
 /**
@@ -169,6 +222,10 @@ function getHighestMilestone(readinessScore: number | null): number | null {
   return null;
 }
 
+// ============================================================================
+// Hook
+// ============================================================================
+
 /**
  * Hook to compute and manage dashboard notifications.
  *
@@ -182,8 +239,6 @@ function getHighestMilestone(readinessScore: number | null): number | null {
  *   userId: user?.id,
  *   thisWeekQuestions: 42,
  *   questionsGoal: 50,
- *   thisWeekTests: 1,
- *   testsGoal: 2,
  *   userTarget: targetExam,
  *   onNavigate: changeView,
  * });
@@ -194,15 +249,15 @@ export function useDashboardNotifications(
 ): UseDashboardNotificationsResult {
   const {
     examType,
-    userId,
     thisWeekQuestions,
     questionsGoal,
-    thisWeekTests,
-    testsGoal,
     userTarget,
     onNavigate,
     maxVisible = 1,
   } = options;
+
+  // Track dismissal state changes (for cross-tab sync)
+  const [dismissalVersion, setDismissalVersion] = useState(0);
 
   // Fetch data from existing hooks
   // Note: streak-at-risk is handled by StreakDisplay, so we only need lastActivityDate here
@@ -245,6 +300,19 @@ export function useDashboardNotifications(
     ? Math.round((thisWeekQuestions / questionsGoal) * 100)
     : 0;
 
+  // Listen for cross-tab dismissal changes
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key?.startsWith(DISMISS_PREFIX)) {
+        // Trigger re-render to update notification list
+        setDismissalVersion((v) => v + 1);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   /**
    * Generate all applicable notifications based on current state.
    */
@@ -255,10 +323,10 @@ export function useDashboardNotifications(
     // Trigger: Exam in ≤7 days AND readiness < 75%
     if (
       daysToExam !== null &&
-      daysToExam <= 7 &&
+      daysToExam <= EXAM_URGENCY_THRESHOLD_DAYS &&
       daysToExam > 0 &&
       readinessScore !== null &&
-      readinessScore < 75 &&
+      readinessScore < EXAM_URGENCY_READINESS_THRESHOLD &&
       !isDismissed('exam-urgent')
     ) {
       notifications.push({
@@ -299,7 +367,11 @@ export function useDashboardNotifications(
 
     // 3. Inactivity (Priority 3)
     // Trigger: last_study_at > 3 days ago
-    if (inactivityDays >= 3 && inactivityDays < Infinity && !isDismissed('inactivity')) {
+    if (
+      inactivityDays >= INACTIVITY_THRESHOLD_DAYS &&
+      inactivityDays < Infinity &&
+      !isDismissed('inactivity')
+    ) {
       notifications.push({
         id: 'inactivity',
         type: 'inactivity',
@@ -319,7 +391,7 @@ export function useDashboardNotifications(
     // 4. Weekly Goal Close (Priority 4)
     // Trigger: 80-99% of weekly goal complete
     if (
-      weeklyProgress >= 80 &&
+      weeklyProgress >= WEEKLY_GOAL_CLOSE_THRESHOLD &&
       weeklyProgress < 100 &&
       !isDismissed('weekly-goal-close')
     ) {
@@ -378,6 +450,7 @@ export function useDashboardNotifications(
     thisWeekQuestions,
     onNavigate,
     maxVisible,
+    dismissalVersion, // Re-compute when dismissals change across tabs
   ]);
 
   /**
@@ -390,35 +463,39 @@ export function useDashboardNotifications(
     if (milestoneMatch) {
       const milestone = parseInt(milestoneMatch[1], 10);
       const key = getDismissKey('readiness-milestone', milestone);
-      localStorage.setItem(key, 'true');
+      safeSetItem(key, 'true');
     } else {
       const type = id as NotificationType;
       const key = getDismissKey(type);
       if (key) {
-        localStorage.setItem(key, 'true');
+        safeSetItem(key, 'true');
       }
     }
 
-    // Force re-render by triggering a state update
-    // This is handled by the parent component re-rendering
+    // Trigger re-render to remove dismissed notification
+    setDismissalVersion((v) => v + 1);
   }, []);
 
   /**
    * Send push notifications for high-priority items (once per day).
+   * Only sends when tab is hidden to avoid interrupting active users.
    */
   useEffect(() => {
     if (permission !== 'granted' || allNotifications.length === 0) return;
 
     const topNotification = allNotifications[0];
-    // Only send push for priority 1-3 notifications
-    if (topNotification.priority > 3) return;
+    // Only send push for high-priority notifications
+    if (topNotification.priority > PUSH_NOTIFICATION_PRIORITY_THRESHOLD) return;
+
+    // Only send push when user is not actively viewing the app
+    if (document.visibilityState === 'visible') return;
 
     // Check if we've already sent this push today
     const today = getLocalDateString();
     const pushKey = `${PUSH_SENT_PREFIX}${topNotification.id}-${today}`;
 
     // Check both localStorage and our session ref
-    if (localStorage.getItem(pushKey) || sentPushRef.current.has(pushKey)) return;
+    if (safeGetItem(pushKey) || sentPushRef.current.has(pushKey)) return;
 
     // Send the push notification
     sendNotification(topNotification.title, {
@@ -427,7 +504,7 @@ export function useDashboardNotifications(
     });
 
     // Mark as sent
-    localStorage.setItem(pushKey, 'true');
+    safeSetItem(pushKey, 'true');
     sentPushRef.current.add(pushKey);
   }, [allNotifications, permission, sendNotification]);
 

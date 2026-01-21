@@ -31,8 +31,6 @@ const defaultProps = {
   userId: 'user-123',
   thisWeekQuestions: 30,
   questionsGoal: 50,
-  thisWeekTests: 1,
-  testsGoal: 2,
   userTarget: null,
   onNavigate: vi.fn(),
   maxVisible: 1,
