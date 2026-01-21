@@ -2,7 +2,6 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, SupabaseClient } from "jsr:@supabase/supabase-js@2";
 import {
   getCorsHeaders,
-  isServiceRoleToken,
   ALERT_LOOKBACK_MS,
   MAX_LOG_ENTRIES,
   ANALYTICS_API_TIMEOUT_MS,
@@ -57,47 +56,6 @@ Deno.serve(async (req: Request) => {
   let runId: string | undefined;
 
   try {
-    // This function should only be called by:
-    // 1. pg_cron (via pg_net with service role)
-    // 2. Admin manual trigger (with service role or admin user)
-    const authHeader = req.headers.get("Authorization");
-
-    // If auth header present, verify it's service role or admin
-    if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");
-      if (!isServiceRoleToken(token)) {
-        // Check if user is admin
-        const supabaseUser = createClient(
-          Deno.env.get("SUPABASE_URL")!,
-          Deno.env.get("SUPABASE_ANON_KEY")!,
-          { global: { headers: { Authorization: authHeader } } }
-        );
-
-        const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
-        if (authError || !user) {
-          return new Response(
-            JSON.stringify({ error: "Unauthorized" }),
-            { status: 401, headers: { ...getCorsHeaders(), "Content-Type": "application/json" } }
-          );
-        }
-
-        // Check admin role
-        const { data: roleData, error: roleError } = await supabaseUser
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .eq("role", "admin")
-          .single();
-
-        if (roleError || !roleData) {
-          return new Response(
-            JSON.stringify({ error: "Admin access required" }),
-            { status: 403, headers: { ...getCorsHeaders(), "Content-Type": "application/json" } }
-          );
-        }
-      }
-    }
-
     console.log(`[${requestId}] Starting system monitor check`);
 
     // Record that a monitor run has started

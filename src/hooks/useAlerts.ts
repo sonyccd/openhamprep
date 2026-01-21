@@ -8,9 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 /** Time window for resolved alerts count (24 hours in ms) */
 const RESOLVED_LOOKBACK_MS = 24 * 60 * 60 * 1000;
 
-/** Delay before refetching after triggering monitor (5 seconds) */
-const TRIGGER_REFETCH_DELAY_MS = 5_000;
-
 // ============================================================
 // TYPE DEFINITIONS
 // ============================================================
@@ -382,27 +379,3 @@ export function useMonitorRuns(limit = 20) {
   });
 }
 
-/**
- * Manually trigger the system monitor.
- */
-export function useTriggerMonitor() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      // Call the trigger_system_monitor function
-      const { data, error } = await supabase.rpc('trigger_system_monitor');
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      // Invalidate related queries after a delay to allow the edge function to complete
-      // Edge function has 30s timeout, so 5s delay gives time for fast runs
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['alerts'] });
-        queryClient.invalidateQueries({ queryKey: ['monitor-runs'] });
-      }, TRIGGER_REFETCH_DELAY_MS);
-    },
-  });
-}

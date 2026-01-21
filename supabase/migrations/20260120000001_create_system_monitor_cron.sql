@@ -1,121 +1,15 @@
--- Create pg_cron job to invoke system-monitor Edge Function every 5 minutes
--- This migration depends on pg_cron and pg_net extensions being enabled
---
--- ============================================================
--- REQUIRED CONFIGURATION (per environment):
--- ============================================================
--- These settings must be configured for each environment after migration:
---
--- Production:
---   ALTER DATABASE postgres SET app.settings.supabase_url = 'https://wghfvormohhmqijcxbzq.supabase.co';
---   ALTER DATABASE postgres SET app.settings.service_role_key = '<your-service-role-key>';
---
--- Preview branches: Set automatically by Supabase preview infrastructure
--- Local development: Set in local Supabase config or via SQL
---
--- To verify settings:
---   SELECT current_setting('app.settings.supabase_url', true);
---   SELECT current_setting('app.settings.service_role_key', true);
--- ============================================================
+-- System monitor runs table for tracking edge function execution history
+-- The actual cron job is configured in Supabase Dashboard (Cron Jobs > system-monitor-check)
+-- which directly invokes the system-monitor edge function every 5 minutes
 
 -- ============================================================
--- 1. CREATE THE CRON JOB
+-- 0. CLEANUP OLD FUNCTIONS
 -- ============================================================
-
--- First, remove any existing job with the same name (idempotent)
-SELECT cron.unschedule('system-monitor-check')
-WHERE EXISTS (
-  SELECT 1 FROM cron.job WHERE jobname = 'system-monitor-check'
-);
-
--- Schedule the system-monitor function to run every 5 minutes
--- Uses pg_net to make HTTP request to the Edge Function
--- NOTE: Will fail loudly if app.settings.supabase_url is not configured
-SELECT cron.schedule(
-  'system-monitor-check',  -- job name
-  '*/5 * * * *',           -- every 5 minutes
-  $$
-  SELECT net.http_post(
-    url := current_setting('app.settings.supabase_url') || '/functions/v1/system-monitor',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key')
-    ),
-    body := '{}'::jsonb,
-    timeout_milliseconds := 30000
-  );
-  $$
-);
+-- Remove the old RPC trigger function (no longer needed - cron is in Supabase Dashboard)
+DROP FUNCTION IF EXISTS public.trigger_system_monitor();
 
 -- ============================================================
--- 2. HELPER FUNCTION FOR MANUAL TRIGGER
--- ============================================================
-
--- Create a function that admins can call to manually trigger the monitor
--- This is useful for testing or when you want an immediate check
--- Includes rate limiting to prevent abuse
-CREATE OR REPLACE FUNCTION public.trigger_system_monitor()
-RETURNS JSONB
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  result JSONB;
-  supabase_url TEXT;
-  service_key TEXT;
-BEGIN
-  -- Check if caller is admin
-  IF NOT EXISTS (
-    SELECT 1 FROM public.user_roles
-    WHERE user_id = auth.uid() AND role = 'admin'
-  ) THEN
-    RAISE EXCEPTION 'Admin access required';
-  END IF;
-
-  -- Rate limiting: prevent triggering if a monitor run started within the last minute
-  IF EXISTS (
-    SELECT 1 FROM public.system_monitor_runs
-    WHERE started_at > now() - interval '1 minute'
-      AND status = 'running'
-  ) THEN
-    RAISE EXCEPTION 'Monitor already running. Please wait for it to complete.';
-  END IF;
-
-  -- Verify configuration is present before attempting HTTP call
-  supabase_url := current_setting('app.settings.supabase_url', true);
-  service_key := current_setting('app.settings.service_role_key', true);
-
-  IF supabase_url IS NULL OR supabase_url = '' THEN
-    RAISE EXCEPTION 'System monitoring not configured. Missing app.settings.supabase_url. '
-      'Run: ALTER DATABASE postgres SET app.settings.supabase_url = ''https://your-project.supabase.co'';';
-  END IF;
-
-  IF service_key IS NULL OR service_key = '' THEN
-    RAISE EXCEPTION 'System monitoring not configured. Missing app.settings.service_role_key. '
-      'Run: ALTER DATABASE postgres SET app.settings.service_role_key = ''your-service-role-key'';';
-  END IF;
-
-  -- Make HTTP request to the Edge Function
-  SELECT net.http_post(
-    url := current_setting('app.settings.supabase_url') || '/functions/v1/system-monitor',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key')
-    ),
-    body := '{}'::jsonb,
-    timeout_milliseconds := 30000
-  )::TEXT::JSONB INTO result;
-
-  RETURN result;
-END;
-$$;
-
--- Grant execute to authenticated users (admin check is inside the function)
-GRANT EXECUTE ON FUNCTION public.trigger_system_monitor() TO authenticated;
-
--- ============================================================
--- 3. MONITORING METADATA TABLE
+-- 1. MONITORING METADATA TABLE
 -- ============================================================
 
 -- Track the last successful monitor run for observability
@@ -155,7 +49,7 @@ CREATE POLICY "Service role can manage monitor runs"
   USING (auth.role() = 'service_role');
 
 -- ============================================================
--- 4. CLEANUP OLD RUNS (keep last 100)
+-- 2. CLEANUP OLD RUNS (keep last 100)
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.cleanup_old_monitor_runs()
@@ -189,8 +83,7 @@ CREATE TRIGGER trg_cleanup_monitor_runs
   EXECUTE FUNCTION public.cleanup_old_monitor_runs();
 
 -- ============================================================
--- 5. DOCUMENTATION
+-- 3. DOCUMENTATION
 -- ============================================================
 
 COMMENT ON TABLE public.system_monitor_runs IS 'Tracks execution history of the system-monitor Edge Function for observability.';
-COMMENT ON FUNCTION public.trigger_system_monitor() IS 'Manually triggers the system-monitor Edge Function. Admin access required.';

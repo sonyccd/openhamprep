@@ -5,7 +5,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminGlossary } from "@/components/admin/AdminGlossary";
 import { AdminQuestions } from "@/components/admin/AdminQuestions";
-import { AdminStats } from "@/components/admin/AdminStats";
 import { AdminExamSessions } from "@/components/admin/AdminExamSessions";
 import { AdminTopics } from "@/components/admin/AdminTopics";
 import { AdminLessons } from "@/components/admin/AdminLessons";
@@ -31,10 +30,8 @@ export default function Admin() {
   const navigate = useNavigate();
   const [sidebarTest, setSidebarTest] = useState<TestType>('technician');
   const [adminExamType, setAdminExamType] = useState<TestType>('technician');
-  const [activeTab, setActiveTab] = useState("stats");
   const [activeSection, setActiveSection] = useState<"exam" | "glossary" | "sessions" | "learning" | "chapters" | "tools" | "discourse" | "alerts">("exam");
   const { data: unacknowledgedCount = 0 } = useUnacknowledgedAlertCount();
-  const [linkQuestionId, setLinkQuestionId] = useState("");
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
@@ -57,18 +54,9 @@ export default function Admin() {
       navigate('/dashboard');
     }
   };
-  const handleAddLinkToQuestion = (questionId: string) => {
-    setLinkQuestionId(questionId);
-    setActiveSection("exam");
-    setActiveTab("questions");
-  };
-  const testTypeLabels = {
-    technician: 'Technician',
-    general: 'General',
-    extra: 'Extra'
-  };
-  // Stats tab needs full page scroll, Questions/Glossary need fixed viewport with internal scroll
-  const needsFixedHeight = activeSection === "glossary" || activeSection === "sessions" || activeSection === "learning" || activeSection === "chapters" || activeSection === "tools" || activeSection === "discourse" || activeSection === "alerts" || (activeSection === "exam" && activeTab === "questions");
+
+  // Questions/Glossary need fixed viewport with internal scroll
+  const needsFixedHeight = activeSection === "glossary" || activeSection === "sessions" || activeSection === "learning" || activeSection === "chapters" || activeSection === "tools" || activeSection === "discourse" || activeSection === "alerts" || activeSection === "exam";
 
   return <AppLayout currentView="dashboard" onViewChange={handleViewChange} selectedTest={sidebarTest} onTestChange={setSidebarTest}>
       <div className={`flex-1 p-6 md:p-8 flex flex-col ${needsFixedHeight ? 'h-full overflow-hidden' : 'overflow-y-auto'}`}>
@@ -175,40 +163,25 @@ export default function Admin() {
             </nav>
           </div>
 
-          {activeSection === "exam" ? <Tabs value={activeTab} onValueChange={value => {
-          setActiveTab(value);
-          if (value !== "questions") setLinkQuestionId("");
-        }} className={`w-full ${needsFixedHeight ? 'flex-1 flex flex-col min-h-0' : ''}`}>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                <TabsList className="grid w-full sm:w-auto grid-cols-2">
-                  <TabsTrigger value="stats">Statistics</TabsTrigger>
-                  <TabsTrigger value="questions">Questions</TabsTrigger>
-                </TabsList>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Exam:</span>
-                  <ToggleGroup type="single" value={adminExamType} onValueChange={value => value && setAdminExamType(value as TestType)} className="bg-muted rounded-lg p-1">
-                    <ToggleGroupItem value="technician" className="text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                      Tech
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="general" className="text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                      General
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="extra" className="text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                      Extra
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </div>
+          {activeSection === "exam" ? (
+            <div className="w-full flex-1 flex flex-col min-h-0">
+              <div className="flex items-center justify-end gap-2 mb-6">
+                <span className="text-sm text-muted-foreground">Exam:</span>
+                <ToggleGroup type="single" value={adminExamType} onValueChange={value => value && setAdminExamType(value as TestType)} className="bg-muted rounded-lg p-1">
+                  <ToggleGroupItem value="technician" className="text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                    Tech
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="general" className="text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                    General
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="extra" className="text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                    Extra
+                  </ToggleGroupItem>
+                </ToggleGroup>
               </div>
-
-              <TabsContent value="stats" className="mt-0">
-                <AdminStats testType={adminExamType} onAddLinkToQuestion={handleAddLinkToQuestion} />
-              </TabsContent>
-
-              <TabsContent value="questions" className="flex-1 min-h-0 flex flex-col">
-                <AdminQuestions testType={adminExamType} highlightQuestionId={linkQuestionId} />
-              </TabsContent>
-            </Tabs> : activeSection === "glossary" ? (
+              <AdminQuestions testType={adminExamType} />
+            </div>
+          ) : activeSection === "glossary" ? (
               <div className="flex-1 flex flex-col min-h-0">
                 <AdminGlossary />
               </div>

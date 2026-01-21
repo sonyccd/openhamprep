@@ -41,12 +41,6 @@ vi.mock('@/components/admin/AdminQuestions', () => ({
   ),
 }));
 
-vi.mock('@/components/admin/AdminStats', () => ({
-  AdminStats: ({ testType }: { testType: string }) => (
-    <div data-testid="admin-stats">Admin Stats - {testType}</div>
-  ),
-}));
-
 vi.mock('@/components/admin/AdminExamSessions', () => ({
   AdminExamSessions: () => <div data-testid="admin-exam-sessions">Admin Exam Sessions</div>,
 }));
@@ -202,7 +196,7 @@ describe('Admin', () => {
     it('shows Questions (Exam) section by default', () => {
       renderAdmin();
 
-      expect(screen.getByTestId('admin-stats')).toBeInTheDocument();
+      expect(screen.getByTestId('admin-questions')).toBeInTheDocument();
     });
 
     it('switches to Glossary section when clicked', async () => {
@@ -224,36 +218,13 @@ describe('Admin', () => {
     });
   });
 
-  describe('Tabs in Exam Content', () => {
-    it('displays Statistics tab', () => {
+  describe('Exam Section', () => {
+    it('shows AdminQuestions by default', () => {
       renderAdmin();
-
-      expect(screen.getByRole('tab', { name: /statistics/i })).toBeInTheDocument();
-    });
-
-    it('displays Questions tab', () => {
-      renderAdmin();
-
-      expect(screen.getByRole('tab', { name: /questions/i })).toBeInTheDocument();
-    });
-
-    it('shows Statistics tab content by default', () => {
-      renderAdmin();
-
-      expect(screen.getByTestId('admin-stats')).toBeInTheDocument();
-    });
-
-    it('switches to Questions tab when clicked', async () => {
-      const user = userEvent.setup();
-      renderAdmin();
-
-      await user.click(screen.getByRole('tab', { name: /questions/i }));
 
       expect(screen.getByTestId('admin-questions')).toBeInTheDocument();
     });
-  });
 
-  describe('Exam Type Selection', () => {
     it('displays exam type toggle', () => {
       renderAdmin();
 
@@ -262,10 +233,10 @@ describe('Admin', () => {
       expect(screen.getByText('Extra')).toBeInTheDocument();
     });
 
-    it('shows technician by default in stats', () => {
+    it('shows technician by default', () => {
       renderAdmin();
 
-      expect(screen.getByTestId('admin-stats')).toHaveTextContent('technician');
+      expect(screen.getByTestId('admin-questions')).toHaveTextContent('technician');
     });
 
     it('changes exam type when toggle is clicked', async () => {
@@ -274,7 +245,7 @@ describe('Admin', () => {
 
       await user.click(screen.getByText('General'));
 
-      expect(screen.getByTestId('admin-stats')).toHaveTextContent('general');
+      expect(screen.getByTestId('admin-questions')).toHaveTextContent('general');
     });
   });
 
