@@ -10,7 +10,6 @@ import {
   useAlertRules,
   useToggleAlertRule,
   useMonitorRuns,
-  useTriggerMonitor,
 } from './useAlerts';
 
 // Mock Supabase client
@@ -393,23 +392,4 @@ describe('useAlerts hooks', () => {
     });
   });
 
-  describe('useTriggerMonitor', () => {
-    it('should call trigger_system_monitor RPC', async () => {
-      mockRpc.mockResolvedValue({ data: { success: true }, error: null });
-
-      const { result } = renderHook(() => useTriggerMonitor(), { wrapper });
-
-      await result.current.mutateAsync();
-
-      expect(mockRpc).toHaveBeenCalledWith('trigger_system_monitor');
-    });
-
-    it('should handle RPC errors', async () => {
-      mockRpc.mockResolvedValue({ data: null, error: { message: 'RPC failed' } });
-
-      const { result } = renderHook(() => useTriggerMonitor(), { wrapper });
-
-      await expect(result.current.mutateAsync()).rejects.toThrow();
-    });
-  });
 });

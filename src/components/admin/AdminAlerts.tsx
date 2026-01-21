@@ -5,7 +5,6 @@ import {
   useAlertCounts,
   useAcknowledgeAlert,
   useResolveAlert,
-  useTriggerMonitor,
   useMonitorRuns,
   type Alert,
   type AlertStatus,
@@ -321,7 +320,6 @@ export function AdminAlerts() {
 
   const acknowledgeMutation = useAcknowledgeAlert();
   const resolveMutation = useResolveAlert();
-  const triggerMutation = useTriggerMonitor();
 
   const handleAcknowledge = (alertId: string, note?: string) => {
     acknowledgeMutation.mutate({ alertId, note }, {
@@ -343,24 +341,6 @@ export function AdminAlerts() {
       },
       onError: (error) => {
         toast.error("Failed to resolve alert", {
-          description: error instanceof Error ? error.message : "Unknown error",
-        });
-      },
-    });
-  };
-
-  const handleTriggerMonitor = () => {
-    toast.loading("Running system monitor...", { id: "monitor-trigger" });
-    triggerMutation.mutate(undefined, {
-      onSuccess: () => {
-        toast.success("Monitor completed successfully", {
-          id: "monitor-trigger",
-          description: "Check the results below for any new alerts.",
-        });
-      },
-      onError: (error) => {
-        toast.error("Monitor failed to run", {
-          id: "monitor-trigger",
           description: error instanceof Error ? error.message : "Unknown error",
         });
       },
@@ -389,26 +369,12 @@ export function AdminAlerts() {
 
   return (
     <div className="space-y-6">
-      {/* Header with actions */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">System Alerts</h2>
-          <p className="text-sm text-muted-foreground">
-            Monitor Edge Function health and system issues
-          </p>
-        </div>
-        <Button
-          size="sm"
-          onClick={handleTriggerMonitor}
-          disabled={triggerMutation.isPending}
-        >
-          {triggerMutation.isPending ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Activity className="w-4 h-4 mr-2" />
-          )}
-          Run Monitor Now
-        </Button>
+      {/* Header */}
+      <div>
+        <h2 className="text-lg font-semibold text-foreground">System Alerts</h2>
+        <p className="text-sm text-muted-foreground">
+          Monitor Edge Function health and system issues
+        </p>
       </div>
 
       {/* Status summary cards */}

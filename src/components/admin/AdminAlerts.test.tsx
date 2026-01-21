@@ -10,7 +10,6 @@ vi.mock('@/hooks/useAlerts', () => ({
   useAlertCounts: vi.fn(),
   useAcknowledgeAlert: vi.fn(),
   useResolveAlert: vi.fn(),
-  useTriggerMonitor: vi.fn(),
   useMonitorRuns: vi.fn(),
 }));
 
@@ -28,7 +27,6 @@ import {
   useAlertCounts,
   useAcknowledgeAlert,
   useResolveAlert,
-  useTriggerMonitor,
   useMonitorRuns,
 } from '@/hooks/useAlerts';
 import { toast } from 'sonner';
@@ -92,7 +90,6 @@ describe('AdminAlerts', () => {
 
   const mockAcknowledgeMutate = vi.fn();
   const mockResolveMutate = vi.fn();
-  const mockTriggerMutate = vi.fn();
 
   const renderComponent = () => {
     queryClient = new QueryClient({
@@ -135,11 +132,6 @@ describe('AdminAlerts', () => {
       mutate: mockResolveMutate,
       isPending: false,
     } as unknown as ReturnType<typeof useResolveAlert>);
-
-    vi.mocked(useTriggerMonitor).mockReturnValue({
-      mutate: mockTriggerMutate,
-      isPending: false,
-    } as unknown as ReturnType<typeof useTriggerMonitor>);
   });
 
   describe('Rendering', () => {
@@ -147,12 +139,6 @@ describe('AdminAlerts', () => {
       renderComponent();
 
       expect(screen.getByText('System Alerts')).toBeInTheDocument();
-    });
-
-    it('should render Run Monitor Now button', () => {
-      renderComponent();
-
-      expect(screen.getByRole('button', { name: /run monitor now/i })).toBeInTheDocument();
     });
 
     it('should render status summary cards', () => {
@@ -291,32 +277,6 @@ describe('AdminAlerts', () => {
       await user.click(resolveButtons[0]);
 
       expect(mockResolveMutate).toHaveBeenCalled();
-    });
-  });
-
-  describe('Trigger Monitor', () => {
-    it('should call trigger mutation when Run Monitor Now clicked', async () => {
-      const user = userEvent.setup();
-      renderComponent();
-
-      await user.click(screen.getByRole('button', { name: /run monitor now/i }));
-
-      expect(mockTriggerMutate).toHaveBeenCalled();
-      expect(toast.loading).toHaveBeenCalledWith(
-        'Running system monitor...',
-        expect.any(Object)
-      );
-    });
-
-    it('should disable button while trigger is pending', () => {
-      vi.mocked(useTriggerMonitor).mockReturnValue({
-        mutate: mockTriggerMutate,
-        isPending: true,
-      } as unknown as ReturnType<typeof useTriggerMonitor>);
-
-      renderComponent();
-
-      expect(screen.getByRole('button', { name: /run monitor now/i })).toBeDisabled();
     });
   });
 
