@@ -224,7 +224,7 @@ export function HelpButton() {
                         </div>
                       </button>
 
-                      <a href="https://openhamprep.statuspage.io/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
+                      <a href="https://status.openhamprep.com/status/openhamprep" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
                         <div className="flex items-center justify-center h-10 w-10 rounded-full bg-success/10 text-success">
                           <Activity className="h-5 w-5" aria-hidden="true" />
                         </div>

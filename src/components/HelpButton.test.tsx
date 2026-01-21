@@ -165,7 +165,7 @@ describe('HelpButton', () => {
         const statusLink = screen.getByRole('link', { name: /system status/i });
         expect(statusLink).toHaveAttribute(
           'href',
-          'https://openhamprep.statuspage.io/'
+          'https://status.openhamprep.com/status/openhamprep'
         );
         expect(statusLink).toHaveAttribute('target', '_blank');
         expect(statusLink).toHaveAttribute('rel', 'noopener noreferrer');
