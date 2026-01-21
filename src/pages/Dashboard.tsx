@@ -17,6 +17,7 @@ import { PageContainer } from '@/components/ui/page-container';
 import {
   DashboardHero,
   DashboardNextSteps,
+  DashboardNotifications,
   DashboardProgress,
   DashboardSectionInsights,
   StreakDisplay,
@@ -439,8 +440,18 @@ export default function Dashboard() {
           onAction={handlePrimaryAction}
         />
 
+        <DashboardNotifications
+          examType={selectedTest}
+          userId={user?.id}
+          thisWeekQuestions={thisWeekQuestions}
+          questionsGoal={questionsGoal}
+          userTarget={userTarget}
+          onNavigate={changeView}
+          maxVisible={1}
+        />
+
         <div className="mb-6">
-          <StreakDisplay />
+          <StreakDisplay onAction={() => changeView('random-practice')} />
         </div>
 
         <DashboardNextSteps steps={getNextSteps()} />
