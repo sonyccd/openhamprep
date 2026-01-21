@@ -2664,6 +2664,129 @@ SET error_message = 'Error: Failed to fetch Edge Function logs: Management API r
 WHERE status = 'failed';
 
 -- =============================================================================
+-- DAILY STREAKS - Helper function for testing
+-- =============================================================================
+-- Daily streak data is automatically created when users study (via triggers).
+-- This helper function can be called AFTER a user signs up to seed sample
+-- streak data for testing the UI without having to answer 5+ questions.
+--
+-- Usage (run in Supabase Studio SQL Editor after signing up):
+--   SELECT seed_streak_data_for_user('your-user-id-here');
+--
+-- To find your user ID:
+--   1. Go to Authentication > Users in Supabase Studio
+--   2. Copy the UUID of your test user
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION public.seed_streak_data_for_user(p_user_id UUID)
+RETURNS TEXT AS $$
+DECLARE
+  v_profile_exists BOOLEAN;
+BEGIN
+  -- Verify user has a profile
+  SELECT EXISTS(SELECT 1 FROM public.profiles WHERE id = p_user_id) INTO v_profile_exists;
+
+  IF NOT v_profile_exists THEN
+    RETURN 'Error: No profile found for user ' || p_user_id || '. Make sure the user has signed up.';
+  END IF;
+
+  -- Seed daily activity for the past 7 days (creating a 7-day streak)
+  INSERT INTO public.daily_activity (user_id, activity_date, questions_answered, questions_correct, tests_taken, tests_passed, glossary_terms_studied)
+  VALUES
+    (p_user_id, CURRENT_DATE - 6, 12, 10, 1, 1, 5),   -- 6 days ago: test + questions
+    (p_user_id, CURRENT_DATE - 5, 8, 6, 0, 0, 0),    -- 5 days ago: questions only
+    (p_user_id, CURRENT_DATE - 4, 15, 12, 0, 0, 3),  -- 4 days ago: questions + some glossary
+    (p_user_id, CURRENT_DATE - 3, 5, 4, 0, 0, 0),    -- 3 days ago: exactly 5 questions
+    (p_user_id, CURRENT_DATE - 2, 0, 0, 1, 0, 0),    -- 2 days ago: test only (failed)
+    (p_user_id, CURRENT_DATE - 1, 10, 8, 1, 1, 0),   -- Yesterday: test + questions
+    (p_user_id, CURRENT_DATE, 3, 2, 0, 0, 0)         -- Today: 3 questions (not yet qualified)
+  ON CONFLICT (user_id, activity_date) DO UPDATE SET
+    questions_answered = EXCLUDED.questions_answered,
+    questions_correct = EXCLUDED.questions_correct,
+    tests_taken = EXCLUDED.tests_taken,
+    tests_passed = EXCLUDED.tests_passed,
+    glossary_terms_studied = EXCLUDED.glossary_terms_studied,
+    updated_at = now();
+
+  -- Set streak state (7-day current streak, since all past days qualified)
+  INSERT INTO public.daily_streaks (user_id, current_streak, longest_streak, last_activity_date, streak_freezes_available)
+  VALUES (p_user_id, 7, 7, CURRENT_DATE - 1, 0)
+  ON CONFLICT (user_id) DO UPDATE SET
+    current_streak = 7,
+    longest_streak = GREATEST(daily_streaks.longest_streak, 7),
+    last_activity_date = CURRENT_DATE - 1,
+    updated_at = now();
+
+  RETURN 'Success! Seeded 7-day streak for user ' || p_user_id || '. Today shows 3/5 questions (streak at risk).';
+END;
+$$ LANGUAGE plpgsql;
+
+-- Alternative: Seed a "streak at risk" scenario (user had a streak but hasn't studied today)
+CREATE OR REPLACE FUNCTION public.seed_streak_at_risk_for_user(p_user_id UUID)
+RETURNS TEXT AS $$
+DECLARE
+  v_profile_exists BOOLEAN;
+BEGIN
+  SELECT EXISTS(SELECT 1 FROM public.profiles WHERE id = p_user_id) INTO v_profile_exists;
+
+  IF NOT v_profile_exists THEN
+    RETURN 'Error: No profile found for user ' || p_user_id;
+  END IF;
+
+  -- Seed activity for past days only (no activity today)
+  INSERT INTO public.daily_activity (user_id, activity_date, questions_answered, questions_correct, tests_taken, tests_passed)
+  VALUES
+    (p_user_id, CURRENT_DATE - 3, 10, 8, 0, 0),
+    (p_user_id, CURRENT_DATE - 2, 7, 5, 1, 1),
+    (p_user_id, CURRENT_DATE - 1, 6, 5, 0, 0)
+  ON CONFLICT (user_id, activity_date) DO UPDATE SET
+    questions_answered = EXCLUDED.questions_answered,
+    questions_correct = EXCLUDED.questions_correct,
+    tests_taken = EXCLUDED.tests_taken,
+    tests_passed = EXCLUDED.tests_passed,
+    updated_at = now();
+
+  -- Delete today's activity if any exists
+  DELETE FROM public.daily_activity WHERE user_id = p_user_id AND activity_date = CURRENT_DATE;
+
+  INSERT INTO public.daily_streaks (user_id, current_streak, longest_streak, last_activity_date)
+  VALUES (p_user_id, 3, 5, CURRENT_DATE - 1)
+  ON CONFLICT (user_id) DO UPDATE SET
+    current_streak = 3,
+    longest_streak = GREATEST(daily_streaks.longest_streak, 5),
+    last_activity_date = CURRENT_DATE - 1,
+    updated_at = now();
+
+  RETURN 'Success! User has a 3-day streak at risk (no activity today). Best streak: 5 days.';
+END;
+$$ LANGUAGE plpgsql;
+
+-- Alternative: Seed a fresh start (no streak yet)
+CREATE OR REPLACE FUNCTION public.seed_no_streak_for_user(p_user_id UUID)
+RETURNS TEXT AS $$
+DECLARE
+  v_profile_exists BOOLEAN;
+BEGIN
+  SELECT EXISTS(SELECT 1 FROM public.profiles WHERE id = p_user_id) INTO v_profile_exists;
+
+  IF NOT v_profile_exists THEN
+    RETURN 'Error: No profile found for user ' || p_user_id;
+  END IF;
+
+  -- Clear any existing streak data
+  DELETE FROM public.daily_activity WHERE user_id = p_user_id;
+  DELETE FROM public.daily_streaks WHERE user_id = p_user_id;
+
+  RETURN 'Success! Cleared all streak data for user. They will start fresh.';
+END;
+$$ LANGUAGE plpgsql;
+
+-- Grant execute to authenticated users (for testing via app)
+GRANT EXECUTE ON FUNCTION public.seed_streak_data_for_user TO authenticated;
+GRANT EXECUTE ON FUNCTION public.seed_streak_at_risk_for_user TO authenticated;
+GRANT EXECUTE ON FUNCTION public.seed_no_streak_for_user TO authenticated;
+
+-- =============================================================================
 -- SUMMARY
 -- =============================================================================
 
@@ -2706,5 +2829,10 @@ BEGIN
   RAISE NOTICE '  - Acknowledged: %', (SELECT COUNT(*) FROM public.alerts WHERE status = 'acknowledged');
   RAISE NOTICE '  - Resolved: %', (SELECT COUNT(*) FROM public.alerts WHERE status = 'resolved');
   RAISE NOTICE 'Monitor Runs: %', (SELECT COUNT(*) FROM public.system_monitor_runs);
+  RAISE NOTICE '';
+  RAISE NOTICE 'Daily Streaks: Seed after signup with:';
+  RAISE NOTICE '  SELECT seed_streak_data_for_user(''your-user-id'');';
+  RAISE NOTICE '  SELECT seed_streak_at_risk_for_user(''your-user-id'');';
+  RAISE NOTICE '  SELECT seed_no_streak_for_user(''your-user-id'');';
   RAISE NOTICE '========================================';
 END $$;

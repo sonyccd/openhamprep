@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef } from 'react';
 import { recalculateReadiness } from '@/hooks/useReadinessScore';
 import { recordQuestionAttempt, recordPracticeTestCompleted, recordTopicQuizCompleted } from '@/lib/events';
+import { incrementDailyActivity } from '@/hooks/useDailyStreak';
 
 /** Number of questions to batch before triggering a readiness recalculation */
 const RECALC_QUESTION_THRESHOLD = 10;
@@ -73,6 +74,7 @@ export function useProgress() {
     queryClient.invalidateQueries({ queryKey: ['question-attempts', user.id] });
     queryClient.invalidateQueries({ queryKey: ['profile-stats', user.id] });
     queryClient.invalidateQueries({ queryKey: ['weekly-goals', user.id] });
+    queryClient.invalidateQueries({ queryKey: ['daily-streak', user.id] });
   }, [queryClient, user]);
 
   /**
@@ -238,6 +240,14 @@ export function useProgress() {
       });
     }
 
+    // Track daily activity for streaks (fire-and-forget)
+    incrementDailyActivity(user.id, {
+      questions: totalQuestions,
+      correct: correctCount,
+      tests: 1,
+      testsPassed: passed ? 1 : 0,
+    }).catch(err => console.error('Daily activity tracking failed:', err));
+
     // Invalidate cached queries so UI updates immediately
     invalidateProgressQueries();
 
@@ -293,6 +303,12 @@ export function useProgress() {
         is_correct: selectedAnswer === question.correctAnswer
       });
     }
+
+    // Track daily activity for streaks (fire-and-forget)
+    incrementDailyActivity(user.id, {
+      questions: 1,
+      correct: selectedAnswer === question.correctAnswer ? 1 : 0,
+    }).catch(err => console.error('Daily activity tracking failed:', err));
 
     // Invalidate cached queries so UI updates immediately
     invalidateProgressQueries();
@@ -376,6 +392,12 @@ export function useProgress() {
         attempt_type: attemptType
       });
     }
+
+    // Track daily activity for streaks (fire-and-forget)
+    incrementDailyActivity(user.id, {
+      questions: attempts.length,
+      correct: correctCount,
+    }).catch(err => console.error('Daily activity tracking failed:', err));
 
     // Invalidate cached queries so UI updates immediately
     invalidateProgressQueries();
