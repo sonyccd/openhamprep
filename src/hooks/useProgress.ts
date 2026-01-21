@@ -191,7 +191,8 @@ export function useProgress() {
         answerSelected: answerToIndex[answers[question.id]] ?? 0,
         timeElapsedMs: 0, // Per-question timing not tracked in practice tests
         mode: 'practice_test',
-        practiceTestId: testResult.id
+        practiceTestId: testResult.id,
+        userId: user.id
       }).catch(err => console.error('Event recording failed:', err));
     }
 
@@ -222,7 +223,8 @@ export function useProgress() {
       score: correctCount,
       percentage,
       durationSeconds: 0, // Total time not tracked at test level yet
-      subelementBreakdown
+      subelementBreakdown,
+      userId: user.id
     }).catch(err => console.error('Event recording failed:', err));
 
     // Track test completion event in Pendo
@@ -280,7 +282,8 @@ export function useProgress() {
       question,
       answerSelected: answerToIndex[selectedAnswer],
       timeElapsedMs: timeElapsedMs ?? 0,
-      mode: attemptType
+      mode: attemptType,
+      userId: user.id
     }).catch(err => console.error('Event recording failed:', err));
 
     // Track question answered event in Pendo
@@ -342,7 +345,8 @@ export function useProgress() {
         question: attempt.question,
         answerSelected: answerToIndex[attempt.selectedAnswer],
         timeElapsedMs: attempt.timeElapsedMs ?? 0,
-        mode: attemptType
+        mode: attemptType,
+        userId: user.id
       }).catch(err => console.error('Event recording failed:', err));
     }
 
@@ -358,7 +362,8 @@ export function useProgress() {
         totalQuestions: attempts.length,
         correctCount,
         percentage,
-        passed
+        passed,
+        userId: user.id
       }).catch(err => console.error('Event recording failed:', err));
     }
 

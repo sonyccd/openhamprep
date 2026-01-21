@@ -94,17 +94,23 @@ export interface TopicQuizCompletedPayload {
  * This is the base function used by specialized event recorders.
  *
  * @param event - The event to record
+ * @param userId - Optional user ID to avoid redundant auth calls
  * @returns Promise that resolves when the event is recorded
  */
-async function recordEvent(event: BaseEvent): Promise<void> {
+async function recordEvent(event: BaseEvent, userId?: string): Promise<void> {
   // Check feature flag
   if (!FEATURE_FLAGS.enableEventRecording) {
     return;
   }
 
-  // Get current user
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  // Use provided userId or fetch from auth (fallback for backwards compatibility)
+  let uid = userId;
+  if (!uid) {
+    const { data: { user } } = await supabase.auth.getUser();
+    uid = user?.id;
+  }
+
+  if (!uid) {
     console.debug('Event recording skipped: no authenticated user');
     return;
   }
@@ -113,7 +119,7 @@ async function recordEvent(event: BaseEvent): Promise<void> {
     .from('events')
     .insert({
       event_type: event.eventType,
-      user_id: user.id,
+      user_id: uid,
       payload: event.payload,
       timestamp: new Date().toISOString()
     });
@@ -128,6 +134,7 @@ async function recordEvent(event: BaseEvent): Promise<void> {
  * Record a question attempt event.
  *
  * @param params - Question attempt details
+ * @param params.userId - Optional user ID to avoid redundant auth calls
  */
 export async function recordQuestionAttempt(params: {
   question: Question;
@@ -135,19 +142,23 @@ export async function recordQuestionAttempt(params: {
   timeElapsedMs: number;
   mode: string;
   practiceTestId?: string;
+  userId?: string;
 }): Promise<void> {
-  const { question, answerSelected, timeElapsedMs, mode, practiceTestId } = params;
+  const { question, answerSelected, timeElapsedMs, mode, practiceTestId, userId } = params;
 
   // Map letter answers to index (0-3)
   const answerToIndex: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
   const correctAnswerIdx = answerToIndex[question.correctAnswer] ?? 0;
 
+  // Safe access to displayName with fallback to id
+  const displayName = question.displayName || question.id || '';
+
   const payload: QuestionAttemptPayload = {
     question_id: question.id,
-    question_code: question.displayName,
+    question_code: displayName,
     content_hash: question.contentHash ?? null,
-    pool_version: question.poolVersion ?? getPoolVersionFromDisplayName(question.displayName),
-    topic_code: question.group || question.displayName.slice(0, 3), // e.g., 'T5A' from 'T5A03'
+    pool_version: question.poolVersion ?? getPoolVersionFromDisplayName(displayName),
+    topic_code: question.group || displayName.slice(0, 3) || 'UNK', // e.g., 'T5A' from 'T5A03'
     answer_selected: answerSelected,
     correct_answer: correctAnswerIdx,
     is_correct: answerSelected === correctAnswerIdx,
@@ -160,13 +171,14 @@ export async function recordQuestionAttempt(params: {
   await recordEvent({
     eventType: 'question_attempt',
     payload: payload as unknown as Record<string, unknown>
-  });
+  }, userId);
 }
 
 /**
  * Record a practice test completion event (per documentation section 6.2).
  *
  * @param params - Test completion details
+ * @param params.userId - Optional user ID to avoid redundant auth calls
  */
 export async function recordPracticeTestCompleted(params: {
   practiceTestId: string;
@@ -177,6 +189,7 @@ export async function recordPracticeTestCompleted(params: {
   percentage: number;
   durationSeconds: number;
   subelementBreakdown?: Record<string, { correct: number; total: number }>;
+  userId?: string;
 }): Promise<void> {
   const {
     practiceTestId,
@@ -186,7 +199,8 @@ export async function recordPracticeTestCompleted(params: {
     score,
     percentage,
     durationSeconds,
-    subelementBreakdown
+    subelementBreakdown,
+    userId
   } = params;
 
   const poolVersion = getPoolVersionForExamType(examType as 'technician' | 'general' | 'extra');
@@ -208,7 +222,7 @@ export async function recordPracticeTestCompleted(params: {
   await recordEvent({
     eventType: 'practice_test_completed',
     payload: payload as unknown as Record<string, unknown>
-  });
+  }, userId);
 }
 
 /**
@@ -216,6 +230,7 @@ export async function recordPracticeTestCompleted(params: {
  * Used when a real exam result is recorded - most valuable for model calibration.
  *
  * @param params - Exam outcome details
+ * @param params.userId - Optional user ID to avoid redundant auth calls
  */
 export async function recordExamOutcome(params: {
   source: 'user_reported' | 'system_calculated' | 'imported';
@@ -226,6 +241,7 @@ export async function recordExamOutcome(params: {
   examDate: string;
   confidenceLevel?: string;
   stateSnapshot?: ExamOutcomePayload['state_snapshot'];
+  userId?: string;
 }): Promise<void> {
   const {
     source,
@@ -235,7 +251,8 @@ export async function recordExamOutcome(params: {
     attemptNumber,
     examDate,
     confidenceLevel,
-    stateSnapshot
+    stateSnapshot,
+    userId
   } = params;
 
   const poolVersion = getPoolVersionForExamType(examType as 'technician' | 'general' | 'extra');
@@ -257,13 +274,14 @@ export async function recordExamOutcome(params: {
   await recordEvent({
     eventType: 'exam_outcome',
     payload: payload as unknown as Record<string, unknown>
-  });
+  }, userId);
 }
 
 /**
  * Record a topic quiz completion event.
  *
  * @param params - Quiz completion details
+ * @param params.userId - Optional user ID to avoid redundant auth calls
  */
 export async function recordTopicQuizCompleted(params: {
   topicId: string;
@@ -272,8 +290,9 @@ export async function recordTopicQuizCompleted(params: {
   correctCount: number;
   percentage: number;
   passed: boolean;
+  userId?: string;
 }): Promise<void> {
-  const { topicId, topicSlug, totalQuestions, correctCount, percentage, passed } = params;
+  const { topicId, topicSlug, totalQuestions, correctCount, percentage, passed, userId } = params;
 
   const payload: TopicQuizCompletedPayload = {
     topic_id: topicId,
@@ -287,7 +306,7 @@ export async function recordTopicQuizCompleted(params: {
   await recordEvent({
     eventType: 'topic_quiz_completed',
     payload: payload as unknown as Record<string, unknown>
-  });
+  }, userId);
 }
 
 /**
@@ -295,6 +314,10 @@ export async function recordTopicQuizCompleted(params: {
  * Used as fallback when question doesn't have poolVersion field set.
  */
 function getPoolVersionFromDisplayName(displayName: string): string {
+  if (!displayName) {
+    return POOL_CONFIG.technician.currentVersion;
+  }
+
   const prefix = displayName.charAt(0).toUpperCase();
 
   switch (prefix) {

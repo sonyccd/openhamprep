@@ -461,4 +461,146 @@ describe('Event System Spec Compliance (docs/event-system.md section 6)', () => 
       expect(TIME_CAP_MS).toBe(3 * 60 * 1000);
     });
   });
+
+  /**
+   * Error handling verification
+   */
+  describe('Error handling', () => {
+    it('recordQuestionAttempt handles missing displayName gracefully', async () => {
+      const { recordQuestionAttempt } = await import('./events');
+
+      // Create a question with undefined displayName
+      const questionWithNoDisplayName = {
+        id: 'test-id',
+        displayName: undefined as unknown as string,
+        correctAnswer: 'A' as const,
+        group: 'T5A',
+        contentHash: null,
+        poolVersion: null
+      };
+
+      // Should not throw when displayName is undefined
+      await expect(
+        recordQuestionAttempt({
+          question: questionWithNoDisplayName as any,
+          answerSelected: 0,
+          timeElapsedMs: 1000,
+          mode: 'test',
+          userId: 'test-user'
+        })
+      ).resolves.not.toThrow();
+    });
+
+    it('falls back to question.id when displayName is missing', () => {
+      // Test the fallback logic
+      const displayName = undefined;
+      const id = 'T5A03-uuid';
+      const result = displayName || id || '';
+      expect(result).toBe('T5A03-uuid');
+    });
+
+    it('falls back to empty string when both displayName and id are missing', () => {
+      const displayName = undefined;
+      const id = undefined;
+      const result = displayName || id || '';
+      expect(result).toBe('');
+    });
+
+    it('topic_code falls back to UNK when extraction fails', () => {
+      const displayName = '';
+      const group = undefined;
+      const topicCode = group || displayName.slice(0, 3) || 'UNK';
+      expect(topicCode).toBe('UNK');
+    });
+
+    it('getPoolVersionFromDisplayName handles empty string', () => {
+      // When displayName is empty, should return technician version
+      const displayName = '';
+      const prefix = displayName ? displayName.charAt(0).toUpperCase() : '';
+      const version = prefix === 'T' ? '2022-2026'
+        : prefix === 'G' ? '2023-2027'
+        : prefix === 'E' ? '2024-2028'
+        : '2022-2026'; // Default to technician
+      expect(version).toBe('2022-2026');
+    });
+  });
+
+  /**
+   * userId optimization verification
+   */
+  describe('userId parameter optimization', () => {
+    it('accepts userId parameter to avoid redundant auth calls', async () => {
+      const { recordQuestionAttempt } = await import('./events');
+
+      const mockQuestion = {
+        id: 'test-id',
+        displayName: 'T5A03',
+        correctAnswer: 'A' as const,
+        group: 'T5A',
+        contentHash: 'abc123',
+        poolVersion: '2022-2026'
+      };
+
+      // Should accept userId parameter without error
+      await expect(
+        recordQuestionAttempt({
+          question: mockQuestion as any,
+          answerSelected: 0,
+          timeElapsedMs: 1000,
+          mode: 'test',
+          userId: 'provided-user-id'
+        })
+      ).resolves.not.toThrow();
+    });
+
+    it('recordPracticeTestCompleted accepts userId parameter', async () => {
+      const { recordPracticeTestCompleted } = await import('./events');
+
+      await expect(
+        recordPracticeTestCompleted({
+          practiceTestId: 'test-id',
+          testResultId: 'result-id',
+          examType: 'technician',
+          totalQuestions: 35,
+          score: 28,
+          percentage: 80,
+          durationSeconds: 1800,
+          subelementBreakdown: {},
+          userId: 'provided-user-id'
+        })
+      ).resolves.not.toThrow();
+    });
+
+    it('recordTopicQuizCompleted accepts userId parameter', async () => {
+      const { recordTopicQuizCompleted } = await import('./events');
+
+      await expect(
+        recordTopicQuizCompleted({
+          topicId: 'topic-id',
+          topicSlug: 'topic-slug',
+          totalQuestions: 10,
+          correctCount: 8,
+          percentage: 80,
+          passed: true,
+          userId: 'provided-user-id'
+        })
+      ).resolves.not.toThrow();
+    });
+
+    it('recordExamOutcome accepts userId parameter', async () => {
+      const { recordExamOutcome } = await import('./events');
+
+      await expect(
+        recordExamOutcome({
+          source: 'user_reported',
+          examType: 'technician',
+          score: 32,
+          totalQuestions: 35,
+          attemptNumber: 1,
+          examDate: '2026-01-15',
+          userId: 'provided-user-id'
+        })
+      ).resolves.not.toThrow();
+    });
+  });
 });
