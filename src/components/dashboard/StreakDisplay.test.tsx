@@ -279,4 +279,115 @@ describe('StreakDisplay', () => {
       expect(screen.getByText('days')).toBeInTheDocument();
     });
   });
+
+  describe('Action Button', () => {
+    it('shows "Practice Now" button when streak is at risk', () => {
+      const handleAction = vi.fn();
+      mockUseDailyStreak.mockReturnValue({
+        currentStreak: 5,
+        longestStreak: 8,
+        todayQualifies: false,
+        questionsToday: 2,
+        questionsNeeded: 3,
+        streakAtRisk: true,
+        isLoading: false,
+        error: null,
+      });
+
+      render(<StreakDisplay onAction={handleAction} />);
+
+      const button = screen.getByRole('button', { name: 'Practice Now' });
+      expect(button).toBeInTheDocument();
+    });
+
+    it('calls onAction when "Practice Now" button is clicked', () => {
+      const handleAction = vi.fn();
+      mockUseDailyStreak.mockReturnValue({
+        currentStreak: 5,
+        longestStreak: 8,
+        todayQualifies: false,
+        questionsToday: 2,
+        questionsNeeded: 3,
+        streakAtRisk: true,
+        isLoading: false,
+        error: null,
+      });
+
+      render(<StreakDisplay onAction={handleAction} />);
+
+      screen.getByRole('button', { name: 'Practice Now' }).click();
+      expect(handleAction).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows "Keep Going" button when has streak but not at risk', () => {
+      const handleAction = vi.fn();
+      mockUseDailyStreak.mockReturnValue({
+        currentStreak: 3,
+        longestStreak: 3,
+        todayQualifies: false,
+        questionsToday: 0,
+        questionsNeeded: STREAK_QUESTIONS_THRESHOLD,
+        streakAtRisk: false,
+        isLoading: false,
+        error: null,
+      });
+
+      render(<StreakDisplay onAction={handleAction} />);
+
+      expect(screen.getByRole('button', { name: 'Keep Going' })).toBeInTheDocument();
+    });
+
+    it('shows "Start Practicing" button when no streak', () => {
+      const handleAction = vi.fn();
+      mockUseDailyStreak.mockReturnValue({
+        currentStreak: 0,
+        longestStreak: 0,
+        todayQualifies: false,
+        questionsToday: 0,
+        questionsNeeded: STREAK_QUESTIONS_THRESHOLD,
+        streakAtRisk: false,
+        isLoading: false,
+        error: null,
+      });
+
+      render(<StreakDisplay onAction={handleAction} />);
+
+      expect(screen.getByRole('button', { name: 'Start Practicing' })).toBeInTheDocument();
+    });
+
+    it('does not show action button when today is complete', () => {
+      const handleAction = vi.fn();
+      mockUseDailyStreak.mockReturnValue({
+        currentStreak: 5,
+        longestStreak: 5,
+        todayQualifies: true,
+        questionsToday: STREAK_QUESTIONS_THRESHOLD,
+        questionsNeeded: 0,
+        streakAtRisk: false,
+        isLoading: false,
+        error: null,
+      });
+
+      render(<StreakDisplay onAction={handleAction} />);
+
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    });
+
+    it('does not show action button when onAction is not provided', () => {
+      mockUseDailyStreak.mockReturnValue({
+        currentStreak: 5,
+        longestStreak: 8,
+        todayQualifies: false,
+        questionsToday: 2,
+        questionsNeeded: 3,
+        streakAtRisk: true,
+        isLoading: false,
+        error: null,
+      });
+
+      render(<StreakDisplay />);
+
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    });
+  });
 });

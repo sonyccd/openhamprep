@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flame, AlertCircle, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { useDailyStreak } from '@/hooks/useDailyStreak';
 import { STREAK_QUESTIONS_THRESHOLD } from '@/lib/streakConstants';
 
@@ -8,9 +9,11 @@ interface StreakDisplayProps {
   className?: string;
   /** Compact mode shows just the streak count, full mode shows progress */
   variant?: 'compact' | 'full';
+  /** Callback when user clicks the action button */
+  onAction?: () => void;
 }
 
-export function StreakDisplay({ className, variant = 'full' }: StreakDisplayProps) {
+export function StreakDisplay({ className, variant = 'full', onAction }: StreakDisplayProps) {
   const {
     currentStreak,
     longestStreak,
@@ -168,17 +171,46 @@ export function StreakDisplay({ className, variant = 'full' }: StreakDisplayProp
           />
         </div>
 
-        {/* Warning message */}
+        {/* Warning message and action */}
         {streakAtRisk && !todayQualifies && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="flex items-center gap-2 text-warning text-sm mt-2"
+            className="flex items-center justify-between gap-3 mt-2"
           >
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span>
-              Answer {questionsNeeded} more {questionsNeeded === 1 ? 'question' : 'questions'} to keep your streak!
-            </span>
+            <div className="flex items-center gap-2 text-warning text-sm">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>
+                Answer {questionsNeeded} more {questionsNeeded === 1 ? 'question' : 'questions'} to keep your streak!
+              </span>
+            </div>
+            {onAction && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={onAction}
+                className="shrink-0"
+              >
+                Practice Now
+              </Button>
+            )}
+          </motion.div>
+        )}
+
+        {/* Action button for users who haven't started today (no streak at risk) */}
+        {!todayQualifies && !streakAtRisk && onAction && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-end mt-2"
+          >
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={onAction}
+            >
+              {currentStreak > 0 ? 'Keep Going' : 'Start Practicing'}
+            </Button>
           </motion.div>
         )}
 
