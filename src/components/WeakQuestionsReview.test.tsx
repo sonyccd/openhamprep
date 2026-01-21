@@ -264,7 +264,8 @@ describe('WeakQuestionsReview', () => {
         expect(mockSaveRandomAttempt).toHaveBeenCalledWith(
           mockQuestions[0],
           'A',
-          'weak_questions'
+          'weak_questions',
+          expect.any(Number) // timeElapsedMs
         );
       });
     });

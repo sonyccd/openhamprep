@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
+import { useQuestionTimer } from "@/hooks/useQuestionTimer";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Zap, SkipForward, RotateCcw, Loader2, Flame, Trophy, Award, ChevronLeft } from "lucide-react";
@@ -79,6 +80,9 @@ export function RandomPractice({
   const question = currentEntry?.question || null;
   const selectedAnswer = currentEntry?.selectedAnswer || null;
   const showResult = currentEntry?.showResult || false;
+
+  // Timer for tracking time spent on current question
+  const { getElapsedMs } = useQuestionTimer(question?.id);
 
   // Load all-time best streak from database
   useEffect(() => {
@@ -163,6 +167,10 @@ export function RandomPractice({
 
   const handleSelectAnswer = async (answer: 'A' | 'B' | 'C' | 'D') => {
     if (showResult || !question) return;
+
+    // Capture elapsed time before any state updates
+    const timeElapsedMs = getElapsedMs();
+
     updateCurrentEntry({
       selectedAnswer: answer,
       showResult: true
@@ -210,8 +218,8 @@ export function RandomPractice({
       setStreak(0);
     }
 
-    // Save attempt to database
-    await saveRandomAttempt(question, answer);
+    // Save attempt to database with timing data
+    await saveRandomAttempt(question, answer, 'random_practice', timeElapsedMs);
   };
   const handleNextQuestion = () => {
     // If we're not at the end of history, just move forward

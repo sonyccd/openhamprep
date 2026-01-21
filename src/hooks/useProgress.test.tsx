@@ -314,23 +314,28 @@ describe('useProgress', () => {
 
       const { result } = renderHook(() => useProgress(), { wrapper: createWrapper() });
 
+      // Check that question_attempts inserts are called with correct selected_answer
+      // Note: Events system also calls insert, so we check toHaveBeenCalledWith (not Last)
       await result.current.saveRandomAttempt(mockQuestion, 'A');
-      expect(mockInsert).toHaveBeenLastCalledWith(
+      expect(mockInsert).toHaveBeenCalledWith(
         expect.objectContaining({ selected_answer: 0 })
       );
 
+      mockInsert.mockClear();
       await result.current.saveRandomAttempt(mockQuestion, 'B');
-      expect(mockInsert).toHaveBeenLastCalledWith(
+      expect(mockInsert).toHaveBeenCalledWith(
         expect.objectContaining({ selected_answer: 1 })
       );
 
+      mockInsert.mockClear();
       await result.current.saveRandomAttempt(mockQuestion, 'C');
-      expect(mockInsert).toHaveBeenLastCalledWith(
+      expect(mockInsert).toHaveBeenCalledWith(
         expect.objectContaining({ selected_answer: 2 })
       );
 
+      mockInsert.mockClear();
       await result.current.saveRandomAttempt(mockQuestion, 'D');
-      expect(mockInsert).toHaveBeenLastCalledWith(
+      expect(mockInsert).toHaveBeenCalledWith(
         expect.objectContaining({ selected_answer: 3 })
       );
     });
