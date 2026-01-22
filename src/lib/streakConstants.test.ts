@@ -3,6 +3,7 @@ import {
   STREAK_QUESTIONS_THRESHOLD,
   STREAK_TESTS_THRESHOLD,
   STREAK_GLOSSARY_THRESHOLD,
+  getUTCDateString,
   getLocalDateString,
 } from './streakConstants';
 
@@ -21,60 +22,74 @@ describe('streakConstants', () => {
     });
   });
 
-  describe('getLocalDateString', () => {
+  describe('getUTCDateString', () => {
     afterEach(() => {
       vi.useRealTimers();
     });
 
     it('returns date in YYYY-MM-DD format', () => {
-      const result = getLocalDateString();
+      const result = getUTCDateString();
       expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
 
-    it('uses local timezone, not UTC', () => {
-      // Set a specific time that would be different date in UTC vs local
-      // For example, 11:30 PM on Jan 15 in UTC-5 would be Jan 16 in UTC
+    it('uses UTC timezone to match server CURRENT_DATE', () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-01-15T23:30:00'));
+      // Set to 11:30 PM UTC on Jan 15
+      vi.setSystemTime(new Date('2026-01-15T23:30:00Z'));
 
-      const result = getLocalDateString();
+      const result = getUTCDateString();
 
-      // Should use local date components, not UTC
-      const now = new Date();
-      const expected = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      expect(result).toBe(expected);
+      // Should use UTC date components - still Jan 15 in UTC
+      expect(result).toBe('2026-01-15');
+    });
+
+    it('handles UTC date boundary correctly', () => {
+      vi.useFakeTimers();
+      // Set to 12:30 AM UTC on Jan 16 (which would be Jan 15 in US timezones)
+      vi.setSystemTime(new Date('2026-01-16T00:30:00Z'));
+
+      const result = getUTCDateString();
+
+      // Should be Jan 16 in UTC regardless of local timezone
+      expect(result).toBe('2026-01-16');
     });
 
     it('pads single-digit months with zero', () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-03-05T12:00:00'));
+      vi.setSystemTime(new Date('2026-03-05T12:00:00Z'));
 
-      const result = getLocalDateString();
+      const result = getUTCDateString();
       expect(result).toBe('2026-03-05');
     });
 
     it('pads single-digit days with zero', () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-12-09T12:00:00'));
+      vi.setSystemTime(new Date('2026-12-09T12:00:00Z'));
 
-      const result = getLocalDateString();
+      const result = getUTCDateString();
       expect(result).toBe('2026-12-09');
     });
 
     it('handles December correctly', () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-12-25T12:00:00'));
+      vi.setSystemTime(new Date('2026-12-25T12:00:00Z'));
 
-      const result = getLocalDateString();
+      const result = getUTCDateString();
       expect(result).toBe('2026-12-25');
     });
 
     it('handles January correctly', () => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-01-01T12:00:00'));
+      vi.setSystemTime(new Date('2026-01-01T12:00:00Z'));
 
-      const result = getLocalDateString();
+      const result = getUTCDateString();
       expect(result).toBe('2026-01-01');
+    });
+  });
+
+  describe('getLocalDateString (deprecated alias)', () => {
+    it('is an alias for getUTCDateString', () => {
+      expect(getLocalDateString).toBe(getUTCDateString);
     });
   });
 });

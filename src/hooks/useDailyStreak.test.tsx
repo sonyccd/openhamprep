@@ -264,12 +264,12 @@ describe('incrementDailyActivity', () => {
     expect(result).toBe(false);
   });
 
-  it('uses local date for activity (not UTC)', async () => {
+  it('uses UTC date for activity (to match server CURRENT_DATE)', async () => {
     mockRpc.mockReturnValue(Promise.resolve({ error: null }));
 
-    // getLocalDateString uses local timezone, not UTC
+    // getUTCDateString uses UTC to match PostgreSQL's CURRENT_DATE
     const now = new Date();
-    const expectedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const expectedDate = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
 
     await incrementDailyActivity('user-123', { questions: 1 });
 

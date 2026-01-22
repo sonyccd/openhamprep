@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { getLocalDateString, STREAK_QUESTIONS_THRESHOLD } from '@/lib/streakConstants';
+import { getUTCDateString, STREAK_QUESTIONS_THRESHOLD } from '@/lib/streakConstants';
 
 /**
  * Streak information returned by the hook.
@@ -154,8 +154,8 @@ export async function incrementDailyActivity(
   userId: string,
   options: IncrementActivityOptions
 ): Promise<boolean> {
-  // Use local date to ensure consistent timezone handling
-  const today = getLocalDateString();
+  // Use UTC date to match PostgreSQL's CURRENT_DATE on the server
+  const today = getUTCDateString();
 
   const { error } = await supabase.rpc('increment_daily_activity', {
     p_user_id: userId,
