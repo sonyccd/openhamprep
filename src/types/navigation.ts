@@ -14,7 +14,8 @@ export type View =
   | 'topics'
   | 'topic-detail'
   | 'lessons'
-  | 'lesson-detail';
+  | 'lesson-detail'
+  | 'badges';
 
 export type TestType = 'technician' | 'general' | 'extra';
 

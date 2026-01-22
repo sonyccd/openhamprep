@@ -7,9 +7,47 @@ import { useCallback, useRef } from 'react';
 import { recalculateReadiness } from '@/hooks/useReadinessScore';
 import { recordQuestionAttempt, recordPracticeTestCompleted, recordTopicQuizCompleted } from '@/lib/events';
 import { incrementDailyActivity } from '@/hooks/useDailyStreak';
+import type { AwardedBadge } from '@/hooks/useBadges';
 
 /** Number of questions to batch before triggering a readiness recalculation */
 const RECALC_QUESTION_THRESHOLD = 10;
+
+/** Raw response from check_badges_for_user RPC */
+interface RawAwardedBadge {
+  badge_id: string;
+  badge_slug: string;
+  badge_name: string;
+  badge_tier: string;
+  badge_points: number;
+  badge_icon: string;
+}
+
+/**
+ * Check for and award any newly earned badges for a user.
+ * Returns the list of newly awarded badges (if any).
+ *
+ * @param userId - The user's UUID
+ * @returns Array of newly awarded badges
+ */
+export async function checkBadgesForUser(userId: string): Promise<AwardedBadge[]> {
+  const { data, error } = await supabase.rpc('check_badges_for_user', {
+    p_user_id: userId,
+  });
+
+  if (error) {
+    console.error('Error checking badges:', error);
+    return [];
+  }
+
+  return (data as RawAwardedBadge[] | null)?.map((raw) => ({
+    id: raw.badge_id,
+    slug: raw.badge_slug,
+    name: raw.badge_name,
+    tier: raw.badge_tier as AwardedBadge['tier'],
+    points: raw.badge_points,
+    iconName: raw.badge_icon,
+  })) ?? [];
+}
 
 /** Minimum time between recalculations (debounce) in ms */
 const RECALC_DEBOUNCE_MS = 5000;
@@ -77,6 +115,36 @@ export function useProgress() {
     queryClient.invalidateQueries({ queryKey: ['profile-stats', user.id] });
     queryClient.invalidateQueries({ queryKey: ['weekly-goals', user.id] });
   }, [queryClient, user]);
+
+  /**
+   * Invalidate badge queries after new badges are awarded
+   */
+  const invalidateBadgeQueries = useCallback(() => {
+    if (!user) return;
+    queryClient.invalidateQueries({ queryKey: ['badges', user.id] });
+  }, [queryClient, user]);
+
+  /**
+   * Check for newly earned badges in the background.
+   * Returns the array of newly awarded badges.
+   * Call this after significant activity (test completion, quiz, etc.)
+   */
+  const checkAndAwardBadges = useCallback(async (): Promise<AwardedBadge[]> => {
+    if (!user) return [];
+
+    try {
+      const newBadges = await checkBadgesForUser(user.id);
+
+      if (newBadges.length > 0) {
+        invalidateBadgeQueries();
+      }
+
+      return newBadges;
+    } catch (err) {
+      console.error('Badge check failed:', err);
+      return [];
+    }
+  }, [user, invalidateBadgeQueries]);
 
   /**
    * Invalidate readiness queries after recalculation
@@ -263,6 +331,11 @@ export function useProgress() {
       console.error('Failed to recalculate readiness after test:', err);
     });
 
+    // Check for newly earned badges in the background
+    checkAndAwardBadges().catch((err) => {
+      console.error('Badge check failed after test:', err);
+    });
+
     // Reset pending count since we just recalculated
     pendingRecalcCount.current = 0;
 
@@ -333,6 +406,12 @@ export function useProgress() {
       });
       pendingRecalcCount.current = 0;
     }
+
+    // Check for newly earned badges in the background
+    // This runs on every question to catch "first question" and similar badges
+    checkAndAwardBadges().catch((err) => {
+      console.error('Badge check failed after question:', err);
+    });
   };
 
   /**
@@ -428,8 +507,13 @@ export function useProgress() {
       pendingRecalcCount.current = 0;
     }
 
+    // Check for newly earned badges in the background
+    checkAndAwardBadges().catch((err) => {
+      console.error('Badge check failed after quiz:', err);
+    });
+
     return { success: true };
   };
 
-  return { saveTestResult, saveRandomAttempt, saveQuizAttempts, invalidateProgressQueries };
+  return { saveTestResult, saveRandomAttempt, saveQuizAttempts, invalidateProgressQueries, checkAndAwardBadges };
 }

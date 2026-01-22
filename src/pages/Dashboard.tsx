@@ -40,6 +40,7 @@ import { TopicDetailPage } from '@/components/TopicDetailPage';
 import { LessonGallery } from '@/components/LessonGallery';
 import { LessonDetailPage } from '@/components/LessonDetailPage';
 import { HamRadioToolsGallery } from '@/components/HamRadioToolsGallery';
+import { BadgesShowcase, BadgesGallery } from '@/components/badges';
 import { TestType, testTypes, View } from '@/types/navigation';
 export default function Dashboard() {
   const {
@@ -343,6 +344,13 @@ export default function Dashboard() {
     if (currentView === 'lesson-detail' && selectedLessonSlug) {
       return <LessonDetailPage slug={selectedLessonSlug} onBack={navigateToLessons} />;
     }
+    if (currentView === 'badges') {
+      return (
+        <PageContainer width="standard">
+          <BadgesGallery onBack={() => changeView('dashboard')} />
+        </PageContainer>
+      );
+    }
     if (authLoading || testsLoading || attemptsLoading) {
       return <div className="min-h-screen bg-background flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -452,6 +460,10 @@ export default function Dashboard() {
 
         <div className="mb-6">
           <StreakDisplay onAction={() => changeView('random-practice')} />
+        </div>
+
+        <div className="mb-6">
+          <BadgesShowcase onViewAll={() => changeView('badges')} maxBadges={5} />
         </div>
 
         <DashboardNextSteps steps={getNextSteps()} />
