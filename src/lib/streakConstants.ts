@@ -50,65 +50,57 @@ export function calculateLocalDayQuestions(
   questionsYesterdayUtc: number
 ): number {
   const now = new Date();
-
-  // Get UTC midnight for today's UTC date
-  const utcMidnight = new Date(todayUtc + 'T00:00:00Z');
-
-  // Get local midnight for today
-  const localNow = new Date();
-  const localMidnight = new Date(
-    localNow.getFullYear(),
-    localNow.getMonth(),
-    localNow.getDate(),
-    0, 0, 0, 0
-  );
-
-  // If local midnight is after UTC midnight, we're "behind" UTC
-  // meaning part of our local "today" is in "yesterday UTC"
-  // If local midnight is before UTC midnight, we're "ahead" of UTC
-  // meaning part of our local "today" is in "today UTC" and "tomorrow UTC"
-
-  const localOffsetMs = localMidnight.getTime() - utcMidnight.getTime();
-  const hoursOffset = localOffsetMs / (1000 * 60 * 60);
-
-  // For simplicity, we use a heuristic:
-  // - If user's timezone is behind UTC (negative offset, e.g., Americas),
-  //   their local "today" includes some of "yesterday UTC" + some of "today UTC"
-  // - If user's timezone is ahead of UTC (positive offset, e.g., Asia/Australia),
-  //   their local "today" includes some of "today UTC" + some of "tomorrow UTC"
-  //
-  // Since we only have yesterday and today UTC data, for users ahead of UTC,
-  // we just use today's UTC data as an approximation.
-
   const timezoneOffset = now.getTimezoneOffset(); // minutes, positive = behind UTC
 
   if (timezoneOffset > 0) {
-    // User is behind UTC (e.g., Americas)
-    // Their local day includes activity from yesterday UTC (after their local midnight)
-    // and today UTC (before their local midnight)
-    // For accurate tracking, we'd need timestamps, but with daily aggregates,
-    // we return the sum as a reasonable approximation when it's late in their day
+    // User is behind UTC (e.g., Americas: PST is UTC-8, EST is UTC-5)
+    // Their local day spans two UTC days. For example, PST user on Jan 21 local:
+    // - 12am-4pm PST = 8am-midnight UTC Jan 21 = "yesterday UTC" (after boundary)
+    // - 4pm-midnight PST = midnight-8am UTC Jan 22 = "today UTC"
+    //
+    // The UTC day boundary occurs at (24 - offset) hours into the local day.
+    // For PST (offset=8): boundary at 4pm local (16 hours into day)
+    //
+    // Before crossing: all local activity is in "today UTC"
+    // After crossing: local activity spans "yesterday UTC" + "today UTC"
+
     const hoursIntoLocalDay = now.getHours() + now.getMinutes() / 60;
     const utcHoursOffset = timezoneOffset / 60;
+    const utcBoundaryLocalHour = 24 - utcHoursOffset;
 
-    // If we're past the UTC day boundary in local time, include yesterday's UTC activity
-    if (hoursIntoLocalDay >= (24 - utcHoursOffset)) {
-      // We're in the portion of local day that falls into "today UTC"
-      return questionsTodayUtc;
-    } else {
-      // We're in the portion of local day that was "yesterday UTC"
-      // This is an approximation - ideally we'd have hourly data
+    if (hoursIntoLocalDay >= utcBoundaryLocalHour) {
+      // Crossed UTC boundary - local day spans both UTC days
+      // Need both yesterday (morning activity) + today (evening activity)
       return questionsYesterdayUtc + questionsTodayUtc;
+    } else {
+      // Haven't crossed UTC boundary yet
+      // All local day activity so far is in "today UTC"
+      return questionsTodayUtc;
     }
   } else {
-    // User is ahead of or at UTC
+    // User is ahead of or at UTC (e.g., Europe, Asia, Australia)
     // Their local "today" is mostly "today UTC"
+    // Note: For users far ahead of UTC, some morning activity might be in
+    // "tomorrow UTC" but we don't have that data, so we use today as approximation
     return questionsTodayUtc;
   }
 }
 
 /**
  * Check if the user's local day qualifies for a streak based on UTC data.
+ *
+ * For users behind UTC (Americas), we use OR logic because their local day
+ * spans two UTC days. This is intentionally permissive to benefit the user:
+ *
+ * Example: PST user at 1am local on Tuesday (9am UTC Tuesday):
+ * - They answered 5 questions at 11pm Monday local (7am UTC Tuesday)
+ * - yesterdayQualifies (Monday UTC) = true (from the 11pm activity)
+ * - todayQualifies (Tuesday UTC) = false (no activity yet in current UTC day)
+ * - Result: true (they qualified during their Monday local day)
+ *
+ * This may occasionally credit a user for the "wrong" local day near boundaries,
+ * but precise tracking would require per-question timestamps rather than daily
+ * aggregates. The current approach errs on the side of the user.
  *
  * @param todayUtc - The current UTC date (YYYY-MM-DD)
  * @param todayQualifiesUtc - Whether today UTC qualifies
@@ -124,9 +116,8 @@ export function checkLocalDayQualifies(
   const timezoneOffset = now.getTimezoneOffset(); // minutes, positive = behind UTC
 
   if (timezoneOffset > 0) {
-    // User is behind UTC - their local day may span yesterday + today UTC
-    // If either qualifies, consider local day as qualifying
-    // This is a conservative approach that benefits the user
+    // User is behind UTC - their local day spans yesterday + today UTC
+    // If either qualifies, consider local day as qualifying (benefits user)
     return todayQualifiesUtc || yesterdayQualifiesUtc;
   } else {
     // User is at or ahead of UTC
