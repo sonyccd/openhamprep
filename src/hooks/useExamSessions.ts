@@ -26,12 +26,29 @@ export interface ExamSession {
   updated_at: string;
 }
 
+export type LicenseType = 'technician' | 'general' | 'extra';
+export type ExamOutcome = 'passed' | 'failed' | 'skipped';
+
 export interface UserTargetExam {
   id: string;
   user_id: string;
   exam_session_id: string | null;
   custom_exam_date: string | null;
   study_intensity: 'light' | 'moderate' | 'intensive';
+  target_license: LicenseType | null;
+  created_at: string;
+  updated_at: string;
+  exam_session?: ExamSession | null;
+}
+
+export interface ExamAttempt {
+  id: string;
+  user_id: string;
+  exam_date: string;
+  target_license: LicenseType;
+  outcome: ExamOutcome | null;
+  exam_session_id: string | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
   exam_session?: ExamSession | null;
@@ -172,11 +189,13 @@ export const useSaveTargetExam = () => {
       examSessionId,
       customExamDate,
       studyIntensity,
+      targetLicense,
     }: {
       userId: string;
       examSessionId?: string;
       customExamDate?: string;
       studyIntensity: 'light' | 'moderate' | 'intensive';
+      targetLicense?: LicenseType;
     }) => {
       // Validate: must have exactly one of examSessionId or customExamDate
       if ((!examSessionId && !customExamDate) || (examSessionId && customExamDate)) {
@@ -192,6 +211,7 @@ export const useSaveTargetExam = () => {
             exam_session_id: examSessionId || null,
             custom_exam_date: customExamDate || null,
             study_intensity: studyIntensity,
+            target_license: targetLicense || null,
           },
           { onConflict: 'user_id' }
         )
@@ -260,7 +280,37 @@ export const useBulkImportExamSessions = () => {
 
   return useMutation({
     mutationFn: async (sessions: Omit<ExamSession, 'id' | 'created_at' | 'updated_at'>[]) => {
-      // Delete all existing sessions first (full refresh)
+      // Before deleting exam sessions, convert any user_target_exam rows that
+      // reference sessions to use custom_exam_date instead. This preserves
+      // the user's target date even when the linked session is removed.
+      // Required because check_exam_date_source constraint needs exactly one
+      // of exam_session_id OR custom_exam_date to be set.
+      const { data: targetsWithSessions, error: fetchError } = await supabase
+        .from('user_target_exam')
+        .select('id, exam_session_id, exam_session:exam_sessions(exam_date)')
+        .not('exam_session_id', 'is', null);
+
+      if (fetchError) throw fetchError;
+
+      // Update each target to use custom_exam_date instead of exam_session_id
+      if (targetsWithSessions && targetsWithSessions.length > 0) {
+        for (const target of targetsWithSessions) {
+          const examDate = (target.exam_session as { exam_date: string } | null)?.exam_date;
+          if (examDate) {
+            const { error: updateError } = await supabase
+              .from('user_target_exam')
+              .update({
+                exam_session_id: null,
+                custom_exam_date: examDate,
+              })
+              .eq('id', target.id);
+
+            if (updateError) throw updateError;
+          }
+        }
+      }
+
+      // Delete all existing sessions (full refresh)
       const { error: deleteError } = await supabase
         .from('exam_sessions')
         .delete()
@@ -291,6 +341,130 @@ export const useBulkImportExamSessions = () => {
     onError: (error) => {
       console.error('Error importing exam sessions:', error);
       toast.error('Failed to import exam sessions');
+    },
+  });
+};
+
+// ============================================================================
+// Exam Attempts Hooks (Historical Tracking)
+// ============================================================================
+
+/**
+ * Get a user's exam attempt history
+ */
+export const useExamAttempts = (userId?: string) => {
+  return useQuery({
+    queryKey: ['exam-attempts', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+
+      const { data, error } = await supabase
+        .from('exam_attempts')
+        .select(`
+          *,
+          exam_session:exam_sessions(*)
+        `)
+        .eq('user_id', userId)
+        .order('exam_date', { ascending: false });
+
+      if (error) throw error;
+      return data as (ExamAttempt & { exam_session: ExamSession | null })[];
+    },
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+/**
+ * Record an exam attempt (when user confirms they took the exam)
+ */
+export const useRecordExamAttempt = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      examDate,
+      targetLicense,
+      outcome,
+      examSessionId,
+      notes,
+    }: {
+      userId: string;
+      examDate: string;
+      targetLicense: LicenseType;
+      outcome?: ExamOutcome;
+      examSessionId?: string;
+      notes?: string;
+    }) => {
+      const { data, error } = await supabase
+        .from('exam_attempts')
+        .insert({
+          user_id: userId,
+          exam_date: examDate,
+          target_license: targetLicense,
+          outcome: outcome || null,
+          exam_session_id: examSessionId || null,
+          notes: notes || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exam-attempts'] });
+    },
+    onError: (error) => {
+      console.error('Error recording exam attempt:', error);
+      toast.error('Failed to record exam attempt');
+    },
+  });
+};
+
+/**
+ * Update an exam attempt outcome (when user reports their result)
+ */
+export const useUpdateExamAttemptOutcome = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      attemptId,
+      outcome,
+      notes,
+    }: {
+      attemptId: string;
+      outcome: ExamOutcome;
+      notes?: string;
+    }) => {
+      const updateData: { outcome: ExamOutcome; notes?: string } = { outcome };
+      if (notes !== undefined) {
+        updateData.notes = notes;
+      }
+
+      const { data, error } = await supabase
+        .from('exam_attempts')
+        .update(updateData)
+        .eq('id', attemptId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['exam-attempts'] });
+      if (variables.outcome === 'passed') {
+        toast.success('Congratulations on passing your exam!');
+      } else if (variables.outcome === 'failed') {
+        toast.info("Don't give up! Keep studying and you'll pass next time.");
+      }
+    },
+    onError: (error) => {
+      console.error('Error updating exam outcome:', error);
+      toast.error('Failed to update exam outcome');
     },
   });
 };
