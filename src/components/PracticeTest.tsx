@@ -8,14 +8,11 @@ import { useProgress } from "@/hooks/useProgress";
 import { useAuth } from "@/hooks/useAuth";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
-import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Clock, Info, Play, AlertTriangle, History, Trophy, XCircle, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Play, AlertTriangle, History, Trophy, XCircle, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TestType, testConfig } from "@/types/navigation";
 import { PageContainer } from "@/components/ui/page-container";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,15 +39,6 @@ function shuffleArray<T>(array: T[]): T[] {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
-}
-function formatTime(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor(seconds % 3600 / 60);
-  const secs = seconds % 60;
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
-  return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 export function PracticeTest({
   onBack,
@@ -113,11 +101,6 @@ export function PracticeTest({
   const [answers, setAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
   const [isFinished, setIsFinished] = useState(false);
 
-  // Timer state
-  const [timerEnabled, setTimerEnabled] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(120 * 60); // 120 minutes in seconds
-  const [timerAnnouncement, setTimerAnnouncement] = useState<string>('');
-
   const currentQuestion = questions.length > 0 ? questions[currentIndex] : null;
   const answeredCount = Object.keys(answers).length;
   const progress = questions.length > 0 ? answeredCount / questions.length * 100 : 0;
@@ -134,50 +117,7 @@ export function PracticeTest({
     setCurrentIndex(0);
     setAnswers({});
     setIsFinished(false);
-    setTimerEnabled(false);
-    setTimeRemaining(120 * 60);
   }, [testType]);
-
-  // Timer effect
-  useEffect(() => {
-    if (!timerEnabled || isFinished || !hasStarted) return;
-    const interval = setInterval(() => {
-      setTimeRemaining(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          toast.warning("Time's up! Submitting your test.");
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [timerEnabled, isFinished, hasStarted]);
-
-  // Auto-submit when time runs out
-  useEffect(() => {
-    if (timerEnabled && timeRemaining === 0 && !isFinished && hasStarted) {
-      setIsFinished(true);
-      saveTestResult(questions, answers, testType).then(result => {
-        if (result) {
-          toast.success('Test results saved!');
-        }
-      });
-    }
-  }, [timeRemaining, timerEnabled, isFinished, hasStarted, questions, answers, saveTestResult, testType]);
-
-  // Announce timer warnings at key moments for screen readers
-  useEffect(() => {
-    if (!timerEnabled || isFinished || !hasStarted) return;
-
-    if (timeRemaining === 5 * 60) {
-      setTimerAnnouncement('5 minutes remaining');
-    } else if (timeRemaining === 60) {
-      setTimerAnnouncement('1 minute remaining');
-    } else if (timeRemaining === 0) {
-      setTimerAnnouncement('Time is up. Test submitted.');
-    }
-  }, [timeRemaining, timerEnabled, isFinished, hasStarted]);
 
   // Handlers defined before useKeyboardShortcuts to avoid hooks ordering issues
   const handleSelectAnswer = (answer: 'A' | 'B' | 'C' | 'D') => {
@@ -407,67 +347,19 @@ export function PracticeTest({
     setCurrentIndex(0);
     setIsFinished(false);
     setHasStarted(false);
-    setTimeRemaining(120 * 60);
   };
 
-  const handleTimerToggle = (enabled: boolean) => {
-    setTimerEnabled(enabled);
-    if (enabled) {
-      setTimeRemaining(120 * 60);
-    }
-  };
   if (isFinished) {
     return <TestResults questions={questions} answers={answers} onRetake={handleRetake} onBack={onBack} testType={testType} />;
   }
 
   return (
     <PageContainer width="standard" mobileNavPadding>
-      {/* Header - Refined Minimal */}
+      {/* Header */}
       <div className="mb-12">
-        {/* Top row: Timer toggle and keyboard help */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Switch id="timer-toggle" checked={timerEnabled} onCheckedChange={handleTimerToggle} />
-              <Label htmlFor="timer-toggle" className="text-sm text-muted-foreground cursor-pointer">
-                Timer
-              </Label>
-            </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="w-3.5 h-3.5 text-muted-foreground/60 cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p className="text-sm">
-                  The real exam has no official time limit—only how long your Volunteer Examiners are willing to wait (typically around 2 hours). This timer is optional for practice.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {timerEnabled && (
-              <div
-                role="timer"
-                aria-label={`Time remaining: ${formatTime(timeRemaining)}`}
-                className={cn(
-                  "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-mono",
-                  timeRemaining < 300
-                    ? "bg-destructive/10 text-destructive"
-                    : "text-muted-foreground"
-                )}
-              >
-                <Clock className="w-3.5 h-3.5" aria-hidden="true" />
-                {formatTime(timeRemaining)}
-              </div>
-            )}
-            <KeyboardShortcutsHelp />
-          </div>
-
-          {/* Screen reader announcement for timer warnings */}
-          <div aria-live="assertive" aria-atomic="true" className="sr-only">
-            {timerAnnouncement}
-          </div>
+        {/* Top row: Keyboard help */}
+        <div className="flex items-center justify-end mb-8">
+          <KeyboardShortcutsHelp />
         </div>
 
         {/* Progress - Minimal bar with count */}

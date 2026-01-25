@@ -34,6 +34,114 @@ export type Database = {
   }
   public: {
     Tables: {
+      alert_rules: {
+        Row: {
+          config: Json
+          cooldown_minutes: number
+          created_at: string
+          description: string | null
+          id: string
+          is_enabled: boolean
+          name: string
+          rule_type: string
+          severity: string
+          target_functions: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          cooldown_minutes?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          name: string
+          rule_type: string
+          severity?: string
+          target_functions?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          cooldown_minutes?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          name?: string
+          rule_type?: string
+          severity?: string
+          target_functions?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          acknowledgment_note: string | null
+          auto_resolved: boolean
+          context: Json
+          created_at: string
+          id: string
+          message: string
+          resolved_at: string | null
+          rule_id: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          acknowledgment_note?: string | null
+          auto_resolved?: boolean
+          context?: Json
+          created_at?: string
+          id?: string
+          message: string
+          resolved_at?: string | null
+          rule_id?: string | null
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          acknowledgment_note?: string | null
+          auto_resolved?: boolean
+          context?: Json
+          created_at?: string
+          id?: string
+          message?: string
+          resolved_at?: string | null
+          rule_id?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "alert_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       arrl_chapters: {
         Row: {
           chapter_number: number
@@ -99,6 +207,175 @@ export type Database = {
           },
           {
             foreignKeyName: "bookmarked_questions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_activity: {
+        Row: {
+          activity_date: string
+          created_at: string
+          glossary_terms_studied: number
+          id: string
+          qualifies_for_streak: boolean | null
+          questions_answered: number
+          questions_correct: number
+          tests_passed: number
+          tests_taken: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_date?: string
+          created_at?: string
+          glossary_terms_studied?: number
+          id?: string
+          qualifies_for_streak?: boolean | null
+          questions_answered?: number
+          questions_correct?: number
+          tests_passed?: number
+          tests_taken?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_date?: string
+          created_at?: string
+          glossary_terms_studied?: number
+          id?: string
+          qualifies_for_streak?: boolean | null
+          questions_answered?: number
+          questions_correct?: number
+          tests_passed?: number
+          tests_taken?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_activity_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_activity_date: string | null
+          longest_streak: number
+          streak_freezes_available: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          streak_freezes_available?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          streak_freezes_available?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_streaks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          payload: Json
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      exam_attempts: {
+        Row: {
+          created_at: string
+          exam_date: string
+          exam_session_id: string | null
+          id: string
+          notes: string | null
+          outcome: Database["public"]["Enums"]["exam_outcome"] | null
+          target_license: Database["public"]["Enums"]["license_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_date: string
+          exam_session_id?: string | null
+          id?: string
+          notes?: string | null
+          outcome?: Database["public"]["Enums"]["exam_outcome"] | null
+          target_license: Database["public"]["Enums"]["license_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_date?: string
+          exam_session_id?: string | null
+          id?: string
+          notes?: string | null
+          outcome?: Database["public"]["Enums"]["exam_outcome"] | null
+          target_license?: Database["public"]["Enums"]["license_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_attempts_exam_session_id_fkey"
+            columns: ["exam_session_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_attempts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -754,10 +1031,47 @@ export type Database = {
           },
         ]
       }
+      question_pools: {
+        Row: {
+          created_at: string | null
+          effective_date: string
+          exam_type: string
+          expiration_date: string | null
+          id: string
+          is_current: boolean | null
+          passing_threshold: number
+          pool_version: string
+          question_count: number
+        }
+        Insert: {
+          created_at?: string | null
+          effective_date: string
+          exam_type: string
+          expiration_date?: string | null
+          id?: string
+          is_current?: boolean | null
+          passing_threshold?: number
+          pool_version: string
+          question_count: number
+        }
+        Update: {
+          created_at?: string | null
+          effective_date?: string
+          exam_type?: string
+          expiration_date?: string | null
+          id?: string
+          is_current?: boolean | null
+          passing_threshold?: number
+          pool_version?: string
+          question_count?: number
+        }
+        Relationships: []
+      }
       questions: {
         Row: {
           arrl_chapter_id: string | null
           arrl_page_reference: string | null
+          content_hash: string | null
           correct_answer: number
           created_at: string
           discourse_sync_at: string | null
@@ -774,6 +1088,7 @@ export type Database = {
           id: string
           links: Json
           options: Json
+          pool_version: string | null
           question: string
           question_group: string
           subelement: string
@@ -781,6 +1096,7 @@ export type Database = {
         Insert: {
           arrl_chapter_id?: string | null
           arrl_page_reference?: string | null
+          content_hash?: string | null
           correct_answer: number
           created_at?: string
           discourse_sync_at?: string | null
@@ -797,6 +1113,7 @@ export type Database = {
           id?: string
           links?: Json
           options: Json
+          pool_version?: string | null
           question: string
           question_group: string
           subelement: string
@@ -804,6 +1121,7 @@ export type Database = {
         Update: {
           arrl_chapter_id?: string | null
           arrl_page_reference?: string | null
+          content_hash?: string | null
           correct_answer?: number
           created_at?: string
           discourse_sync_at?: string | null
@@ -820,6 +1138,7 @@ export type Database = {
           id?: string
           links?: Json
           options?: Json
+          pool_version?: string | null
           question?: string
           question_group?: string
           subelement?: string
@@ -888,6 +1207,48 @@ export type Database = {
           license_type?: string
           title?: string
           type?: string
+        }
+        Relationships: []
+      }
+      system_monitor_runs: {
+        Row: {
+          alerts_auto_resolved: number | null
+          alerts_created: number | null
+          completed_at: string | null
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          logs_analyzed: number | null
+          rules_evaluated: number | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          alerts_auto_resolved?: number | null
+          alerts_created?: number | null
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          logs_analyzed?: number | null
+          rules_evaluated?: number | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          alerts_auto_resolved?: number | null
+          alerts_created?: number | null
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          logs_analyzed?: number | null
+          rules_evaluated?: number | null
+          started_at?: string
+          status?: string
         }
         Relationships: []
       }
@@ -1264,6 +1625,7 @@ export type Database = {
           exam_session_id: string | null
           id: string
           study_intensity: string
+          target_license: Database["public"]["Enums"]["license_type"] | null
           updated_at: string
           user_id: string
         }
@@ -1273,6 +1635,7 @@ export type Database = {
           exam_session_id?: string | null
           id?: string
           study_intensity?: string
+          target_license?: Database["public"]["Enums"]["license_type"] | null
           updated_at?: string
           user_id: string
         }
@@ -1282,6 +1645,7 @@ export type Database = {
           exam_session_id?: string | null
           id?: string
           study_intensity?: string
+          target_license?: Database["public"]["Enums"]["license_type"] | null
           updated_at?: string
           user_id?: string
         }
@@ -1363,12 +1727,39 @@ export type Database = {
           without_forum_url: number
         }[]
       }
+      get_streak_info: {
+        Args: { p_user_id: string }
+        Returns: {
+          current_streak: number
+          last_activity_date: string
+          longest_streak: number
+          questions_needed: number
+          questions_today: number
+          questions_yesterday: number
+          streak_at_risk: boolean
+          today_qualifies: boolean
+          today_utc: string
+          yesterday_qualifies: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_daily_activity: {
+        Args: {
+          p_correct?: number
+          p_date: string
+          p_glossary?: number
+          p_questions?: number
+          p_tests?: number
+          p_tests_passed?: number
+          p_user_id: string
+        }
+        Returns: undefined
       }
       increment_mapbox_usage: {
         Args: { p_year_month: string }
@@ -1385,9 +1776,20 @@ export type Database = {
         }
         Returns: Json
       }
+      seed_no_streak_for_user: { Args: { p_user_id: string }; Returns: string }
+      seed_streak_at_risk_for_user: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
+      seed_streak_data_for_user: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      exam_outcome: "passed" | "failed" | "skipped"
+      license_type: "technician" | "general" | "extra"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1519,6 +1921,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      exam_outcome: ["passed", "failed", "skipped"],
+      license_type: ["technician", "general", "extra"],
     },
   },
 } as const

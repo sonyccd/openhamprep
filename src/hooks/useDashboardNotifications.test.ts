@@ -91,6 +91,10 @@ describe('useDashboardNotifications', () => {
     mockStorage = {};
     mockGetLocalDateString.mockReturnValue('2026-01-21');
 
+    // Mock Date to always return 2026-01-21 as "today" for consistent test results
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-21T12:00:00'));
+
     Object.defineProperty(global, 'localStorage', {
       value: mockLocalStorage,
       writable: true,
@@ -110,6 +114,7 @@ describe('useDashboardNotifications', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
