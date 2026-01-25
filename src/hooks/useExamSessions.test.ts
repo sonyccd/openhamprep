@@ -9,6 +9,12 @@ import {
   useSaveTargetExam,
   useRemoveTargetExam,
   useBulkImportExamSessions,
+  useExamAttempts,
+  useRecordExamAttempt,
+  useUpdateExamAttemptOutcome,
+  type LicenseType,
+  type ExamOutcome,
+  type ExamAttempt,
 } from './useExamSessions';
 import React from 'react';
 
@@ -17,6 +23,7 @@ vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
+    info: vi.fn(),
   },
 }));
 
@@ -36,6 +43,9 @@ const mockOrder = vi.fn();
 const mockRange = vi.fn();
 const mockLimit = vi.fn();
 
+const mockUpdate = vi.fn();
+const mockNot = vi.fn();
+
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn((table: string) => {
@@ -48,9 +58,13 @@ vi.mock('@/integrations/supabase/client', () => ({
       }
       if (table === 'user_target_exam') {
         return {
-          select: mockSelect,
+          select: vi.fn().mockReturnValue({
+            eq: mockEq,
+            not: mockNot,
+          }),
           upsert: mockUpsert,
           delete: mockDelete,
+          update: mockUpdate,
         };
       }
       if (table === 'weekly_study_goals') {
@@ -58,11 +72,19 @@ vi.mock('@/integrations/supabase/client', () => ({
           upsert: mockUpsert,
         };
       }
+      if (table === 'exam_attempts') {
+        return {
+          select: mockSelect,
+          insert: mockInsert,
+          update: mockUpdate,
+        };
+      }
       return {
         select: mockSelect,
         insert: mockInsert,
         delete: mockDelete,
         upsert: mockUpsert,
+        update: mockUpdate,
       };
     }),
   },
@@ -124,6 +146,13 @@ describe('useExamSessions', () => {
       gte: mockGte,
       eq: mockEq,
       order: mockOrder,
+      not: mockNot,
+    });
+
+    // For user_target_exam .not() queries (bulk import conversion)
+    mockNot.mockResolvedValue({
+      data: [],
+      error: null,
     });
 
     // For insert/delete/upsert
@@ -446,5 +475,381 @@ describe('useExamSessions with date filters', () => {
     );
 
     expect(result.current).toBeDefined();
+  });
+});
+
+// ============================================================================
+// Exam Attempts Tests
+// ============================================================================
+
+describe('useExamAttempts', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockOrder.mockReturnValue({
+      data: [
+        {
+          id: 'attempt-1',
+          user_id: 'test-user',
+          exam_date: '2025-01-15',
+          target_license: 'technician',
+          outcome: 'passed',
+          notes: 'Great exam!',
+          created_at: '2025-01-15T10:00:00Z',
+          updated_at: '2025-01-15T10:00:00Z',
+        },
+      ],
+      error: null,
+    });
+    mockEq.mockReturnValue({ order: mockOrder });
+    mockSelect.mockReturnValue({ eq: mockEq });
+  });
+
+  it('returns empty array when no userId provided', async () => {
+    const { result } = renderHook(() => useExamAttempts(undefined), {
+      wrapper: createWrapper(),
+    });
+
+    // Should not be enabled without userId
+    expect(result.current.data).toBeUndefined();
+  });
+
+  it('fetches exam attempts when userId is provided', async () => {
+    const { result } = renderHook(() => useExamAttempts('test-user-id'), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // Hook completed without error
+    expect(result.current.error).toBeNull();
+  });
+
+  it('is disabled when userId is undefined', () => {
+    const { result } = renderHook(() => useExamAttempts(undefined), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.fetchStatus).toBe('idle');
+  });
+});
+
+describe('useRecordExamAttempt', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSingle.mockResolvedValue({
+      data: {
+        id: 'new-attempt-id',
+        user_id: 'test-user',
+        exam_date: '2025-02-01',
+        target_license: 'general',
+        outcome: null,
+      },
+      error: null,
+    });
+    mockInsert.mockReturnValue({ select: vi.fn().mockReturnValue({ single: mockSingle }) });
+  });
+
+  it('provides mutateAsync function', async () => {
+    const { result } = renderHook(() => useRecordExamAttempt(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.mutateAsync).toBeDefined();
+    expect(typeof result.current.mutateAsync).toBe('function');
+  });
+
+  it('accepts all license types', async () => {
+    const { result } = renderHook(() => useRecordExamAttempt(), {
+      wrapper: createWrapper(),
+    });
+
+    const licenseTypes: LicenseType[] = ['technician', 'general', 'extra'];
+    licenseTypes.forEach((license) => {
+      expect(() =>
+        result.current.mutate({
+          userId: 'test-user',
+          examDate: '2025-02-01',
+          targetLicense: license,
+        })
+      ).not.toThrow();
+    });
+  });
+
+  it('accepts optional outcome parameter', async () => {
+    const { result } = renderHook(() => useRecordExamAttempt(), {
+      wrapper: createWrapper(),
+    });
+
+    const outcomes: ExamOutcome[] = ['passed', 'failed', 'skipped'];
+    outcomes.forEach((outcome) => {
+      expect(() =>
+        result.current.mutate({
+          userId: 'test-user',
+          examDate: '2025-02-01',
+          targetLicense: 'technician',
+          outcome,
+        })
+      ).not.toThrow();
+    });
+  });
+
+  it('accepts optional notes and examSessionId', async () => {
+    const { result } = renderHook(() => useRecordExamAttempt(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(() =>
+      result.current.mutate({
+        userId: 'test-user',
+        examDate: '2025-02-01',
+        targetLicense: 'extra',
+        outcome: 'passed',
+        examSessionId: 'session-123',
+        notes: 'Passed on first try!',
+      })
+    ).not.toThrow();
+  });
+});
+
+describe('useUpdateExamAttemptOutcome', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSingle.mockResolvedValue({
+      data: {
+        id: 'attempt-1',
+        outcome: 'passed',
+      },
+      error: null,
+    });
+    mockUpdate.mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({ single: mockSingle }),
+      }),
+    });
+  });
+
+  it('provides mutateAsync function', async () => {
+    const { result } = renderHook(() => useUpdateExamAttemptOutcome(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.mutateAsync).toBeDefined();
+    expect(typeof result.current.mutateAsync).toBe('function');
+  });
+
+  it('accepts all outcome types', async () => {
+    const { result } = renderHook(() => useUpdateExamAttemptOutcome(), {
+      wrapper: createWrapper(),
+    });
+
+    const outcomes: ExamOutcome[] = ['passed', 'failed', 'skipped'];
+    outcomes.forEach((outcome) => {
+      expect(() =>
+        result.current.mutate({
+          attemptId: 'attempt-1',
+          outcome,
+        })
+      ).not.toThrow();
+    });
+  });
+
+  it('accepts optional notes parameter', async () => {
+    const { result } = renderHook(() => useUpdateExamAttemptOutcome(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(() =>
+      result.current.mutate({
+        attemptId: 'attempt-1',
+        outcome: 'failed',
+        notes: 'Need to study more on antennas',
+      })
+    ).not.toThrow();
+  });
+});
+
+// ============================================================================
+// Type Interface Tests
+// ============================================================================
+
+describe('LicenseType', () => {
+  it('should accept valid license types', () => {
+    const validTypes: LicenseType[] = ['technician', 'general', 'extra'];
+    validTypes.forEach((type) => {
+      expect(['technician', 'general', 'extra']).toContain(type);
+    });
+  });
+});
+
+describe('ExamOutcome', () => {
+  it('should accept valid outcome types', () => {
+    const validOutcomes: ExamOutcome[] = ['passed', 'failed', 'skipped'];
+    validOutcomes.forEach((outcome) => {
+      expect(['passed', 'failed', 'skipped']).toContain(outcome);
+    });
+  });
+});
+
+describe('ExamAttempt type', () => {
+  it('should have correct interface shape', () => {
+    const mockAttempt: ExamAttempt = {
+      id: 'attempt-1',
+      user_id: 'user-1',
+      exam_date: '2025-02-01',
+      target_license: 'technician',
+      outcome: 'passed',
+      exam_session_id: 'session-1',
+      notes: 'Great experience!',
+      created_at: '2025-02-01T10:00:00Z',
+      updated_at: '2025-02-01T10:00:00Z',
+    };
+
+    expect(mockAttempt.id).toBe('attempt-1');
+    expect(mockAttempt.target_license).toBe('technician');
+    expect(mockAttempt.outcome).toBe('passed');
+  });
+
+  it('should allow null outcome and notes', () => {
+    const mockAttempt: ExamAttempt = {
+      id: 'attempt-2',
+      user_id: 'user-1',
+      exam_date: '2025-03-15',
+      target_license: 'general',
+      outcome: null,
+      exam_session_id: null,
+      notes: null,
+      created_at: '2025-03-15T10:00:00Z',
+      updated_at: '2025-03-15T10:00:00Z',
+    };
+
+    expect(mockAttempt.outcome).toBeNull();
+    expect(mockAttempt.notes).toBeNull();
+    expect(mockAttempt.exam_session_id).toBeNull();
+  });
+});
+
+// ============================================================================
+// Updated useSaveTargetExam Tests (with targetLicense)
+// ============================================================================
+
+describe('useSaveTargetExam with targetLicense', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSingle.mockResolvedValue({
+      data: { id: 'target-exam-id', target_license: 'technician' },
+      error: null,
+    });
+    mockUpsert.mockReturnValue({ select: vi.fn().mockReturnValue({ single: mockSingle }) });
+  });
+
+  it('accepts targetLicense parameter', async () => {
+    const { result } = renderHook(() => useSaveTargetExam(), {
+      wrapper: createWrapper(),
+    });
+
+    const licenseTypes: LicenseType[] = ['technician', 'general', 'extra'];
+    licenseTypes.forEach((license) => {
+      expect(() =>
+        result.current.mutate({
+          userId: 'test-user',
+          examSessionId: 'session-1',
+          studyIntensity: 'moderate',
+          targetLicense: license,
+        })
+      ).not.toThrow();
+    });
+  });
+
+  it('allows targetLicense to be omitted', async () => {
+    const { result } = renderHook(() => useSaveTargetExam(), {
+      wrapper: createWrapper(),
+    });
+
+    // Should not throw when targetLicense is not provided
+    expect(() =>
+      result.current.mutate({
+        userId: 'test-user',
+        customExamDate: '2025-06-15',
+        studyIntensity: 'intensive',
+      })
+    ).not.toThrow();
+  });
+});
+
+// ============================================================================
+// Bulk Import Session Reference Conversion Tests
+// ============================================================================
+
+describe('useBulkImportExamSessions with user target conversion', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Mock for fetching user_target_exam rows with sessions
+    mockNot.mockResolvedValue({
+      data: [
+        {
+          id: 'target-1',
+          exam_session_id: 'session-to-delete',
+          exam_session: { exam_date: '2025-03-01' },
+        },
+      ],
+      error: null,
+    });
+    mockSelect.mockReturnValue({ not: mockNot });
+
+    // Mock for update
+    mockUpdate.mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    });
+
+    // Mock for delete
+    mockNeq.mockResolvedValue({ error: null });
+    mockDelete.mockReturnValue({ neq: mockNeq });
+
+    // Mock for insert
+    mockInsert.mockResolvedValue({ error: null });
+  });
+
+  it('provides mutate function for bulk import', async () => {
+    const { result } = renderHook(() => useBulkImportExamSessions(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.mutate).toBeDefined();
+    expect(typeof result.current.mutate).toBe('function');
+  });
+
+  it('can be called with session data (conversion happens internally)', async () => {
+    const { result } = renderHook(() => useBulkImportExamSessions(), {
+      wrapper: createWrapper(),
+    });
+
+    const testSessions = [
+      {
+        title: 'New Session',
+        exam_date: '2025-04-01',
+        sponsor: 'ARRL',
+        exam_time: '10:00 AM',
+        walk_ins_allowed: true,
+        public_contact: 'Jane Doe',
+        phone: '555-5678',
+        email: 'jane@example.com',
+        vec: 'ARRL/VEC',
+        location_name: 'Library',
+        address: '456 Oak St',
+        address_2: null,
+        address_3: null,
+        city: 'Durham',
+        state: 'NC',
+        zip: '27701',
+        latitude: 35.994,
+        longitude: -78.8986,
+      },
+    ];
+
+    // The hook should handle the conversion internally before deleting sessions
+    expect(() => result.current.mutate(testSessions)).not.toThrow();
   });
 });
