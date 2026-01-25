@@ -3,13 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { trackBookmarkAdded, trackBookmarkRemoved } from '@/lib/amplitude';
+import { queryKeys } from '@/services/queryKeys';
 
 export function useBookmarks() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: bookmarks, isLoading } = useQuery({
-    queryKey: ['bookmarks', user?.id],
+    queryKey: queryKeys.bookmarks.all(user?.id ?? ''),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bookmarked_questions')
@@ -46,7 +47,7 @@ export function useBookmarks() {
       return data;
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all(user?.id ?? '') });
       toast.success('Question bookmarked!');
       trackBookmarkAdded(variables.questionId);
     },
@@ -70,7 +71,7 @@ export function useBookmarks() {
       return questionId;
     },
     onSuccess: (_data, questionId) => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all(user?.id ?? '') });
       toast.success('Bookmark removed');
       trackBookmarkRemoved(questionId);
     },
@@ -93,7 +94,7 @@ export function useBookmarks() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all(user?.id ?? '') });
       toast.success('Note updated');
     },
     onError: (error) => {

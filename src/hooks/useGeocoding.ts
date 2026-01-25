@@ -22,6 +22,7 @@ import {
   isMapboxConfigured,
 } from '@/lib/mapboxGeocoding';
 import type { ExamSession } from '@/hooks/useExamSessions';
+import { queryKeys } from '@/services/queryKeys';
 
 const PROGRESS_STORAGE_KEY = 'geocode_progress';
 
@@ -99,7 +100,7 @@ export function useMapboxUsage(isGeocoding = false) {
   const queryClient = useQueryClient();
 
   const { data: usageData } = useQuery({
-    queryKey: ['mapbox-usage'],
+    queryKey: queryKeys.geocoding.usage(),
     queryFn: async () => {
       const usage = await getMonthlyUsageFromDb();
       return {
@@ -116,7 +117,7 @@ export function useMapboxUsage(isGeocoding = false) {
 
   // Function to manually refresh usage
   const refreshUsage = () => {
-    queryClient.invalidateQueries({ queryKey: ['mapbox-usage'] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.geocoding.usage() });
   };
 
   return {
@@ -282,8 +283,8 @@ export function useClientGeocoding() {
       return { processed: successCount, skipped: skippedCount, total: toProcess.length };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['exam-sessions'] });
-      queryClient.invalidateQueries({ queryKey: ['mapbox-usage'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.examSessions.all() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.geocoding.usage() });
       if (data.skipped > 0) {
         toast.success(
           `Geocoded ${data.processed} of ${data.total} sessions (${data.skipped} could not be geocoded)`

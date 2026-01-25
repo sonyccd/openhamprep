@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { queryKeys } from "@/services/queryKeys";
 
 export function useAdmin() {
   const { user } = useAuth();
 
   const { data: isAdmin = false, isLoading } = useQuery({
-    queryKey: ['user-role', user?.id],
+    queryKey: queryKeys.auth.role(user?.id ?? ''),
     queryFn: async () => {
       if (!user?.id) return false;
       

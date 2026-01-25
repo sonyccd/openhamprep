@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TestType } from "@/types/navigation";
 import { getTestTypePrefix } from "@/lib/testTypeUtils";
+import { queryKeys } from "@/services/queryKeys";
 
 export interface LinkData {
   url: string;
@@ -123,7 +124,7 @@ function isUUID(str: string): boolean {
 
 export function useQuestions(testType?: TestType) {
   return useQuery({
-    queryKey: ['questions', testType],
+    queryKey: queryKeys.questions.all(testType),
     queryFn: async () => {
       let query = supabase
         .from('questions')
@@ -168,7 +169,7 @@ export function useRandomQuestion(excludeIds: string[] = []) {
 
 export function useQuestion(questionId: string | undefined) {
   return useQuery({
-    queryKey: ['question', questionId],
+    queryKey: queryKeys.questions.detail(questionId ?? ''),
     queryFn: async () => {
       if (!questionId) throw new Error('Question ID is required');
 
@@ -203,7 +204,7 @@ export function useQuestionsByIds(questionIds: string[]) {
   // Sort IDs for consistent cache key regardless of bookmark order
   const sortedIds = [...questionIds].sort();
   return useQuery({
-    queryKey: ['questions-by-ids', sortedIds],
+    queryKey: queryKeys.questions.byIds(sortedIds),
     queryFn: async () => {
       if (questionIds.length === 0) return [];
 

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { queryKeys } from "@/services/queryKeys";
 
 // ============================================================
 // CONSTANTS
@@ -82,7 +83,7 @@ export interface MonitorRun {
  */
 export function useAlerts(statusFilter?: AlertStatus | 'active') {
   return useQuery({
-    queryKey: ['alerts', statusFilter],
+    queryKey: queryKeys.alerts.all(statusFilter),
     queryFn: async () => {
       let query = supabase
         .from('alerts')
@@ -115,7 +116,7 @@ export function useAlerts(statusFilter?: AlertStatus | 'active') {
  */
 export function useUnacknowledgedAlertCount() {
   return useQuery({
-    queryKey: ['alerts', 'unacknowledged-count'],
+    queryKey: queryKeys.alerts.unacknowledgedCount(),
     queryFn: async () => {
       const { count, error } = await supabase
         .from('alerts')
@@ -136,7 +137,7 @@ export function useUnacknowledgedAlertCount() {
  */
 export function useAlertCounts() {
   return useQuery({
-    queryKey: ['alerts', 'counts'],
+    queryKey: queryKeys.alerts.counts(),
     queryFn: async () => {
       // Fetch counts for each status in parallel
       const [pendingResult, acknowledgedResult, resolvedResult] = await Promise.all([
@@ -194,7 +195,7 @@ export function useAcknowledgeAlert() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all() });
     },
   });
 }
@@ -219,7 +220,7 @@ export function useResolveAlert() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all() });
     },
   });
 }
@@ -240,7 +241,7 @@ export function useDeleteAlert() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.all() });
     },
   });
 }
@@ -254,7 +255,7 @@ export function useDeleteAlert() {
  */
 export function useAlertRules() {
   return useQuery({
-    queryKey: ['alert-rules'],
+    queryKey: queryKeys.alerts.rules(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('alert_rules')
@@ -284,7 +285,7 @@ export function useToggleAlertRule() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alert-rules'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.rules() });
     },
   });
 }
@@ -307,7 +308,7 @@ export function useCreateAlertRule() {
       return data as AlertRule;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alert-rules'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.rules() });
     },
   });
 }
@@ -328,7 +329,7 @@ export function useUpdateAlertRule() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alert-rules'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.rules() });
     },
   });
 }
@@ -349,7 +350,7 @@ export function useDeleteAlertRule() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alert-rules'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts.rules() });
     },
   });
 }
@@ -363,7 +364,7 @@ export function useDeleteAlertRule() {
  */
 export function useMonitorRuns(limit = 20) {
   return useQuery({
-    queryKey: ['monitor-runs', limit],
+    queryKey: queryKeys.alerts.monitorRuns(limit),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('system_monitor_runs')
