@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TestType } from "@/types/navigation";
 import { Lesson, LessonTopic, LessonProgress } from "@/types/lessons";
 import { useAdmin } from "./useAdmin";
+import { queryKeys } from "@/services/queryKeys";
 
 // Map test type to license type string
 const testTypeLicenseMap: Record<TestType, string> = {
@@ -16,7 +17,7 @@ const testTypeLicenseMap: Record<TestType, string> = {
  */
 export function useLessons(testType?: TestType) {
   return useQuery({
-    queryKey: ['lessons', testType],
+    queryKey: queryKeys.lessons.all(testType),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('lessons')
@@ -67,7 +68,7 @@ export function useAdminLessons() {
   const { isAdmin } = useAdmin();
 
   return useQuery({
-    queryKey: ['admin-lessons'],
+    queryKey: queryKeys.lessons.admin(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('lessons')
@@ -107,7 +108,7 @@ export function useAdminLessons() {
  */
 export function useLesson(slug: string | undefined) {
   return useQuery({
-    queryKey: ['lesson', slug],
+    queryKey: queryKeys.lessons.detail(slug ?? ''),
     queryFn: async () => {
       if (!slug) throw new Error('Lesson slug is required');
 
@@ -149,7 +150,7 @@ export function useLesson(slug: string | undefined) {
  */
 export function useLessonProgress() {
   return useQuery({
-    queryKey: ['lesson-progress'],
+    queryKey: queryKeys.lessons.progress(),
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
@@ -191,7 +192,7 @@ export function useUpdateLessonProgress() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lesson-progress'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.progress() });
     },
   });
 }
@@ -214,8 +215,8 @@ export function useCreateLesson() {
       return data as Lesson;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['lessons'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.admin() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
     },
   });
 }
@@ -239,9 +240,9 @@ export function useUpdateLesson() {
       return data as Lesson;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['lesson', data.slug] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.admin() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.detail(data.slug) });
     },
   });
 }
@@ -262,8 +263,8 @@ export function useDeleteLesson() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['lessons'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.admin() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
     },
   });
 }
@@ -290,8 +291,10 @@ export function useAddLessonTopic() {
       return data as LessonTopic;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['lessons'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.admin() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
+      // Broad invalidation to catch any lesson detail query regardless of slug
+      // (TanStack Query matches prefixes, so ['lesson'] matches ['lesson', 'intro-to-radio'])
       queryClient.invalidateQueries({ queryKey: ['lesson'] });
     },
   });
@@ -313,8 +316,9 @@ export function useRemoveLessonTopic() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['lessons'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.admin() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
+      // Broad invalidation to catch any lesson detail query regardless of slug
       queryClient.invalidateQueries({ queryKey: ['lesson'] });
     },
   });
@@ -340,8 +344,9 @@ export function useUpdateLessonTopicOrder() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['lessons'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.admin() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
+      // Broad invalidation to catch any lesson detail query regardless of slug
       queryClient.invalidateQueries({ queryKey: ['lesson'] });
     },
   });

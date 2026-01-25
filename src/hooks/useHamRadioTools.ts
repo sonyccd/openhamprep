@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { EditHistoryEntry } from "@/components/admin/EditHistoryViewer";
+import { queryKeys } from "@/services/queryKeys";
 
 export interface HamRadioToolCategory {
   id: string;
@@ -48,7 +49,7 @@ export function getToolImageUrl(tool: HamRadioTool): string | null {
  */
 export function useHamRadioToolCategories() {
   return useQuery({
-    queryKey: ['ham-radio-tool-categories'],
+    queryKey: queryKeys.hamRadioTools.categories(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ham_radio_tool_categories')
@@ -67,7 +68,7 @@ export function useHamRadioToolCategories() {
  */
 export function useHamRadioTools(categorySlug?: string) {
   return useQuery({
-    queryKey: ['ham-radio-tools', categorySlug],
+    queryKey: queryKeys.hamRadioTools.all(categorySlug),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ham_radio_tools')
@@ -98,7 +99,7 @@ export function useHamRadioTools(categorySlug?: string) {
  */
 export function useAdminHamRadioTools() {
   return useQuery({
-    queryKey: ['admin-ham-radio-tools'],
+    queryKey: queryKeys.hamRadioTools.admin(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ham_radio_tools')
@@ -133,8 +134,8 @@ export function useCreateHamRadioTool() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ham-radio-tools'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-ham-radio-tools'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.hamRadioTools.all() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.hamRadioTools.admin() });
     },
   });
 }
@@ -158,8 +159,8 @@ export function useUpdateHamRadioTool() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ham-radio-tools'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-ham-radio-tools'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.hamRadioTools.all() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.hamRadioTools.admin() });
     },
   });
 }
@@ -201,8 +202,8 @@ export function useDeleteHamRadioTool() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ham-radio-tools'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-ham-radio-tools'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.hamRadioTools.all() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.hamRadioTools.admin() });
     },
   });
 }
@@ -225,7 +226,7 @@ export function useCreateHamRadioToolCategory() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ham-radio-tool-categories'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.hamRadioTools.categories() });
     },
   });
 }
@@ -249,7 +250,7 @@ export function useUpdateHamRadioToolCategory() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ham-radio-tool-categories'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.hamRadioTools.categories() });
     },
   });
 }
@@ -270,9 +271,9 @@ export function useDeleteHamRadioToolCategory() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ham-radio-tool-categories'] });
-      queryClient.invalidateQueries({ queryKey: ['ham-radio-tools'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-ham-radio-tools'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.hamRadioTools.categories() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.hamRadioTools.all() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.hamRadioTools.admin() });
     },
   });
 }

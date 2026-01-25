@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { TestType } from '@/types/navigation';
+import { queryKeys } from '@/services/queryKeys';
 
 /**
  * Daily readiness snapshot for trend analysis
@@ -40,7 +41,7 @@ export function useReadinessSnapshots({
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['readiness-snapshots', user?.id, examType, days],
+    queryKey: queryKeys.readiness.snapshots(user?.id ?? '', examType, days),
     queryFn: async (): Promise<ReadinessSnapshot[]> => {
       if (!user) return [];
 

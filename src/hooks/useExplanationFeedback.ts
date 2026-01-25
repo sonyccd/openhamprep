@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { queryKeys } from "@/services/queryKeys";
 
 interface Feedback {
   question_id: string;
@@ -13,7 +14,7 @@ export function useExplanationFeedback(questionId?: string) {
 
   // Fetch user's feedback for a specific question
   const { data: userFeedback } = useQuery({
-    queryKey: ['explanation-feedback', questionId, user?.id],
+    queryKey: queryKeys.feedback.forQuestion(questionId ?? '', user?.id ?? ''),
     queryFn: async () => {
       if (!questionId || !user) return null;
       
@@ -48,8 +49,8 @@ export function useExplanationFeedback(questionId?: string) {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['explanation-feedback', variables.question_id, user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['admin-explanation-feedback'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feedback.forQuestion(variables.question_id, user?.id ?? '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feedback.adminStats() });
     },
   });
 
@@ -66,8 +67,8 @@ export function useExplanationFeedback(questionId?: string) {
       if (error) throw error;
     },
     onSuccess: (_, question_id) => {
-      queryClient.invalidateQueries({ queryKey: ['explanation-feedback', question_id, user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['admin-explanation-feedback'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feedback.forQuestion(question_id, user?.id ?? '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feedback.adminStats() });
     },
   });
 
@@ -81,7 +82,7 @@ export function useExplanationFeedback(questionId?: string) {
 // Hook for admins to get feedback stats
 export function useExplanationFeedbackStats() {
   return useQuery({
-    queryKey: ['admin-explanation-feedback'],
+    queryKey: queryKeys.feedback.adminStats(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('explanation_feedback')

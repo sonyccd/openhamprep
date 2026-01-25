@@ -8,6 +8,7 @@ import {
   getStreakResetTimeLocal,
   STREAK_QUESTIONS_THRESHOLD,
 } from '@/lib/streakConstants';
+import { queryKeys } from '@/services/queryKeys';
 
 /**
  * Streak information returned by the hook.
@@ -73,7 +74,7 @@ export function useDailyStreak() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['daily-streak', user?.id],
+    queryKey: queryKeys.progress.streak(user?.id ?? ''),
     queryFn: async (): Promise<StreakInfo> => {
       const { data, error } = await supabase
         .rpc('get_streak_info', { p_user_id: user!.id })
@@ -125,7 +126,7 @@ export function useDailyStreak() {
    */
   const invalidateStreak = () => {
     if (user) {
-      queryClient.invalidateQueries({ queryKey: ['daily-streak', user.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.progress.streak(user.id) });
     }
   };
 
