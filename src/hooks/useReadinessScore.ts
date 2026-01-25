@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { TestType } from '@/types/navigation';
+import { queryKeys } from '@/services/queryKeys';
 
 /**
  * Subelement metrics from the readiness calculation
@@ -51,7 +52,7 @@ export function useReadinessScore(examType: TestType) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['readiness', user?.id, examType],
+    queryKey: queryKeys.readiness.score(user?.id ?? '', examType),
     queryFn: async (): Promise<ReadinessData | null> => {
       if (!user) return null;
 

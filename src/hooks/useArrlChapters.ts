@@ -9,6 +9,7 @@ import type {
   CreateChapterInput,
   UpdateChapterInput,
 } from "@/types/chapters";
+import { queryKeys } from "@/services/queryKeys";
 
 /**
  * Transform database row to ArrlChapter interface
@@ -31,7 +32,7 @@ function transformChapter(row: ArrlChapterRow): ArrlChapter {
  */
 export function useArrlChapters(licenseType?: LicenseType) {
   return useQuery({
-    queryKey: ['arrl-chapters', licenseType],
+    queryKey: queryKeys.arrlChapters.all(licenseType),
     queryFn: async () => {
       let query = supabase
         .from('arrl_chapters')
@@ -59,7 +60,7 @@ export function useArrlChapters(licenseType?: LicenseType) {
  */
 export function useArrlChaptersWithCounts(licenseType?: LicenseType) {
   return useQuery({
-    queryKey: ['arrl-chapters-with-counts', licenseType],
+    queryKey: queryKeys.arrlChapters.withCounts(licenseType),
     queryFn: async () => {
       // First fetch chapters
       let chapterQuery = supabase
@@ -106,7 +107,7 @@ export function useArrlChaptersWithCounts(licenseType?: LicenseType) {
  */
 export function useArrlChapter(id: string | undefined) {
   return useQuery({
-    queryKey: ['arrl-chapter', id],
+    queryKey: queryKeys.arrlChapters.detail(id ?? ''),
     queryFn: async () => {
       if (!id) throw new Error('Chapter ID is required');
 
@@ -150,8 +151,8 @@ export function useChapterMutations() {
     onSuccess: () => {
       // Invalidate both queries - arrl-chapters-with-counts fetches chapters internally
       // but we still need to invalidate arrl-chapters for other consumers
-      queryClient.invalidateQueries({ queryKey: ['arrl-chapters-with-counts'] });
-      queryClient.invalidateQueries({ queryKey: ['arrl-chapters'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.arrlChapters.withCounts() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.arrlChapters.all() });
       toast.success('Chapter added successfully');
     },
     onError: (error: Error) => {
@@ -193,9 +194,9 @@ export function useChapterMutations() {
     },
     onSuccess: () => {
       // Invalidate in order of importance - with-counts is primary UI consumer
-      queryClient.invalidateQueries({ queryKey: ['arrl-chapters-with-counts'] });
-      queryClient.invalidateQueries({ queryKey: ['arrl-chapters'] });
-      queryClient.invalidateQueries({ queryKey: ['arrl-chapter'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.arrlChapters.withCounts() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.arrlChapters.all() });
+      queryClient.invalidateQueries({ queryKey: ['arrl-chapter'] }); // Broad invalidation for any chapter detail
       toast.success('Chapter updated successfully');
     },
     onError: (error: Error) => {
@@ -218,8 +219,8 @@ export function useChapterMutations() {
     },
     onSuccess: () => {
       // Invalidate in order of importance - with-counts is primary UI consumer
-      queryClient.invalidateQueries({ queryKey: ['arrl-chapters-with-counts'] });
-      queryClient.invalidateQueries({ queryKey: ['arrl-chapters'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.arrlChapters.withCounts() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.arrlChapters.all() });
       toast.success('Chapter deleted successfully');
     },
     onError: (error: Error) => {
@@ -258,7 +259,7 @@ export interface BulkLinkResult {
  */
 export function useChapterQuestions(chapterId: string | undefined) {
   return useQuery({
-    queryKey: ['chapter-questions', chapterId],
+    queryKey: queryKeys.arrlChapters.questions(chapterId ?? ''),
     queryFn: async () => {
       if (!chapterId) return [];
 
@@ -281,7 +282,7 @@ export function useChapterQuestions(chapterId: string | undefined) {
  */
 export function useQuestionsForLicense(licenseType: LicenseType | undefined) {
   return useQuery({
-    queryKey: ['questions-for-license', licenseType],
+    queryKey: queryKeys.questions.forLicense(licenseType),
     queryFn: async () => {
       if (!licenseType) return [];
 
@@ -310,10 +311,10 @@ export function useChapterQuestionMutations() {
   const queryClient = useQueryClient();
 
   const invalidateQueries = () => {
-    queryClient.invalidateQueries({ queryKey: ['chapter-questions'] });
-    queryClient.invalidateQueries({ queryKey: ['questions-for-license'] });
-    queryClient.invalidateQueries({ queryKey: ['arrl-chapters-with-counts'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
+    queryClient.invalidateQueries({ queryKey: ['chapter-questions'] }); // Broad invalidation
+    queryClient.invalidateQueries({ queryKey: ['questions-for-license'] }); // Broad invalidation
+    queryClient.invalidateQueries({ queryKey: queryKeys.arrlChapters.withCounts() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.questions.admin() });
   };
 
   const linkQuestion = useMutation({

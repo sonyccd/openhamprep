@@ -2,13 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { queryKeys } from '@/services/queryKeys';
 
 export function useBookmarks() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: bookmarks, isLoading } = useQuery({
-    queryKey: ['bookmarks', user?.id],
+    queryKey: queryKeys.bookmarks.all(user?.id ?? ''),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bookmarked_questions')
@@ -45,7 +46,7 @@ export function useBookmarks() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all(user?.id ?? '') });
       toast.success('Question bookmarked!');
     },
     onError: (error) => {
@@ -68,7 +69,7 @@ export function useBookmarks() {
       return questionId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all(user?.id ?? '') });
       toast.success('Bookmark removed');
     },
     onError: (error) => {
@@ -90,7 +91,7 @@ export function useBookmarks() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all(user?.id ?? '') });
       toast.success('Note updated');
     },
     onError: (error) => {
