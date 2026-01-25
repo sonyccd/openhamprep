@@ -293,7 +293,9 @@ export function useAddLessonTopic() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.lessons.admin() });
       queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
-      queryClient.invalidateQueries({ queryKey: ['lesson'] }); // Broad invalidation for any lesson detail
+      // Broad invalidation to catch any lesson detail query regardless of slug
+      // (TanStack Query matches prefixes, so ['lesson'] matches ['lesson', 'intro-to-radio'])
+      queryClient.invalidateQueries({ queryKey: ['lesson'] });
     },
   });
 }
@@ -316,7 +318,8 @@ export function useRemoveLessonTopic() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.lessons.admin() });
       queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
-      queryClient.invalidateQueries({ queryKey: ['lesson'] }); // Broad invalidation for any lesson detail
+      // Broad invalidation to catch any lesson detail query regardless of slug
+      queryClient.invalidateQueries({ queryKey: ['lesson'] });
     },
   });
 }
@@ -343,7 +346,8 @@ export function useUpdateLessonTopicOrder() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.lessons.admin() });
       queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
-      queryClient.invalidateQueries({ queryKey: ['lesson'] }); // Broad invalidation for any lesson detail
+      // Broad invalidation to catch any lesson detail query regardless of slug
+      queryClient.invalidateQueries({ queryKey: ['lesson'] });
     },
   });
 }
