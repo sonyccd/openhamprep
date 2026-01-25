@@ -307,11 +307,17 @@ export const useRemoveTargetExam = () => {
  * This prevents race conditions where users could save targets
  * referencing sessions that are about to be deleted.
  *
- * The database function:
- * 1. Converts user_target_exam rows to custom_exam_date (preserves dates)
+ * **Important:** This operation affects ALL users with session-linked targets.
+ * Any user_target_exam row that references an exam_session will have its
+ * exam_session_id converted to a custom_exam_date (preserving the date).
+ * Users will see their target date unchanged, but it will no longer be
+ * linked to a specific session.
+ *
+ * The database function (admin-only, SECURITY DEFINER):
+ * 1. Converts ALL user_target_exam rows with session refs to custom_exam_date
  * 2. Deletes all existing sessions
- * 3. Inserts new sessions
- * All within a single transaction.
+ * 3. Inserts new sessions from the provided data
+ * All within a single atomic transaction.
  */
 export const useBulkImportExamSessions = () => {
   const queryClient = useQueryClient();
@@ -344,7 +350,7 @@ export const useBulkImportExamSessions = () => {
 
       let message = `Imported ${data.count} exam sessions`;
       if (data.convertedTargets > 0) {
-        message += `. ${data.convertedTargets} user target${data.convertedTargets === 1 ? '' : 's'} converted to custom dates.`;
+        message += ` (${data.convertedTargets} existing target${data.convertedTargets === 1 ? '' : 's'} preserved as custom dates)`;
       }
       toast.success(message);
     },

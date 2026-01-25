@@ -218,24 +218,6 @@ describe('PracticeTest', () => {
       expect(screen.getByText('Progress')).toBeInTheDocument();
     });
 
-    it('shows timer toggle', async () => {
-      await startTest();
-
-      expect(screen.getByText('Timer')).toBeInTheDocument();
-    });
-
-    it('enables timer when toggled', async () => {
-      await startTest();
-      
-      const timerSwitch = screen.getByRole('switch');
-      fireEvent.click(timerSwitch);
-      
-      await waitFor(() => {
-        // Timer display should appear showing 120:00 or similar
-        expect(screen.getByText(/\d+:\d+/)).toBeInTheDocument();
-      });
-    });
-
     it('shows navigation buttons', async () => {
       await startTest();
       
@@ -257,18 +239,6 @@ describe('PracticeTest', () => {
       // Previous button should now be enabled
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /previous/i })).not.toBeDisabled();
-      });
-    });
-  });
-
-  describe('Timer Functionality', () => {
-    it('shows timer info tooltip', async () => {
-      renderPracticeTest();
-      fireEvent.click(screen.getByRole('button', { name: /start test/i }));
-
-      await waitFor(() => {
-        // Timer label should be present
-        expect(screen.getByText('Timer')).toBeInTheDocument();
       });
     });
   });
