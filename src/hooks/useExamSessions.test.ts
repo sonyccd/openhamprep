@@ -18,14 +18,17 @@ import {
 } from './useExamSessions';
 import React from 'react';
 
-// Mock sonner toast
-vi.mock('sonner', () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-  },
-}));
+// Mock sonner toast - use inline factory since vi.mock is hoisted
+vi.mock('sonner', () => {
+  const toastFn = (() => {}) as unknown as typeof import('sonner').toast;
+  return {
+    toast: Object.assign(toastFn, {
+      success: () => {},
+      error: () => {},
+      info: () => {},
+    }),
+  };
+});
 
 // Mock supabase - we need a more flexible mock setup
 const mockMaybeSingle = vi.fn();
@@ -859,5 +862,194 @@ describe('useBulkImportExamSessions with user target conversion', () => {
 
     // The hook should handle the conversion internally before deleting sessions
     expect(() => result.current.mutate(testSessions)).not.toThrow();
+  });
+});
+
+// ============================================================================
+// Error Path Tests
+// ============================================================================
+
+describe('useExamAttempts error handling', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockOrder.mockReturnValue({
+      data: null,
+      error: { message: 'Database error', code: 'PGRST301' },
+    });
+    mockEq.mockReturnValue({ order: mockOrder });
+    mockSelect.mockReturnValue({ eq: mockEq });
+  });
+
+  it('returns error when fetch fails', async () => {
+    const { result } = renderHook(() => useExamAttempts('test-user'), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.error).not.toBeNull();
+  });
+});
+
+describe('useRecordExamAttempt error handling', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSingle.mockResolvedValue({
+      data: null,
+      error: { message: 'Duplicate key violation', code: '23505' },
+    });
+    mockInsert.mockReturnValue({ select: vi.fn().mockReturnValue({ single: mockSingle }) });
+  });
+
+  it('handles insert error gracefully', async () => {
+    const { result } = renderHook(() => useRecordExamAttempt(), {
+      wrapper: createWrapper(),
+    });
+
+    let thrownError: Error | null = null;
+    await act(async () => {
+      try {
+        await result.current.mutateAsync({
+          userId: 'test-user',
+          examDate: '2025-02-01',
+          targetLicense: 'technician',
+        });
+      } catch (e) {
+        thrownError = e as Error;
+      }
+    });
+
+    // Error should be thrown by mutateAsync
+    expect(thrownError).not.toBeNull();
+    expect(thrownError?.message).toBe('Duplicate key violation');
+  });
+});
+
+describe('useUpdateExamAttemptOutcome error handling', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSingle.mockResolvedValue({
+      data: null,
+      error: { message: 'Record not found', code: 'PGRST116' },
+    });
+    mockUpdate.mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({ single: mockSingle }),
+      }),
+    });
+  });
+
+  it('handles update error gracefully', async () => {
+    const { result } = renderHook(() => useUpdateExamAttemptOutcome(), {
+      wrapper: createWrapper(),
+    });
+
+    let thrownError: Error | null = null;
+    await act(async () => {
+      try {
+        await result.current.mutateAsync({
+          attemptId: 'nonexistent-id',
+          outcome: 'passed',
+        });
+      } catch (e) {
+        thrownError = e as Error;
+      }
+    });
+
+    // Error should be thrown by mutateAsync
+    expect(thrownError).not.toBeNull();
+    expect(thrownError?.message).toBe('Record not found');
+  });
+});
+
+describe('useBulkImportExamSessions error handling', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { message: 'Only admins can bulk import exam sessions', code: 'P0001' },
+    });
+  });
+
+  it('handles non-admin error from RPC function', async () => {
+    const { result } = renderHook(() => useBulkImportExamSessions(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      try {
+        await result.current.mutateAsync([
+          {
+            title: 'Test',
+            exam_date: '2025-02-01',
+            sponsor: 'Test',
+            exam_time: '9:00 AM',
+            walk_ins_allowed: false,
+            public_contact: null,
+            phone: null,
+            email: null,
+            vec: null,
+            location_name: null,
+            address: null,
+            address_2: null,
+            address_3: null,
+            city: 'Test',
+            state: 'NC',
+            zip: '27601',
+            latitude: null,
+            longitude: null,
+          },
+        ]);
+      } catch {
+        // Expected to throw
+      }
+    });
+
+    expect(result.current.error).not.toBeNull();
+  });
+
+  it('throws error when RPC returns empty data', async () => {
+    mockRpc.mockResolvedValue({
+      data: [],
+      error: null,
+    });
+
+    const { result } = renderHook(() => useBulkImportExamSessions(), {
+      wrapper: createWrapper(),
+    });
+
+    await act(async () => {
+      try {
+        await result.current.mutateAsync([
+          {
+            title: 'Test',
+            exam_date: '2025-02-01',
+            sponsor: 'Test',
+            exam_time: '9:00 AM',
+            walk_ins_allowed: false,
+            public_contact: null,
+            phone: null,
+            email: null,
+            vec: null,
+            location_name: null,
+            address: null,
+            address_2: null,
+            address_3: null,
+            city: 'Test',
+            state: 'NC',
+            zip: '27601',
+            latitude: null,
+            longitude: null,
+          },
+        ]);
+      } catch {
+        // Expected to throw
+      }
+    });
+
+    expect(result.current.error).not.toBeNull();
+    expect(result.current.error?.message).toContain('no result');
   });
 });

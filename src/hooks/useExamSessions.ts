@@ -26,7 +26,20 @@ export interface ExamSession {
   updated_at: string;
 }
 
+/**
+ * Amateur radio license classes in the US licensing system.
+ * - technician: Entry-level license with VHF/UHF privileges
+ * - general: Mid-level license with HF privileges
+ * - extra: Highest class with full amateur privileges
+ */
 export type LicenseType = 'technician' | 'general' | 'extra';
+
+/**
+ * Possible outcomes for an exam attempt.
+ * - passed: User passed the exam
+ * - failed: User did not pass the exam
+ * - skipped: User did not take the scheduled exam
+ */
 export type ExamOutcome = 'passed' | 'failed' | 'skipped';
 
 export interface UserTargetExam {
@@ -304,7 +317,12 @@ export const useBulkImportExamSessions = () => {
       if (error) throw error;
 
       // The function returns a single row with counts
-      const result = data?.[0] ?? { inserted_sessions_count: sessions.length };
+      // If no data returned, the transaction may have failed silently
+      if (!data || data.length === 0) {
+        throw new Error('Bulk import returned no result - transaction may have failed');
+      }
+
+      const result = data[0];
       return {
         count: result.inserted_sessions_count,
         convertedTargets: result.converted_targets_count,
@@ -437,7 +455,7 @@ export const useUpdateExamAttemptOutcome = () => {
       if (variables.outcome === 'passed') {
         toast.success('Congratulations on passing your exam!');
       } else if (variables.outcome === 'failed') {
-        toast.info("Don't give up! Keep studying and you'll pass next time.");
+        toast('Exam result recorded. Keep studying - you can do it!');
       }
     },
     onError: (error) => {
