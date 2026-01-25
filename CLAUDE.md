@@ -64,6 +64,33 @@ The app is wrapped in multiple providers in this order:
 - `useAuth()` - Provides user session and auth methods
 - `useAppNavigation()` - Provides global license filter and navigation helpers
 
+**Service Layer & Query Keys**:
+All TanStack Query cache keys are centralized in `src/services/queryKeys.ts`. When creating or modifying hooks:
+
+```typescript
+// ✅ CORRECT - Use centralized query keys
+import { queryKeys } from '@/services/queryKeys';
+
+useQuery({
+  queryKey: queryKeys.questions.all('technician'),
+  queryFn: ...
+});
+
+// For cache invalidation
+queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all(userId) });
+
+// ❌ WRONG - Don't use hardcoded strings
+useQuery({
+  queryKey: ['questions', 'technician'],  // Bad - use queryKeys instead
+  ...
+});
+```
+
+The service layer foundation in `src/services/` includes:
+- `queryKeys.ts` - Centralized cache key registry
+- `types.ts` - `ServiceResult<T>`, `ServiceError` types for future services
+- `shared/serviceBase.ts` - Base class for Supabase error handling
+
 **Component Organization**:
 - `src/components/ui/` - Base shadcn components (rarely modified)
 - `src/components/admin/` - Admin-only components

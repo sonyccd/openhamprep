@@ -20,9 +20,16 @@
  * ```
  *
  * Naming conventions:
+ * - `.root` - Base key for broad invalidation (matches all queries in domain)
  * - `.all(params?)` - List/collection queries (may be filtered)
  * - `.detail(id)` - Single item by ID
  * - `.byX(param)` - Filtered subset
+ *
+ * Note on empty string fallbacks:
+ * Many user-scoped keys accept `userId ?? ''` as a fallback. This is safe because:
+ * 1. Hooks use `enabled: !!user` to prevent queries from running without auth
+ * 2. The empty string key is never actually fetched, just reserved
+ * 3. When user logs in, the correct key is used and cached separately
  */
 
 import { TestType } from '@/types/navigation';
@@ -56,7 +63,12 @@ export const queryKeys = {
     /** All questions queries - use for broad invalidation */
     root: ['questions'] as const,
 
-    /** Questions list (optionally filtered by test type) */
+    /**
+     * Questions list (optionally filtered by test type).
+     * Note: .all() with no params returns ['questions'], same as .root.
+     * This is intentional - TanStack Query's hierarchical matching means
+     * invalidating .root catches .all('technician') too.
+     */
     all: (testType?: TestType) =>
       testType ? ['questions', testType] as const : ['questions'] as const,
 

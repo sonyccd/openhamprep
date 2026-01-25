@@ -196,7 +196,9 @@ export function useChapterMutations() {
       // Invalidate in order of importance - with-counts is primary UI consumer
       queryClient.invalidateQueries({ queryKey: queryKeys.arrlChapters.withCounts() });
       queryClient.invalidateQueries({ queryKey: queryKeys.arrlChapters.all() });
-      queryClient.invalidateQueries({ queryKey: ['arrl-chapter'] }); // Broad invalidation for any chapter detail
+      // Broad invalidation to catch any chapter detail query regardless of ID
+      // (TanStack Query matches prefixes, so ['arrl-chapter'] matches ['arrl-chapter', 'abc-123'])
+      queryClient.invalidateQueries({ queryKey: ['arrl-chapter'] });
       toast.success('Chapter updated successfully');
     },
     onError: (error: Error) => {
