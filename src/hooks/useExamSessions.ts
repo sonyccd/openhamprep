@@ -482,3 +482,109 @@ export const useUpdateExamAttemptOutcome = () => {
 
 // Note: Geocoding is now handled client-side via useGeocoding.ts hook
 // using Mapbox API with localStorage persistence and quota protection.
+
+/**
+ * Hook to get count of sessions needing geocoding (missing coordinates).
+ * Uses efficient count-only query (head: true) - doesn't fetch actual rows.
+ */
+export const useSessionsNeedingGeocodeCount = () => {
+  return useQuery({
+    queryKey: ['sessions-needing-geocode-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('exam_sessions')
+        .select('*', { count: 'exact', head: true })
+        .not('address', 'is', null)
+        .not('city', 'is', null)
+        .not('state', 'is', null)
+        .or('latitude.is.null,longitude.is.null');
+
+      if (error) throw error;
+      return count ?? 0;
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+};
+
+/**
+ * PostgREST's maximum rows per request. We paginate in chunks of this size.
+ */
+const POSTGREST_PAGE_SIZE = 1000;
+
+/**
+ * Maximum sessions to fetch for geocoding to prevent memory issues.
+ * At ~500 bytes/session, 10,000 sessions ≈ 5MB in memory.
+ * This limit can be increased if needed, but provides a reasonable default.
+ */
+const MAX_GEOCODE_SESSIONS = 10000;
+
+/**
+ * Hook to fetch all sessions needing geocoding with automatic pagination.
+ * Bypasses PostgREST's 1000-record limit by fetching in a loop.
+ *
+ * Performance notes:
+ * - Each session is ~500 bytes, so 10k sessions ≈ 5MB in memory
+ * - Fetching is sequential (unavoidable with PostgREST pagination)
+ * - Large datasets may take several seconds to load
+ *
+ * @param options.enabled - Whether to run the query (default: false, must be explicitly enabled)
+ * @param options.includeAll - When true, fetches ALL sessions with valid addresses (for force re-geocode mode)
+ */
+export const useSessionsNeedingGeocode = (options?: {
+  enabled?: boolean;
+  includeAll?: boolean;
+}) => {
+  return useQuery({
+    queryKey: ['sessions-needing-geocode', { includeAll: options?.includeAll ?? false }],
+    queryFn: async () => {
+      const allSessions: ExamSession[] = [];
+      let page = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        let query = supabase
+          .from('exam_sessions')
+          .select('*')
+          .not('address', 'is', null)
+          .not('city', 'is', null)
+          .not('state', 'is', null)
+          .order('exam_date', { ascending: true })
+          .range(page * POSTGREST_PAGE_SIZE, (page + 1) * POSTGREST_PAGE_SIZE - 1);
+
+        // Only filter for missing coords if not including all
+        if (!options?.includeAll) {
+          query = query.or('latitude.is.null,longitude.is.null');
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          // Cast is safe: Supabase returns rows matching the exam_sessions schema
+          allSessions.push(...(data as ExamSession[]));
+          hasMore = data.length === POSTGREST_PAGE_SIZE;
+          page++;
+
+          // Safety limit to prevent memory issues with very large datasets
+          if (allSessions.length >= MAX_GEOCODE_SESSIONS) {
+            console.warn(
+              `Geocode query reached ${MAX_GEOCODE_SESSIONS} session limit. ` +
+              `Some sessions may not be included.`
+            );
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return {
+        sessions: allSessions,
+        totalCount: allSessions.length,
+        limitReached: allSessions.length >= MAX_GEOCODE_SESSIONS,
+      };
+    },
+    enabled: options?.enabled ?? false,
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
+  });
+};

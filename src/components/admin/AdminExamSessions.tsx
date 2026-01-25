@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, Download, MapPin, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +20,8 @@ import {
   useExamSessionsCount,
   useExamSessionsLastUpdated,
   useBulkImportExamSessions,
+  useSessionsNeedingGeocodeCount,
+  useSessionsNeedingGeocode,
   type ExamSession,
 } from '@/hooks/useExamSessions';
 import { GeocodeModal } from '@/components/admin/GeocodeModal';
@@ -58,15 +60,42 @@ export const AdminExamSessions = () => {
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [showGeocodePrompt, setShowGeocodePrompt] = useState(false);
   const [showGeocodeModal, setShowGeocodeModal] = useState(false);
+  const [needsAllSessions, setNeedsAllSessions] = useState(false);
 
-  const { data: sessionsData, refetch: refetchSessions } = useExamSessions({ pageSize: 1000 });
-  const existingSessions = sessionsData?.sessions ?? [];
+  // Paginated sessions for display (uses normal pagination)
+  const { data: sessionsData, refetch: refetchSessions } = useExamSessions({ pageSize: 50 });
+  const existingSessions = sessionsData?.sessions ?? []; // For stats display
   const { data: totalCount = 0 } = useExamSessionsCount();
   const { data: lastUpdated, refetch: refetchLastUpdated } = useExamSessionsLastUpdated();
   const importMutation = useBulkImportExamSessions();
 
-  // Calculate sessions needing geocoding
-  const sessionsNeedingGeocode = existingSessions.filter((s) => !s.latitude || !s.longitude).length;
+  // Efficient count-only query for the badge (no row limit issues)
+  const { data: needsGeocodeCount = 0, refetch: refetchGeocodeCount } = useSessionsNeedingGeocodeCount();
+
+  // Fetch sessions needing geocoding - only when modal is open (with pagination)
+  const {
+    data: geocodeData,
+    isLoading: isLoadingGeocodeData,
+    error: geocodeError,
+    refetch: refetchGeocodeData,
+  } = useSessionsNeedingGeocode({ enabled: showGeocodeModal });
+
+  // Fetch ALL geocodeable sessions (for force re-geocode mode) - only when needed
+  const {
+    data: allGeocodeableData,
+    isLoading: isLoadingAllGeocodeable,
+    error: allGeocodeableError,
+    refetch: refetchAllGeocodeable,
+  } = useSessionsNeedingGeocode({
+    enabled: showGeocodeModal && needsAllSessions,
+    includeAll: true,
+  });
+
+  // Memoized callback to prevent duplicate fetches from useEffect re-runs
+  const handleRequestAllSessions = useCallback(() => {
+    setNeedsAllSessions(true);
+    refetchAllGeocodeable();
+  }, [refetchAllGeocodeable]);
 
   const parseCSV = (content: string): ParsedSession[] => {
     const lines = content.split('\n').filter((line) => line.trim());
@@ -228,6 +257,8 @@ export const AdminExamSessions = () => {
   const handleGeocodeComplete = () => {
     refetchSessions();
     refetchLastUpdated();
+    refetchGeocodeCount();
+    refetchGeocodeData();
   };
 
   const downloadExampleCSV = () => {
@@ -387,7 +418,7 @@ export const AdminExamSessions = () => {
                 onClick={() => setShowGeocodeModal(true)}
               >
                 <MapPin className="h-4 w-4 mr-2" />
-                Geocode Addresses{sessionsNeedingGeocode > 0 ? ` (${sessionsNeedingGeocode})` : ''}
+                Geocode Addresses{needsGeocodeCount > 0 ? ` (${needsGeocodeCount})` : ''}
               </Button>
             )}
           </div>
@@ -455,8 +486,17 @@ export const AdminExamSessions = () => {
       {/* Geocoding modal */}
       <GeocodeModal
         open={showGeocodeModal}
-        onOpenChange={setShowGeocodeModal}
-        sessions={existingSessions}
+        onOpenChange={(open) => {
+          setShowGeocodeModal(open);
+          if (!open) setNeedsAllSessions(false); // Reset on close
+        }}
+        sessions={geocodeData?.sessions ?? []}
+        isLoading={isLoadingGeocodeData}
+        error={geocodeError ?? allGeocodeableError}
+        limitReached={geocodeData?.limitReached || allGeocodeableData?.limitReached}
+        allSessions={allGeocodeableData?.sessions}
+        isLoadingAllSessions={isLoadingAllGeocodeable}
+        onRequestAllSessions={handleRequestAllSessions}
         onComplete={handleGeocodeComplete}
       />
     </div>
