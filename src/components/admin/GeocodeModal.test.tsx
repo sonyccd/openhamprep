@@ -488,3 +488,99 @@ describe('GeocodeModal sessions filtering', () => {
     expect(startButton).toBeDisabled();
   });
 });
+
+describe('GeocodeModal error handling', () => {
+  it('should display error message when error prop is provided', () => {
+    const testError = new Error('Database connection failed');
+
+    renderWithProviders(
+      <GeocodeModal
+        open={true}
+        onOpenChange={vi.fn()}
+        sessions={mockSessions}
+        error={testError}
+      />
+    );
+
+    expect(screen.getByText('Failed to load sessions')).toBeInTheDocument();
+    expect(screen.getByText('Database connection failed')).toBeInTheDocument();
+  });
+
+  it('should display limit reached warning when limitReached is true', () => {
+    renderWithProviders(
+      <GeocodeModal
+        open={true}
+        onOpenChange={vi.fn()}
+        sessions={mockSessions}
+        limitReached={true}
+      />
+    );
+
+    expect(screen.getByText('Session limit reached')).toBeInTheDocument();
+    expect(screen.getByText(/maximum of 10,000 sessions/)).toBeInTheDocument();
+  });
+
+  it('should not show limit warning when error is present', () => {
+    const testError = new Error('Test error');
+
+    renderWithProviders(
+      <GeocodeModal
+        open={true}
+        onOpenChange={vi.fn()}
+        sessions={mockSessions}
+        error={testError}
+        limitReached={true}
+      />
+    );
+
+    // Error should be shown
+    expect(screen.getByText('Failed to load sessions')).toBeInTheDocument();
+    // Limit warning should not be shown when there's an error
+    expect(screen.queryByText('Session limit reached')).not.toBeInTheDocument();
+  });
+});
+
+describe('GeocodeModal onRequestAllSessions callback', () => {
+  it('should trigger onRequestAllSessions when force mode is enabled', async () => {
+    const user = userEvent.setup();
+    const onRequestAllSessions = vi.fn();
+
+    renderWithProviders(
+      <GeocodeModal
+        open={true}
+        onOpenChange={vi.fn()}
+        sessions={mockSessions}
+        onRequestAllSessions={onRequestAllSessions}
+      />
+    );
+
+    // Toggle force all mode
+    const toggle = screen.getByRole('switch');
+    await user.click(toggle);
+
+    // Callback should have been called
+    expect(onRequestAllSessions).toHaveBeenCalled();
+  });
+
+  it('should not trigger onRequestAllSessions when allSessions already loaded', async () => {
+    const user = userEvent.setup();
+    const onRequestAllSessions = vi.fn();
+
+    renderWithProviders(
+      <GeocodeModal
+        open={true}
+        onOpenChange={vi.fn()}
+        sessions={mockSessions}
+        allSessions={mockSessions} // Already loaded
+        onRequestAllSessions={onRequestAllSessions}
+      />
+    );
+
+    // Toggle force all mode
+    const toggle = screen.getByRole('switch');
+    await user.click(toggle);
+
+    // Callback should NOT have been called since allSessions is already provided
+    expect(onRequestAllSessions).not.toHaveBeenCalled();
+  });
+});

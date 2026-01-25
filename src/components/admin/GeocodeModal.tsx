@@ -5,7 +5,7 @@
  * Displays Mapbox usage quota and supports resuming from localStorage.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { MapPin, Loader2, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react';
 import {
   Dialog,
@@ -38,6 +38,10 @@ interface GeocodeModalProps {
   sessions: ExamSession[];
   /** Loading state for sessions data */
   isLoading?: boolean;
+  /** Error from data fetching */
+  error?: Error | null;
+  /** Whether the max session limit was reached during fetching */
+  limitReached?: boolean;
   /** All geocodeable sessions for force re-geocode mode */
   allSessions?: ExamSession[];
   /** Loading state for allSessions */
@@ -52,6 +56,8 @@ export function GeocodeModal({
   onOpenChange,
   sessions,
   isLoading,
+  error,
+  limitReached,
   allSessions,
   isLoadingAllSessions,
   onRequestAllSessions,
@@ -65,15 +71,19 @@ export function GeocodeModal({
   const resumableProgress = useGeocodeResumableProgress();
   const mapboxUsage = useMapboxUsage(geocodeMutation.isPending);
 
-  // Sessions missing coordinates - the parent pre-filters for valid addresses,
-  // but we still filter here for missing coords to be safe
-  const sessionsNeedingGeocode = sessions.filter(
-    (s) => !s.latitude || !s.longitude
+  // Sessions missing coordinates - memoized to avoid recalculation on every render
+  // Parent pre-filters for valid addresses, but we filter here for missing coords
+  const sessionsNeedingGeocode = useMemo(
+    () => sessions.filter((s) => !s.latitude || !s.longitude),
+    [sessions]
   );
 
   // All sessions with valid addresses (from parent, for force mode)
   // Fall back to filtering the sessions we have if allSessions not yet loaded
-  const allGeocodeableSessions = allSessions ?? sessions;
+  const allGeocodeableSessions = useMemo(
+    () => allSessions ?? sessions,
+    [allSessions, sessions]
+  );
 
   // Which sessions to process based on mode
   const sessionsToProcess = forceAll ? allGeocodeableSessions : sessionsNeedingGeocode;
@@ -172,6 +182,30 @@ export function GeocodeModal({
               </span>
             </div>
           )}
+
+          {/* Error state */}
+          {error && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Failed to load sessions</AlertTitle>
+              <AlertDescription>
+                {error.message || 'An error occurred while fetching sessions.'}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Limit reached warning */}
+          {limitReached && !error && (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Session limit reached</AlertTitle>
+              <AlertDescription>
+                The maximum of 10,000 sessions has been loaded. Some sessions may
+                not be included. Consider geocoding in batches.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Mapbox configuration warning */}
           {!mapboxUsage.isConfigured && (
             <Alert variant="destructive">

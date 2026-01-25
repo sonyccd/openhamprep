@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, Download, MapPin, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -76,6 +76,7 @@ export const AdminExamSessions = () => {
   const {
     data: geocodeData,
     isLoading: isLoadingGeocodeData,
+    error: geocodeError,
     refetch: refetchGeocodeData,
   } = useSessionsNeedingGeocode({ enabled: showGeocodeModal });
 
@@ -83,11 +84,18 @@ export const AdminExamSessions = () => {
   const {
     data: allGeocodeableData,
     isLoading: isLoadingAllGeocodeable,
+    error: allGeocodeableError,
     refetch: refetchAllGeocodeable,
   } = useSessionsNeedingGeocode({
     enabled: showGeocodeModal && needsAllSessions,
     includeAll: true,
   });
+
+  // Memoized callback to prevent duplicate fetches from useEffect re-runs
+  const handleRequestAllSessions = useCallback(() => {
+    setNeedsAllSessions(true);
+    refetchAllGeocodeable();
+  }, [refetchAllGeocodeable]);
 
   const parseCSV = (content: string): ParsedSession[] => {
     const lines = content.split('\n').filter((line) => line.trim());
@@ -484,12 +492,11 @@ export const AdminExamSessions = () => {
         }}
         sessions={geocodeData?.sessions ?? []}
         isLoading={isLoadingGeocodeData}
+        error={geocodeError ?? allGeocodeableError}
+        limitReached={geocodeData?.limitReached || allGeocodeableData?.limitReached}
         allSessions={allGeocodeableData?.sessions}
         isLoadingAllSessions={isLoadingAllGeocodeable}
-        onRequestAllSessions={() => {
-          setNeedsAllSessions(true);
-          refetchAllGeocodeable();
-        }}
+        onRequestAllSessions={handleRequestAllSessions}
         onComplete={handleGeocodeComplete}
       />
     </div>
