@@ -2679,7 +2679,10 @@ WHERE status = 'failed';
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.seed_streak_data_for_user(p_user_id UUID)
-RETURNS TEXT AS $$
+RETURNS TEXT
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 DECLARE
   v_profile_exists BOOLEAN;
 BEGIN
@@ -2719,11 +2722,14 @@ BEGIN
 
   RETURN 'Success! Seeded 7-day streak for user ' || p_user_id || '. Today shows 3/5 questions (streak at risk).';
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Alternative: Seed a "streak at risk" scenario (user had a streak but hasn't studied today)
 CREATE OR REPLACE FUNCTION public.seed_streak_at_risk_for_user(p_user_id UUID)
-RETURNS TEXT AS $$
+RETURNS TEXT
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 DECLARE
   v_profile_exists BOOLEAN;
 BEGIN
@@ -2759,11 +2765,14 @@ BEGIN
 
   RETURN 'Success! User has a 3-day streak at risk (no activity today). Best streak: 5 days.';
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Alternative: Seed a fresh start (no streak yet)
 CREATE OR REPLACE FUNCTION public.seed_no_streak_for_user(p_user_id UUID)
-RETURNS TEXT AS $$
+RETURNS TEXT
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 DECLARE
   v_profile_exists BOOLEAN;
 BEGIN
@@ -2779,7 +2788,7 @@ BEGIN
 
   RETURN 'Success! Cleared all streak data for user. They will start fresh.';
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Grant execute to authenticated users (for testing via app)
 GRANT EXECUTE ON FUNCTION public.seed_streak_data_for_user TO authenticated;
