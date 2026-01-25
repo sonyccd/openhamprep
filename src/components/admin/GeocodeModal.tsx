@@ -34,7 +34,16 @@ import type { ExamSession } from '@/hooks/useExamSessions';
 interface GeocodeModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Sessions missing coordinates (pre-filtered with pagination) */
   sessions: ExamSession[];
+  /** Loading state for sessions data */
+  isLoading?: boolean;
+  /** All geocodeable sessions for force re-geocode mode */
+  allSessions?: ExamSession[];
+  /** Loading state for allSessions */
+  isLoadingAllSessions?: boolean;
+  /** Callback to trigger fetching all sessions when force mode is enabled */
+  onRequestAllSessions?: () => void;
   onComplete?: () => void;
 }
 
@@ -42,6 +51,10 @@ export function GeocodeModal({
   open,
   onOpenChange,
   sessions,
+  isLoading,
+  allSessions,
+  isLoadingAllSessions,
+  onRequestAllSessions,
   onComplete,
 }: GeocodeModalProps) {
   const [progress, setProgress] = useState<GeocodeProgress | null>(null);
@@ -52,18 +65,25 @@ export function GeocodeModal({
   const resumableProgress = useGeocodeResumableProgress();
   const mapboxUsage = useMapboxUsage(geocodeMutation.isPending);
 
-  // All sessions with valid addresses
-  const allGeocodeableSessions = sessions.filter(
-    (s) => s.address && s.city && s.state
+  // Sessions missing coordinates - the parent pre-filters for valid addresses,
+  // but we still filter here for missing coords to be safe
+  const sessionsNeedingGeocode = sessions.filter(
+    (s) => !s.latitude || !s.longitude
   );
 
-  // Sessions missing coordinates
-  const sessionsNeedingGeocode = sessions.filter(
-    (s) => (!s.latitude || !s.longitude) && s.address && s.city && s.state
-  );
+  // All sessions with valid addresses (from parent, for force mode)
+  // Fall back to filtering the sessions we have if allSessions not yet loaded
+  const allGeocodeableSessions = allSessions ?? sessions;
 
   // Which sessions to process based on mode
   const sessionsToProcess = forceAll ? allGeocodeableSessions : sessionsNeedingGeocode;
+
+  // Request all sessions when force mode is enabled
+  useEffect(() => {
+    if (forceAll && !allSessions && onRequestAllSessions) {
+      onRequestAllSessions();
+    }
+  }, [forceAll, allSessions, onRequestAllSessions]);
 
   // Account for already-processed sessions from saved progress (only in non-force mode)
   const alreadyProcessedCount = forceAll ? 0 : (resumableProgress?.processedIds.length || 0);
@@ -143,6 +163,15 @@ export function GeocodeModal({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Loading state */}
+          {(isLoading || (forceAll && isLoadingAllSessions)) && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              <span className="text-muted-foreground">
+                {forceAll ? 'Loading all sessions...' : 'Loading sessions...'}
+              </span>
+            </div>
+          )}
           {/* Mapbox configuration warning */}
           {!mapboxUsage.isConfigured && (
             <Alert variant="destructive">
@@ -206,7 +235,7 @@ export function GeocodeModal({
             )}
 
           {/* Sessions summary and force option */}
-          {!geocodeMutation.isPending && !showQuotaWarning && (
+          {!geocodeMutation.isPending && !showQuotaWarning && !isLoading && !(forceAll && isLoadingAllSessions) && (
             <div className="space-y-3">
               <div className="text-sm text-muted-foreground">
                 <p>
@@ -238,13 +267,15 @@ export function GeocodeModal({
                     Re-geocode all sessions
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Overwrite existing coordinates ({allGeocodeableSessions.length} total)
+                    Overwrite existing coordinates
+                    {allSessions ? ` (${allSessions.length.toLocaleString()} total)` : ''}
                   </p>
                 </div>
                 <Switch
                   id="force-all"
                   checked={forceAll}
                   onCheckedChange={setForceAll}
+                  disabled={isLoadingAllSessions}
                 />
               </div>
             </div>
@@ -303,6 +334,8 @@ export function GeocodeModal({
             onClick={handleStart}
             disabled={
               geocodeMutation.isPending ||
+              isLoading ||
+              (forceAll && isLoadingAllSessions) ||
               remainingToProcess === 0 ||
               wouldExceedQuota ||
               !mapboxUsage.isConfigured

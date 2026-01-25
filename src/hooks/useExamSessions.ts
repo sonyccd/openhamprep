@@ -482,3 +482,79 @@ export const useUpdateExamAttemptOutcome = () => {
 
 // Note: Geocoding is now handled client-side via useGeocoding.ts hook
 // using Mapbox API with localStorage persistence and quota protection.
+
+/**
+ * Hook to get count of sessions needing geocoding (missing coordinates).
+ * Uses efficient count-only query (head: true) - doesn't fetch actual rows.
+ */
+export const useSessionsNeedingGeocodeCount = () => {
+  return useQuery({
+    queryKey: ['sessions-needing-geocode-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('exam_sessions')
+        .select('*', { count: 'exact', head: true })
+        .not('address', 'is', null)
+        .not('city', 'is', null)
+        .not('state', 'is', null)
+        .or('latitude.is.null,longitude.is.null');
+
+      if (error) throw error;
+      return count ?? 0;
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+};
+
+/**
+ * Hook to fetch all sessions needing geocoding with automatic pagination.
+ * Bypasses PostgREST's 1000-record limit by fetching in a loop.
+ *
+ * @param options.enabled - Whether to run the query (default: false, must be explicitly enabled)
+ * @param options.includeAll - When true, fetches ALL sessions with valid addresses (for force re-geocode mode)
+ */
+export const useSessionsNeedingGeocode = (options?: {
+  enabled?: boolean;
+  includeAll?: boolean;
+}) => {
+  return useQuery({
+    queryKey: ['sessions-needing-geocode', { includeAll: options?.includeAll ?? false }],
+    queryFn: async () => {
+      const allSessions: ExamSession[] = [];
+      const pageSize = 1000;
+      let page = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        let query = supabase
+          .from('exam_sessions')
+          .select('*')
+          .not('address', 'is', null)
+          .not('city', 'is', null)
+          .not('state', 'is', null)
+          .order('exam_date', { ascending: true })
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+
+        // Only filter for missing coords if not including all
+        if (!options?.includeAll) {
+          query = query.or('latitude.is.null,longitude.is.null');
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allSessions.push(...(data as ExamSession[]));
+          hasMore = data.length === pageSize;
+          page++;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return { sessions: allSessions, totalCount: allSessions.length };
+    },
+    enabled: options?.enabled ?? false,
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
+  });
+};

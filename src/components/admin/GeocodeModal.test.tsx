@@ -435,8 +435,10 @@ describe('GeocodeModal state management', () => {
 });
 
 describe('GeocodeModal sessions filtering', () => {
-  it('should count sessions with valid addresses', () => {
-    const sessionsWithMixedAddresses: ExamSession[] = [
+  it('should show count of sessions passed to it (pre-filtered by parent)', () => {
+    // Note: The parent (AdminExamSessions) is now responsible for filtering sessions
+    // to only include those with valid addresses. The component displays what it receives.
+    const preFilteredSessions: ExamSession[] = [
       createMockSession({
         id: '1',
         address: '123 Main St',
@@ -447,18 +449,9 @@ describe('GeocodeModal sessions filtering', () => {
         longitude: null,
       }),
       createMockSession({
-        id: '2',
-        address: null, // Missing address
-        city: 'Durham',
-        state: 'NC',
-        zip: '27701',
-        latitude: null,
-        longitude: null,
-      }),
-      createMockSession({
         id: '3',
         address: '789 Pine St',
-        city: 'Anywhere', // City is required in ExamSession
+        city: 'Anywhere',
         state: 'NC',
         zip: '27801',
         latitude: null,
@@ -470,11 +463,11 @@ describe('GeocodeModal sessions filtering', () => {
       <GeocodeModal
         open={true}
         onOpenChange={vi.fn()}
-        sessions={sessionsWithMixedAddresses}
+        sessions={preFilteredSessions}
       />
     );
 
-    // 2 sessions have valid address, city, and state (session 2 has null address)
+    // Parent pre-filters to 2 sessions needing geocoding
     expect(screen.getByText(/2 sessions need geocoding/)).toBeInTheDocument();
   });
 

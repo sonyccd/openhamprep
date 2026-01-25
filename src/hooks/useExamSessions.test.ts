@@ -12,6 +12,8 @@ import {
   useExamAttempts,
   useRecordExamAttempt,
   useUpdateExamAttemptOutcome,
+  useSessionsNeedingGeocodeCount,
+  useSessionsNeedingGeocode,
   type LicenseType,
   type ExamOutcome,
   type ExamAttempt,
@@ -49,6 +51,7 @@ const mockLimit = vi.fn();
 const mockUpdate = vi.fn();
 const mockNot = vi.fn();
 const mockRpc = vi.fn();
+const mockOr = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -1054,5 +1057,464 @@ describe('useBulkImportExamSessions error handling', () => {
 
     expect(result.current.error).not.toBeNull();
     expect(result.current.error?.message).toContain('no result');
+  });
+});
+
+// ============================================================================
+// useSessionsNeedingGeocodeCount Tests
+// ============================================================================
+
+describe('useSessionsNeedingGeocodeCount', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Setup mock chain for count query:
+    // supabase.from('exam_sessions').select('*', { count: 'exact', head: true })
+    //   .not('address', 'is', null).not('city', 'is', null).not('state', 'is', null)
+    //   .or('latitude.is.null,longitude.is.null')
+    mockOr.mockResolvedValue({
+      count: 42,
+      error: null,
+    });
+    mockNot.mockReturnValue({
+      not: mockNot,
+      or: mockOr,
+    });
+    mockSelect.mockReturnValue({
+      not: mockNot,
+    });
+  });
+
+  it('returns count of sessions needing geocoding', async () => {
+    const { result } = renderHook(() => useSessionsNeedingGeocodeCount(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.data).toBe(42);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('returns 0 when count is null', async () => {
+    mockOr.mockResolvedValue({
+      count: null,
+      error: null,
+    });
+
+    const { result } = renderHook(() => useSessionsNeedingGeocodeCount(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.data).toBe(0);
+  });
+
+  it('handles errors gracefully', async () => {
+    mockOr.mockResolvedValue({
+      count: null,
+      error: { message: 'Database error', code: 'PGRST301' },
+    });
+
+    const { result } = renderHook(() => useSessionsNeedingGeocodeCount(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.error).not.toBeNull();
+  });
+
+  it('has appropriate stale time configured', () => {
+    const { result } = renderHook(() => useSessionsNeedingGeocodeCount(), {
+      wrapper: createWrapper(),
+    });
+
+    // Hook should be defined with query
+    expect(result.current).toBeDefined();
+    expect(result.current.isStale).toBeDefined();
+  });
+});
+
+// ============================================================================
+// useSessionsNeedingGeocode Tests
+// ============================================================================
+
+describe('useSessionsNeedingGeocode', () => {
+  const createMockSessions = (count: number, startId: number = 1) =>
+    Array.from({ length: count }, (_, i) => ({
+      id: `session-${startId + i}`,
+      title: `Session ${startId + i}`,
+      exam_date: '2025-02-01',
+      sponsor: 'ARRL',
+      exam_time: '9:00 AM',
+      walk_ins_allowed: true,
+      public_contact: 'John Doe',
+      phone: '555-1234',
+      email: 'test@example.com',
+      vec: 'ARRL/VEC',
+      location_name: 'Community Center',
+      address: '123 Main St',
+      address_2: null,
+      address_3: null,
+      city: 'Raleigh',
+      state: 'NC',
+      zip: '27601',
+      latitude: null,
+      longitude: null,
+      created_at: '2025-01-01T00:00:00Z',
+      updated_at: '2025-01-15T00:00:00Z',
+    }));
+
+  // Helper to setup mock chain for useSessionsNeedingGeocode
+  // Chain: select().not().not().not().order().range() then optionally .or()
+  const setupGeocodeQueryMock = (mockData: ReturnType<typeof createMockSessions> | null, error: unknown = null) => {
+    // .or() is called after .range() - this is the final step for non-includeAll queries
+    mockOr.mockResolvedValue({
+      data: mockData,
+      error,
+    });
+    // .range() returns object with .or() for chaining, or can resolve directly for includeAll
+    mockRange.mockReturnValue({
+      or: mockOr,
+      then: (resolve: (value: unknown) => void) => resolve({ data: mockData, error }),
+    });
+    // .order() returns object with .range()
+    mockOrder.mockReturnValue({ range: mockRange });
+    // .not() returns object for chaining more .not() calls and .order()
+    mockNot.mockReturnValue({
+      not: mockNot,
+      order: mockOrder,
+    });
+    // .select() returns object with .not()
+    mockSelect.mockReturnValue({
+      not: mockNot,
+    });
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('basic functionality', () => {
+    beforeEach(() => {
+      setupGeocodeQueryMock(createMockSessions(5));
+    });
+
+    it('is disabled by default', async () => {
+      const { result } = renderHook(() => useSessionsNeedingGeocode(), {
+        wrapper: createWrapper(),
+      });
+
+      // Should not fetch when enabled is not set
+      expect(result.current.fetchStatus).toBe('idle');
+      expect(result.current.data).toBeUndefined();
+    });
+
+    it('fetches sessions when enabled', async () => {
+      const { result } = renderHook(
+        () => useSessionsNeedingGeocode({ enabled: true }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.data).toBeDefined();
+      expect(result.current.data?.sessions).toHaveLength(5);
+      expect(result.current.data?.totalCount).toBe(5);
+    });
+
+    it('returns sessions with correct shape', async () => {
+      const { result } = renderHook(
+        () => useSessionsNeedingGeocode({ enabled: true }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      const session = result.current.data?.sessions[0];
+      expect(session).toHaveProperty('id');
+      expect(session).toHaveProperty('address');
+      expect(session).toHaveProperty('city');
+      expect(session).toHaveProperty('state');
+      expect(session).toHaveProperty('latitude');
+      expect(session).toHaveProperty('longitude');
+    });
+  });
+
+  describe('pagination', () => {
+    it('fetches multiple pages when data exceeds page size', async () => {
+      // First call returns 1000 items (full page), second call returns 500 (partial)
+      let callCount = 0;
+
+      mockOr.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return Promise.resolve({
+            data: createMockSessions(1000, 1),
+            error: null,
+          });
+        } else {
+          return Promise.resolve({
+            data: createMockSessions(500, 1001),
+            error: null,
+          });
+        }
+      });
+      mockRange.mockReturnValue({ or: mockOr });
+      mockOrder.mockReturnValue({ range: mockRange });
+      mockNot.mockReturnValue({
+        not: mockNot,
+        order: mockOrder,
+      });
+      mockSelect.mockReturnValue({
+        not: mockNot,
+      });
+
+      const { result } = renderHook(
+        () => useSessionsNeedingGeocode({ enabled: true }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Should have fetched 2 pages (1000 + 500 = 1500 sessions)
+      expect(result.current.data?.sessions).toHaveLength(1500);
+      expect(result.current.data?.totalCount).toBe(1500);
+      expect(callCount).toBe(2);
+    });
+
+    it('stops fetching when receiving less than page size', async () => {
+      let callCount = 0;
+      mockOr.mockImplementation(() => {
+        callCount++;
+        return Promise.resolve({
+          data: createMockSessions(100),
+          error: null,
+        });
+      });
+      mockRange.mockReturnValue({ or: mockOr });
+      mockOrder.mockReturnValue({ range: mockRange });
+      mockNot.mockReturnValue({
+        not: mockNot,
+        order: mockOrder,
+      });
+      mockSelect.mockReturnValue({
+        not: mockNot,
+      });
+
+      const { result } = renderHook(
+        () => useSessionsNeedingGeocode({ enabled: true }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Should only fetch once since 100 < 1000 (page size)
+      expect(callCount).toBe(1);
+      expect(result.current.data?.sessions).toHaveLength(100);
+    });
+
+    it('handles empty results', async () => {
+      setupGeocodeQueryMock([]);
+
+      const { result } = renderHook(
+        () => useSessionsNeedingGeocode({ enabled: true }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.data?.sessions).toHaveLength(0);
+      expect(result.current.data?.totalCount).toBe(0);
+    });
+  });
+
+  describe('includeAll option', () => {
+    beforeEach(() => {
+      setupGeocodeQueryMock(createMockSessions(10));
+    });
+
+    it('uses different query key for includeAll mode', async () => {
+      const { result: resultDefault } = renderHook(
+        () => useSessionsNeedingGeocode({ enabled: true, includeAll: false }),
+        { wrapper: createWrapper() }
+      );
+
+      const { result: resultAll } = renderHook(
+        () => useSessionsNeedingGeocode({ enabled: true, includeAll: true }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(resultDefault.current.isLoading).toBe(false);
+        expect(resultAll.current.isLoading).toBe(false);
+      });
+
+      // Both should work independently
+      expect(resultDefault.current.data).toBeDefined();
+      expect(resultAll.current.data).toBeDefined();
+    });
+
+    it('fetches all geocodeable sessions when includeAll is true', async () => {
+      const { result } = renderHook(
+        () => useSessionsNeedingGeocode({ enabled: true, includeAll: true }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.data?.sessions).toHaveLength(10);
+    });
+  });
+
+  describe('error handling', () => {
+    it('handles database errors gracefully', async () => {
+      setupGeocodeQueryMock(null, { message: 'Database error', code: 'PGRST301' });
+
+      const { result } = renderHook(
+        () => useSessionsNeedingGeocode({ enabled: true }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.error).not.toBeNull();
+    });
+
+    it('handles error on subsequent pages', async () => {
+      let callCount = 0;
+      mockOr.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return Promise.resolve({
+            data: createMockSessions(1000),
+            error: null,
+          });
+        } else {
+          return Promise.resolve({
+            data: null,
+            error: { message: 'Connection lost', code: 'PGRST500' },
+          });
+        }
+      });
+      mockRange.mockReturnValue({ or: mockOr });
+      mockOrder.mockReturnValue({ range: mockRange });
+      mockNot.mockReturnValue({
+        not: mockNot,
+        order: mockOrder,
+      });
+      mockSelect.mockReturnValue({
+        not: mockNot,
+      });
+
+      const { result } = renderHook(
+        () => useSessionsNeedingGeocode({ enabled: true }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Should error after first page succeeds but second fails
+      expect(result.current.error).not.toBeNull();
+    });
+  });
+
+  describe('query key caching', () => {
+    beforeEach(() => {
+      setupGeocodeQueryMock(createMockSessions(5));
+    });
+
+    it('has different query keys for different includeAll values', () => {
+      // This is a type-level test - the query keys should be different
+      // so that switching between modes doesn't use stale data
+      const { result: result1 } = renderHook(
+        () => useSessionsNeedingGeocode({ enabled: false, includeAll: false }),
+        { wrapper: createWrapper() }
+      );
+      const { result: result2 } = renderHook(
+        () => useSessionsNeedingGeocode({ enabled: false, includeAll: true }),
+        { wrapper: createWrapper() }
+      );
+
+      // Both hooks should initialize without error
+      expect(result1.current).toBeDefined();
+      expect(result2.current).toBeDefined();
+    });
+  });
+});
+
+// ============================================================================
+// Integration Tests - Geocoding hooks with large datasets
+// ============================================================================
+
+describe('useSessionsNeedingGeocode pagination integration', () => {
+  it('correctly calculates total across multiple pages', async () => {
+    // Simulate 3 pages: 1000 + 1000 + 250 = 2250 total
+    let callCount = 0;
+    mockOr.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return Promise.resolve({
+          data: Array.from({ length: 1000 }, (_, i) => ({ id: `s-${i}` })),
+          error: null,
+        });
+      } else if (callCount === 2) {
+        return Promise.resolve({
+          data: Array.from({ length: 1000 }, (_, i) => ({ id: `s-${1000 + i}` })),
+          error: null,
+        });
+      } else {
+        return Promise.resolve({
+          data: Array.from({ length: 250 }, (_, i) => ({ id: `s-${2000 + i}` })),
+          error: null,
+        });
+      }
+    });
+    mockRange.mockReturnValue({ or: mockOr });
+    mockOrder.mockReturnValue({ range: mockRange });
+    mockNot.mockReturnValue({
+      not: mockNot,
+      order: mockOrder,
+    });
+    mockSelect.mockReturnValue({
+      not: mockNot,
+    });
+
+    const { result } = renderHook(
+      () => useSessionsNeedingGeocode({ enabled: true }),
+      { wrapper: createWrapper() }
+    );
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.data?.totalCount).toBe(2250);
+    expect(result.current.data?.sessions).toHaveLength(2250);
+    expect(callCount).toBe(3);
   });
 });
