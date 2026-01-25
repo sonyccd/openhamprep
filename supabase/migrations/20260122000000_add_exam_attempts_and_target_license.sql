@@ -26,8 +26,13 @@ CREATE TABLE public.exam_attempts (
 CREATE INDEX idx_exam_attempts_user_id ON public.exam_attempts(user_id);
 CREATE INDEX idx_exam_attempts_exam_date ON public.exam_attempts(exam_date);
 
--- Prevent duplicate attempts for same user/date/license combination
--- This ensures users can't accidentally record multiple attempts for the same exam
+-- Prevent duplicate attempts for same user/date/license combination.
+-- Design decision: VE sessions typically don't allow same-day retakes for the
+-- same element (Technician/General/Extra). This constraint prevents accidental
+-- duplicates. If a user legitimately takes the same element twice on one day
+-- (very rare), they can use the notes field to document additional details.
+-- Alternative considered: Using timestamp instead of date for finer granularity,
+-- but this adds complexity without clear benefit for the typical use case.
 CREATE UNIQUE INDEX idx_exam_attempts_unique_user_date_license
   ON public.exam_attempts(user_id, exam_date, target_license);
 

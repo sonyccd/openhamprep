@@ -59,6 +59,15 @@ export interface UserTargetExam {
   exam_session?: ExamSession | null;
 }
 
+/**
+ * Historical record of an exam attempt.
+ *
+ * Note: A unique constraint (user_id, exam_date, target_license) prevents
+ * duplicate entries for the same license on the same day. This is intentional
+ * as VE sessions typically don't allow same-day retakes for the same element.
+ * If a user needs to record multiple attempts on the same day (rare), they
+ * can use the notes field to document additional details.
+ */
 export interface ExamAttempt {
   id: string;
   user_id: string;
@@ -455,7 +464,7 @@ export const useUpdateExamAttemptOutcome = () => {
       if (variables.outcome === 'passed') {
         toast.success('Congratulations on passing your exam!');
       } else if (variables.outcome === 'failed') {
-        toast('Exam result recorded. Keep studying - you can do it!');
+        toast.info('Exam result recorded. Keep studying - you can do it!');
       }
     },
     onError: (error) => {

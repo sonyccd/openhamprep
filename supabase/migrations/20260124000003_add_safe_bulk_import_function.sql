@@ -1,6 +1,11 @@
 -- Migration: Add safe bulk import function for exam sessions
 -- Handles the entire import operation atomically to prevent race conditions
 -- where users could save targets referencing sessions about to be deleted
+--
+-- Prerequisites:
+--   - public.exam_sessions table (base migration)
+--   - public.user_target_exam table (base migration)
+--   - public.user_roles table (base migration)
 
 -- Create the safe bulk import function
 CREATE OR REPLACE FUNCTION public.bulk_import_exam_sessions_safe(

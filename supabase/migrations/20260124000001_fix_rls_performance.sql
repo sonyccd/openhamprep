@@ -3,6 +3,10 @@
 -- 2. Consolidate multiple permissive policies into single policies with OR conditions
 -- See: https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan
 -- See: https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies
+--
+-- Prerequisites:
+--   - All tables with RLS policies must exist (alert_rules, bookmarks, etc.)
+--   - 20260120000000_create_alerting_tables.sql (for alert_rules, alert_history)
 
 -- ============================================================================
 -- ALERT_RULES TABLE - Consolidate admin + service_role policies
