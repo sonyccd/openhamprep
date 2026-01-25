@@ -35,6 +35,11 @@ export interface UserTargetExam {
   exam_session_id: string | null;
   custom_exam_date: string | null;
   study_intensity: 'light' | 'moderate' | 'intensive';
+  /**
+   * The license level the user is studying for.
+   * Null for legacy records created before this field was added,
+   * or if the user hasn't explicitly selected a license level.
+   */
   target_license: LicenseType | null;
   created_at: string;
   updated_at: string;
@@ -275,68 +280,46 @@ export const useRemoveTargetExam = () => {
   });
 };
 
+/**
+ * Bulk import exam sessions using an atomic database function.
+ * This prevents race conditions where users could save targets
+ * referencing sessions that are about to be deleted.
+ *
+ * The database function:
+ * 1. Converts user_target_exam rows to custom_exam_date (preserves dates)
+ * 2. Deletes all existing sessions
+ * 3. Inserts new sessions
+ * All within a single transaction.
+ */
 export const useBulkImportExamSessions = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (sessions: Omit<ExamSession, 'id' | 'created_at' | 'updated_at'>[]) => {
-      // Before deleting exam sessions, convert any user_target_exam rows that
-      // reference sessions to use custom_exam_date instead. This preserves
-      // the user's target date even when the linked session is removed.
-      // Required because check_exam_date_source constraint needs exactly one
-      // of exam_session_id OR custom_exam_date to be set.
-      const { data: targetsWithSessions, error: fetchError } = await supabase
-        .from('user_target_exam')
-        .select('id, exam_session_id, exam_session:exam_sessions(exam_date)')
-        .not('exam_session_id', 'is', null);
+      // Use atomic database function to prevent race conditions
+      const { data, error } = await supabase.rpc('bulk_import_exam_sessions_safe', {
+        sessions_data: sessions,
+      });
 
-      if (fetchError) throw fetchError;
+      if (error) throw error;
 
-      // Update each target to use custom_exam_date instead of exam_session_id
-      if (targetsWithSessions && targetsWithSessions.length > 0) {
-        for (const target of targetsWithSessions) {
-          const examDate = (target.exam_session as { exam_date: string } | null)?.exam_date;
-          if (examDate) {
-            const { error: updateError } = await supabase
-              .from('user_target_exam')
-              .update({
-                exam_session_id: null,
-                custom_exam_date: examDate,
-              })
-              .eq('id', target.id);
-
-            if (updateError) throw updateError;
-          }
-        }
-      }
-
-      // Delete all existing sessions (full refresh)
-      const { error: deleteError } = await supabase
-        .from('exam_sessions')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
-
-      if (deleteError) throw deleteError;
-
-      // Insert in batches of 500 to avoid Supabase limits
-      const BATCH_SIZE = 500;
-      let totalInserted = 0;
-
-      for (let i = 0; i < sessions.length; i += BATCH_SIZE) {
-        const batch = sessions.slice(i, i + BATCH_SIZE);
-        const { error } = await supabase
-          .from('exam_sessions')
-          .insert(batch);
-
-        if (error) throw error;
-        totalInserted += batch.length;
-      }
-
-      return { count: totalInserted };
+      // The function returns a single row with counts
+      const result = data?.[0] ?? { inserted_sessions_count: sessions.length };
+      return {
+        count: result.inserted_sessions_count,
+        convertedTargets: result.converted_targets_count,
+        deletedSessions: result.deleted_sessions_count,
+      };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['exam-sessions'] });
-      toast.success(`Imported ${data.count} exam sessions`);
+      queryClient.invalidateQueries({ queryKey: ['user-target-exam'] });
+
+      let message = `Imported ${data.count} exam sessions`;
+      if (data.convertedTargets > 0) {
+        message += `. ${data.convertedTargets} user target${data.convertedTargets === 1 ? '' : 's'} converted to custom dates.`;
+      }
+      toast.success(message);
     },
     onError: (error) => {
       console.error('Error importing exam sessions:', error);
@@ -439,14 +422,9 @@ export const useUpdateExamAttemptOutcome = () => {
       outcome: ExamOutcome;
       notes?: string;
     }) => {
-      const updateData: { outcome: ExamOutcome; notes?: string } = { outcome };
-      if (notes !== undefined) {
-        updateData.notes = notes;
-      }
-
       const { data, error } = await supabase
         .from('exam_attempts')
-        .update(updateData)
+        .update({ outcome, ...(notes !== undefined && { notes }) })
         .eq('id', attemptId)
         .select()
         .single();

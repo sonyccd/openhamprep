@@ -26,6 +26,11 @@ CREATE TABLE public.exam_attempts (
 CREATE INDEX idx_exam_attempts_user_id ON public.exam_attempts(user_id);
 CREATE INDEX idx_exam_attempts_exam_date ON public.exam_attempts(exam_date);
 
+-- Prevent duplicate attempts for same user/date/license combination
+-- This ensures users can't accidentally record multiple attempts for the same exam
+CREATE UNIQUE INDEX idx_exam_attempts_unique_user_date_license
+  ON public.exam_attempts(user_id, exam_date, target_license);
+
 -- Add target_license to user_target_exam
 ALTER TABLE public.user_target_exam
   ADD COLUMN target_license license_type;

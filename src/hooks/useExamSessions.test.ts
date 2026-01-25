@@ -45,9 +45,11 @@ const mockLimit = vi.fn();
 
 const mockUpdate = vi.fn();
 const mockNot = vi.fn();
+const mockRpc = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
+    rpc: (...args: unknown[]) => mockRpc(...args),
     from: vi.fn((table: string) => {
       if (table === 'exam_sessions') {
         return {
@@ -147,6 +149,12 @@ describe('useExamSessions', () => {
       eq: mockEq,
       order: mockOrder,
       not: mockNot,
+    });
+
+    // For RPC calls (bulk import)
+    mockRpc.mockResolvedValue({
+      data: [{ converted_targets_count: 0, deleted_sessions_count: 0, inserted_sessions_count: 1 }],
+      error: null,
     });
 
     // For user_target_exam .not() queries (bulk import conversion)
