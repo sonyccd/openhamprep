@@ -33,8 +33,12 @@ Sentry.init({
 // Uses environment variable - gracefully disabled if not set
 const amplitudeApiKey = import.meta.env.VITE_AMPLITUDE_API_KEY;
 if (amplitudeApiKey) {
-  amplitude.add(sessionReplayPlugin({ sampleRate: 1 }));
-  amplitude.init(amplitudeApiKey, { autocapture: true });
+  try {
+    amplitude.add(sessionReplayPlugin({ sampleRate: 1 }));
+    amplitude.init(amplitudeApiKey, { autocapture: true });
+  } catch (error) {
+    console.warn('Failed to initialize Amplitude:', error);
+  }
 }
 
 // Initialize Vercel Analytics only in production (they require Vercel's infrastructure)

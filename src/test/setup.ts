@@ -34,3 +34,8 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
 vi.mock('@/hooks/usePendo', () => ({
   PendoProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
+
+// Mock Amplitude - AmplitudeProvider only syncs user identity, SDK init is in main.tsx
+vi.mock('@/hooks/useAmplitude', () => ({
+  AmplitudeProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
