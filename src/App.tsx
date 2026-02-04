@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { PendoProvider } from "@/hooks/usePendo";
+import { AmplitudeProvider } from "@/hooks/useAmplitude";
 import { AppNavigationProvider } from "@/hooks/useAppNavigation";
 import { AccessibilityProvider } from "@/hooks/useAccessibility";
 import { useWindowControlsOverlay } from "@/hooks/useWindowControlsOverlay";
@@ -69,11 +70,13 @@ const App = () => (
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <PendoProvider>
+          <AmplitudeProvider>
             <AppNavigationProvider>
               <TooltipProvider>
                 <AppContent />
               </TooltipProvider>
             </AppNavigationProvider>
+          </AmplitudeProvider>
           </PendoProvider>
         </AuthProvider>
       </QueryClientProvider>
