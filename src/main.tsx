@@ -1,6 +1,8 @@
 import { createRoot } from "react-dom/client";
 import { injectSpeedInsights } from "@vercel/speed-insights";
 import { inject } from "@vercel/analytics";
+import * as amplitude from '@amplitude/analytics-browser';
+import { sessionReplayPlugin } from '@amplitude/plugin-session-replay-browser';
 import * as Sentry from "@sentry/react";
 import { toast } from "sonner";
 import App from "./App.tsx";
@@ -26,6 +28,14 @@ Sentry.init({
   // Only enable in production
   enabled: import.meta.env.PROD,
 });
+
+// Initialize Amplitude Analytics with Session Replay
+// Uses environment variable - gracefully disabled if not set
+const amplitudeApiKey = import.meta.env.VITE_AMPLITUDE_API_KEY;
+if (amplitudeApiKey) {
+  amplitude.add(sessionReplayPlugin({ sampleRate: 1 }));
+  amplitude.init(amplitudeApiKey, { autocapture: true });
+}
 
 // Initialize Vercel Analytics only in production (they require Vercel's infrastructure)
 if (import.meta.env.PROD) {
