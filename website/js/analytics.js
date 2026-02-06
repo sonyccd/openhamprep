@@ -1,5 +1,5 @@
 // Analytics and tracking scripts
-// Amplitude handles page views, session replay, and event tracking
+// Amplitude handles page views and event tracking via autocapture
 // Configure AMPLITUDE_API_KEY in config.js or set window.ANALYTICS_CONFIG before this script loads
 
 (function() {
@@ -19,6 +19,29 @@
 
   var apiKey = config.AMPLITUDE_API_KEY;
 
+  // Attach click handlers to all CTA links pointing to the app.
+  // Called after SDK loads to guarantee window.amplitude exists.
+  function attachCTATracking() {
+    function setup() {
+      document.querySelectorAll('a[href*="app.openhamprep.com"]').forEach(function(link) {
+        link.addEventListener('click', function() {
+          window.amplitude.track('CTA Clicked', {
+            page: window.location.pathname,
+            button_text: this.textContent.trim(),
+            destination_url: this.href,
+          });
+        });
+      });
+    }
+
+    // DOM may already be ready if SDK loaded after DOMContentLoaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setup);
+    } else {
+      setup();
+    }
+  }
+
   // Load Amplitude Browser SDK from CDN
   var ampScript = document.createElement('script');
   ampScript.async = true;
@@ -29,23 +52,8 @@
   ampScript.onload = function() {
     if (window.amplitude) {
       window.amplitude.init(apiKey, { autocapture: true });
+      attachCTATracking();
     }
   };
   document.head.appendChild(ampScript);
-
-  // Track CTA clicks to the app
-  document.addEventListener('DOMContentLoaded', function() {
-    var links = document.querySelectorAll('a[href*="app.openhamprep.com"]');
-    for (var i = 0; i < links.length; i++) {
-      links[i].addEventListener('click', function(e) {
-        if (window.amplitude) {
-          window.amplitude.track('CTA Clicked', {
-            page: window.location.pathname,
-            button_text: this.textContent.trim(),
-            destination_url: this.href,
-          });
-        }
-      });
-    }
-  });
 })();
