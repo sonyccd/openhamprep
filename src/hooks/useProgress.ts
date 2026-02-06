@@ -7,6 +7,7 @@ import { useCallback, useRef } from 'react';
 import { recalculateReadiness } from '@/hooks/useReadinessScore';
 import { recordQuestionAttempt, recordPracticeTestCompleted, recordTopicQuizCompleted } from '@/lib/events';
 import { incrementDailyActivity } from '@/hooks/useDailyStreak';
+import { trackPracticeTestCompleted as trackAmpTestCompleted, trackQuestionAnswered, trackQuizCompleted } from '@/lib/amplitude';
 
 /** Number of questions to batch before triggering a readiness recalculation */
 const RECALC_QUESTION_THRESHOLD = 10;
@@ -241,6 +242,15 @@ export function useProgress() {
       });
     }
 
+    // Track in Amplitude
+    trackAmpTestCompleted({
+      score: correctCount,
+      total_questions: totalQuestions,
+      percentage,
+      passed,
+      test_type: testType,
+    });
+
     // Track daily activity for streaks
     // Invalidate streak cache only after successful increment to avoid stale data race
     incrementDailyActivity(user.id, {
@@ -309,6 +319,13 @@ export function useProgress() {
         is_correct: selectedAnswer === question.correctAnswer
       });
     }
+
+    // Track in Amplitude
+    trackQuestionAnswered({
+      question_id: question.id,
+      is_correct: selectedAnswer === question.correctAnswer,
+      attempt_type: attemptType,
+    });
 
     // Track daily activity for streaks
     // Invalidate streak cache only after successful increment to avoid stale data race
@@ -403,6 +420,15 @@ export function useProgress() {
         attempt_type: attemptType
       });
     }
+
+    // Track in Amplitude
+    trackQuizCompleted({
+      total_questions: attempts.length,
+      correct_count: correctCount,
+      percentage,
+      passed,
+      attempt_type: attemptType,
+    });
 
     // Track daily activity for streaks
     // Invalidate streak cache only after successful increment to avoid stale data race

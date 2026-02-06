@@ -39,3 +39,22 @@ vi.mock('@/hooks/usePendo', () => ({
 vi.mock('@/hooks/useAmplitude', () => ({
   AmplitudeProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
+
+// Mock Amplitude tracking utility - all tracking functions are no-ops in tests
+vi.mock('@/lib/amplitude', () => ({
+  trackSignUp: vi.fn(),
+  trackSignIn: vi.fn(),
+  trackSignOut: vi.fn(),
+  trackPracticeTestStarted: vi.fn(),
+  trackPracticeTestCompleted: vi.fn(),
+  trackQuestionAnswered: vi.fn(),
+  trackQuizStarted: vi.fn(),
+  trackQuizCompleted: vi.fn(),
+  trackLicenseTypeChanged: vi.fn(),
+  trackStudyModeSelected: vi.fn(),
+  trackBookmarkAdded: vi.fn(),
+  trackBookmarkRemoved: vi.fn(),
+  trackTopicViewed: vi.fn(),
+  trackLessonViewed: vi.fn(),
+  trackGlossarySearched: vi.fn(),
+}));

@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TestType, testConfig } from "@/types/navigation";
+import { trackPracticeTestStarted } from "@/lib/amplitude";
 import { PageContainer } from "@/components/ui/page-container";
 import { supabase } from "@/integrations/supabase/client";
 interface PracticeTestProps {
@@ -159,6 +160,7 @@ export function PracticeTest({
     const shuffledQuestions = shuffleArray([...allQuestions]).slice(0, questionCount);
     setQuestions(shuffledQuestions);
     setHasStarted(true);
+    trackPracticeTestStarted({ test_type: testType, question_count: questionCount });
   };
 
   if (isLoading) {

@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { trackSignUp, trackSignIn } from '@/lib/amplitude';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -107,6 +108,7 @@ export default function Auth() {
             setFormError(error.message);
           }
         } else {
+          trackSignIn('email');
           toast.success('Welcome back!');
           // If there's a returnTo URL (e.g., from OAuth consent flow), redirect there
           navigate(returnTo || '/');
@@ -120,6 +122,7 @@ export default function Auth() {
             setFormError(error.message);
           }
         } else {
+          trackSignUp();
           setShowEmailConfirmation(true);
         }
       }

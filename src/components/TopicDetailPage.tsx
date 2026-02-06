@@ -19,8 +19,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ArrowLeft, FileText, PlayCircle, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { trackTopicViewed, trackQuizStarted } from "@/lib/amplitude";
 import { motion } from "framer-motion";
 import { PageContainer } from "@/components/ui/page-container";
 import { TOPIC_QUIZ_PASSING_THRESHOLD } from "@/types/navigation";
@@ -39,6 +40,11 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   const [activeHeadingId, setActiveHeadingId] = useState<string>();
   const [isQuizOpen, setIsQuizOpen] = useState(false);
 
+  // Track topic view in Amplitude when slug changes
+  useEffect(() => {
+    trackTopicViewed(slug);
+  }, [slug]);
+
   const questionCount = topicQuestions?.length || 0;
   const isCompleted = useTopicCompleted(topic?.id);
 
@@ -54,6 +60,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
 
   const handleStartQuiz = () => {
     setIsQuizOpen(true);
+    trackQuizStarted({ topic_slug: slug, question_count: questionCount });
   };
 
   const handleQuizComplete = (passed: boolean, score: number, totalQuestions: number) => {

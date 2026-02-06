@@ -41,6 +41,7 @@ import { LessonGallery } from '@/components/LessonGallery';
 import { LessonDetailPage } from '@/components/LessonDetailPage';
 import { HamRadioToolsGallery } from '@/components/HamRadioToolsGallery';
 import { TestType, testTypes, View } from '@/types/navigation';
+import { trackLicenseTypeChanged, trackStudyModeSelected } from '@/lib/amplitude';
 export default function Dashboard() {
   const {
     user,
@@ -114,6 +115,15 @@ export default function Dashboard() {
       setSearchParams({}, { replace: true });
     } else {
       setSearchParams({ view }, { replace: true });
+    }
+  };
+
+  // Wrap test type changes to track in Amplitude
+  const handleTestChange = (newType: TestType) => {
+    const previousType = selectedTest;
+    setSelectedTest(newType);
+    if (newType !== previousType) {
+      trackLicenseTypeChanged({ new_type: newType, previous_type: previousType });
     }
   };
   useEffect(() => {
@@ -263,13 +273,24 @@ export default function Dashboard() {
     }
   }, [readinessData, selectedTest, queryClient, user?.id]);
 
-  // Handle view changes with test-in-progress check
+  // Study views that represent user-initiated navigation worth tracking
+  const studyViews: View[] = [
+    'practice-test', 'random-practice', 'weak-questions', 'bookmarks',
+    'subelement-practice', 'chapter-practice', 'glossary', 'glossary-flashcards',
+    'topics', 'lessons', 'find-test-site', 'tools',
+  ];
+
+  // Handle view changes with test-in-progress check (user-initiated from sidebar/buttons)
   const handleViewChange = (view: typeof currentView) => {
     if (testInProgress && view !== 'practice-test') {
       setPendingView(view);
       setShowNavigationWarning(true);
     } else {
       changeView(view);
+    }
+    // Track user-initiated study mode navigation in Amplitude
+    if (studyViews.includes(view)) {
+      trackStudyModeSelected(view);
     }
   };
   const handleConfirmNavigation = () => {
@@ -517,7 +538,7 @@ export default function Dashboard() {
       queryKey: ['weekly-goals', user.id]
     })} />}
 
-      <AppLayout currentView={currentView} onViewChange={handleViewChange} selectedTest={selectedTest} onTestChange={setSelectedTest} onSearch={openSearch}>
+      <AppLayout currentView={currentView} onViewChange={handleViewChange} selectedTest={selectedTest} onTestChange={handleTestChange} onSearch={openSearch}>
         {renderContent()}
       </AppLayout>
     </>;
