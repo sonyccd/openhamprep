@@ -116,15 +116,6 @@ export default function Dashboard() {
     } else {
       setSearchParams({ view }, { replace: true });
     }
-    // Track study-mode navigation in Amplitude (skip utility views)
-    const studyViews: View[] = [
-      'practice-test', 'random-practice', 'weak-questions', 'bookmarks',
-      'subelement-practice', 'chapter-practice', 'glossary', 'glossary-flashcards',
-      'topics', 'lessons', 'find-test-site', 'tools',
-    ];
-    if (studyViews.includes(view)) {
-      trackStudyModeSelected(view);
-    }
   };
 
   // Wrap test type changes to track in Amplitude
@@ -282,13 +273,24 @@ export default function Dashboard() {
     }
   }, [readinessData, selectedTest, queryClient, user?.id]);
 
-  // Handle view changes with test-in-progress check
+  // Study views that represent user-initiated navigation worth tracking
+  const studyViews: View[] = [
+    'practice-test', 'random-practice', 'weak-questions', 'bookmarks',
+    'subelement-practice', 'chapter-practice', 'glossary', 'glossary-flashcards',
+    'topics', 'lessons', 'find-test-site', 'tools',
+  ];
+
+  // Handle view changes with test-in-progress check (user-initiated from sidebar/buttons)
   const handleViewChange = (view: typeof currentView) => {
     if (testInProgress && view !== 'practice-test') {
       setPendingView(view);
       setShowNavigationWarning(true);
     } else {
       changeView(view);
+    }
+    // Track user-initiated study mode navigation in Amplitude
+    if (studyViews.includes(view)) {
+      trackStudyModeSelected(view);
     }
   };
   const handleConfirmNavigation = () => {

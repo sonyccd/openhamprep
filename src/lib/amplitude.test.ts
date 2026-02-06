@@ -22,6 +22,7 @@ import {
   trackPracticeTestStarted,
   trackPracticeTestCompleted,
   trackQuestionAnswered,
+  trackQuizStarted,
   trackQuizCompleted,
   trackLicenseTypeChanged,
   trackStudyModeSelected,
@@ -86,6 +87,14 @@ describe('Amplitude tracking utility', () => {
       };
       trackQuestionAnswered(props);
       expect(mockTrack).toHaveBeenCalledWith('question_answered', props);
+    });
+
+    it('tracks quiz_started', () => {
+      trackQuizStarted({ topic_slug: 'ohms-law', question_count: 5 });
+      expect(mockTrack).toHaveBeenCalledWith('quiz_started', {
+        topic_slug: 'ohms-law',
+        question_count: 5,
+      });
     });
 
     it('tracks quiz_completed', () => {

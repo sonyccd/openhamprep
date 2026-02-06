@@ -21,7 +21,7 @@ import {
 import { ArrowLeft, FileText, PlayCircle, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { trackTopicViewed } from "@/lib/amplitude";
+import { trackTopicViewed, trackQuizStarted } from "@/lib/amplitude";
 import { motion } from "framer-motion";
 import { PageContainer } from "@/components/ui/page-container";
 import { TOPIC_QUIZ_PASSING_THRESHOLD } from "@/types/navigation";
@@ -60,6 +60,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
 
   const handleStartQuiz = () => {
     setIsQuizOpen(true);
+    trackQuizStarted({ topic_slug: slug, question_count: questionCount });
   };
 
   const handleQuizComplete = (passed: boolean, score: number, totalQuestions: number) => {

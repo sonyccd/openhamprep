@@ -48,6 +48,7 @@ vi.mock('@/lib/amplitude', () => ({
   trackPracticeTestStarted: vi.fn(),
   trackPracticeTestCompleted: vi.fn(),
   trackQuestionAnswered: vi.fn(),
+  trackQuizStarted: vi.fn(),
   trackQuizCompleted: vi.fn(),
   trackLicenseTypeChanged: vi.fn(),
   trackStudyModeSelected: vi.fn(),

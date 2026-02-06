@@ -7,6 +7,7 @@
  */
 
 import * as amplitude from '@amplitude/analytics-browser';
+import type { TestType } from '@/types/navigation';
 
 const AMPLITUDE_API_KEY = import.meta.env.VITE_AMPLITUDE_API_KEY || '';
 
@@ -25,7 +26,7 @@ function safeTrack(eventName: string, properties?: Record<string, unknown>): voi
 // ── Event property interfaces ────────────────────────────────────────
 
 export interface PracticeTestStartedProps {
-  test_type: string;
+  test_type: TestType;
   question_count: number;
 }
 
@@ -34,7 +35,12 @@ export interface PracticeTestCompletedProps {
   total_questions: number;
   percentage: number;
   passed: boolean;
-  test_type: string;
+  test_type: TestType;
+}
+
+export interface QuizStartedProps {
+  topic_slug: string;
+  question_count: number;
 }
 
 export interface QuestionAnsweredProps {
@@ -82,6 +88,10 @@ export function trackPracticeTestCompleted(props: PracticeTestCompletedProps): v
 
 export function trackQuestionAnswered(props: QuestionAnsweredProps): void {
   safeTrack('question_answered', props);
+}
+
+export function trackQuizStarted(props: QuizStartedProps): void {
+  safeTrack('quiz_started', props);
 }
 
 export function trackQuizCompleted(props: QuizCompletedProps): void {
