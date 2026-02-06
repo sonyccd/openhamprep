@@ -5,11 +5,22 @@ import { render } from '@testing-library/react';
 vi.unmock('@/hooks/useAmplitude');
 
 // vi.hoisted runs before imports — set env var and create mock fns
-const { mockSetUserId, mockReset } = vi.hoisted(() => {
+const { mockSetUserId, mockReset, mockIdentify, MockIdentify } = vi.hoisted(() => {
   import.meta.env.VITE_AMPLITUDE_API_KEY = 'test-api-key';
+
+  // Mock Identify class that records .set() calls
+  class _MockIdentify {
+    _properties: Record<string, unknown> = {};
+    set(key: string, value: unknown) {
+      this._properties[key] = value;
+    }
+  }
+
   return {
     mockSetUserId: vi.fn(),
     mockReset: vi.fn(),
+    mockIdentify: vi.fn(),
+    MockIdentify: _MockIdentify,
   };
 });
 
@@ -17,6 +28,8 @@ const { mockSetUserId, mockReset } = vi.hoisted(() => {
 vi.mock('@amplitude/analytics-browser', () => ({
   setUserId: mockSetUserId,
   reset: mockReset,
+  identify: mockIdentify,
+  Identify: MockIdentify,
 }));
 
 // Mock useAuth with controllable user state
@@ -142,6 +155,33 @@ describe('AmplitudeProvider', () => {
 
       expect(mockSetUserId).toHaveBeenCalledWith('user-xyz-456');
       expect(mockSetUserId).toHaveBeenCalledTimes(2);
+    });
+
+    it('calls identify with email when user has email', () => {
+      mockUser = { id: 'user-abc-123', email: 'test@example.com' };
+
+      render(
+        <AmplitudeProvider>
+          <div />
+        </AmplitudeProvider>
+      );
+
+      expect(mockIdentify).toHaveBeenCalledTimes(1);
+      const identifyArg = mockIdentify.mock.calls[0][0];
+      expect(identifyArg._properties).toEqual({ email: 'test@example.com' });
+    });
+
+    it('does not call identify when user has no email', () => {
+      mockUser = { id: 'user-abc-123' };
+
+      render(
+        <AmplitudeProvider>
+          <div />
+        </AmplitudeProvider>
+      );
+
+      expect(mockSetUserId).toHaveBeenCalledWith('user-abc-123');
+      expect(mockIdentify).not.toHaveBeenCalled();
     });
 
     it('does not call reset when no user was previously identified', () => {

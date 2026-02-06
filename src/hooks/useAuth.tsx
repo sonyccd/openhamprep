@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { trackSignOut } from '@/lib/amplitude';
 
 interface AuthContextType {
   user: User | null;
@@ -116,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    trackSignOut();
     await supabase.auth.signOut();
   };
 

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { trackBookmarkAdded, trackBookmarkRemoved } from '@/lib/amplitude';
 
 export function useBookmarks() {
   const { user } = useAuth();
@@ -44,9 +45,10 @@ export function useBookmarks() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] });
       toast.success('Question bookmarked!');
+      trackBookmarkAdded(variables.questionId);
     },
     onError: (error) => {
       toast.error('Failed to bookmark question');
@@ -67,9 +69,10 @@ export function useBookmarks() {
       if (error) throw error;
       return questionId;
     },
-    onSuccess: () => {
+    onSuccess: (_data, questionId) => {
       queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] });
       toast.success('Bookmark removed');
+      trackBookmarkRemoved(questionId);
     },
     onError: (error) => {
       toast.error('Failed to remove bookmark');

@@ -6,7 +6,9 @@ import { CircularProgress } from "@/components/ui/circular-progress";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Route, CheckCircle2 } from "lucide-react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
+import { trackLessonViewed } from "@/lib/amplitude";
 import { PageContainer } from "@/components/ui/page-container";
 
 interface LessonDetailPageProps {
@@ -18,6 +20,11 @@ export function LessonDetailPage({ slug, onBack }: LessonDetailPageProps) {
   const { data: lesson, isLoading, error } = useLesson(slug);
   const { data: topicProgress } = useTopicProgress();
   const { navigateToTopic } = useAppNavigation();
+
+  // Track lesson view in Amplitude when slug changes
+  useEffect(() => {
+    trackLessonViewed(slug);
+  }, [slug]);
 
   // Calculate which topics are completed
   const getTopicStatus = (topicId: string) => {

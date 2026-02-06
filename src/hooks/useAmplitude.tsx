@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as amplitude from '@amplitude/analytics-browser';
+import { Identify } from '@amplitude/analytics-browser';
 import { useAuth } from './useAuth';
 
 // Use environment variable - gracefully disabled if not set
@@ -24,6 +25,12 @@ export function AmplitudeProvider({ children }: { children: React.ReactNode }) {
         // Only set user ID if it changed (avoids redundant calls)
         if (identifiedUserRef.current !== user.id) {
           amplitude.setUserId(user.id);
+          // Set email as a user property for Amplitude user profiles
+          if (user.email) {
+            const identifyObj = new Identify();
+            identifyObj.set('email', user.email);
+            amplitude.identify(identifyObj);
+          }
           identifiedUserRef.current = user.id;
         }
       } else if (!user && identifiedUserRef.current) {

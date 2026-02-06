@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageContainer } from "@/components/ui/page-container";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { motion } from "framer-motion";
+import { trackGlossarySearched } from "@/lib/amplitude";
 
 export function Glossary() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,6 +55,16 @@ export function Glossary() {
     if (b === '#') return -1;
     return a.localeCompare(b);
   });
+
+  // Track glossary searches in Amplitude (debounced 1s)
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+    const timer = setTimeout(() => {
+      trackGlossarySearched(trimmed);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Handle scroll-to-term when navigated from search
   useEffect(() => {

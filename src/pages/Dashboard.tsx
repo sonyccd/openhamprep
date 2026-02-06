@@ -41,6 +41,7 @@ import { LessonGallery } from '@/components/LessonGallery';
 import { LessonDetailPage } from '@/components/LessonDetailPage';
 import { HamRadioToolsGallery } from '@/components/HamRadioToolsGallery';
 import { TestType, testTypes, View } from '@/types/navigation';
+import { trackLicenseTypeChanged, trackStudyModeSelected } from '@/lib/amplitude';
 export default function Dashboard() {
   const {
     user,
@@ -114,6 +115,24 @@ export default function Dashboard() {
       setSearchParams({}, { replace: true });
     } else {
       setSearchParams({ view }, { replace: true });
+    }
+    // Track study-mode navigation in Amplitude (skip utility views)
+    const studyViews: View[] = [
+      'practice-test', 'random-practice', 'weak-questions', 'bookmarks',
+      'subelement-practice', 'chapter-practice', 'glossary', 'glossary-flashcards',
+      'topics', 'lessons', 'find-test-site', 'tools',
+    ];
+    if (studyViews.includes(view)) {
+      trackStudyModeSelected(view);
+    }
+  };
+
+  // Wrap test type changes to track in Amplitude
+  const handleTestChange = (newType: TestType) => {
+    const previousType = selectedTest;
+    setSelectedTest(newType);
+    if (newType !== previousType) {
+      trackLicenseTypeChanged({ new_type: newType, previous_type: previousType });
     }
   };
   useEffect(() => {
@@ -517,7 +536,7 @@ export default function Dashboard() {
       queryKey: ['weekly-goals', user.id]
     })} />}
 
-      <AppLayout currentView={currentView} onViewChange={handleViewChange} selectedTest={selectedTest} onTestChange={setSelectedTest} onSearch={openSearch}>
+      <AppLayout currentView={currentView} onViewChange={handleViewChange} selectedTest={selectedTest} onTestChange={handleTestChange} onSearch={openSearch}>
         {renderContent()}
       </AppLayout>
     </>;
