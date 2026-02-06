@@ -134,6 +134,35 @@ describe('AmplitudeProvider', () => {
       expect(mockSetUserId).toHaveBeenCalledTimes(1);
     });
 
+    it('identifies email when it arrives after initial login', () => {
+      // User logs in without email initially (e.g., profile fetch pending)
+      mockUser = { id: 'user-abc-123' };
+
+      const { rerender } = render(
+        <AmplitudeProvider>
+          <div />
+        </AmplitudeProvider>
+      );
+
+      expect(mockSetUserId).toHaveBeenCalledWith('user-abc-123');
+      expect(mockIdentify).not.toHaveBeenCalled();
+
+      // Email arrives in a later render (e.g., profile fetch completes)
+      mockUser = { id: 'user-abc-123', email: 'late@example.com' };
+      rerender(
+        <AmplitudeProvider>
+          <div />
+        </AmplitudeProvider>
+      );
+
+      // setUserId should NOT be called again (same ID)
+      expect(mockSetUserId).toHaveBeenCalledTimes(1);
+      // But identify should fire for the late-arriving email
+      expect(mockIdentify).toHaveBeenCalledTimes(1);
+      const identifyArg = mockIdentify.mock.calls[0][0];
+      expect(identifyArg._properties).toEqual({ email: 'late@example.com' });
+    });
+
     it('calls setUserId with new ID when user switches accounts', () => {
       mockUser = { id: 'user-abc-123' };
 

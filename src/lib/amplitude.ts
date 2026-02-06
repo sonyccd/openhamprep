@@ -24,6 +24,8 @@ function safeTrack(eventName: string, properties?: Record<string, unknown>): voi
 }
 
 // ── Event property interfaces ────────────────────────────────────────
+// Convention: event names and property keys use snake_case to match
+// Amplitude's standard naming and keep the dashboard consistent.
 
 export interface PracticeTestStartedProps {
   test_type: TestType;
