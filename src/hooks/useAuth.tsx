@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { trackSignOut } from '@/lib/amplitude';
+import { trackSignIn, trackSignOut } from '@/lib/amplitude';
 
 interface AuthContextType {
   user: User | null;
@@ -39,6 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
         
+        // Track Google OAuth sign-in after the redirect completes
+        if (hasAuthCallback && event === 'SIGNED_IN' && session?.user?.app_metadata?.provider === 'google') {
+          trackSignIn('google');
+        }
+
         // Clear the hash from URL after processing auth callback
         if (event === 'SIGNED_IN' && window.location.hash) {
           window.history.replaceState(null, '', window.location.pathname);

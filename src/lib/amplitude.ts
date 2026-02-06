@@ -23,6 +23,17 @@ function safeTrack(eventName: string, properties?: Record<string, unknown>): voi
   }
 }
 
+// ── Types ────────────────────────────────────────────────────────────
+
+/** Mirrors the attempt_type values used in the question_attempts table. */
+export type AttemptType =
+  | 'practice_test'
+  | 'random_practice'
+  | 'subelement_practice'
+  | 'chapter_practice'
+  | 'weak_questions'
+  | 'topic_quiz';
+
 // ── Event property interfaces ────────────────────────────────────────
 // Convention: event names and property keys use snake_case to match
 // Amplitude's standard naming and keep the dashboard consistent.
@@ -48,7 +59,7 @@ export interface QuizStartedProps {
 export interface QuestionAnsweredProps {
   question_id: string;
   is_correct: boolean;
-  attempt_type: string;
+  attempt_type: AttemptType;
 }
 
 export interface QuizCompletedProps {
@@ -56,7 +67,7 @@ export interface QuizCompletedProps {
   correct_count: number;
   percentage: number;
   passed: boolean;
-  attempt_type: string;
+  attempt_type: AttemptType;
 }
 
 export interface LicenseTypeChangedProps {

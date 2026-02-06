@@ -56,10 +56,10 @@ export function Glossary() {
     return a.localeCompare(b);
   });
 
-  // Track glossary searches in Amplitude (debounced 1s)
+  // Track glossary searches in Amplitude (debounced 1s, min 3 chars)
   useEffect(() => {
     const trimmed = searchQuery.trim();
-    if (!trimmed) return;
+    if (trimmed.length < 3) return;
     const timer = setTimeout(() => {
       trackGlossarySearched(trimmed);
     }, 1000);

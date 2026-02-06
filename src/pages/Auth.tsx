@@ -159,7 +159,6 @@ export default function Auth() {
   };
 
   const handleGoogleSignIn = async () => {
-    trackSignIn('google');
     setIsSubmitting(true);
     setFormError(null);
 
