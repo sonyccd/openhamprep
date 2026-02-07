@@ -18,7 +18,7 @@ import {
 Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: getCorsHeaders() });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   const requestId = crypto.randomUUID().slice(0, 8);
@@ -33,7 +33,7 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify(skippedResponse(validation.reason)),
         {
-          headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -47,7 +47,7 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify(skippedResponse("pendo_key_not_configured")),
         {
-          headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -73,14 +73,14 @@ Deno.serve(async (req: Request) => {
         JSON.stringify(errorResponse("pendo_api_error", errorText, response.status)),
         {
           status: 502, // Bad Gateway - upstream service failed
-          headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
 
     console.log(`[${requestId}] User signup tracked: ${userId}`);
     return new Response(JSON.stringify(successResponse(userId)), {
-      headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error(`[${requestId}] Error:`, error);
@@ -90,7 +90,7 @@ Deno.serve(async (req: Request) => {
       ),
       {
         status: 500,
-        headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }

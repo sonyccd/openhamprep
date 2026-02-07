@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { queryKeys } from '@/services/queryKeys';
 
 /**
  * Overview stats from the discourse_sync_overview view
@@ -69,7 +70,7 @@ export function useDiscourseSyncStatus() {
    * Query for overview stats using the database view
    */
   const overview = useQuery({
-    queryKey: ['discourse-sync-overview'],
+    queryKey: queryKeys.discourse.overview(),
     queryFn: async (): Promise<SyncOverviewRow[]> => {
       const { data, error } = await supabase
         .rpc('get_discourse_sync_overview');
@@ -117,7 +118,7 @@ export function useDiscourseSyncStatus() {
       return response.data as VerifyResult;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['discourse-sync-overview'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.discourse.overview() });
     },
   });
 
@@ -134,10 +135,10 @@ export function useDiscourseSyncStatus() {
       return response.data as VerifyResult;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['discourse-sync-overview'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-questions-full'] });
-      queryClient.invalidateQueries({ queryKey: ['questions'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.discourse.overview() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.questions.admin() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.questions.adminFull() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.questions.root });
     },
   });
 
@@ -145,7 +146,7 @@ export function useDiscourseSyncStatus() {
    * Refresh the overview data
    */
   const refreshOverview = () => {
-    queryClient.invalidateQueries({ queryKey: ['discourse-sync-overview'] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.discourse.overview() });
   };
 
   return {

@@ -110,14 +110,76 @@ export function getCategorySlug(categoryName: string): string {
 }
 
 /**
- * Get CORS headers for edge functions.
- * Uses APP_DOMAIN env var if available, otherwise allows all origins.
- * Set APP_DOMAIN in production (e.g., 'https://app.openhamprep.com') for improved security.
+ * Check whether an origin is allowed for CORS.
+ * Allowed patterns (when APP_DOMAIN is set):
+ * - Exact match against APP_DOMAIN (e.g., https://app.openhamprep.com)
+ * - Vercel preview deployments: https://*.vercel.app
+ * - Local development: http://localhost or http://localhost:PORT
  */
-export function getCorsHeaders(): Record<string, string> {
-  return {
-    'Access-Control-Allow-Origin': Deno.env.get('APP_DOMAIN') || '*',
+export function isAllowedOrigin(origin: string, appDomain?: string): boolean {
+  if (!appDomain) return true;
+
+  // Exact match with configured production domain
+  if (origin === appDomain) return true;
+
+  // Vercel preview deployments (https only, must have subdomain)
+  if (/^https:\/\/[a-z0-9][\w.-]+\.vercel\.app$/i.test(origin)) return true;
+
+  // Local development (http://localhost with optional port)
+  if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return true;
+
+  return false;
+}
+
+/**
+ * Get CORS headers for edge functions.
+ *
+ * When a Request is provided, reads the Origin header and validates it against
+ * allowed patterns. Echoes back the origin if allowed (required by CORS spec
+ * for multi-origin support). Includes Vary: Origin for correct CDN caching.
+ *
+ * Without a Request (legacy), returns APP_DOMAIN or '*' directly.
+ */
+export function getCorsHeaders(req?: Request): Record<string, string> {
+  const appDomain = Deno.env.get('APP_DOMAIN');
+
+  const baseHeaders: Record<string, string> = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+
+  // Legacy path: no request object (backward compatible)
+  if (!req) {
+    return {
+      ...baseHeaders,
+      'Access-Control-Allow-Origin': appDomain || '*',
+    };
+  }
+
+  // No APP_DOMAIN configured: allow all origins
+  if (!appDomain) {
+    return {
+      ...baseHeaders,
+      'Access-Control-Allow-Origin': '*',
+    };
+  }
+
+  // Dynamic origin validation
+  const origin = req.headers.get('Origin');
+
+  if (origin && isAllowedOrigin(origin, appDomain)) {
+    return {
+      ...baseHeaders,
+      'Access-Control-Allow-Origin': origin,
+      'Vary': 'Origin',
+    };
+  }
+
+  // Origin not allowed or missing: omit Access-Control-Allow-Origin
+  // The browser will block the request (CORS failure)
+  return {
+    ...baseHeaders,
+    'Vary': 'Origin',
   };
 }
 

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TestType } from "@/types/navigation";
+import { queryKeys } from "@/services/queryKeys";
 
 export interface TopicQuestion {
   id: string;
@@ -64,7 +65,7 @@ const testTypeLicenseMap: Record<TestType, string> = {
  */
 export function useTopics(testType?: TestType) {
   return useQuery({
-    queryKey: ['topics', testType],
+    queryKey: queryKeys.topics.all(testType),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('topics')
@@ -99,7 +100,7 @@ export function useTopics(testType?: TestType) {
  */
 export function useAdminTopics() {
   return useQuery({
-    queryKey: ['admin-topics'],
+    queryKey: queryKeys.topics.admin(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('topics')
@@ -122,7 +123,7 @@ export function useAdminTopics() {
  */
 export function useTopic(slug: string | undefined) {
   return useQuery({
-    queryKey: ['topic', slug],
+    queryKey: queryKeys.topics.detail(slug ?? ''),
     queryFn: async () => {
       if (!slug) throw new Error('Topic slug is required');
 
@@ -151,7 +152,7 @@ export function useTopic(slug: string | undefined) {
  */
 export function useTopicContent(contentPath: string | null | undefined) {
   return useQuery({
-    queryKey: ['topic-content', contentPath],
+    queryKey: queryKeys.topics.content(contentPath),
     queryFn: async () => {
       if (!contentPath) return null;
 
@@ -181,7 +182,7 @@ export function useTopicContent(contentPath: string | null | undefined) {
  */
 export function useTopicProgress() {
   return useQuery({
-    queryKey: ['topic-progress'],
+    queryKey: queryKeys.topics.progress(),
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
@@ -252,7 +253,7 @@ export function useToggleTopicComplete() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['topic-progress'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.progress() });
     },
   });
 }
@@ -262,7 +263,7 @@ export function useToggleTopicComplete() {
  */
 export function useTopicQuestions(topicId: string | undefined) {
   return useQuery({
-    queryKey: ['topic-questions', topicId],
+    queryKey: queryKeys.topics.questions(topicId ?? ''),
     queryFn: async () => {
       if (!topicId) throw new Error('Topic ID is required');
 

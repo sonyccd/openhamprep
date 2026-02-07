@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { queryKeys } from '@/services/queryKeys';
 
 export interface ExamSession {
   id: string;
@@ -94,7 +95,7 @@ export const useExamSessions = (filters?: {
   const pageSize = filters?.pageSize ?? 50;
 
   return useQuery({
-    queryKey: ['exam-sessions', filters],
+    queryKey: queryKeys.examSessions.all(filters),
     queryFn: async () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
@@ -145,7 +146,7 @@ export const useExamSessions = (filters?: {
 // Hook to get total count of sessions (for admin stats)
 export const useExamSessionsCount = () => {
   return useQuery({
-    queryKey: ['exam-sessions-count'],
+    queryKey: queryKeys.examSessions.count(),
     queryFn: async () => {
       const { count, error } = await supabase
         .from('exam_sessions')
@@ -161,7 +162,7 @@ export const useExamSessionsCount = () => {
 // Hook to get the last updated timestamp for exam sessions
 export const useExamSessionsLastUpdated = () => {
   return useQuery({
-    queryKey: ['exam-sessions-last-updated'],
+    queryKey: queryKeys.examSessions.lastUpdated(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('exam_sessions')
@@ -179,7 +180,7 @@ export const useExamSessionsLastUpdated = () => {
 
 export const useUserTargetExam = (userId?: string) => {
   return useQuery({
-    queryKey: ['user-target-exam', userId],
+    queryKey: queryKeys.targetExam.byUser(userId ?? ''),
     queryFn: async () => {
       if (!userId) return null;
       
@@ -268,7 +269,7 @@ export const useSaveTargetExam = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-target-exam'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.targetExam.root() });
       queryClient.invalidateQueries({ queryKey: ['weekly-goals'] });
       toast.success('Target exam date saved! Weekly goals updated.');
     },
@@ -292,7 +293,7 @@ export const useRemoveTargetExam = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-target-exam'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.targetExam.root() });
       toast.success('Target exam date removed');
     },
     onError: (error) => {
@@ -345,8 +346,8 @@ export const useBulkImportExamSessions = () => {
       };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['exam-sessions'] });
-      queryClient.invalidateQueries({ queryKey: ['user-target-exam'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.examSessions.all() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.targetExam.root() });
 
       let message = `Imported ${data.count} exam sessions`;
       if (data.convertedTargets > 0) {
@@ -370,7 +371,7 @@ export const useBulkImportExamSessions = () => {
  */
 export const useExamAttempts = (userId?: string) => {
   return useQuery({
-    queryKey: ['exam-attempts', userId],
+    queryKey: queryKeys.examAttempts.byUser(userId ?? ''),
     queryFn: async () => {
       if (!userId) return [];
 
@@ -430,7 +431,7 @@ export const useRecordExamAttempt = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['exam-attempts'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.examAttempts.root() });
     },
     onError: (error) => {
       console.error('Error recording exam attempt:', error);
@@ -466,7 +467,7 @@ export const useUpdateExamAttemptOutcome = () => {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['exam-attempts'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.examAttempts.root() });
       if (variables.outcome === 'passed') {
         toast.success('Congratulations on passing your exam!');
       } else if (variables.outcome === 'failed') {
@@ -489,7 +490,7 @@ export const useUpdateExamAttemptOutcome = () => {
  */
 export const useSessionsNeedingGeocodeCount = () => {
   return useQuery({
-    queryKey: ['sessions-needing-geocode-count'],
+    queryKey: queryKeys.examSessions.needingGeocodeCount(),
     queryFn: async () => {
       const { count, error } = await supabase
         .from('exam_sessions')
@@ -535,7 +536,7 @@ export const useSessionsNeedingGeocode = (options?: {
   includeAll?: boolean;
 }) => {
   return useQuery({
-    queryKey: ['sessions-needing-geocode', { includeAll: options?.includeAll ?? false }],
+    queryKey: queryKeys.examSessions.needingGeocode(options?.includeAll ?? false),
     queryFn: async () => {
       const allSessions: ExamSession[] = [];
       let page = 0;

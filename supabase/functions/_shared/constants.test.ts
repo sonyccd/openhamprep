@@ -11,6 +11,8 @@ import {
   getCategorySlug,
   decodeJwtPayload,
   isServiceRoleToken,
+  isAllowedOrigin,
+  getCorsHeaders,
   CATEGORY_MAP,
   QUESTION_ID_PATTERN,
   UUID_V4_PATTERN,
@@ -253,4 +255,165 @@ Deno.test("UUID_V4_PATTERN - requires version 4 digit", () => {
   assertEquals(UUID_V4_PATTERN.test("550e8400-e29b-41d4-a716-446655440000"), true);
   assertEquals(UUID_V4_PATTERN.test("550e8400-e29b-11d4-a716-446655440000"), false);
   assertEquals(UUID_V4_PATTERN.test("550e8400-e29b-51d4-a716-446655440000"), false);
+});
+
+// ============================================================
+// isAllowedOrigin Tests
+// ============================================================
+
+Deno.test("isAllowedOrigin - allows any origin when no appDomain", () => {
+  assertEquals(isAllowedOrigin("https://anything.example.com"), true);
+  assertEquals(isAllowedOrigin("https://evil.com"), true);
+});
+
+Deno.test("isAllowedOrigin - allows exact match with appDomain", () => {
+  assertEquals(isAllowedOrigin("https://app.openhamprep.com", "https://app.openhamprep.com"), true);
+});
+
+Deno.test("isAllowedOrigin - rejects non-matching origin", () => {
+  assertEquals(isAllowedOrigin("https://evil.com", "https://app.openhamprep.com"), false);
+});
+
+Deno.test("isAllowedOrigin - allows Vercel preview deployments (https)", () => {
+  assertEquals(
+    isAllowedOrigin("https://openhamprep-8w4txybzj-brad-bazemores-projects.vercel.app", "https://app.openhamprep.com"),
+    true,
+  );
+  assertEquals(
+    isAllowedOrigin("https://my-project-abc123.vercel.app", "https://app.openhamprep.com"),
+    true,
+  );
+});
+
+Deno.test("isAllowedOrigin - rejects http vercel.app (must be https)", () => {
+  assertEquals(
+    isAllowedOrigin("http://my-project.vercel.app", "https://app.openhamprep.com"),
+    false,
+  );
+});
+
+Deno.test("isAllowedOrigin - rejects bare vercel.app (no subdomain)", () => {
+  assertEquals(
+    isAllowedOrigin("https://vercel.app", "https://app.openhamprep.com"),
+    false,
+  );
+});
+
+Deno.test("isAllowedOrigin - allows localhost without port", () => {
+  assertEquals(isAllowedOrigin("http://localhost", "https://app.openhamprep.com"), true);
+});
+
+Deno.test("isAllowedOrigin - allows localhost with port", () => {
+  assertEquals(isAllowedOrigin("http://localhost:8080", "https://app.openhamprep.com"), true);
+  assertEquals(isAllowedOrigin("http://localhost:3000", "https://app.openhamprep.com"), true);
+  assertEquals(isAllowedOrigin("http://localhost:54321", "https://app.openhamprep.com"), true);
+});
+
+Deno.test("isAllowedOrigin - rejects https localhost", () => {
+  // Local dev servers use http, not https
+  assertEquals(isAllowedOrigin("https://localhost:8080", "https://app.openhamprep.com"), false);
+});
+
+// ============================================================
+// getCorsHeaders Tests
+// ============================================================
+
+Deno.test("getCorsHeaders - no APP_DOMAIN returns * regardless of request", () => {
+  Deno.env.delete("APP_DOMAIN");
+  const req = new Request("https://example.com", {
+    headers: { Origin: "https://anything.com" },
+  });
+  const headers = getCorsHeaders(req);
+  assertEquals(headers["Access-Control-Allow-Origin"], "*");
+});
+
+Deno.test("getCorsHeaders - no request (legacy) returns APP_DOMAIN directly", () => {
+  Deno.env.set("APP_DOMAIN", "https://app.openhamprep.com");
+  try {
+    const headers = getCorsHeaders();
+    assertEquals(headers["Access-Control-Allow-Origin"], "https://app.openhamprep.com");
+    // Legacy path doesn't set Vary since there's no dynamic origin selection
+    assertEquals(headers["Vary"], undefined);
+  } finally {
+    Deno.env.delete("APP_DOMAIN");
+  }
+});
+
+Deno.test("getCorsHeaders - production origin is echoed back with Vary", () => {
+  Deno.env.set("APP_DOMAIN", "https://app.openhamprep.com");
+  try {
+    const req = new Request("https://example.com", {
+      headers: { Origin: "https://app.openhamprep.com" },
+    });
+    const headers = getCorsHeaders(req);
+    assertEquals(headers["Access-Control-Allow-Origin"], "https://app.openhamprep.com");
+    assertEquals(headers["Vary"], "Origin");
+  } finally {
+    Deno.env.delete("APP_DOMAIN");
+  }
+});
+
+Deno.test("getCorsHeaders - Vercel preview origin is echoed back", () => {
+  Deno.env.set("APP_DOMAIN", "https://app.openhamprep.com");
+  try {
+    const previewOrigin = "https://openhamprep-abc123.vercel.app";
+    const req = new Request("https://example.com", {
+      headers: { Origin: previewOrigin },
+    });
+    const headers = getCorsHeaders(req);
+    assertEquals(headers["Access-Control-Allow-Origin"], previewOrigin);
+    assertEquals(headers["Vary"], "Origin");
+  } finally {
+    Deno.env.delete("APP_DOMAIN");
+  }
+});
+
+Deno.test("getCorsHeaders - localhost origin is echoed back", () => {
+  Deno.env.set("APP_DOMAIN", "https://app.openhamprep.com");
+  try {
+    const req = new Request("https://example.com", {
+      headers: { Origin: "http://localhost:8080" },
+    });
+    const headers = getCorsHeaders(req);
+    assertEquals(headers["Access-Control-Allow-Origin"], "http://localhost:8080");
+    assertEquals(headers["Vary"], "Origin");
+  } finally {
+    Deno.env.delete("APP_DOMAIN");
+  }
+});
+
+Deno.test("getCorsHeaders - disallowed origin omits Access-Control-Allow-Origin", () => {
+  Deno.env.set("APP_DOMAIN", "https://app.openhamprep.com");
+  try {
+    const req = new Request("https://example.com", {
+      headers: { Origin: "https://evil.com" },
+    });
+    const headers = getCorsHeaders(req);
+    assertEquals(headers["Access-Control-Allow-Origin"], undefined);
+    assertEquals(headers["Vary"], "Origin");
+  } finally {
+    Deno.env.delete("APP_DOMAIN");
+  }
+});
+
+Deno.test("getCorsHeaders - no Origin header omits Access-Control-Allow-Origin", () => {
+  Deno.env.set("APP_DOMAIN", "https://app.openhamprep.com");
+  try {
+    const req = new Request("https://example.com");
+    const headers = getCorsHeaders(req);
+    assertEquals(headers["Access-Control-Allow-Origin"], undefined);
+    assertEquals(headers["Vary"], "Origin");
+  } finally {
+    Deno.env.delete("APP_DOMAIN");
+  }
+});
+
+Deno.test("getCorsHeaders - includes Allow-Methods and Allow-Headers", () => {
+  Deno.env.delete("APP_DOMAIN");
+  const req = new Request("https://example.com", {
+    headers: { Origin: "https://anything.com" },
+  });
+  const headers = getCorsHeaders(req);
+  assertEquals(headers["Access-Control-Allow-Methods"], "POST, OPTIONS");
+  assertEquals(headers["Access-Control-Allow-Headers"], "authorization, x-client-info, apikey, content-type");
 });

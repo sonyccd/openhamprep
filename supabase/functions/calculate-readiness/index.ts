@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
 
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: getCorsHeaders() });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
@@ -60,7 +60,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "Missing authorization" }),
         {
           status: 401,
-          headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -82,7 +82,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "Unauthorized" }),
         {
           status: 401,
-          headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -96,7 +96,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "Invalid JSON body" }),
         {
           status: 400,
-          headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -111,7 +111,7 @@ Deno.serve(async (req: Request) => {
         }),
         {
           status: 400,
-          headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -139,7 +139,7 @@ Deno.serve(async (req: Request) => {
           config_version: existingCache.config_version,
         }),
         {
-          headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -245,7 +245,7 @@ Deno.serve(async (req: Request) => {
         config_version: config.version,
       }),
       {
-        headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   } catch (error) {
@@ -256,7 +256,7 @@ Deno.serve(async (req: Request) => {
       }),
       {
         status: 500,
-        headers: { ...getCorsHeaders(), "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }

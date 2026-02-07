@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { queryKeys } from "@/services/queryKeys";
 
 export interface GlossaryTerm {
   id: string;
@@ -9,7 +10,7 @@ export interface GlossaryTerm {
 
 export function useGlossaryTerms() {
   return useQuery({
-    queryKey: ['glossary-terms'],
+    queryKey: queryKeys.glossary.terms(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('glossary_terms')

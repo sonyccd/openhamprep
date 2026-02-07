@@ -8,6 +8,7 @@ import { recalculateReadiness } from '@/hooks/useReadinessScore';
 import { recordQuestionAttempt, recordPracticeTestCompleted, recordTopicQuizCompleted } from '@/lib/events';
 import { incrementDailyActivity } from '@/hooks/useDailyStreak';
 import { trackPracticeTestCompleted as trackAmpTestCompleted, trackQuestionAnswered, trackQuizCompleted } from '@/lib/amplitude';
+import { queryKeys } from '@/services/queryKeys';
 
 /** Number of questions to batch before triggering a readiness recalculation */
 const RECALC_QUESTION_THRESHOLD = 10;
@@ -73,10 +74,10 @@ export function useProgress() {
     // Invalidate all queries that depend on user progress data
     // Note: daily-streak is invalidated separately after successful activity increment
     // to avoid race conditions with the RPC call
-    queryClient.invalidateQueries({ queryKey: ['test-results', user.id] });
-    queryClient.invalidateQueries({ queryKey: ['question-attempts', user.id] });
-    queryClient.invalidateQueries({ queryKey: ['profile-stats', user.id] });
-    queryClient.invalidateQueries({ queryKey: ['weekly-goals', user.id] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.progress.testResults(user.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.progress.attempts(user.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.progress.profileStats(user.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.progress.weeklyGoals(user.id) });
   }, [queryClient, user]);
 
   /**
@@ -84,8 +85,8 @@ export function useProgress() {
    */
   const invalidateReadinessQueries = useCallback(() => {
     if (!user) return;
-    queryClient.invalidateQueries({ queryKey: ['readiness', user.id] });
-    queryClient.invalidateQueries({ queryKey: ['readiness-snapshots', user.id] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.readiness.byUser(user.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.readiness.snapshotsByUser(user.id) });
   }, [queryClient, user]);
 
   /**
@@ -260,7 +261,7 @@ export function useProgress() {
       testsPassed: passed ? 1 : 0,
     }).then(success => {
       if (success) {
-        queryClient.invalidateQueries({ queryKey: ['daily-streak', user.id] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.progress.streak(user.id) });
       }
     }).catch(err => console.error('Daily activity tracking failed:', err));
 
@@ -334,7 +335,7 @@ export function useProgress() {
       correct: selectedAnswer === question.correctAnswer ? 1 : 0,
     }).then(success => {
       if (success) {
-        queryClient.invalidateQueries({ queryKey: ['daily-streak', user.id] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.progress.streak(user.id) });
       }
     }).catch(err => console.error('Daily activity tracking failed:', err));
 
@@ -437,7 +438,7 @@ export function useProgress() {
       correct: correctCount,
     }).then(success => {
       if (success) {
-        queryClient.invalidateQueries({ queryKey: ['daily-streak', user.id] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.progress.streak(user.id) });
       }
     }).catch(err => console.error('Daily activity tracking failed:', err));
 

@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import type { EditHistoryEntry } from '@/components/admin/EditHistoryViewer';
 import type { Question, LinkData } from '@/components/admin/questions/types';
+import { queryKeys } from '@/services/queryKeys';
 
 type NewQuestionData = Omit<Question, 'edit_history'> & {
   links: LinkData[];
@@ -27,10 +28,10 @@ export function useQuestionMutations(testType: 'technician' | 'general' | 'extra
   const { user } = useAuth();
 
   const invalidateQueries = () => {
-    queryClient.invalidateQueries({ queryKey: ['admin-questions-full'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-stats-questions'] });
-    queryClient.invalidateQueries({ queryKey: ['questions'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-questions', testType] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.questions.adminFull() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.adminStats.questions() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.questions.root });
+    queryClient.invalidateQueries({ queryKey: queryKeys.questions.admin(testType) });
   };
 
   const addQuestion = useMutation({

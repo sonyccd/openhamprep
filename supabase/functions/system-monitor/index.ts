@@ -41,7 +41,7 @@ Deno.serve(async (req: Request) => {
 
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: getCorsHeaders() });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   const errors: string[] = [];
@@ -116,7 +116,7 @@ Deno.serve(async (req: Request) => {
         duration_ms: Date.now() - startTime,
       };
       await updateRunStatus("completed", emptyResponse);
-      return createResponse(emptyResponse);
+      return createResponse(emptyResponse, req);
     }
 
     // 2. Fetch Edge Function logs
@@ -188,7 +188,7 @@ Deno.serve(async (req: Request) => {
     );
 
     console.log(`[${requestId}] Completed in ${response.duration_ms}ms`);
-    return createResponse(response);
+    return createResponse(response, req);
 
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : "Unknown error";
@@ -217,7 +217,7 @@ Deno.serve(async (req: Request) => {
         error: errMsg,
         duration_ms: Date.now() - startTime,
       }),
-      { status: 500, headers: { ...getCorsHeaders(), "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });
@@ -226,10 +226,10 @@ Deno.serve(async (req: Request) => {
 // HELPER FUNCTIONS
 // ============================================================
 
-function createResponse(data: MonitorResponse): Response {
+function createResponse(data: MonitorResponse, req: Request): Response {
   return new Response(
     JSON.stringify(data),
-    { headers: { ...getCorsHeaders(), "Content-Type": "application/json" } }
+    { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
   );
 }
 
