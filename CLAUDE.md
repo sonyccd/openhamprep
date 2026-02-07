@@ -87,9 +87,31 @@ useQuery({
 ```
 
 The service layer foundation in `src/services/` includes:
-- `queryKeys.ts` - Centralized cache key registry
+- `queryKeys.ts` - Centralized cache key registry (~60 keys)
 - `types.ts` - `ServiceResult<T>`, `ServiceError` types for future services
 - `shared/serviceBase.ts` - Base class for Supabase error handling
+
+**Cache Invalidation Patterns**:
+
+```typescript
+// EXACT MATCH - Invalidates only queries with this exact key
+queryClient.invalidateQueries({ queryKey: queryKeys.readiness.score(userId, 'technician') });
+
+// PREFIX MATCH - Invalidates all queries that start with this prefix.
+// Use .byUser() or .root to invalidate a broader set of queries.
+queryClient.invalidateQueries({ queryKey: queryKeys.readiness.byUser(userId) });
+// ↑ This catches readiness.score(userId, 'technician'), readiness.score(userId, 'general'), etc.
+
+// DOMAIN-WIDE - Invalidate everything in a domain
+queryClient.invalidateQueries({ queryKey: queryKeys.questions.root });
+```
+
+**`.root` vs `.all()` usage**:
+- `.root` is a static array for broad invalidation (e.g., `queryKeys.questions.root`)
+- `.all(param?)` is a factory that builds the key used in `useQuery`. Without params, `.all()` equals `.root`
+- Use `.root` when invalidating; use `.all(param)` when querying
+
+**Empty string fallback pattern**: User-scoped keys accept `userId ?? ''` because hooks always set `enabled: !!user`, preventing queries from ever running with the empty key. The fallback just satisfies TypeScript.
 
 **Component Organization**:
 - `src/components/ui/` - Base shadcn components (rarely modified)

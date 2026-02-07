@@ -114,7 +114,10 @@ export abstract class ServiceBase {
   }
 
   /**
-   * Type guard for PostgrestError
+   * Type guard for PostgrestError.
+   * Checks for the `hint` property which is unique to PostgrestError
+   * (standard Error objects don't have it), plus validates that
+   * `code` and `message` are strings as PostgrestError requires.
    */
   private isPostgrestError(error: unknown): error is PostgrestError {
     return (
@@ -122,7 +125,10 @@ export abstract class ServiceBase {
       error !== null &&
       'code' in error &&
       'message' in error &&
-      'details' in error
+      'details' in error &&
+      'hint' in error &&
+      typeof (error as Record<string, unknown>).code === 'string' &&
+      typeof (error as Record<string, unknown>).message === 'string'
     );
   }
 
