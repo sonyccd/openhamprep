@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { trackBookmarkAdded, trackBookmarkRemoved } from '@/lib/amplitude';
-import { queryKeys } from '@/services/queryKeys';
+import { queryKeys, unwrapOrThrow } from '@/services';
+import { bookmarkService } from '@/services/bookmarks/bookmarkService';
 
 export function useBookmarks() {
   const { user } = useAuth();
@@ -11,20 +11,7 @@ export function useBookmarks() {
 
   const { data: bookmarks, isLoading } = useQuery({
     queryKey: queryKeys.bookmarks.all(user?.id ?? ''),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('bookmarked_questions')
-        .select('*, questions!inner(display_name)')
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      // Flatten the joined data to include display_name at the top level
-      return data?.map(bookmark => ({
-        ...bookmark,
-        display_name: bookmark.questions?.display_name
-      })) || [];
-    },
+    queryFn: async () => unwrapOrThrow(await bookmarkService.getAll(user!.id)),
     enabled: !!user,
     staleTime: 1000 * 60 * 2, // Cache for 2 minutes
   });
@@ -32,19 +19,7 @@ export function useBookmarks() {
   const addBookmark = useMutation({
     mutationFn: async ({ questionId, note }: { questionId: string; note?: string }) => {
       if (!user) throw new Error('Not authenticated');
-      
-      const { data, error } = await supabase
-        .from('bookmarked_questions')
-        .insert({
-          user_id: user.id,
-          question_id: questionId,
-          note: note || null,
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+      return unwrapOrThrow(await bookmarkService.add(user.id, questionId, note));
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all(user?.id ?? '') });
@@ -60,15 +35,7 @@ export function useBookmarks() {
   const removeBookmark = useMutation({
     mutationFn: async (questionId: string) => {
       if (!user) throw new Error('Not authenticated');
-      
-      const { error } = await supabase
-        .from('bookmarked_questions')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('question_id', questionId);
-      
-      if (error) throw error;
-      return questionId;
+      return unwrapOrThrow(await bookmarkService.remove(user.id, questionId));
     },
     onSuccess: (_data, questionId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all(user?.id ?? '') });
@@ -84,14 +51,7 @@ export function useBookmarks() {
   const updateNote = useMutation({
     mutationFn: async ({ questionId, note }: { questionId: string; note: string }) => {
       if (!user) throw new Error('Not authenticated');
-      
-      const { error } = await supabase
-        .from('bookmarked_questions')
-        .update({ note })
-        .eq('user_id', user.id)
-        .eq('question_id', questionId);
-      
-      if (error) throw error;
+      return unwrapOrThrow(await bookmarkService.updateNote(user.id, questionId, note));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all(user?.id ?? '') });
