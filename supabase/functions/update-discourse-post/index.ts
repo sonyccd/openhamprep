@@ -77,7 +77,7 @@ async function getTopicByExternalId(
 
 serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
-  const corsHeaders = getCorsHeaders();
+  const corsHeaders = getCorsHeaders(req);
 
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
