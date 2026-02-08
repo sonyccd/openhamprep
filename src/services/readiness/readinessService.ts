@@ -3,6 +3,24 @@ import { ServiceBase } from '../shared/serviceBase';
 import { ServiceResult, failure } from '../types';
 import { TestType } from '@/types/navigation';
 
+/** Daily readiness snapshot for trend analysis */
+export interface ReadinessSnapshot {
+  id: string;
+  user_id: string;
+  exam_type: string;
+  snapshot_date: string;
+  readiness_score: number | null;
+  pass_probability: number | null;
+  recent_accuracy: number | null;
+  overall_accuracy: number | null;
+  coverage: number | null;
+  mastery: number | null;
+  tests_passed: number;
+  tests_taken: number;
+  questions_attempted: number;
+  questions_correct: number;
+}
+
 export interface SubelementMetric {
   accuracy: number | null;
   recent_accuracy: number | null;
@@ -88,6 +106,36 @@ class ReadinessService extends ServiceBase {
     }
 
     return { success: true, data: undefined };
+  }
+
+  /**
+   * Fetch readiness snapshots for trend analysis.
+   * Returns snapshots sorted by date ascending (oldest first for charting).
+   */
+  async getSnapshots(
+    userId: string,
+    examType: TestType,
+    days: number
+  ): Promise<ServiceResult<ReadinessSnapshot[]>> {
+    const userCheck = this.requireUserId(userId);
+    if (!userCheck.success) return userCheck;
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    const startDateStr = startDate.toISOString().split('T')[0];
+
+    return this.handleQueryAllowEmpty(
+      () =>
+        supabase
+          .from('user_readiness_snapshots')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('exam_type', examType)
+          .gte('snapshot_date', startDateStr)
+          .order('snapshot_date', { ascending: true }),
+      [],
+      'Failed to fetch readiness snapshots'
+    );
   }
 }
 

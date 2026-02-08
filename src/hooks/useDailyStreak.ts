@@ -1,6 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import {
   getUTCDateString,
   calculateLocalDayQuestions,
@@ -9,6 +8,11 @@ import {
   STREAK_QUESTIONS_THRESHOLD,
 } from '@/lib/streakConstants';
 import { queryKeys } from '@/services/queryKeys';
+import { streakService, type IncrementActivityOptions } from '@/services/streak/streakService';
+import { unwrapOrThrow } from '@/services/types';
+
+// Re-export types from the service layer
+export type { IncrementActivityOptions } from '@/services/streak/streakService';
 
 /**
  * Streak information returned by the hook.
@@ -31,23 +35,6 @@ export interface StreakInfo {
   streakAtRisk: boolean;
   /** Human-readable time when streak day resets (e.g., "4:00 PM") */
   streakResetTime: string;
-}
-
-/** Raw response from the get_streak_info RPC */
-interface RawStreakInfo {
-  current_streak: number;
-  longest_streak: number;
-  last_activity_date: string | null;
-  // Today UTC data
-  today_qualifies: boolean;
-  questions_today: number;
-  questions_needed: number;
-  streak_at_risk: boolean;
-  // Yesterday UTC data
-  yesterday_qualifies: boolean;
-  questions_yesterday: number;
-  // Current UTC date
-  today_utc: string;
 }
 
 /**
@@ -76,16 +63,7 @@ export function useDailyStreak() {
   const { data, isLoading, error } = useQuery({
     queryKey: queryKeys.progress.streak(user?.id ?? ''),
     queryFn: async (): Promise<StreakInfo> => {
-      const { data, error } = await supabase
-        .rpc('get_streak_info', { p_user_id: user!.id })
-        .single();
-
-      if (error) {
-        console.error('Error fetching streak info:', error);
-        throw error;
-      }
-
-      const raw = data as RawStreakInfo;
+      const raw = unwrapOrThrow(await streakService.getStreakInfo(user!.id));
 
       // Compute local day values from UTC data
       const questionsToday = calculateLocalDayQuestions(
@@ -159,22 +137,6 @@ export function useDailyStreak() {
 }
 
 /**
- * Options for incrementing daily activity.
- */
-export interface IncrementActivityOptions {
-  /** Number of questions answered */
-  questions?: number;
-  /** Number of correct answers */
-  correct?: number;
-  /** Number of tests completed */
-  tests?: number;
-  /** Number of tests passed */
-  testsPassed?: number;
-  /** Number of glossary terms studied */
-  glossary?: number;
-}
-
-/**
  * Increment daily activity for the current user.
  * This is called from useProgress after saving question attempts.
  *
@@ -187,6 +149,8 @@ export interface IncrementActivityOptions {
  *
  * @example
  * ```ts
+ * import { IncrementActivityOptions } from '@/hooks/useDailyStreak';
+ *
  * await incrementDailyActivity(user.id, {
  *   questions: 1,
  *   correct: 1,
@@ -197,21 +161,11 @@ export async function incrementDailyActivity(
   userId: string,
   options: IncrementActivityOptions
 ): Promise<boolean> {
-  // Use UTC date to match PostgreSQL's CURRENT_DATE on the server
   const today = getUTCDateString();
+  const result = await streakService.incrementActivity(userId, today, options);
 
-  const { error } = await supabase.rpc('increment_daily_activity', {
-    p_user_id: userId,
-    p_date: today,
-    p_questions: options.questions ?? 0,
-    p_correct: options.correct ?? 0,
-    p_tests: options.tests ?? 0,
-    p_tests_passed: options.testsPassed ?? 0,
-    p_glossary: options.glossary ?? 0,
-  });
-
-  if (error) {
-    console.error('Error incrementing daily activity:', error);
+  if (!result.success) {
+    console.error('Error incrementing daily activity:', result.error.message);
     return false;
   }
 

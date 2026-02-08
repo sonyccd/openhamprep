@@ -1,28 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { TestType } from '@/types/navigation';
 import { queryKeys } from '@/services/queryKeys';
+import { readinessService, type ReadinessSnapshot } from '@/services/readiness/readinessService';
+import { unwrapOrThrow } from '@/services/types';
 
-/**
- * Daily readiness snapshot for trend analysis
- */
-export interface ReadinessSnapshot {
-  id: string;
-  user_id: string;
-  exam_type: string;
-  snapshot_date: string;
-  readiness_score: number | null;
-  pass_probability: number | null;
-  recent_accuracy: number | null;
-  overall_accuracy: number | null;
-  coverage: number | null;
-  mastery: number | null;
-  tests_passed: number;
-  tests_taken: number;
-  questions_attempted: number;
-  questions_correct: number;
-}
+// Re-export type from the service layer
+export type { ReadinessSnapshot } from '@/services/readiness/readinessService';
 
 interface UseReadinessSnapshotsOptions {
   examType: TestType;
@@ -42,27 +26,9 @@ export function useReadinessSnapshots({
 
   return useQuery({
     queryKey: queryKeys.readiness.snapshots(user?.id ?? '', examType, days),
-    queryFn: async (): Promise<ReadinessSnapshot[]> => {
+    queryFn: async () => {
       if (!user) return [];
-
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
-      const startDateStr = startDate.toISOString().split('T')[0];
-
-      const { data, error } = await supabase
-        .from('user_readiness_snapshots')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('exam_type', examType)
-        .gte('snapshot_date', startDateStr)
-        .order('snapshot_date', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching readiness snapshots:', error);
-        throw error;
-      }
-
-      return (data as ReadinessSnapshot[]) || [];
+      return unwrapOrThrow(await readinessService.getSnapshots(user.id, examType, days));
     },
     enabled: !!user,
     staleTime: 60 * 1000, // 1 minute - allow refetch after test completion

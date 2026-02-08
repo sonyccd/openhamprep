@@ -256,13 +256,13 @@ describe('useProgress', () => {
 
       await result.current.saveRandomAttempt(mockQuestion, 'A');
 
-      expect(mockInsert).toHaveBeenCalledWith({
+      expect(mockInsert).toHaveBeenCalledWith([{
         user_id: 'test-user-id',
         question_id: 'T1A01',
         selected_answer: 0,
         is_correct: true,
         attempt_type: 'random_practice',
-      });
+      }]);
     });
 
     it('records incorrect attempts', async () => {
@@ -279,12 +279,12 @@ describe('useProgress', () => {
 
       await result.current.saveRandomAttempt(mockQuestion, 'D');
 
-      expect(mockInsert).toHaveBeenCalledWith(
+      expect(mockInsert).toHaveBeenCalledWith([
         expect.objectContaining({
           selected_answer: 3,
           is_correct: false,
-        })
-      );
+        }),
+      ]);
     });
 
     it('does not save when no user', async () => {
@@ -317,27 +317,27 @@ describe('useProgress', () => {
       // Check that question_attempts inserts are called with correct selected_answer
       // Note: Events system also calls insert, so we check toHaveBeenCalledWith (not Last)
       await result.current.saveRandomAttempt(mockQuestion, 'A');
-      expect(mockInsert).toHaveBeenCalledWith(
-        expect.objectContaining({ selected_answer: 0 })
-      );
+      expect(mockInsert).toHaveBeenCalledWith([
+        expect.objectContaining({ selected_answer: 0 }),
+      ]);
 
       mockInsert.mockClear();
       await result.current.saveRandomAttempt(mockQuestion, 'B');
-      expect(mockInsert).toHaveBeenCalledWith(
-        expect.objectContaining({ selected_answer: 1 })
-      );
+      expect(mockInsert).toHaveBeenCalledWith([
+        expect.objectContaining({ selected_answer: 1 }),
+      ]);
 
       mockInsert.mockClear();
       await result.current.saveRandomAttempt(mockQuestion, 'C');
-      expect(mockInsert).toHaveBeenCalledWith(
-        expect.objectContaining({ selected_answer: 2 })
-      );
+      expect(mockInsert).toHaveBeenCalledWith([
+        expect.objectContaining({ selected_answer: 2 }),
+      ]);
 
       mockInsert.mockClear();
       await result.current.saveRandomAttempt(mockQuestion, 'D');
-      expect(mockInsert).toHaveBeenCalledWith(
-        expect.objectContaining({ selected_answer: 3 })
-      );
+      expect(mockInsert).toHaveBeenCalledWith([
+        expect.objectContaining({ selected_answer: 3 }),
+      ]);
     });
 
     it('uses random_practice as default attempt type', async () => {
@@ -354,9 +354,9 @@ describe('useProgress', () => {
 
       await result.current.saveRandomAttempt(mockQuestion, 'A');
 
-      expect(mockInsert).toHaveBeenCalledWith(
-        expect.objectContaining({ attempt_type: 'random_practice' })
-      );
+      expect(mockInsert).toHaveBeenCalledWith([
+        expect.objectContaining({ attempt_type: 'random_practice' }),
+      ]);
     });
 
     it('saves weak_questions attempt type when specified', async () => {
@@ -373,9 +373,9 @@ describe('useProgress', () => {
 
       await result.current.saveRandomAttempt(mockQuestion, 'A', 'weak_questions');
 
-      expect(mockInsert).toHaveBeenCalledWith(
-        expect.objectContaining({ attempt_type: 'weak_questions' })
-      );
+      expect(mockInsert).toHaveBeenCalledWith([
+        expect.objectContaining({ attempt_type: 'weak_questions' }),
+      ]);
     });
 
     it('saves subelement_practice attempt type when specified', async () => {
@@ -392,12 +392,12 @@ describe('useProgress', () => {
 
       await result.current.saveRandomAttempt(mockQuestion, 'B', 'subelement_practice');
 
-      expect(mockInsert).toHaveBeenCalledWith(
+      expect(mockInsert).toHaveBeenCalledWith([
         expect.objectContaining({
           attempt_type: 'subelement_practice',
           is_correct: false, // B is wrong, A is correct
-        })
-      );
+        }),
+      ]);
     });
   });
 
