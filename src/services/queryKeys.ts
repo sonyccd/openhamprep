@@ -113,8 +113,11 @@ export const queryKeys = {
     /** Question attempts for a user */
     attempts: (userId: string) => ['question-attempts', userId] as const,
 
-    /** Test results for a user */
-    testResults: (userId: string) => ['test-results', userId] as const,
+    /** Test results for a user (optionally filtered by test type) */
+    testResults: (userId: string, testType?: TestType) =>
+      testType
+        ? ['test-results', userId, testType] as const
+        : ['test-results', userId] as const,
 
     /** Profile stats (aggregate counts) */
     profileStats: (userId: string) => ['profile-stats', userId] as const,
@@ -266,6 +269,14 @@ export const queryKeys = {
   auth: {
     /** User's role (admin check) */
     role: (userId: string) => ['user-role', userId] as const,
+  },
+
+  // ---------------------------------------------------------------------------
+  // Profile Domain
+  // ---------------------------------------------------------------------------
+  profile: {
+    /** Full user profile */
+    byUser: (userId: string) => ['profile', userId] as const,
   },
 
   // ---------------------------------------------------------------------------

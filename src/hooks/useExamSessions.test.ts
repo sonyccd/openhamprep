@@ -926,7 +926,7 @@ describe('useRecordExamAttempt error handling', () => {
 
     // Error should be thrown by mutateAsync
     expect(thrownError).not.toBeNull();
-    expect(thrownError?.message).toBe('Duplicate key violation');
+    expect(thrownError?.message).toContain('Duplicate key violation');
   });
 });
 
@@ -963,7 +963,7 @@ describe('useUpdateExamAttemptOutcome error handling', () => {
 
     // Error should be thrown by mutateAsync
     expect(thrownError).not.toBeNull();
-    expect(thrownError?.message).toBe('Record not found');
+    expect(thrownError?.message).toContain('Record not found');
   });
 });
 
@@ -1013,7 +1013,7 @@ describe('useBulkImportExamSessions error handling', () => {
 
     // Error should be thrown by mutateAsync
     expect(thrownError).not.toBeNull();
-    expect(thrownError?.message).toBe('Only admins can bulk import exam sessions');
+    expect(thrownError?.message).toContain('Only admins can bulk import exam sessions');
   });
 
   it('throws error when RPC returns empty data', async () => {
@@ -1057,6 +1057,7 @@ describe('useBulkImportExamSessions error handling', () => {
 
     expect(result.current.error).not.toBeNull();
     expect(result.current.error?.message).toContain('no result');
+    // Note: Service wraps this as 'Bulk import returned no result - transaction may have failed'
   });
 });
 

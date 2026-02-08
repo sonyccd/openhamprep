@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { supabase } from '@/integrations/supabase/client';
+import { weeklyGoalsService } from '@/services/weeklyGoals/weeklyGoalsService';
+import { unwrapOrThrow } from '@/services/types';
 import { toast } from 'sonner';
 import { Target, Brain, Loader2 } from 'lucide-react';
 
@@ -39,27 +40,9 @@ export function WeeklyGoalsModal({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      if (currentGoals) {
-        const { error } = await supabase
-          .from('weekly_study_goals')
-          .update({
-            questions_goal: questionsGoal,
-            tests_goal: testsGoal,
-          })
-          .eq('user_id', userId);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('weekly_study_goals')
-          .insert({
-            user_id: userId,
-            questions_goal: questionsGoal,
-            tests_goal: testsGoal,
-          });
-
-        if (error) throw error;
-      }
+      unwrapOrThrow(
+        await weeklyGoalsService.upsertGoals(userId, questionsGoal, testsGoal)
+      );
 
       toast.success('Weekly goals updated!');
       onGoalsUpdated();

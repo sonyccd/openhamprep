@@ -54,3 +54,19 @@ export type { RawStreakInfo, IncrementActivityOptions } from './streak/streakSer
 
 export { feedbackService } from './feedback/feedbackService';
 export type { FeedbackRecord } from './feedback/feedbackService';
+
+export { searchService } from './search/searchService';
+export type { SearchContentResponse, SearchContentParams } from './search/searchService';
+
+export { examSessionService } from './examSession/examSessionService';
+export type {
+  ExamSession, UserTargetExam, ExamAttempt, LicenseType, ExamOutcome,
+  PaginatedSessions, SaveTargetParams, RecordAttemptParams, UpdateOutcomeParams,
+  BulkImportResult, GeocodeSessions,
+} from './examSession/examSessionService';
+
+export { weeklyGoalsService } from './weeklyGoals/weeklyGoalsService';
+export type { WeeklyGoals } from './weeklyGoals/weeklyGoalsService';
+
+export { dashboardDataService } from './dashboard/dashboardDataService';
+export type { AttemptWithDisplayName, ProfileStats, FullProfile } from './dashboard/dashboardDataService';

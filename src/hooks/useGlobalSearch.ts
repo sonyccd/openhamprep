@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { getTestTypePrefix } from '@/lib/testTypeUtils';
 import { truncateText } from '@/lib/searchUtils';
+import { searchService } from '@/services/search/searchService';
+import { unwrapOrThrow } from '@/services/types';
+import type { SearchContentResponse } from '@/services/search/searchService';
 import type { TestType } from '@/types/navigation';
 
 /**
@@ -25,39 +27,6 @@ export interface SearchResults {
   glossary: SearchResult[];
   topics: SearchResult[];
   tools: SearchResult[];
-}
-
-/**
- * Raw response from the search_content RPC function
- */
-interface SearchContentResponse {
-  questions: Array<{
-    id: string;
-    display_name: string;
-    question: string;
-    explanation: string;
-    rank: number;
-  }>;
-  glossary: Array<{
-    id: string;
-    term: string;
-    definition: string;
-    rank: number;
-  }>;
-  topics: Array<{
-    id: string;
-    slug: string;
-    title: string;
-    description: string;
-    rank: number;
-  }>;
-  tools: Array<{
-    id: string;
-    title: string;
-    description: string;
-    url: string;
-    rank: number;
-  }>;
 }
 
 const DEBOUNCE_MS = 300;
@@ -114,25 +83,21 @@ export function useGlobalSearch(testType: TestType) {
       try {
         const licensePrefix = getTestTypePrefix(testType);
 
-        const { data, error: rpcError } = await supabase.rpc('search_content', {
-          search_query: debouncedQuery,
-          license_prefix: licensePrefix,
-          questions_limit: 5,
-          glossary_limit: 5,
-          topics_limit: 3,
-          tools_limit: 3,
-        });
+        const response = unwrapOrThrow(
+          await searchService.searchContent({
+            searchQuery: debouncedQuery,
+            licensePrefix,
+            questionsLimit: 5,
+            glossaryLimit: 5,
+            topicsLimit: 3,
+            toolsLimit: 3,
+          })
+        );
 
         // Ignore stale responses (from previous requests or if component unmounted)
         if (abortController.signal.aborted || currentRequestId !== requestIdRef.current) {
           return;
         }
-
-        if (rpcError) {
-          throw new Error(rpcError.message);
-        }
-
-        const response = data as SearchContentResponse;
 
         // Transform raw results into unified SearchResult format
         const transformedResults: SearchResults = {
