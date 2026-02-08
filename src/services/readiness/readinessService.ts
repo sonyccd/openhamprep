@@ -58,8 +58,15 @@ class ReadinessService extends ServiceBase {
     );
   }
 
+  /**
+   * Trigger readiness recalculation via the calculate-readiness edge function.
+   *
+   * The edge function returns `{ success: boolean }` in its response body.
+   * `handleEdgeFunction` handles transport-level errors (network, HTTP status);
+   * we then check the application-level `success` field to confirm the
+   * calculation itself completed.
+   */
   async recalculate(examType: TestType): Promise<ServiceResult<void>> {
-    // Check session before calling edge function
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       return failure('AUTH_REQUIRED', 'Cannot recalculate readiness: user not authenticated');
@@ -75,6 +82,7 @@ class ReadinessService extends ServiceBase {
 
     if (!result.success) return result;
 
+    // Edge function responded OK but calculation itself may have failed
     if (result.data?.success !== true) {
       return failure('EDGE_FUNCTION_ERROR', 'Failed to recalculate readiness: calculation returned unsuccessful');
     }
