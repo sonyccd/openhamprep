@@ -1026,6 +1026,7 @@ describe('useBulkImportExamSessions error handling', () => {
       wrapper: createWrapper(),
     });
 
+    let thrownError: Error | null = null;
     await act(async () => {
       try {
         await result.current.mutateAsync([
@@ -1050,14 +1051,13 @@ describe('useBulkImportExamSessions error handling', () => {
             longitude: null,
           },
         ]);
-      } catch {
-        // Expected to throw
+      } catch (e) {
+        thrownError = e as Error;
       }
     });
 
-    expect(result.current.error).not.toBeNull();
-    expect(result.current.error?.message).toContain('no result');
-    // Note: Service wraps this as 'Bulk import returned no result - transaction may have failed'
+    expect(thrownError).not.toBeNull();
+    expect(thrownError?.message).toContain('no result');
   });
 });
 
