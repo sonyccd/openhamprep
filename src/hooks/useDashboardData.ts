@@ -78,6 +78,7 @@ export function useFullProfile() {
         await dashboardDataService.getFullProfile(user!.id)
       ),
     enabled: !!user,
+    staleTime: 1000 * 60 * 5,
   });
 }
 

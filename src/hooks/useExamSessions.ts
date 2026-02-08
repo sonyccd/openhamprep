@@ -114,9 +114,9 @@ export const useSaveTargetExam = () => {
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.targetExam.root() });
-      queryClient.invalidateQueries({ queryKey: ['weekly-goals'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.progress.weeklyGoals(variables.userId) });
       toast.success('Target exam date saved! Weekly goals updated.');
     },
     onError: (error) => {

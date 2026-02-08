@@ -63,7 +63,7 @@ class DashboardDataService extends ServiceBase {
         const flattened = data?.map(attempt => ({
           ...attempt,
           display_name: attempt.questions?.display_name,
-        })) ?? null;
+        })) ?? [];
 
         return { data: flattened, error };
       },
