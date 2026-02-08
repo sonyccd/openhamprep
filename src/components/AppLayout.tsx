@@ -2,8 +2,9 @@ import { ReactNode, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookmarks } from '@/hooks/useBookmarks';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { useFullProfile, useQuestionAttemptsWithNames } from '@/hooks/useDashboardData';
+import { queryKeys } from '@/services/queryKeys';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
 import { View, TestType, testTypes } from '@/types/navigation';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -30,38 +31,8 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
   const queryClient = useQueryClient();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const { data: profile } = useQuery({
-    queryKey: ['profile', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user!.id)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  const { data: questionAttempts } = useQuery({
-    queryKey: ['question-attempts', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('question_attempts')
-        .select('*, questions!inner(display_name)')
-        .eq('user_id', user!.id);
-
-      if (error) throw error;
-      // Flatten the joined data to include display_name at the top level
-      return data?.map(attempt => ({
-        ...attempt,
-        display_name: attempt.questions?.display_name
-      })) || [];
-    },
-    enabled: !!user,
-  });
+  const { data: profile } = useFullProfile();
+  const { data: questionAttempts } = useQuestionAttemptsWithNames();
 
   // Filter attempts by selected test type, then calculate weak questions
   const filteredAttempts = filterByTestType(
@@ -94,7 +65,7 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
   };
 
   const handleProfileUpdate = () => {
-    queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.profile.byUser(user?.id ?? '') });
   };
 
   if (authLoading) {

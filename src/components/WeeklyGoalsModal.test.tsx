@@ -3,17 +3,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { WeeklyGoalsModal } from './WeeklyGoalsModal';
 
-// Mock Supabase
-const mockUpdate = vi.fn();
-const mockInsert = vi.fn();
-const mockEq = vi.fn();
-
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      update: mockUpdate,
-      insert: mockInsert,
-    })),
+// Mock weeklyGoalsService
+const mockUpsertGoals = vi.fn();
+vi.mock('@/services/weeklyGoals/weeklyGoalsService', () => ({
+  weeklyGoalsService: {
+    upsertGoals: (...args: unknown[]) => mockUpsertGoals(...args),
   },
 }));
 
@@ -22,6 +16,14 @@ vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
+  },
+}));
+
+// Mock unwrapOrThrow - pass through success, throw on failure
+vi.mock('@/services/types', () => ({
+  unwrapOrThrow: (result: { success: boolean; data?: unknown; error?: { message: string } }) => {
+    if (result.success) return result.data;
+    throw new Error(result.error?.message || 'Service error');
   },
 }));
 
@@ -39,10 +41,8 @@ describe('WeeklyGoalsModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default mock implementations
-    mockEq.mockResolvedValue({ error: null });
-    mockUpdate.mockReturnValue({ eq: mockEq });
-    mockInsert.mockResolvedValue({ error: null });
+    // Default: upsert succeeds
+    mockUpsertGoals.mockResolvedValue({ success: true, data: undefined });
   });
 
   describe('Display', () => {
@@ -110,7 +110,6 @@ describe('WeeklyGoalsModal', () => {
       render(<WeeklyGoalsModal {...defaultProps} />);
 
       // Questions slider: min 10, max 200
-      // Use getAllByText since '10' appears multiple times (slider min and max for tests)
       expect(screen.getAllByText('10').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('200')).toBeInTheDocument();
     });
@@ -120,7 +119,6 @@ describe('WeeklyGoalsModal', () => {
 
       // Tests slider: min 1, max 10
       expect(screen.getByText('1')).toBeInTheDocument();
-      // '10' appears for both max tests and questions min
       expect(screen.getAllByText('10').length).toBeGreaterThanOrEqual(1);
     });
   });
@@ -138,8 +136,8 @@ describe('WeeklyGoalsModal', () => {
     });
   });
 
-  describe('Save Goals - Insert', () => {
-    it('inserts new goals when currentGoals is null', async () => {
+  describe('Save Goals', () => {
+    it('calls upsertGoals with correct params (no current goals)', async () => {
       const user = userEvent.setup();
       const onGoalsUpdated = vi.fn();
 
@@ -154,15 +152,28 @@ describe('WeeklyGoalsModal', () => {
       await user.click(screen.getByRole('button', { name: /save goals/i }));
 
       await waitFor(() => {
-        expect(mockInsert).toHaveBeenCalledWith({
-          user_id: 'user-123',
-          questions_goal: 50,
-          tests_goal: 2,
-        });
+        expect(mockUpsertGoals).toHaveBeenCalledWith('user-123', 50, 2);
       });
     });
 
-    it('shows success toast on successful insert', async () => {
+    it('calls upsertGoals with correct params (existing goals)', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <WeeklyGoalsModal
+          {...defaultProps}
+          currentGoals={{ questions_goal: 100, tests_goal: 5 }}
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: /save goals/i }));
+
+      await waitFor(() => {
+        expect(mockUpsertGoals).toHaveBeenCalledWith('user-123', 100, 5);
+      });
+    });
+
+    it('shows success toast on successful save', async () => {
       const user = userEvent.setup();
 
       render(<WeeklyGoalsModal {...defaultProps} currentGoals={null} />);
@@ -174,7 +185,7 @@ describe('WeeklyGoalsModal', () => {
       });
     });
 
-    it('calls onGoalsUpdated on successful insert', async () => {
+    it('calls onGoalsUpdated on successful save', async () => {
       const user = userEvent.setup();
       const onGoalsUpdated = vi.fn();
 
@@ -193,7 +204,7 @@ describe('WeeklyGoalsModal', () => {
       });
     });
 
-    it('closes dialog on successful insert', async () => {
+    it('closes dialog on successful save', async () => {
       const user = userEvent.setup();
       const onOpenChange = vi.fn();
 
@@ -213,52 +224,15 @@ describe('WeeklyGoalsModal', () => {
     });
   });
 
-  describe('Save Goals - Update', () => {
-    it('updates existing goals when currentGoals exists', async () => {
-      const user = userEvent.setup();
-
-      render(
-        <WeeklyGoalsModal
-          {...defaultProps}
-          currentGoals={{ questions_goal: 50, tests_goal: 2 }}
-        />
-      );
-
-      await user.click(screen.getByRole('button', { name: /save goals/i }));
-
-      await waitFor(() => {
-        expect(mockUpdate).toHaveBeenCalledWith({
-          questions_goal: 50,
-          tests_goal: 2,
-        });
-      });
-    });
-  });
-
   describe('Error Handling', () => {
-    it('shows error toast when insert fails', async () => {
+    it('shows error toast when save fails', async () => {
       const user = userEvent.setup();
-      mockInsert.mockResolvedValueOnce({ error: new Error('Database error') });
+      mockUpsertGoals.mockResolvedValueOnce({
+        success: false,
+        error: { code: 'DATABASE_ERROR', message: 'Database error' },
+      });
 
       render(<WeeklyGoalsModal {...defaultProps} currentGoals={null} />);
-
-      await user.click(screen.getByRole('button', { name: /save goals/i }));
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith('Failed to save goals');
-      });
-    });
-
-    it('shows error toast when update fails', async () => {
-      const user = userEvent.setup();
-      mockEq.mockResolvedValueOnce({ error: new Error('Database error') });
-
-      render(
-        <WeeklyGoalsModal
-          {...defaultProps}
-          currentGoals={{ questions_goal: 50, tests_goal: 2 }}
-        />
-      );
 
       await user.click(screen.getByRole('button', { name: /save goals/i }));
 
@@ -270,7 +244,10 @@ describe('WeeklyGoalsModal', () => {
     it('does not call onGoalsUpdated when save fails', async () => {
       const user = userEvent.setup();
       const onGoalsUpdated = vi.fn();
-      mockInsert.mockResolvedValueOnce({ error: new Error('Database error') });
+      mockUpsertGoals.mockResolvedValueOnce({
+        success: false,
+        error: { code: 'DATABASE_ERROR', message: 'Database error' },
+      });
 
       render(
         <WeeklyGoalsModal
@@ -294,8 +271,8 @@ describe('WeeklyGoalsModal', () => {
     it('disables Save button while saving', async () => {
       const user = userEvent.setup();
 
-      // Make the insert hang
-      mockInsert.mockImplementation(() => new Promise(() => {}));
+      // Make the upsert hang
+      mockUpsertGoals.mockImplementation(() => new Promise(() => {}));
 
       render(<WeeklyGoalsModal {...defaultProps} currentGoals={null} />);
 

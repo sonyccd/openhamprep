@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { useUserTargetExam } from '@/hooks/useExamSessions';
 import { useTestReadiness } from '@/hooks/useTestReadiness';
 import { useReadinessScore, recalculateReadiness } from '@/hooks/useReadinessScore';
-import { supabase } from '@/integrations/supabase/client';
+import { useTestResults, useQuestionAttemptsWithNames, useProfileStats, useWeeklyGoals } from '@/hooks/useDashboardData';
+import { queryKeys } from '@/services/queryKeys';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -134,81 +135,17 @@ export default function Dashboard() {
   const {
     data: testResults,
     isLoading: testsLoading
-  } = useQuery({
-    queryKey: ['test-results', user?.id, selectedTest],
-    queryFn: async () => {
-      // Handle both legacy 'practice' test_type and new test type values
-      const testTypesToMatch = selectedTest === 'technician'
-        ? ['practice', 'technician']  // Include legacy 'practice' for backward compatibility
-        : [selectedTest];
-
-      const {
-        data,
-        error
-      } = await supabase.from('practice_test_results').select('*').eq('user_id', user!.id).in('test_type', testTypesToMatch).order('completed_at', {
-        ascending: false
-      });
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
-  });
+  } = useTestResults(selectedTest);
   const {
     data: questionAttempts,
     isLoading: attemptsLoading
-  } = useQuery({
-    queryKey: ['question-attempts', user?.id],
-    queryFn: async () => {
-      const {
-        data,
-        error
-      } = await supabase
-        .from('question_attempts')
-        .select('*, questions!inner(display_name)')
-        .eq('user_id', user!.id);
-      if (error) throw error;
-      // Flatten the joined data to include display_name at the top level
-      return data?.map(attempt => ({
-        ...attempt,
-        display_name: attempt.questions?.display_name
-      })) || [];
-    },
-    enabled: !!user,
-    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
-  });
+  } = useQuestionAttemptsWithNames();
   const {
     data: profile
-  } = useQuery({
-    queryKey: ['profile-stats', user?.id],
-    queryFn: async () => {
-      const {
-        data,
-        error
-      } = await supabase.from('profiles').select('best_streak').eq('id', user!.id).maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-  });
-
-  // Fetch weekly study goals
+  } = useProfileStats();
   const {
     data: weeklyGoals
-  } = useQuery({
-    queryKey: ['weekly-goals', user?.id],
-    queryFn: async () => {
-      const {
-        data,
-        error
-      } = await supabase.from('weekly_study_goals').select('*').eq('user_id', user!.id).maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-  });
+  } = useWeeklyGoals();
 
   // Fetch user's target exam
   const { data: userTarget } = useUserTargetExam(user?.id);
@@ -268,7 +205,7 @@ export default function Dashboard() {
     if (readinessData && (!readinessData.subelement_metrics || Object.keys(readinessData.subelement_metrics).length === 0)) {
       recalculationAttempted.current[selectedTest] = true;
       recalculateReadiness(selectedTest).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['readiness', user?.id, selectedTest] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.readiness.score(user?.id ?? '', selectedTest) });
       });
     }
   }, [readinessData, selectedTest, queryClient, user?.id]);
@@ -535,7 +472,7 @@ export default function Dashboard() {
 
       {/* Weekly Goals Modal */}
       {user && <WeeklyGoalsModal open={showGoalsModal} onOpenChange={setShowGoalsModal} userId={user.id} currentGoals={weeklyGoals || null} onGoalsUpdated={() => queryClient.invalidateQueries({
-      queryKey: ['weekly-goals', user.id]
+      queryKey: queryKeys.progress.weeklyGoals(user.id)
     })} />}
 
       <AppLayout currentView={currentView} onViewChange={handleViewChange} selectedTest={selectedTest} onTestChange={handleTestChange} onSearch={openSearch}>

@@ -487,7 +487,7 @@ describe('useGlobalSearch', () => {
       });
 
       expect(result.current.error).toBeInstanceOf(Error);
-      expect(result.current.error?.message).toBe('Database connection failed');
+      expect(result.current.error?.message).toContain('Database connection failed');
     });
 
     it('clears results on error', async () => {

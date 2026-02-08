@@ -926,7 +926,7 @@ describe('useRecordExamAttempt error handling', () => {
 
     // Error should be thrown by mutateAsync
     expect(thrownError).not.toBeNull();
-    expect(thrownError?.message).toBe('Duplicate key violation');
+    expect(thrownError?.message).toContain('Duplicate key violation');
   });
 });
 
@@ -963,7 +963,7 @@ describe('useUpdateExamAttemptOutcome error handling', () => {
 
     // Error should be thrown by mutateAsync
     expect(thrownError).not.toBeNull();
-    expect(thrownError?.message).toBe('Record not found');
+    expect(thrownError?.message).toContain('Record not found');
   });
 });
 
@@ -1013,7 +1013,7 @@ describe('useBulkImportExamSessions error handling', () => {
 
     // Error should be thrown by mutateAsync
     expect(thrownError).not.toBeNull();
-    expect(thrownError?.message).toBe('Only admins can bulk import exam sessions');
+    expect(thrownError?.message).toContain('Only admins can bulk import exam sessions');
   });
 
   it('throws error when RPC returns empty data', async () => {
@@ -1026,6 +1026,7 @@ describe('useBulkImportExamSessions error handling', () => {
       wrapper: createWrapper(),
     });
 
+    let thrownError: Error | null = null;
     await act(async () => {
       try {
         await result.current.mutateAsync([
@@ -1050,13 +1051,13 @@ describe('useBulkImportExamSessions error handling', () => {
             longitude: null,
           },
         ]);
-      } catch {
-        // Expected to throw
+      } catch (e) {
+        thrownError = e as Error;
       }
     });
 
-    expect(result.current.error).not.toBeNull();
-    expect(result.current.error?.message).toContain('no result');
+    expect(thrownError).not.toBeNull();
+    expect(thrownError?.message).toContain('no result');
   });
 });
 

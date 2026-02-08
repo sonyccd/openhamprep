@@ -1,86 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { queryKeys } from '@/services/queryKeys';
+import { unwrapOrThrow } from '@/services/types';
+import { examSessionService } from '@/services/examSession/examSessionService';
+import { weeklyGoalsService } from '@/services/weeklyGoals/weeklyGoalsService';
 
-export interface ExamSession {
-  id: string;
-  title: string | null;
-  exam_date: string;
-  sponsor: string | null;
-  exam_time: string | null;
-  walk_ins_allowed: boolean;
-  public_contact: string | null;
-  phone: string | null;
-  email: string | null;
-  vec: string | null;
-  location_name: string | null;
-  address: string | null;
-  address_2: string | null;
-  address_3: string | null;
-  city: string;
-  state: string;
-  zip: string;
-  latitude: number | null;
-  longitude: number | null;
-  created_at: string;
-  updated_at: string;
-}
+// Re-export types from service for backward compatibility
+export type {
+  ExamSession,
+  LicenseType,
+  ExamOutcome,
+  UserTargetExam,
+  ExamAttempt,
+} from '@/services/examSession/examSessionService';
 
-/**
- * Amateur radio license classes in the US licensing system.
- * - technician: Entry-level license with VHF/UHF privileges
- * - general: Mid-level license with HF privileges
- * - extra: Highest class with full amateur privileges
- */
-export type LicenseType = 'technician' | 'general' | 'extra';
-
-/**
- * Possible outcomes for an exam attempt.
- * - passed: User passed the exam
- * - failed: User did not pass the exam
- * - skipped: User did not take the scheduled exam
- */
-export type ExamOutcome = 'passed' | 'failed' | 'skipped';
-
-export interface UserTargetExam {
-  id: string;
-  user_id: string;
-  exam_session_id: string | null;
-  custom_exam_date: string | null;
-  study_intensity: 'light' | 'moderate' | 'intensive';
-  /**
-   * The license level the user is studying for.
-   * Null for legacy records created before this field was added,
-   * or if the user hasn't explicitly selected a license level.
-   */
-  target_license: LicenseType | null;
-  created_at: string;
-  updated_at: string;
-  exam_session?: ExamSession | null;
-}
-
-/**
- * Historical record of an exam attempt.
- *
- * Note: A unique constraint (user_id, exam_date, target_license) prevents
- * duplicate entries for the same license on the same day. This is intentional
- * as VE sessions typically don't allow same-day retakes for the same element.
- * If a user needs to record multiple attempts on the same day (rare), they
- * can use the notes field to document additional details.
- */
-export interface ExamAttempt {
-  id: string;
-  user_id: string;
-  exam_date: string;
-  target_license: LicenseType;
-  outcome: ExamOutcome | null;
-  exam_session_id: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-  exam_session?: ExamSession | null;
-}
+// Map study intensity to weekly goals (presentation concern, stays in hook)
+const INTENSITY_TO_GOALS = {
+  light: { questions_goal: 70, tests_goal: 1 },
+  moderate: { questions_goal: 175, tests_goal: 2 },
+  intensive: { questions_goal: 350, tests_goal: 3 },
+};
 
 export const useExamSessions = (filters?: {
   zip?: string;
@@ -96,85 +35,30 @@ export const useExamSessions = (filters?: {
 
   return useQuery({
     queryKey: queryKeys.examSessions.all(filters),
-    queryFn: async () => {
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
-
-      let query = supabase
-        .from('exam_sessions')
-        .select('*', { count: 'exact' })
-        .gte('exam_date', new Date().toISOString().split('T')[0])
-        .order('exam_date', { ascending: true });
-
-      if (filters?.startDate) {
-        query = query.gte('exam_date', filters.startDate);
-      }
-      if (filters?.endDate) {
-        query = query.lte('exam_date', filters.endDate);
-      }
-      if (filters?.state) {
-        query = query.eq('state', filters.state);
-      }
-      // Filter by zip code prefix (first 3 digits) on server
-      if (filters?.zip && filters.zip.length >= 3) {
-        const zipPrefix = filters.zip.substring(0, 3);
-        query = query.ilike('zip', `${zipPrefix}*`);
-      }
-      // Filter by walk-ins allowed
-      if (filters?.walkInsOnly) {
-        query = query.eq('walk_ins_allowed', true);
-      }
-
-      // Apply pagination after all filters
-      query = query.range(from, to);
-
-      const { data, error, count } = await query;
-      if (error) throw error;
-      return {
-        sessions: data as ExamSession[],
-        totalCount: count ?? 0,
-        page,
-        pageSize,
-        totalPages: Math.ceil((count ?? 0) / pageSize),
-      };
-    },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    gcTime: 1000 * 60 * 30, // Keep in garbage collection for 30 minutes
+    queryFn: async () =>
+      unwrapOrThrow(
+        await examSessionService.getSessions(filters, page, pageSize)
+      ),
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
   });
 };
 
-// Hook to get total count of sessions (for admin stats)
 export const useExamSessionsCount = () => {
   return useQuery({
     queryKey: queryKeys.examSessions.count(),
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from('exam_sessions')
-        .select('*', { count: 'exact', head: true });
-
-      if (error) throw error;
-      return count ?? 0;
-    },
-    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
+    queryFn: async () =>
+      unwrapOrThrow(await examSessionService.getCount()),
+    staleTime: 1000 * 60 * 10,
   });
 };
 
-// Hook to get the last updated timestamp for exam sessions
 export const useExamSessionsLastUpdated = () => {
   return useQuery({
     queryKey: queryKeys.examSessions.lastUpdated(),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('exam_sessions')
-        .select('updated_at')
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data?.updated_at ?? null;
-    },
-    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
+    queryFn: async () =>
+      unwrapOrThrow(await examSessionService.getLastUpdated()),
+    staleTime: 1000 * 60 * 10,
   });
 };
 
@@ -183,29 +67,11 @@ export const useUserTargetExam = (userId?: string) => {
     queryKey: queryKeys.targetExam.byUser(userId ?? ''),
     queryFn: async () => {
       if (!userId) return null;
-      
-      const { data, error } = await supabase
-        .from('user_target_exam')
-        .select(`
-          *,
-          exam_session:exam_sessions(*)
-        `)
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data as (UserTargetExam & { exam_session: ExamSession | null }) | null;
+      return unwrapOrThrow(await examSessionService.getUserTarget(userId));
     },
     enabled: !!userId,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
-};
-
-// Map study intensity to weekly goals
-const INTENSITY_TO_GOALS = {
-  light: { questions_goal: 70, tests_goal: 1 },      // 10 questions/day * 7
-  moderate: { questions_goal: 175, tests_goal: 2 },  // 25 questions/day * 7
-  intensive: { questions_goal: 350, tests_goal: 3 }, // 50 questions/day * 7
 };
 
 export const useSaveTargetExam = () => {
@@ -223,54 +89,34 @@ export const useSaveTargetExam = () => {
       examSessionId?: string;
       customExamDate?: string;
       studyIntensity: 'light' | 'moderate' | 'intensive';
-      targetLicense?: LicenseType;
+      targetLicense?: 'technician' | 'general' | 'extra';
     }) => {
-      // Validate: must have exactly one of examSessionId or customExamDate
-      if ((!examSessionId && !customExamDate) || (examSessionId && customExamDate)) {
-        throw new Error('Must provide either examSessionId or customExamDate, not both');
-      }
+      const data = unwrapOrThrow(
+        await examSessionService.saveTarget({
+          userId,
+          examSessionId,
+          customExamDate,
+          studyIntensity,
+          targetLicense,
+        })
+      );
 
-      // Upsert target exam
-      const { data, error } = await supabase
-        .from('user_target_exam')
-        .upsert(
-          {
-            user_id: userId,
-            exam_session_id: examSessionId || null,
-            custom_exam_date: customExamDate || null,
-            study_intensity: studyIntensity,
-            target_license: targetLicense || null,
-          },
-          { onConflict: 'user_id' }
-        )
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Also update weekly study goals based on intensity
+      // Also update weekly study goals based on intensity (non-fatal)
       const goals = INTENSITY_TO_GOALS[studyIntensity];
-      const { error: goalsError } = await supabase
-        .from('weekly_study_goals')
-        .upsert(
-          {
-            user_id: userId,
-            questions_goal: goals.questions_goal,
-            tests_goal: goals.tests_goal,
-          },
-          { onConflict: 'user_id' }
-        );
-
-      if (goalsError) {
-        console.error('Failed to update weekly goals:', goalsError);
-        // Don't throw - target exam was saved successfully
+      const goalsResult = await weeklyGoalsService.upsertGoals(
+        userId,
+        goals.questions_goal,
+        goals.tests_goal
+      );
+      if (!goalsResult.success) {
+        console.error('Failed to update weekly goals:', goalsResult.error);
       }
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.targetExam.root() });
-      queryClient.invalidateQueries({ queryKey: ['weekly-goals'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.progress.weeklyGoals(variables.userId) });
       toast.success('Target exam date saved! Weekly goals updated.');
     },
     onError: (error) => {
@@ -285,12 +131,7 @@ export const useRemoveTargetExam = () => {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      const { error } = await supabase
-        .from('user_target_exam')
-        .delete()
-        .eq('user_id', userId);
-
-      if (error) throw error;
+      unwrapOrThrow(await examSessionService.removeTarget(userId));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.targetExam.root() });
@@ -324,27 +165,8 @@ export const useBulkImportExamSessions = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (sessions: Omit<ExamSession, 'id' | 'created_at' | 'updated_at'>[]) => {
-      // Use atomic database function to prevent race conditions
-      const { data, error } = await supabase.rpc('bulk_import_exam_sessions_safe', {
-        sessions_data: sessions,
-      });
-
-      if (error) throw error;
-
-      // The function returns a single row with counts
-      // If no data returned, the transaction may have failed silently
-      if (!data || data.length === 0) {
-        throw new Error('Bulk import returned no result - transaction may have failed');
-      }
-
-      const result = data[0];
-      return {
-        count: result.inserted_sessions_count,
-        convertedTargets: result.converted_targets_count,
-        deletedSessions: result.deleted_sessions_count,
-      };
-    },
+    mutationFn: async (sessions: Parameters<typeof examSessionService.bulkImport>[0]) =>
+      unwrapOrThrow(await examSessionService.bulkImport(sessions)),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.examSessions.all() });
       queryClient.invalidateQueries({ queryKey: queryKeys.targetExam.root() });
@@ -366,35 +188,18 @@ export const useBulkImportExamSessions = () => {
 // Exam Attempts Hooks (Historical Tracking)
 // ============================================================================
 
-/**
- * Get a user's exam attempt history
- */
 export const useExamAttempts = (userId?: string) => {
   return useQuery({
     queryKey: queryKeys.examAttempts.byUser(userId ?? ''),
     queryFn: async () => {
       if (!userId) return [];
-
-      const { data, error } = await supabase
-        .from('exam_attempts')
-        .select(`
-          *,
-          exam_session:exam_sessions(*)
-        `)
-        .eq('user_id', userId)
-        .order('exam_date', { ascending: false });
-
-      if (error) throw error;
-      return data as (ExamAttempt & { exam_session: ExamSession | null })[];
+      return unwrapOrThrow(await examSessionService.getAttempts(userId));
     },
     enabled: !!userId,
     staleTime: 1000 * 60 * 5,
   });
 };
 
-/**
- * Record an exam attempt (when user confirms they took the exam)
- */
 export const useRecordExamAttempt = () => {
   const queryClient = useQueryClient();
 
@@ -409,27 +214,21 @@ export const useRecordExamAttempt = () => {
     }: {
       userId: string;
       examDate: string;
-      targetLicense: LicenseType;
-      outcome?: ExamOutcome;
+      targetLicense: 'technician' | 'general' | 'extra';
+      outcome?: 'passed' | 'failed' | 'skipped';
       examSessionId?: string;
       notes?: string;
-    }) => {
-      const { data, error } = await supabase
-        .from('exam_attempts')
-        .insert({
-          user_id: userId,
-          exam_date: examDate,
-          target_license: targetLicense,
-          outcome: outcome || null,
-          exam_session_id: examSessionId || null,
-          notes: notes || null,
+    }) =>
+      unwrapOrThrow(
+        await examSessionService.recordAttempt({
+          userId,
+          examDate,
+          targetLicense,
+          outcome,
+          examSessionId,
+          notes,
         })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.examAttempts.root() });
     },
@@ -440,9 +239,6 @@ export const useRecordExamAttempt = () => {
   });
 };
 
-/**
- * Update an exam attempt outcome (when user reports their result)
- */
 export const useUpdateExamAttemptOutcome = () => {
   const queryClient = useQueryClient();
 
@@ -453,19 +249,12 @@ export const useUpdateExamAttemptOutcome = () => {
       notes,
     }: {
       attemptId: string;
-      outcome: ExamOutcome;
+      outcome: 'passed' | 'failed' | 'skipped';
       notes?: string;
-    }) => {
-      const { data, error } = await supabase
-        .from('exam_attempts')
-        .update({ outcome, ...(notes !== undefined && { notes }) })
-        .eq('id', attemptId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+    }) =>
+      unwrapOrThrow(
+        await examSessionService.updateOutcome({ attemptId, outcome, notes })
+      ),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.examAttempts.root() });
       if (variables.outcome === 'passed') {
@@ -484,108 +273,26 @@ export const useUpdateExamAttemptOutcome = () => {
 // Note: Geocoding is now handled client-side via useGeocoding.ts hook
 // using Mapbox API with localStorage persistence and quota protection.
 
-/**
- * Hook to get count of sessions needing geocoding (missing coordinates).
- * Uses efficient count-only query (head: true) - doesn't fetch actual rows.
- */
 export const useSessionsNeedingGeocodeCount = () => {
   return useQuery({
     queryKey: queryKeys.examSessions.needingGeocodeCount(),
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from('exam_sessions')
-        .select('*', { count: 'exact', head: true })
-        .not('address', 'is', null)
-        .not('city', 'is', null)
-        .not('state', 'is', null)
-        .or('latitude.is.null,longitude.is.null');
-
-      if (error) throw error;
-      return count ?? 0;
-    },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    queryFn: async () =>
+      unwrapOrThrow(await examSessionService.getNeedingGeocodeCount()),
+    staleTime: 1000 * 60 * 5,
   });
 };
 
-/**
- * PostgREST's maximum rows per request. We paginate in chunks of this size.
- */
-const POSTGREST_PAGE_SIZE = 1000;
-
-/**
- * Maximum sessions to fetch for geocoding to prevent memory issues.
- * At ~500 bytes/session, 10,000 sessions ≈ 5MB in memory.
- * This limit can be increased if needed, but provides a reasonable default.
- */
-const MAX_GEOCODE_SESSIONS = 10000;
-
-/**
- * Hook to fetch all sessions needing geocoding with automatic pagination.
- * Bypasses PostgREST's 1000-record limit by fetching in a loop.
- *
- * Performance notes:
- * - Each session is ~500 bytes, so 10k sessions ≈ 5MB in memory
- * - Fetching is sequential (unavoidable with PostgREST pagination)
- * - Large datasets may take several seconds to load
- *
- * @param options.enabled - Whether to run the query (default: false, must be explicitly enabled)
- * @param options.includeAll - When true, fetches ALL sessions with valid addresses (for force re-geocode mode)
- */
 export const useSessionsNeedingGeocode = (options?: {
   enabled?: boolean;
   includeAll?: boolean;
 }) => {
   return useQuery({
     queryKey: queryKeys.examSessions.needingGeocode(options?.includeAll ?? false),
-    queryFn: async () => {
-      const allSessions: ExamSession[] = [];
-      let page = 0;
-      let hasMore = true;
-
-      while (hasMore) {
-        let query = supabase
-          .from('exam_sessions')
-          .select('*')
-          .not('address', 'is', null)
-          .not('city', 'is', null)
-          .not('state', 'is', null)
-          .order('exam_date', { ascending: true })
-          .range(page * POSTGREST_PAGE_SIZE, (page + 1) * POSTGREST_PAGE_SIZE - 1);
-
-        // Only filter for missing coords if not including all
-        if (!options?.includeAll) {
-          query = query.or('latitude.is.null,longitude.is.null');
-        }
-
-        const { data, error } = await query;
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          // Cast is safe: Supabase returns rows matching the exam_sessions schema
-          allSessions.push(...(data as ExamSession[]));
-          hasMore = data.length === POSTGREST_PAGE_SIZE;
-          page++;
-
-          // Safety limit to prevent memory issues with very large datasets
-          if (allSessions.length >= MAX_GEOCODE_SESSIONS) {
-            console.warn(
-              `Geocode query reached ${MAX_GEOCODE_SESSIONS} session limit. ` +
-              `Some sessions may not be included.`
-            );
-            hasMore = false;
-          }
-        } else {
-          hasMore = false;
-        }
-      }
-
-      return {
-        sessions: allSessions,
-        totalCount: allSessions.length,
-        limitReached: allSessions.length >= MAX_GEOCODE_SESSIONS,
-      };
-    },
+    queryFn: async () =>
+      unwrapOrThrow(
+        await examSessionService.getSessionsNeedingGeocode(options?.includeAll ?? false)
+      ),
     enabled: options?.enabled ?? false,
-    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
+    staleTime: 1000 * 60 * 2,
   });
 };
