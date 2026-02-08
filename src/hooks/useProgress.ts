@@ -1,4 +1,3 @@
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Question } from '@/hooks/useQuestions';
 import { TestType, testConfig } from '@/types/navigation';
@@ -9,6 +8,7 @@ import { recordQuestionAttempt, recordPracticeTestCompleted, recordTopicQuizComp
 import { incrementDailyActivity } from '@/hooks/useDailyStreak';
 import { trackPracticeTestCompleted as trackAmpTestCompleted, trackQuestionAnswered, trackQuizCompleted } from '@/lib/amplitude';
 import { queryKeys } from '@/services/queryKeys';
+import { progressService } from '@/services/progress/progressService';
 
 /** Number of questions to batch before triggering a readiness recalculation */
 const RECALC_QUESTION_THRESHOLD = 10;
@@ -151,23 +151,21 @@ export function useProgress() {
     const passed = correctCount >= passingScore;
 
     // Save test result
-    const { data: testResult, error: testError } = await supabase
-      .from('practice_test_results')
-      .insert({
-        user_id: user.id,
-        score: correctCount,
-        total_questions: totalQuestions,
-        percentage,
-        passed,
-        test_type: testType
-      })
-      .select()
-      .single();
+    const testResultResult = await progressService.createTestResult({
+      userId: user.id,
+      score: correctCount,
+      totalQuestions,
+      percentage,
+      passed,
+      testType,
+    });
 
-    if (testError) {
-      console.error('Error saving test result:', testError);
+    if (!testResultResult.success) {
+      console.error('Error saving test result:', testResultResult.error.message);
       return null;
     }
+
+    const testResult = testResultResult.data;
 
     // Save individual question attempts
     const answerToIndex: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
@@ -181,12 +179,10 @@ export function useProgress() {
       attempt_type: 'practice_test'
     }));
 
-    const { error: attemptsError } = await supabase
-      .from('question_attempts')
-      .insert(attempts);
+    const attemptsResult = await progressService.createAttempts(attempts);
 
-    if (attemptsError) {
-      console.error('Error saving question attempts:', attemptsError);
+    if (!attemptsResult.success) {
+      console.error('Error saving question attempts:', attemptsResult.error.message);
     }
 
     // Record individual question attempt events (fire-and-forget)
@@ -290,18 +286,16 @@ export function useProgress() {
 
     const answerToIndex: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
 
-    const { error } = await supabase
-      .from('question_attempts')
-      .insert({
-        user_id: user.id,
-        question_id: question.id,
-        selected_answer: answerToIndex[selectedAnswer],
-        is_correct: selectedAnswer === question.correctAnswer,
-        attempt_type: attemptType
-      });
+    const attemptResult = await progressService.createAttempts([{
+      user_id: user.id,
+      question_id: question.id,
+      selected_answer: answerToIndex[selectedAnswer],
+      is_correct: selectedAnswer === question.correctAnswer,
+      attempt_type: attemptType,
+    }]);
 
-    if (error) {
-      console.error('Error saving attempt:', error);
+    if (!attemptResult.success) {
+      console.error('Error saving attempt:', attemptResult.error.message);
     }
 
     // Record event (fire-and-forget, doesn't block UI)
@@ -375,13 +369,11 @@ export function useProgress() {
       attempt_type: attemptType
     }));
 
-    const { error } = await supabase
-      .from('question_attempts')
-      .insert(attemptRecords);
+    const insertResult = await progressService.createAttempts(attemptRecords);
 
-    if (error) {
-      console.error('Error saving quiz attempts:', error);
-      return { success: false, error: error.message };
+    if (!insertResult.success) {
+      console.error('Error saving quiz attempts:', insertResult.error.message);
+      return { success: false, error: insertResult.error.message };
     }
 
     // Record events for each question attempt (fire-and-forget)

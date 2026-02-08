@@ -44,4 +44,13 @@ export { questionService } from './questions/questionService';
 export type { Question, LinkData, QuestionTopic } from './questions/questionService';
 
 export { readinessService } from './readiness/readinessService';
-export type { ReadinessData, SubelementMetric } from './readiness/readinessService';
+export type { ReadinessData, SubelementMetric, ReadinessSnapshot } from './readiness/readinessService';
+
+export { progressService } from './progress/progressService';
+export type { TestResultRow, AttemptRecord } from './progress/progressService';
+
+export { streakService } from './streak/streakService';
+export type { RawStreakInfo, IncrementActivityOptions } from './streak/streakService';
+
+export { feedbackService } from './feedback/feedbackService';
+export type { FeedbackRecord } from './feedback/feedbackService';
