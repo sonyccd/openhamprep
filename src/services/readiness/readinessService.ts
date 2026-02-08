@@ -54,15 +54,15 @@ class ReadinessService extends ServiceBase {
           .eq('exam_type', examType)
           .maybeSingle(),
       null,
-      'Failed to fetch readiness score'
+      'Failed to fetch readiness score for user'
     );
   }
 
-  async recalculate(examType: TestType): Promise<ServiceResult<boolean>> {
+  async recalculate(examType: TestType): Promise<ServiceResult<void>> {
     // Check session before calling edge function
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      return failure('AUTH_REQUIRED', 'User must be authenticated to recalculate readiness');
+      return failure('AUTH_REQUIRED', 'Cannot recalculate readiness: user not authenticated');
     }
 
     const result = await this.handleEdgeFunction(
@@ -74,7 +74,12 @@ class ReadinessService extends ServiceBase {
     );
 
     if (!result.success) return result;
-    return { success: true, data: result.data?.success === true };
+
+    if (result.data?.success !== true) {
+      return failure('EDGE_FUNCTION_ERROR', 'Failed to recalculate readiness: calculation returned unsuccessful');
+    }
+
+    return { success: true, data: undefined };
   }
 }
 

@@ -175,6 +175,8 @@ class QuestionService extends ServiceBase {
         const lookupByUUID = isUUID(questionId);
         const column = lookupByUUID ? 'id' : 'display_name';
 
+        // display_name lookup uses ilike for case-insensitive matching,
+        // allowing URLs like /questions/t1a01 to resolve to T1A01
         const query = supabase.from('questions').select(QUESTION_SELECT);
         const { data, error } = lookupByUUID
           ? await query.eq(column, questionId).single()

@@ -33,5 +33,5 @@ export async function recalculateReadiness(examType: TestType): Promise<boolean>
     console.error('Failed to recalculate readiness:', result.error.message);
     return false;
   }
-  return result.data;
+  return true;
 }

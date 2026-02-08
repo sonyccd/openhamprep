@@ -24,10 +24,10 @@ class BookmarkService extends ServiceBase {
           .eq('user_id', userId)
           .order('created_at', { ascending: false });
 
-        // Flatten the joined data to include display_name at the top level
+        // Flatten the joined display_name from the !inner join to the top level
         const flattened = data?.map(bookmark => ({
           ...bookmark,
-          display_name: bookmark.questions?.display_name,
+          display_name: bookmark.questions?.display_name ?? 'Unknown',
         })) ?? null;
 
         return { data: flattened, error };

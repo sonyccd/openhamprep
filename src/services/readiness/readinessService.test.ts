@@ -104,7 +104,7 @@ describe('ReadinessService', () => {
   });
 
   describe('recalculate', () => {
-    it('returns true when edge function succeeds', async () => {
+    it('succeeds when edge function returns success: true', async () => {
       mockGetSession.mockResolvedValue({
         data: { session: { access_token: 'token' } },
       });
@@ -116,9 +116,6 @@ describe('ReadinessService', () => {
       const result = await readinessService.recalculate(examType);
 
       expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data).toBe(true);
-      }
       expect(mockInvoke).toHaveBeenCalledWith('calculate-readiness', {
         body: { exam_type: examType },
       });
@@ -155,7 +152,7 @@ describe('ReadinessService', () => {
       }
     });
 
-    it('returns false when edge function returns success: false', async () => {
+    it('returns EDGE_FUNCTION_ERROR when calculation returns success: false', async () => {
       mockGetSession.mockResolvedValue({
         data: { session: { access_token: 'token' } },
       });
@@ -166,9 +163,10 @@ describe('ReadinessService', () => {
 
       const result = await readinessService.recalculate(examType);
 
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data).toBe(false);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.code).toBe('EDGE_FUNCTION_ERROR');
+        expect(result.error.message).toContain('calculation returned unsuccessful');
       }
     });
   });
