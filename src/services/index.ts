@@ -32,3 +32,16 @@ export type {
 
 // Base class for services
 export { ServiceBase } from './shared/serviceBase';
+
+// Domain services
+export { glossaryService } from './glossary/glossaryService';
+export type { GlossaryTerm } from './glossary/glossaryService';
+
+export { bookmarkService } from './bookmarks/bookmarkService';
+export type { BookmarkRow } from './bookmarks/bookmarkService';
+
+export { questionService } from './questions/questionService';
+export type { Question, LinkData, QuestionTopic } from './questions/questionService';
+
+export { readinessService } from './readiness/readinessService';
+export type { ReadinessData, SubelementMetric } from './readiness/readinessService';
