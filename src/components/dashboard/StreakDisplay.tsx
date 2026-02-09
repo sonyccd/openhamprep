@@ -176,9 +176,9 @@ export function StreakDisplay({ className, variant = 'full', onAction }: StreakD
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="flex items-center justify-between gap-3 mt-2"
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mt-2"
           >
-            <div className="flex items-center gap-2 text-warning text-sm">
+            <div className="flex items-center gap-2 text-warning text-sm min-w-0">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span>
                 Answer {questionsNeeded} more {questionsNeeded === 1 ? 'question' : 'questions'} to keep your streak!
@@ -189,7 +189,7 @@ export function StreakDisplay({ className, variant = 'full', onAction }: StreakD
                 size="sm"
                 variant="secondary"
                 onClick={onAction}
-                className="shrink-0"
+                className="shrink-0 self-start sm:self-auto"
               >
                 Practice Now
               </Button>

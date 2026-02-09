@@ -57,4 +57,5 @@ vi.mock('@/lib/amplitude', () => ({
   trackTopicViewed: vi.fn(),
   trackLessonViewed: vi.fn(),
   trackGlossarySearched: vi.fn(),
+  trackAiPromptCopied: vi.fn(),
 }));

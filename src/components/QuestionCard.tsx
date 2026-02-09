@@ -3,13 +3,13 @@ import { Question } from "@/hooks/useQuestions";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import { useAuth } from "@/hooks/useAuth";
 import { useExplanationFeedback } from "@/hooks/useExplanationFeedback";
-import { cn, getSafeUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Bookmark, BookmarkCheck, MessageSquare, ThumbsUp, ThumbsDown, ExternalLink, Users, Link, BookOpen } from "lucide-react";
+import { Bookmark, BookmarkCheck, MessageSquare, ThumbsUp, ThumbsDown, Link } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import { GetMoreHelp } from "@/components/GetMoreHelp";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Popover,
@@ -22,29 +22,6 @@ import { GlossaryHighlightedText } from "@/components/GlossaryHighlightedText";
 import { MarkdownText } from "@/components/MarkdownText";
 import { FigureImage } from "@/components/FigureImage";
 import type { LinkData } from "@/hooks/useQuestions";
-
-/**
- * Constructs a Discourse auth URL that logs the user in via OIDC
- * and redirects them to the specified forum topic after authentication.
- *
- * @param forumUrl - The full forum topic URL (e.g., https://forum.openhamprep.com/t/topic/123)
- * @returns The OIDC auth URL with origin parameter for post-auth redirect
- */
-function getForumAuthUrl(forumUrl: string): string | null {
-  // First validate the URL is safe (http/https only)
-  const safeUrl = getSafeUrl(forumUrl);
-  if (!safeUrl) return null;
-
-  try {
-    const url = new URL(safeUrl);
-    // Extract the path (e.g., /t/topic-slug/123) to use as the origin parameter
-    const origin = url.pathname + url.search + url.hash;
-    return `https://forum.openhamprep.com/auth/oidc?origin=${encodeURIComponent(origin)}`;
-  } catch {
-    // URL parsing failed - return null for safety
-    return null;
-  }
-}
 
 interface QuestionCardProps {
   question: Question;
@@ -417,58 +394,11 @@ export function QuestionCard({
               )}
             </div>
 
-            {/* Discuss in Forum Button */}
-            {(() => {
-              const authUrl = question.forumUrl ? getForumAuthUrl(question.forumUrl) : null;
-              return authUrl ? (
-                <div className="mt-8">
-                  <Button
-                    variant="outline"
-                    className="w-full sm:w-auto gap-2"
-                    asChild
-                  >
-                    <a
-                      href={authUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Users className="w-4 h-4" aria-hidden="true" />
-                      Discuss with Other Hams
-                      <ExternalLink className="w-3 h-3 ml-1" aria-hidden="true" />
-                    </a>
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Join the community discussion, share study tips, or suggest improvements to this explanation.
-                  </p>
-                </div>
-              ) : null;
-            })()}
-
-            {/* Related Topics */}
-            {question.topics && question.topics.length > 0 && (
-              <div className="mt-8">
-                <div className="flex items-center gap-2 mb-3">
-                  <BookOpen className="w-4 h-4 text-muted-foreground/80" aria-hidden="true" />
-                  <span className="text-sm font-medium text-foreground/80">Study this topic:</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {question.topics.map((topic) => (
-                    <Badge
-                      key={topic.id}
-                      variant="secondary"
-                      className={cn(
-                        "text-sm py-1.5 px-3",
-                        onTopicClick && "cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                      )}
-                      onClick={() => onTopicClick?.(topic.slug)}
-                    >
-                      <BookOpen className="w-3 h-3 mr-1.5" aria-hidden="true" />
-                      {topic.title}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
+            <GetMoreHelp
+              question={question}
+              selectedAnswer={selectedAnswer}
+              onTopicClick={onTopicClick}
+            />
           </motion.div>
         )}
       </div>

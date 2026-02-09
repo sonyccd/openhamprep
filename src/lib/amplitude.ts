@@ -142,3 +142,15 @@ export function trackLessonViewed(lessonSlug: string): void {
 export function trackGlossarySearched(query: string): void {
   safeTrack('glossary_searched', { query });
 }
+
+// ── AI Prompt events ────────────────────────────────────────────────
+
+export interface AiPromptCopiedProps {
+  question_id: string;
+  is_correct: boolean;
+  license_class: string;
+}
+
+export function trackAiPromptCopied(props: AiPromptCopiedProps): void {
+  safeTrack('ai_prompt_copied', props);
+}
