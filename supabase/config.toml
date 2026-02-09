@@ -16,23 +16,38 @@ additional_redirect_urls = [
   "https://openhamprep-*-brad-bazemores-projects.vercel.app/**"
 ]
 
-[functions.seed-questions]
+[functions.calculate-readiness]
 verify_jwt = false
 
-[functions.manage-question-links]
-verify_jwt = false
-
-[functions.sync-discourse-topics]
+[functions.delete-discourse-user]
 verify_jwt = false
 
 [functions.discourse-webhook]
 verify_jwt = false
 
+[functions.manage-question-links]
+verify_jwt = false
+
+[functions.migrate-discourse-external-ids]
+verify_jwt = false
+
 [functions.question-opengraph]
+verify_jwt = false
+
+[functions.seed-questions]
+verify_jwt = false
+
+[functions.sync-discourse-topics]
+verify_jwt = false
+
+[functions.system-monitor]
+verify_jwt = false
+
+[functions.track-user-signup]
 verify_jwt = false
 
 [functions.update-discourse-post]
 verify_jwt = false
 
-[functions.delete-discourse-user]
+[functions.verify-discourse-sync]
 verify_jwt = false
