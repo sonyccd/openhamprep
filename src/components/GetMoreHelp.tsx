@@ -39,10 +39,12 @@ export function GetMoreHelp({ question, selectedAnswer, onTopicClick }: GetMoreH
   const licenseClass = getLicenseClass(question.displayName);
 
   const handleCopyPrompt = async () => {
+    if (!selectedAnswer) return;
+
     const prompt = buildAiPrompt({
       questionText: question.question,
       options: question.options,
-      userAnswer: selectedAnswer ?? '',
+      userAnswer: selectedAnswer,
       correctAnswer: question.correctAnswer,
       explanation: question.explanation ?? null,
       licenseClass,

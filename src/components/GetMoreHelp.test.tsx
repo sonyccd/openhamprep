@@ -13,6 +13,12 @@ vi.mock('sonner', () => ({
   },
 }));
 
+// Explicitly mock amplitude (also mocked globally in setup.ts, but explicit here for clarity)
+const mockTrackAiPromptCopied = vi.fn();
+vi.mock('@/lib/amplitude', () => ({
+  trackAiPromptCopied: (...args) => mockTrackAiPromptCopied(...args),
+}));
+
 const baseQuestion: Question = {
   id: 'uuid-t1a01',
   displayName: 'T1A01',
@@ -148,6 +154,30 @@ describe('GetMoreHelp', () => {
       await waitFor(() => {
         expect(mockToastSuccess).toHaveBeenCalledWith('Prompt copied! Paste into your favorite AI chatbot.');
       });
+    });
+
+    it('tracks ai_prompt_copied event on successful copy', async () => {
+      render(<GetMoreHelp question={baseQuestion} selectedAnswer="B" />);
+
+      fireEvent.click(screen.getByText('Get AI Prompt'));
+
+      await waitFor(() => {
+        expect(mockTrackAiPromptCopied).toHaveBeenCalledWith({
+          question_id: 'T1A01',
+          is_correct: false,
+          license_class: 'technician',
+        });
+      });
+    });
+
+    it('does nothing when selectedAnswer is null', async () => {
+      render(<GetMoreHelp question={baseQuestion} selectedAnswer={null} />);
+
+      fireEvent.click(screen.getByText('Get AI Prompt'));
+
+      // Should not attempt clipboard write or tracking
+      expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
+      expect(mockTrackAiPromptCopied).not.toHaveBeenCalled();
     });
 
     it('shows error toast on clipboard failure', async () => {
