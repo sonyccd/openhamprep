@@ -106,6 +106,7 @@ export function GetMoreHelp({ question, selectedAnswer, onTopicClick }: GetMoreH
           <button
             onClick={handleCopyPrompt}
             className={actionStyle}
+            aria-label="Copy AI chatbot prompt to clipboard"
           >
             <Sparkles className="w-4 h-4 shrink-0" aria-hidden="true" />
             Get AI Prompt
