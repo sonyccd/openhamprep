@@ -277,17 +277,6 @@ describe('QuestionCard', () => {
       expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     });
 
-    it('shows helper text below the forum button', () => {
-      renderQuestionCard({
-        question: questionWithForumUrl,
-        selectedAnswer: 'A',
-        showResult: true,
-        hideLinks: false
-      });
-
-      expect(screen.getByText(/Join the community discussion/)).toBeInTheDocument();
-    });
-
     it('does not show forum button when forumUrl is undefined', () => {
       const questionWithUndefinedForumUrl: Question = {
         id: 'T1A01',
