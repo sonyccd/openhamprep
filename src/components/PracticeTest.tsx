@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { TestType, testConfig } from "@/types/navigation";
+import { TestType, testConfig, examDistribution } from "@/types/navigation";
 import { trackPracticeTestStarted } from "@/lib/amplitude";
 import { PageContainer } from "@/components/ui/page-container";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +40,76 @@ function shuffleArray<T>(array: T[]): T[] {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
+}
+
+/**
+ * Selects questions matching the real FCC exam distribution.
+ * For each subelement, picks one question per group first, then fills
+ * remaining slots randomly from that subelement. Falls back to random
+ * fill if the pool is too small.
+ */
+function selectExamQuestions(
+  allQuestions: Question[],
+  questionCount: number,
+  distribution: Record<string, number>
+): Question[] {
+  const selected: Question[] = [];
+  const usedIds = new Set<string>();
+
+  for (const [subelement, count] of Object.entries(distribution)) {
+    // Get all questions for this subelement (e.g. id starts with "T1")
+    const pool = allQuestions.filter(q => q.id.startsWith(subelement));
+    if (pool.length === 0) continue;
+
+    // Group questions by their question group (e.g. "T1A", "T1B")
+    const groups = new Map<string, Question[]>();
+    for (const q of pool) {
+      // Group key is the first 3 characters (e.g. "T1A" from "T1A01")
+      const groupKey = q.id.slice(0, 3);
+      if (!groups.has(groupKey)) groups.set(groupKey, []);
+      groups.get(groupKey)!.push(q);
+    }
+
+    // Pick one random question from each group first
+    const fromGroups: Question[] = [];
+    for (const groupQuestions of groups.values()) {
+      const shuffled = shuffleArray(groupQuestions);
+      fromGroups.push(shuffled[0]);
+    }
+
+    // Shuffle so we don't always pick from groups in alphabetical order
+    const shuffledFromGroups = shuffleArray(fromGroups);
+
+    // Take up to `count` from the per-group picks
+    const picked = shuffledFromGroups.slice(0, count);
+    for (const q of picked) {
+      selected.push(q);
+      usedIds.add(q.id);
+    }
+
+    // If we need more from this subelement than we got groups, fill randomly
+    if (picked.length < count) {
+      const remaining = shuffleArray(pool.filter(q => !usedIds.has(q.id)));
+      for (const q of remaining) {
+        if (picked.length + (selected.length - picked.length) >= count) break;
+        if (selected.filter(s => s.id.startsWith(subelement)).length >= count) break;
+        selected.push(q);
+        usedIds.add(q.id);
+      }
+    }
+  }
+
+  // If we still don't have enough (sparse pool), fill from unused questions
+  if (selected.length < questionCount) {
+    const unused = shuffleArray(allQuestions.filter(q => !usedIds.has(q.id)));
+    for (const q of unused) {
+      if (selected.length >= questionCount) break;
+      selected.push(q);
+    }
+  }
+
+  // Shuffle final set so questions aren't grouped by subelement
+  return shuffleArray(selected).slice(0, questionCount);
 }
 export function PracticeTest({
   onBack,
@@ -157,8 +227,8 @@ export function PracticeTest({
 
   const handleStartTest = () => {
     if (!allQuestions) return;
-    const shuffledQuestions = shuffleArray([...allQuestions]).slice(0, questionCount);
-    setQuestions(shuffledQuestions);
+    const examQuestions = selectExamQuestions(allQuestions, questionCount, examDistribution[testType]);
+    setQuestions(examQuestions);
     setHasStarted(true);
     trackPracticeTestStarted({ test_type: testType, question_count: questionCount });
   };
@@ -206,7 +276,7 @@ export function PracticeTest({
             </h1>
 
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              This practice test simulates the real Amateur Radio exam with {questionCount} randomly selected questions.
+              This practice test simulates the real Amateur Radio exam with {questionCount} questions distributed across topics just like the actual test.
             </p>
 
             {/* Test Info */}
