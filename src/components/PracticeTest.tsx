@@ -13,7 +13,8 @@ import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { TestType, testConfig } from "@/types/navigation";
+import { TestType, testConfig, examDistribution } from "@/types/navigation";
+import { selectExamQuestions } from "@/lib/examQuestions";
 import { trackPracticeTestStarted } from "@/lib/amplitude";
 import { PageContainer } from "@/components/ui/page-container";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,14 +34,7 @@ interface TestHistoryResult {
   completed_at: string;
   test_type: string;
 }
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
+
 export function PracticeTest({
   onBack,
   onTestStateChange,
@@ -157,8 +151,8 @@ export function PracticeTest({
 
   const handleStartTest = () => {
     if (!allQuestions) return;
-    const shuffledQuestions = shuffleArray([...allQuestions]).slice(0, questionCount);
-    setQuestions(shuffledQuestions);
+    const examQuestions = selectExamQuestions(allQuestions, questionCount, examDistribution[testType]);
+    setQuestions(examQuestions);
     setHasStarted(true);
     trackPracticeTestStarted({ test_type: testType, question_count: questionCount });
   };
@@ -206,7 +200,7 @@ export function PracticeTest({
             </h1>
 
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              This practice test simulates the real Amateur Radio exam with {questionCount} randomly selected questions.
+              This practice test simulates the real Amateur Radio exam with {questionCount} questions distributed across topics just like the actual test.
             </p>
 
             {/* Test Info */}
