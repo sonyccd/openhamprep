@@ -7,6 +7,7 @@ import { recalculateReadiness } from '@/hooks/useReadinessScore';
 import { recordQuestionAttempt, recordPracticeTestCompleted, recordTopicQuizCompleted } from '@/lib/events';
 import { incrementDailyActivity } from '@/hooks/useDailyStreak';
 import { trackPracticeTestCompleted as trackAmpTestCompleted, trackQuestionAnswered, trackQuizCompleted } from '@/lib/amplitude';
+import { rsTrackPracticeTestCompleted, rsTrackQuestionAnswered, rsTrackQuizCompleted } from '@/lib/rudderstack';
 import { queryKeys } from '@/services/queryKeys';
 import { progressService } from '@/services/progress/progressService';
 
@@ -248,6 +249,15 @@ export function useProgress() {
       test_type: testType,
     });
 
+    // Track in RudderStack
+    rsTrackPracticeTestCompleted({
+      score: correctCount,
+      total_questions: totalQuestions,
+      percentage,
+      passed,
+      test_type: testType,
+    });
+
     // Track daily activity for streaks
     // Invalidate streak cache only after successful increment to avoid stale data race
     incrementDailyActivity(user.id, {
@@ -317,6 +327,13 @@ export function useProgress() {
 
     // Track in Amplitude
     trackQuestionAnswered({
+      question_id: question.id,
+      is_correct: selectedAnswer === question.correctAnswer,
+      attempt_type: attemptType,
+    });
+
+    // Track in RudderStack
+    rsTrackQuestionAnswered({
       question_id: question.id,
       is_correct: selectedAnswer === question.correctAnswer,
       attempt_type: attemptType,
@@ -416,6 +433,15 @@ export function useProgress() {
 
     // Track in Amplitude
     trackQuizCompleted({
+      total_questions: attempts.length,
+      correct_count: correctCount,
+      percentage,
+      passed,
+      attempt_type: attemptType,
+    });
+
+    // Track in RudderStack
+    rsTrackQuizCompleted({
       total_questions: attempts.length,
       correct_count: correctCount,
       percentage,

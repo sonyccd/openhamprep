@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { TestType, testConfig, examDistribution } from "@/types/navigation";
 import { selectExamQuestions } from "@/lib/examQuestions";
 import { trackPracticeTestStarted } from "@/lib/amplitude";
+import { rsTrackPracticeTestStarted } from "@/lib/rudderstack";
 import { PageContainer } from "@/components/ui/page-container";
 import { supabase } from "@/integrations/supabase/client";
 interface PracticeTestProps {
@@ -155,6 +156,7 @@ export function PracticeTest({
     setQuestions(examQuestions);
     setHasStarted(true);
     trackPracticeTestStarted({ test_type: testType, question_count: questionCount });
+    rsTrackPracticeTestStarted({ test_type: testType, question_count: questionCount });
   };
 
   if (isLoading) {
