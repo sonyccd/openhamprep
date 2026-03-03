@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { trackSignIn, trackSignOut } from '@/lib/amplitude';
+import { rsTrackSignIn, rsTrackSignOut } from '@/lib/rudderstack';
 
 interface AuthContextType {
   user: User | null;
@@ -42,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Track Google OAuth sign-in after the redirect completes
         if (hasAuthCallback && event === 'SIGNED_IN' && session?.user?.app_metadata?.provider === 'google') {
           trackSignIn('google');
+          rsTrackSignIn('google');
         }
 
         // Clear the hash from URL after processing auth callback
@@ -123,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     trackSignOut();
+    rsTrackSignOut();
     await supabase.auth.signOut();
   };
 

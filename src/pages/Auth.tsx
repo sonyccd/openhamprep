@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { trackSignUp, trackSignIn } from '@/lib/amplitude';
+import { rsTrackSignUp, rsTrackSignIn } from '@/lib/rudderstack';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -109,6 +110,7 @@ export default function Auth() {
           }
         } else {
           trackSignIn('email');
+          rsTrackSignIn('email');
           toast.success('Welcome back!');
           // If there's a returnTo URL (e.g., from OAuth consent flow), redirect there
           navigate(returnTo || '/');
@@ -123,6 +125,7 @@ export default function Auth() {
           }
         } else {
           trackSignUp();
+          rsTrackSignUp();
           setShowEmailConfirmation(true);
         }
       }
