@@ -2,6 +2,7 @@ import { Question } from "@/hooks/useQuestions";
 import { getSafeUrl } from "@/lib/utils";
 import { buildAiPrompt, getLicenseClass } from "@/lib/aiPrompt";
 import { trackAiPromptCopied } from "@/lib/amplitude";
+import { rsTrackAiPromptCopied } from "@/lib/rudderstack";
 import { toast } from "sonner";
 import { BookOpen, Users, Sparkles, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -56,6 +57,11 @@ export function GetMoreHelp({ question, selectedAnswer, onTopicClick }: GetMoreH
       await navigator.clipboard.writeText(prompt);
       toast.success("Prompt copied! Paste into your favorite AI chatbot.");
       trackAiPromptCopied({
+        question_id: question.displayName,
+        is_correct: selectedAnswer === question.correctAnswer,
+        license_class: licenseClass.toLowerCase(),
+      });
+      rsTrackAiPromptCopied({
         question_id: question.displayName,
         is_correct: selectedAnswer === question.correctAnswer,
         license_class: licenseClass.toLowerCase(),

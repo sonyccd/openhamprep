@@ -9,6 +9,7 @@ import { ArrowLeft, Route, CheckCircle2 } from "lucide-react";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { trackLessonViewed } from "@/lib/amplitude";
+import { rsTrackLessonViewed } from "@/lib/rudderstack";
 import { PageContainer } from "@/components/ui/page-container";
 
 interface LessonDetailPageProps {
@@ -24,6 +25,7 @@ export function LessonDetailPage({ slug, onBack }: LessonDetailPageProps) {
   // Track lesson view in Amplitude when slug changes
   useEffect(() => {
     trackLessonViewed(slug);
+    rsTrackLessonViewed(slug);
   }, [slug]);
 
   // Calculate which topics are completed

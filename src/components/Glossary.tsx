@@ -9,6 +9,7 @@ import { PageContainer } from "@/components/ui/page-container";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { motion } from "framer-motion";
 import { trackGlossarySearched } from "@/lib/amplitude";
+import { rsTrackGlossarySearched } from "@/lib/rudderstack";
 
 export function Glossary() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,6 +63,7 @@ export function Glossary() {
     if (trimmed.length < 3) return;
     const timer = setTimeout(() => {
       trackGlossarySearched(trimmed);
+      rsTrackGlossarySearched(trimmed);
     }, 1000);
     return () => clearTimeout(timer);
   }, [searchQuery]);

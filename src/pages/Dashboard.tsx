@@ -43,6 +43,7 @@ import { LessonDetailPage } from '@/components/LessonDetailPage';
 import { HamRadioToolsGallery } from '@/components/HamRadioToolsGallery';
 import { TestType, testTypes, View } from '@/types/navigation';
 import { trackLicenseTypeChanged, trackStudyModeSelected } from '@/lib/amplitude';
+import { rsTrackLicenseTypeChanged, rsTrackStudyModeSelected } from '@/lib/rudderstack';
 export default function Dashboard() {
   const {
     user,
@@ -125,6 +126,7 @@ export default function Dashboard() {
     setSelectedTest(newType);
     if (newType !== previousType) {
       trackLicenseTypeChanged({ new_type: newType, previous_type: previousType });
+      rsTrackLicenseTypeChanged({ new_type: newType, previous_type: previousType });
     }
   };
   useEffect(() => {
@@ -228,6 +230,7 @@ export default function Dashboard() {
     // Track user-initiated study mode navigation in Amplitude
     if (studyViews.includes(view)) {
       trackStudyModeSelected(view);
+      rsTrackStudyModeSelected(view);
     }
   };
   const handleConfirmNavigation = () => {

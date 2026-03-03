@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { trackBookmarkAdded, trackBookmarkRemoved } from '@/lib/amplitude';
+import { rsTrackBookmarkAdded, rsTrackBookmarkRemoved } from '@/lib/rudderstack';
 import { queryKeys, unwrapOrThrow } from '@/services';
 import { bookmarkService } from '@/services/bookmarks/bookmarkService';
 
@@ -25,6 +26,7 @@ export function useBookmarks() {
       queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all(user?.id ?? '') });
       toast.success('Question bookmarked!');
       trackBookmarkAdded(variables.questionId);
+      rsTrackBookmarkAdded(variables.questionId);
     },
     onError: (error) => {
       toast.error('Failed to bookmark question');
@@ -41,6 +43,7 @@ export function useBookmarks() {
       queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all(user?.id ?? '') });
       toast.success('Bookmark removed');
       trackBookmarkRemoved(questionId);
+      rsTrackBookmarkRemoved(questionId);
     },
     onError: (error) => {
       toast.error('Failed to remove bookmark');
