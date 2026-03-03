@@ -59,3 +59,28 @@ vi.mock('@/lib/amplitude', () => ({
   trackGlossarySearched: vi.fn(),
   trackAiPromptCopied: vi.fn(),
 }));
+
+// Mock RudderStack tracking utility - all tracking functions are no-ops in tests
+vi.mock('@/lib/rudderstack', () => ({
+  rsTrackSignUp: vi.fn(),
+  rsTrackSignIn: vi.fn(),
+  rsTrackSignOut: vi.fn(),
+  rsTrackPracticeTestStarted: vi.fn(),
+  rsTrackPracticeTestCompleted: vi.fn(),
+  rsTrackQuestionAnswered: vi.fn(),
+  rsTrackQuizStarted: vi.fn(),
+  rsTrackQuizCompleted: vi.fn(),
+  rsTrackLicenseTypeChanged: vi.fn(),
+  rsTrackStudyModeSelected: vi.fn(),
+  rsTrackBookmarkAdded: vi.fn(),
+  rsTrackBookmarkRemoved: vi.fn(),
+  rsTrackTopicViewed: vi.fn(),
+  rsTrackLessonViewed: vi.fn(),
+  rsTrackGlossarySearched: vi.fn(),
+  rsTrackAiPromptCopied: vi.fn(),
+}));
+
+// Mock RudderStack identity provider
+vi.mock('@/hooks/useRudderStack', () => ({
+  RudderStackProvider: ({ children }: { children: React.ReactNode }) => children,
+}));

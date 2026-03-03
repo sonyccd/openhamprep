@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Ensure we test the real implementation, not the global mock from setup.ts
+vi.unmock('@/lib/rudderstack');
+
 // vi.hoisted runs before imports — set env vars and create mock
 const { mockTrack } = vi.hoisted(() => {
   import.meta.env.VITE_RUDDERSTACK_WRITE_KEY = 'test-write-key';

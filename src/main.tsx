@@ -41,6 +41,22 @@ if (amplitudeApiKey) {
   }
 }
 
+// Initialize RudderStack Analytics
+// Uses environment variables - gracefully disabled if not set
+const rudderWriteKey = import.meta.env.VITE_RUDDERSTACK_WRITE_KEY;
+const rudderDataPlaneUrl = import.meta.env.VITE_RUDDERSTACK_DATA_PLANE_URL;
+if (rudderWriteKey && rudderDataPlaneUrl) {
+  try {
+    import('@rudderstack/analytics-js').then(({ RudderAnalytics }) => {
+      const rudderAnalytics = new RudderAnalytics();
+      rudderAnalytics.load(rudderWriteKey, rudderDataPlaneUrl);
+      (window as any).rudderanalytics = rudderAnalytics;
+    });
+  } catch (error) {
+    console.warn('Failed to initialize RudderStack:', error);
+  }
+}
+
 // Initialize Vercel Analytics only in production (they require Vercel's infrastructure)
 if (import.meta.env.PROD) {
   injectSpeedInsights();

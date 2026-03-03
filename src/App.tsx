@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { PendoProvider } from "@/hooks/usePendo";
 import { AmplitudeProvider } from "@/hooks/useAmplitude";
+import { RudderStackProvider } from "@/hooks/useRudderStack";
 import { AppNavigationProvider } from "@/hooks/useAppNavigation";
 import { AccessibilityProvider } from "@/hooks/useAccessibility";
 import { useWindowControlsOverlay } from "@/hooks/useWindowControlsOverlay";
@@ -71,11 +72,13 @@ const App = () => (
         <AuthProvider>
           <PendoProvider>
           <AmplitudeProvider>
+          <RudderStackProvider>
             <AppNavigationProvider>
               <TooltipProvider>
                 <AppContent />
               </TooltipProvider>
             </AppNavigationProvider>
+          </RudderStackProvider>
           </AmplitudeProvider>
           </PendoProvider>
         </AuthProvider>
