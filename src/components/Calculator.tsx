@@ -189,12 +189,12 @@ export function Calculator({ className }: CalculatorProps) {
             variant="ghost"
             size="sm"
             onClick={() => setIsOpen(!isOpen)}
-            className="gap-2 w-28 justify-start hover:bg-muted hover:text-foreground"
+            className="gap-2 w-8 px-0 sm:w-28 sm:px-3 justify-center sm:justify-start hover:bg-muted hover:text-foreground"
             aria-label={isOpen ? "Close calculator" : "Open calculator"}
             aria-expanded={isOpen}
           >
             <CalculatorIcon className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
-            {isOpen ? "Close" : "Calculator"}
+            <span className="hidden sm:inline">{isOpen ? "Close" : "Calculator"}</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent>

@@ -114,8 +114,6 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
           selectedAnswer={answers[question.id] || null}
           onSelectAnswer={() => {}}
           showResult={true}
-          questionNumber={reviewIndex + 1}
-          totalQuestions={totalQuestions}
           enableGlossaryHighlight
           onTopicClick={navigateToTopic}
         />

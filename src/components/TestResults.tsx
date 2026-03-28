@@ -78,8 +78,6 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
           selectedAnswer={answers[question.id] || null}
           onSelectAnswer={() => {}}
           showResult={true}
-          questionNumber={reviewIndex + 1}
-          totalQuestions={totalQuestions}
         />
 
         <div className="mt-8 flex justify-between">
@@ -130,7 +128,7 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
           </div>
           <h1
             className={cn(
-              "text-4xl font-mono font-bold mb-2",
+              "text-3xl sm:text-4xl font-mono font-bold mb-2",
               passed ? "text-success" : "text-destructive"
             )}
           >
@@ -143,23 +141,23 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
           </p>
 
           {/* Score Display */}
-          <div className="flex items-center justify-center gap-8 mt-6">
+          <div className="flex items-center justify-center gap-4 sm:gap-8 mt-6">
             <div className="text-center">
-              <p className="text-5xl font-mono font-bold text-foreground">
+              <p className="text-4xl sm:text-5xl font-mono font-bold text-foreground">
                 {correctCount}
               </p>
               <p className="text-sm text-muted-foreground">Correct</p>
             </div>
             <div className="w-px h-16 bg-border" />
             <div className="text-center">
-              <p className="text-5xl font-mono font-bold text-foreground">
+              <p className="text-4xl sm:text-5xl font-mono font-bold text-foreground">
                 {totalQuestions - correctCount}
               </p>
               <p className="text-sm text-muted-foreground">Incorrect</p>
             </div>
             <div className="w-px h-16 bg-border" />
             <div className="text-center">
-              <p className="text-5xl font-mono font-bold text-foreground">
+              <p className="text-4xl sm:text-5xl font-mono font-bold text-foreground">
                 {percentage}%
               </p>
               <p className="text-sm text-muted-foreground">Score</p>

@@ -107,7 +107,7 @@ export function HelpButton() {
   return <>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="default" size="icon" className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg z-50 [&_svg]:size-8" onClick={() => setOpen(true)} aria-label="Open help dialog">
+          <Button variant="default" size="icon" className="fixed bottom-4 left-4 sm:left-auto sm:right-4 h-12 w-12 rounded-full shadow-lg z-50 [&_svg]:size-8" onClick={() => setOpen(true)} aria-label="Open help dialog">
             <HelpCircle aria-hidden="true" />
           </Button>
         </TooltipTrigger>
