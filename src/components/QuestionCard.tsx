@@ -122,11 +122,6 @@ export function QuestionCard({
           <span className="font-mono text-sm text-muted-foreground/80 tracking-wide">
             {question.displayName}
           </span>
-          {questionNumber && totalQuestions && (
-            <span className="font-mono text-sm text-muted-foreground">
-              {questionNumber} / {totalQuestions}
-            </span>
-          )}
         </div>
 
         {/* Floating Action Buttons */}
