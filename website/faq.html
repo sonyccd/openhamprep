@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FAQ - Open Ham Prep</title>
   <meta name="description" content="Frequently asked questions about ham radio licensing and using Open Ham Prep.">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/img/OHP_Favicon_Orange.svg">
 
   <!-- Analytics Configuration and Scripts -->
   <script src="/js/config.js"></script>
@@ -15,11 +15,40 @@
   <script>
     tailwind.config = {
       darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["'DM Sans'", 'system-ui', 'sans-serif'],
+            mono: ['Norwester', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            amber: {
+              50: '#FFF8EF', 100: '#FFF0D6', 200: '#FFE4B3', 300: '#FFD48A',
+              400: '#FFCA78', 500: '#FFC285', 600: '#FFB36D', 700: '#E09A50',
+              800: '#C07830', 900: '#9A5818',
+            },
+            gray: {
+              50: '#F8F7F5', 100: '#F0EEED', 200: '#E0DCDA', 300: '#C4BEBB',
+              400: '#A09898', 500: '#726E6C', 600: '#4A4646', 700: '#322E2C',
+              800: '#212F45', 900: '#161F2E',
+            },
+            teal: {
+              100: '#D4FFF0', 400: '#85FFC7', 500: '#5EFDB5',
+              600: '#3DDBA0', 900: '#0D4A35',
+            },
+            cyan: {
+              100: '#D4FFF0', 400: '#85FFC7', 500: '#5EFDB5',
+              600: '#3DDBA0', 900: '#0D4A35',
+            },
+          },
+        },
+      },
     }
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.cdnfonts.com/css/norwester" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="/css/styles.css">
   <!-- Prevent theme flash by setting theme class before page renders -->
@@ -43,9 +72,9 @@
   <nav aria-label="Main navigation" class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
     <div class="max-w-6xl mx-auto px-4">
       <div class="flex items-center justify-between h-16">
-        <a href="/" class="flex items-center gap-2 group">
-          <i data-lucide="radio" aria-hidden="true" class="w-7 h-7 text-amber-600 dark:text-amber-400 group-hover:animate-pulse-slow"></i>
-          <span class="font-mono font-bold text-lg">Open Ham Prep</span>
+        <a href="/" class="flex items-center group">
+          <img src="/img/OHP_Horizontal_Orange_Black.svg" alt="Open Ham Prep" class="h-10 block dark:hidden" width="225" height="40">
+          <img src="/img/OHP_Horizontal_Orange_White.svg" alt="Open Ham Prep" class="h-10 hidden dark:block" width="225" height="40">
         </a>
         <div class="hidden md:flex items-center gap-6">
           <a href="/features.html" class="nav-link text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Features</a>
@@ -93,7 +122,7 @@
     <!-- Hero -->
     <section class="py-20 px-4 gradient-hero">
       <div class="max-w-4xl mx-auto text-center">
-        <i data-lucide="help-circle" aria-hidden="true" class="w-16 h-16 text-amber-600 dark:text-amber-400 mx-auto mb-6"></i>
+        <img src="/img/OHP_Icon_Orange.svg" alt="" aria-hidden="true" class="w-16 h-16 mx-auto mb-6">
         <h1 class="text-4xl md:text-5xl lg:text-6xl font-mono font-bold mb-6 animate-fade-in-up">
           Frequently Asked <span class="gradient-text">Questions</span>
         </h1>
@@ -286,7 +315,7 @@
     <section class="py-20 px-4 gradient-hero">
       <div class="max-w-2xl mx-auto text-center">
         <div class="cta-card reveal-scale bg-white dark:bg-gray-800 border-2 border-amber-200 dark:border-amber-700 rounded-3xl p-10 md:p-14 shadow-2xl shadow-amber-600/10">
-          <i data-lucide="radio" aria-hidden="true" class="w-14 h-14 text-amber-600 dark:text-amber-400 mx-auto mb-6 animate-float"></i>
+          <img src="/img/OHP_Icon_Orange.svg" alt="" aria-hidden="true" class="w-14 h-14 mx-auto mb-6 animate-float">
           <h2 class="text-3xl md:text-4xl font-mono font-bold mb-4">Ready to Get Your License?</h2>
           <p class="text-gray-600 dark:text-gray-400 mb-8 text-lg">Start studying today with our free practice tests, Learning Library, and supportive community.</p>
           <a href="https://app.openhamprep.com/auth" class="btn-primary inline-flex items-center gap-3 px-8 py-4 bg-amber-600 dark:bg-amber-500 text-white text-lg font-medium rounded-xl hover:bg-amber-700 dark:hover:bg-amber-600 transition-all group shadow-lg shadow-amber-600/20">
@@ -303,9 +332,9 @@
     <h2 class="sr-only">Site footer</h2>
     <div class="max-w-6xl mx-auto">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-        <div class="flex items-center gap-2">
-          <i data-lucide="radio" aria-hidden="true" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i>
-          <span class="font-mono font-bold">Open Ham Prep</span>
+        <div class="flex items-center">
+          <img src="/img/OHP_Horizontal_Orange_Black.svg" alt="Open Ham Prep" class="h-6 block dark:hidden" width="140" height="24">
+          <img src="/img/OHP_Horizontal_Orange_White.svg" alt="Open Ham Prep" class="h-6 hidden dark:block" width="140" height="24">
         </div>
         <nav aria-label="Footer navigation" class="flex flex-wrap items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
           <a href="/features.html" class="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Features</a>
