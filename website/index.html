@@ -12,17 +12,15 @@
   <script src="/js/analytics.js"></script>
 
   <!-- Tailwind CSS CDN -->
+  <script src="/js/tailwind-config.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-    }
-  </script>
+  <script>tailwind.config = window.__TAILWIND_CONFIG;</script>
 
-  <!-- Google Fonts -->
+  <!-- Fonts: Norwester (headings) + DM Sans (body) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.cdnfonts.com/css/norwester" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
 
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -50,9 +48,9 @@
     <div class="max-w-6xl mx-auto px-4">
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
-        <a href="/" class="flex items-center gap-2 group">
-          <i data-lucide="radio" aria-hidden="true" class="w-7 h-7 text-amber-600 dark:text-amber-400 group-hover:animate-pulse-slow"></i>
-          <span class="font-mono font-bold text-lg">Open Ham Prep</span>
+        <a href="/" class="flex items-center group">
+          <img src="/img/OHP_Horizontal_Orange_Black.svg" alt="Open Ham Prep" class="h-10 block dark:hidden" width="225" height="40">
+          <img src="/img/OHP_Horizontal_Orange_White.svg" alt="Open Ham Prep" class="h-10 hidden dark:block" width="225" height="40">
         </a>
 
         <!-- Desktop Navigation -->
@@ -474,7 +472,7 @@
     <section class="py-20 px-4 gradient-hero">
       <div class="max-w-2xl mx-auto text-center">
         <div class="cta-card reveal-scale bg-white dark:bg-gray-800 border-2 border-amber-200 dark:border-amber-700 rounded-3xl p-10 md:p-14 shadow-2xl shadow-amber-600/10 dark:shadow-amber-500/5">
-          <i data-lucide="radio" aria-hidden="true" class="w-16 h-16 text-amber-600 dark:text-amber-400 mx-auto mb-6 animate-float"></i>
+          <img src="/img/OHP_Icon_Orange.svg" alt="" aria-hidden="true" class="w-16 h-16 mx-auto mb-6 animate-float">
           <h2 class="text-3xl md:text-4xl font-mono font-bold mb-4">Ready to Get Licensed?</h2>
           <p class="text-gray-600 dark:text-gray-400 mb-8 text-lg">
             Join aspiring hams who've used Open Ham Prep to pass their exams. Your amateur radio journey starts here.
@@ -495,9 +493,9 @@
     <div class="max-w-6xl mx-auto">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <!-- Logo & Description -->
-        <div class="flex items-center gap-2">
-          <i data-lucide="radio" aria-hidden="true" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i>
-          <span class="font-mono font-bold">Open Ham Prep</span>
+        <div class="flex items-center">
+          <img src="/img/OHP_Horizontal_Orange_Black.svg" alt="Open Ham Prep" class="h-6 block dark:hidden" width="140" height="24">
+          <img src="/img/OHP_Horizontal_Orange_White.svg" alt="Open Ham Prep" class="h-6 hidden dark:block" width="140" height="24">
         </div>
 
         <!-- Links -->
