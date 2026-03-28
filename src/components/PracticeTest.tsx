@@ -375,7 +375,7 @@ export function PracticeTest({
       </div>
 
       {/* Question */}
-      <QuestionCard question={currentQuestion} selectedAnswer={answers[currentQuestion.id] || null} onSelectAnswer={handleSelectAnswer} showResult={false} questionNumber={currentIndex + 1} totalQuestions={questions.length} />
+      <QuestionCard question={currentQuestion} selectedAnswer={answers[currentQuestion.id] || null} onSelectAnswer={handleSelectAnswer} showResult={false} />
 
       {/* Navigation */}
       <div className="mt-10">

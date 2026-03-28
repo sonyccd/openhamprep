@@ -78,8 +78,6 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
           selectedAnswer={answers[question.id] || null}
           onSelectAnswer={() => {}}
           showResult={true}
-          questionNumber={reviewIndex + 1}
-          totalQuestions={totalQuestions}
         />
 
         <div className="mt-8 flex justify-between">

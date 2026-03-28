@@ -122,10 +122,6 @@ describe('QuestionCard', () => {
       expect(screen.getByText('D')).toBeInTheDocument();
     });
 
-    it('renders question number when provided', () => {
-      renderQuestionCard({ questionNumber: 5, totalQuestions: 35 });
-      expect(screen.getByText('5 / 35')).toBeInTheDocument();
-    });
   });
 
   describe('Answer Selection', () => {

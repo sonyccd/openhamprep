@@ -28,8 +28,6 @@ interface QuestionCardProps {
   selectedAnswer: string | null;
   onSelectAnswer: (answer: 'A' | 'B' | 'C' | 'D') => void;
   showResult?: boolean;
-  questionNumber?: number;
-  totalQuestions?: number;
   enableGlossaryHighlight?: boolean; // Enable glossary term highlighting (disabled during practice tests)
   hideLinks?: boolean; // Hide links during active practice test (show only on review)
   onTopicClick?: (slug: string) => void; // Navigate to topic when clicked
@@ -40,8 +38,6 @@ export function QuestionCard({
   selectedAnswer,
   onSelectAnswer,
   showResult = false,
-  questionNumber,
-  totalQuestions,
   hideLinks = false,
   enableGlossaryHighlight = false,
   onTopicClick,

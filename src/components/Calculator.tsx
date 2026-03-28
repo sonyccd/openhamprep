@@ -189,7 +189,7 @@ export function Calculator({ className }: CalculatorProps) {
             variant="ghost"
             size="sm"
             onClick={() => setIsOpen(!isOpen)}
-            className="gap-2 w-7 sm:w-28 justify-center sm:justify-start hover:bg-muted hover:text-foreground"
+            className="gap-2 w-8 px-0 sm:w-28 sm:px-3 justify-center sm:justify-start hover:bg-muted hover:text-foreground"
             aria-label={isOpen ? "Close calculator" : "Open calculator"}
             aria-expanded={isOpen}
           >
