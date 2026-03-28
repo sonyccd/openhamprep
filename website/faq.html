@@ -5,46 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FAQ - Open Ham Prep</title>
   <meta name="description" content="Frequently asked questions about ham radio licensing and using Open Ham Prep.">
-  <link rel="icon" type="image/svg+xml" href="/img/OHP_Favicon_Orange.svg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 
   <!-- Analytics Configuration and Scripts -->
   <script src="/js/config.js"></script>
   <script src="/js/analytics.js"></script>
 
+  <script src="/js/tailwind-config.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ["'DM Sans'", 'system-ui', 'sans-serif'],
-            mono: ['Norwester', 'system-ui', 'sans-serif'],
-          },
-          colors: {
-            amber: {
-              50: '#FFF8EF', 100: '#FFF0D6', 200: '#FFE4B3', 300: '#FFD48A',
-              400: '#FFCA78', 500: '#FFC285', 600: '#FFB36D', 700: '#E09A50',
-              800: '#C07830', 900: '#9A5818',
-            },
-            gray: {
-              50: '#F8F7F5', 100: '#F0EEED', 200: '#E0DCDA', 300: '#C4BEBB',
-              400: '#A09898', 500: '#726E6C', 600: '#4A4646', 700: '#322E2C',
-              800: '#212F45', 900: '#161F2E',
-            },
-            teal: {
-              100: '#D4FFF0', 400: '#85FFC7', 500: '#5EFDB5',
-              600: '#3DDBA0', 900: '#0D4A35',
-            },
-            cyan: {
-              100: '#D4FFF0', 400: '#85FFC7', 500: '#5EFDB5',
-              600: '#3DDBA0', 900: '#0D4A35',
-            },
-          },
-        },
-      },
-    }
-  </script>
+  <script>tailwind.config = window.__TAILWIND_CONFIG;</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.cdnfonts.com/css/norwester" rel="stylesheet">

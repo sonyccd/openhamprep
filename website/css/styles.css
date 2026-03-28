@@ -228,6 +228,11 @@ html {
    NAVY HERO SECTIONS — Brand signature dark
    ========================================== */
 
+/* ⚠️  gray-800 = #212F45 (brand navy, NOT standard Tailwind gray-800).
+   Any element using dark:bg-gray-800 will have a navy background in dark mode.
+   Explicitly override text colors for those elements — do not rely on inherited
+   .gradient-hero text overrides to do the right thing inside cards. */
+
 .gradient-hero {
   position: relative;
   background-color: #212F45;
