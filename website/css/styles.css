@@ -1,17 +1,18 @@
 /* Open Ham Prep Marketing Site Styles
-   Design Direction: "Radio Waves Meet Modern Tech"
-   A bold, confident aesthetic with subtle radio/signal motifs */
+   Brand Identity: Navy + Amber + Mint
+   Typography: Norwester (headings) + DM Sans (body)
+   Colors: #212F45 Navy | #FFB36D Amber | #85FFC7 Mint */
 
 /* ==========================================
    TYPOGRAPHY
    ========================================== */
 
 body {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'DM Sans', system-ui, sans-serif;
 }
 
 h1, h2, h3, h4, h5, h6, .font-mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Norwester', system-ui, sans-serif;
 }
 
 html {
@@ -224,23 +225,22 @@ html {
 }
 
 /* ==========================================
-   GRADIENT BACKGROUNDS & RADIO WAVE PATTERNS
+   NAVY HERO SECTIONS — Brand signature dark
    ========================================== */
+
+/* ⚠️  gray-800 = #212F45 (brand navy, NOT standard Tailwind gray-800).
+   Any element using dark:bg-gray-800 will have a navy background in dark mode.
+   Explicitly override text colors for those elements — do not rely on inherited
+   .gradient-hero text overrides to do the right thing inside cards. */
 
 .gradient-hero {
   position: relative;
-  background: linear-gradient(135deg,
-    rgba(251, 191, 36, 0.08) 0%,
-    rgba(245, 158, 11, 0.04) 25%,
-    transparent 50%,
-    rgba(20, 184, 166, 0.04) 75%,
-    rgba(13, 148, 136, 0.06) 100%
-  );
-  background-size: 200% 200%;
-  animation: gradientShift 15s ease infinite;
+  background-color: #212F45;
+  color: white;
   overflow: hidden;
 }
 
+/* Subtle radio-wave pattern on dark navy */
 .gradient-hero::before {
   content: '';
   position: absolute;
@@ -248,28 +248,104 @@ html {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 Q 25 40, 50 50 T 100 50' stroke='%23d97706' stroke-width='0.5' fill='none' opacity='0.1'/%3E%3Cpath d='M0 60 Q 25 50, 50 60 T 100 60' stroke='%23d97706' stroke-width='0.3' fill='none' opacity='0.08'/%3E%3Cpath d='M0 70 Q 25 60, 50 70 T 100 70' stroke='%2314b8a6' stroke-width='0.3' fill='none' opacity='0.08'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 Q 25 40, 50 50 T 100 50' stroke='%23ffffff' stroke-width='0.5' fill='none' opacity='0.06'/%3E%3Cpath d='M0 60 Q 25 50, 50 60 T 100 60' stroke='%23ffffff' stroke-width='0.3' fill='none' opacity='0.04'/%3E%3Cpath d='M0 70 Q 25 60, 50 70 T 100 70' stroke='%23FFB36D' stroke-width='0.4' fill='none' opacity='0.08'/%3E%3C/svg%3E");
   background-size: 200px 100px;
   animation: wave 12s linear infinite;
   pointer-events: none;
 }
 
-.dark .gradient-hero {
-  background: linear-gradient(135deg,
-    rgba(251, 191, 36, 0.06) 0%,
-    rgba(245, 158, 11, 0.02) 25%,
-    transparent 50%,
-    rgba(20, 184, 166, 0.02) 75%,
-    rgba(13, 148, 136, 0.04) 100%
-  );
+/* Amber glow in top-right corner */
+.gradient-hero::after {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255, 179, 109, 0.12) 0%, transparent 65%);
+  pointer-events: none;
 }
 
-.dark .gradient-hero::before {
-  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 Q 25 40, 50 50 T 100 50' stroke='%23fbbf24' stroke-width='0.5' fill='none' opacity='0.15'/%3E%3Cpath d='M0 60 Q 25 50, 50 60 T 100 60' stroke='%23fbbf24' stroke-width='0.3' fill='none' opacity='0.1'/%3E%3Cpath d='M0 70 Q 25 60, 50 70 T 100 70' stroke='%2314b8a6' stroke-width='0.3' fill='none' opacity='0.1'/%3E%3C/svg%3E");
+/* ---- Text overrides inside navy hero ---- */
+
+.gradient-hero h1,
+.gradient-hero h2,
+.gradient-hero h3 {
+  color: white !important;
+}
+
+.gradient-hero p,
+.gradient-hero .text-gray-600,
+.gradient-hero .text-gray-400,
+.gradient-hero .text-gray-700,
+.gradient-hero .text-gray-300 {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.gradient-hero .text-gray-500 {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+/* Checkmarks → brand mint on dark bg */
+.gradient-hero .text-green-500 {
+  color: #85FFC7 !important;
+}
+
+/* Community / teal icons → mint */
+.gradient-hero .text-cyan-600,
+.gradient-hero .text-cyan-400 {
+  color: #85FFC7 !important;
+}
+
+/* Secondary button on dark bg */
+.gradient-hero .btn-secondary {
+  color: rgba(255, 255, 255, 0.85) !important;
+  border-radius: 0.75rem;
+}
+.gradient-hero .btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Badge variants on dark bg */
+.gradient-hero .badge-amber {
+  background: rgba(255, 179, 109, 0.2);
+  color: #FFB36D;
+}
+.gradient-hero .badge-teal {
+  background: rgba(133, 255, 199, 0.15);
+  color: #85FFC7;
+}
+
+/* ---- CTA card floating on navy bg ---- */
+/* Light mode: white card resets text colors back to dark */
+
+.gradient-hero .cta-card h2,
+.gradient-hero .cta-card h3 {
+  color: #212F45 !important;
+}
+
+.gradient-hero .cta-card p,
+.gradient-hero .cta-card .text-gray-600,
+.gradient-hero .cta-card .text-gray-400,
+.gradient-hero .cta-card .text-gray-500 {
+  color: #4A4646 !important;
+}
+
+/* Dark mode: card background is navy, so text must be light */
+html.dark .gradient-hero .cta-card h2,
+html.dark .gradient-hero .cta-card h3 {
+  color: white !important;
+}
+
+html.dark .gradient-hero .cta-card p,
+html.dark .gradient-hero .cta-card .text-gray-600,
+html.dark .gradient-hero .cta-card .text-gray-400,
+html.dark .gradient-hero .cta-card .text-gray-500 {
+  color: rgba(255, 255, 255, 0.75) !important;
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #d97706, #f59e0b, #fbbf24);
+  background: linear-gradient(135deg, #FFB36D, #F09A50, #FFD48A);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -280,13 +356,13 @@ html {
 .gradient-border {
   position: relative;
   background: linear-gradient(white, white) padding-box,
-              linear-gradient(135deg, #d97706, #14b8a6) border-box;
+              linear-gradient(135deg, #FFB36D, #85FFC7) border-box;
   border: 2px solid transparent;
 }
 
 .dark .gradient-border {
-  background: linear-gradient(rgb(31, 41, 55), rgb(31, 41, 55)) padding-box,
-              linear-gradient(135deg, #d97706, #14b8a6) border-box;
+  background: linear-gradient(rgb(33, 47, 69), rgb(33, 47, 69)) padding-box,
+              linear-gradient(135deg, #FFB36D, #85FFC7) border-box;
 }
 
 /* Signal wave decoration */
@@ -316,7 +392,7 @@ html {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #d97706;
+  color: #FFB36D;
 }
 
 .signal-waves::after {
@@ -325,7 +401,7 @@ html {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #14b8a6;
+  color: #85FFC7;
   animation-delay: 0.5s;
 }
 
@@ -343,8 +419,8 @@ html {
 }
 
 html.dark .pillar-card {
-  background-color: rgb(55, 65, 81);
-  border-color: rgb(75, 85, 99);
+  background-color: rgb(33, 47, 69);
+  border-color: rgb(44, 62, 84);
 }
 
 .pillar-card::before {
@@ -354,7 +430,7 @@ html.dark .pillar-card {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--pillar-color, #d97706), transparent);
+  background: linear-gradient(90deg, var(--pillar-color, #FFB36D), transparent);
 }
 
 .pillar-card:hover {
@@ -368,8 +444,8 @@ html.dark .pillar-card {
 
 .pillar-card.pillar-free { --pillar-color: #10b981; }
 .pillar-card.pillar-learn { --pillar-color: #8b5cf6; }
-.pillar-card.pillar-community { --pillar-color: #06b6d4; }
-.pillar-card.pillar-smart { --pillar-color: #f59e0b; }
+.pillar-card.pillar-community { --pillar-color: #85FFC7; }
+.pillar-card.pillar-smart { --pillar-color: #FFB36D; }
 
 /* ==========================================
    ENHANCED FEATURE CARDS
@@ -381,8 +457,8 @@ html.dark .pillar-card {
 }
 
 html.dark .feature-card {
-  background-color: rgb(55, 65, 81);
-  border-color: rgb(75, 85, 99);
+  background-color: rgb(33, 47, 69);
+  border-color: rgb(44, 62, 84);
 }
 
 .feature-card::before {
@@ -408,7 +484,7 @@ html.dark .feature-card {
 
 .feature-card:hover::before {
   opacity: 1;
-  background: linear-gradient(135deg, #d97706, #14b8a6);
+  background: linear-gradient(135deg, #FFB36D, #85FFC7);
 }
 
 .dark .feature-card:hover {
@@ -443,20 +519,20 @@ html.dark .feature-card {
 .community-card {
   position: relative;
   background: linear-gradient(135deg,
-    rgba(6, 182, 212, 0.1) 0%,
-    rgba(20, 184, 166, 0.05) 100%
+    rgba(133, 255, 199, 0.1) 0%,
+    rgba(133, 255, 199, 0.05) 100%
   );
-  border: 1px solid rgba(6, 182, 212, 0.2);
+  border: 1px solid rgba(133, 255, 199, 0.2);
   border-radius: 1.5rem;
   overflow: hidden;
 }
 
 .dark .community-card {
   background: linear-gradient(135deg,
-    rgba(6, 182, 212, 0.15) 0%,
-    rgba(20, 184, 166, 0.08) 100%
+    rgba(133, 255, 199, 0.12) 0%,
+    rgba(133, 255, 199, 0.06) 100%
   );
-  border-color: rgba(6, 182, 212, 0.3);
+  border-color: rgba(133, 255, 199, 0.25);
 }
 
 .community-card::before {
@@ -466,7 +542,7 @@ html.dark .feature-card {
   right: -50%;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(133, 255, 199, 0.12) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -498,7 +574,7 @@ html.dark .feature-card {
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px -10px rgba(217, 119, 6, 0.5);
+  box-shadow: 0 10px 30px -10px rgba(255, 179, 109, 0.5);
 }
 
 .btn-primary:hover::before {
@@ -541,7 +617,7 @@ html.dark .feature-card {
   position: absolute;
   inset: -4px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #d97706, #f59e0b);
+  background: linear-gradient(135deg, #FFB36D, #F09A50);
   opacity: 0;
   filter: blur(8px);
   transition: opacity 0.3s ease;
@@ -587,7 +663,7 @@ html.dark .feature-card {
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, #d97706, #14b8a6);
+  background: linear-gradient(90deg, #FFB36D, #85FFC7);
   transition: width 0.3s ease;
 }
 
@@ -612,7 +688,7 @@ html.dark .feature-card {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(255, 179, 109, 0.08) 0%, transparent 60%);
   animation: pulse 4s ease-in-out infinite;
   pointer-events: none;
 }
@@ -627,10 +703,10 @@ html.dark .feature-card {
 }
 
 .stat-number {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Norwester', system-ui, sans-serif;
   font-size: 2.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #d97706, #f59e0b);
+  background: linear-gradient(135deg, #FFB36D, #F09A50);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -680,11 +756,11 @@ html.dark .feature-card {
 }
 
 .shadow-glow-amber {
-  box-shadow: 0 0 40px rgba(251, 191, 36, 0.2);
+  box-shadow: 0 0 40px rgba(255, 179, 109, 0.2);
 }
 
 .dark .shadow-glow-amber {
-  box-shadow: 0 0 40px rgba(251, 191, 36, 0.1);
+  box-shadow: 0 0 40px rgba(255, 179, 109, 0.12);
 }
 
 /* Checkmark list styling */
@@ -717,23 +793,23 @@ html.dark .feature-card {
 }
 
 .badge-amber {
-  background: rgba(251, 191, 36, 0.15);
-  color: #d97706;
+  background: rgba(255, 179, 109, 0.15);
+  color: #E08A40;
 }
 
 .dark .badge-amber {
-  background: rgba(251, 191, 36, 0.2);
-  color: #fbbf24;
+  background: rgba(255, 179, 109, 0.18);
+  color: #FFB36D;
 }
 
 .badge-teal {
-  background: rgba(20, 184, 166, 0.15);
-  color: #0d9488;
+  background: rgba(133, 255, 199, 0.15);
+  color: #1A8F65;
 }
 
 .dark .badge-teal {
-  background: rgba(20, 184, 166, 0.2);
-  color: #14b8a6;
+  background: rgba(133, 255, 199, 0.18);
+  color: #3DDBA0;
 }
 
 .badge-purple {
@@ -755,19 +831,19 @@ html.dark .feature-card {
   position: absolute;
   top: -40px;
   left: 0;
-  background: #d97706;
-  color: white;
+  background: #FFB36D;
+  color: #212F45;
   padding: 8px 16px;
   z-index: 100;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   border-radius: 0 0 8px 0;
   transition: top 0.2s ease;
 }
 
 .skip-link:focus {
   top: 0;
-  outline: 2px solid white;
+  outline: 2px solid #212F45;
   outline-offset: 2px;
 }
 
@@ -786,7 +862,7 @@ html.dark .feature-card {
 
 /* Focus visible styling for keyboard navigation */
 :focus-visible {
-  outline: 2px solid #d97706;
+  outline: 2px solid #FFB36D;
   outline-offset: 2px;
 }
 
