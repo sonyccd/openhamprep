@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "katex/dist/katex.min.css";
 
 /* OpenDyslexic font - self-hosted for accessibility */
@@ -217,7 +217,7 @@ html.font-xl {
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'DM Sans', 'Space Grotesk', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {

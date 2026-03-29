@@ -1,7 +1,8 @@
-import { Radio, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { PanelLeftClose, PanelLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { OHPLogo } from '@/components/OHPLogo';
 
 interface SidebarHeaderProps {
   isCollapsed: boolean;
@@ -22,11 +23,8 @@ export function SidebarHeader({
       )}
     >
       {(isMobile || !isCollapsed) && (
-        <div className="flex items-center gap-2">
-          <Radio className="w-5 h-5 text-primary" />
-          <span className="font-mono font-bold text-foreground text-sm">
-            <span className="text-primary">Open Ham Prep</span>
-          </span>
+        <div className="flex items-center">
+          <OHPLogo variant="horizontal" className="h-9 w-auto" />
         </div>
       )}
       {!isMobile && (

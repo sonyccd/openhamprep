@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Radio, Loader2, Mail, Lock, User, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Mail, Lock, User, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { OHPLogo } from '@/components/OHPLogo';
 import { trackSignUp, trackSignIn } from '@/lib/amplitude';
 
 const emailSchema = z.string().email('Please enter a valid email address');
@@ -357,15 +358,10 @@ export default function Auth() {
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Radio className="w-6 h-6 text-primary" />
-            </div>
+          <div className="flex items-center justify-center mb-6">
+            <OHPLogo variant="horizontal" className="h-10 w-auto" />
           </div>
-          <h1 className="text-2xl font-mono font-bold text-foreground">
-            Open Ham Prep
-          </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-muted-foreground">
             {isLogin ? 'Sign in to track your progress' : 'Create an account to get started'}
           </p>
         </div>
