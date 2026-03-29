@@ -29,7 +29,7 @@ describe('SidebarHeader', () => {
     renderWithTooltip(
       <SidebarHeader {...defaultProps} isCollapsed={true} isMobile={false} />
     );
-    expect(screen.queryByText('Open Ham Prep')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ohp-logo-horizontal')).not.toBeInTheDocument();
   });
 
   it('renders collapse button on desktop', () => {
