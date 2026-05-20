@@ -225,47 +225,36 @@ export function QuestionCard({
         {!user && (
           <div className="absolute top-4 right-4 flex items-center gap-1 opacity-40 hover:opacity-100 transition-opacity duration-200">
             <Calculator key={question.id} />
-            <div className="relative">
+            <Popover open={showGuestBookmarkPopover} onOpenChange={setShowGuestBookmarkPopover}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => setShowGuestBookmarkPopover(true)}
-                    aria-label="Bookmark this question"
-                  >
-                    <Bookmark className="w-3.5 h-3.5" aria-hidden="true" />
-                  </Button>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      aria-label="Bookmark this question"
+                    >
+                      <Bookmark className="w-3.5 h-3.5" aria-hidden="true" />
+                    </Button>
+                  </PopoverTrigger>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Bookmark this question</p>
                 </TooltipContent>
               </Tooltip>
-              {showGuestBookmarkPopover && (
-                <div
-                  className="absolute z-10 right-0 top-full mt-1 w-64 bg-popover border border-border rounded-lg shadow-lg p-3"
-                  onClick={(e) => e.stopPropagation()}
+              <PopoverContent className="w-64 bg-popover border-border" align="end">
+                <p className="text-sm text-popover-foreground mb-2">
+                  Bookmarks need an account to persist — they'd disappear when you close the tab.
+                </p>
+                <a
+                  href="/auth"
+                  className="text-sm font-medium text-primary hover:underline"
                 >
-                  <button
-                    onClick={() => setShowGuestBookmarkPopover(false)}
-                    className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-xs"
-                    aria-label="Close"
-                  >
-                    ✕
-                  </button>
-                  <p className="text-sm text-popover-foreground mb-2 pr-4">
-                    Bookmarks need an account to persist — they'd disappear when you close the tab.
-                  </p>
-                  <a
-                    href="/auth"
-                    className="text-sm font-medium text-primary hover:underline"
-                  >
-                    Create free account
-                  </a>
-                </div>
-              )}
-            </div>
+                  Create free account
+                </a>
+              </PopoverContent>
+            </Popover>
           </div>
         )}
 
