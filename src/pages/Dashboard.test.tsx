@@ -203,7 +203,7 @@ describe('Dashboard', () => {
   });
 
   describe('Guest mode', () => {
-    it('shows guest dashboard (not redirect) when user is not authenticated', async () => {
+    it('renders main dashboard (not a redirect) when user is not authenticated', async () => {
       mockAuthHook.mockReturnValueOnce({
         user: null,
         loading: false,
@@ -212,7 +212,7 @@ describe('Dashboard', () => {
       renderDashboard();
 
       await waitFor(() => {
-        expect(screen.getByText('Start Studying')).toBeInTheDocument();
+        expect(screen.getByText(/you're studying as a guest/i)).toBeInTheDocument();
       });
       expect(mockNavigate).not.toHaveBeenCalledWith('/auth');
     });
