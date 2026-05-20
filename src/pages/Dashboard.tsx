@@ -391,7 +391,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between gap-3 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 mb-6">
             <p className="text-sm text-foreground">
               You're studying as a guest — progress isn't being saved.{' '}
-              <a href="/auth" className="text-primary hover:underline font-medium">
+              <a href="/auth?returnTo=/dashboard" className="text-primary hover:underline font-medium">
                 Create a free account
               </a>
             </p>
