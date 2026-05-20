@@ -12,7 +12,7 @@ import { queryKeys } from '@/services/queryKeys';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, AlertTriangle, Zap, Brain, Target, MapPin, BookOpen, Shuffle, GraduationCap, BookMarked } from 'lucide-react';
+import { Loader2, AlertTriangle, Zap, Brain, Target, MapPin } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { PageContainer } from '@/components/ui/page-container';
 import {
@@ -305,111 +305,6 @@ export default function Dashboard() {
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>;
     }
-    if (!user) {
-      return (
-        <PageContainer width="standard" radioWaveBg>
-          {!guestBannerDismissed && (
-            <div className="flex items-center justify-between gap-3 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 mb-6">
-              <p className="text-sm text-foreground">
-                You're studying as a guest — progress isn't being saved.{' '}
-                <a href="/auth" className="text-primary hover:underline font-medium">
-                  Create a free account
-                </a>
-              </p>
-              <button
-                onClick={() => {
-                  localStorage.setItem('guest_banner_dismissed', 'true');
-                  setGuestBannerDismissed(true);
-                }}
-                aria-label="Dismiss banner"
-                className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-foreground mb-1">Start Studying</h2>
-            <p className="text-sm text-muted-foreground">Pick a study mode to get started.</p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 mb-8">
-            <button
-              onClick={() => changeView('practice-test')}
-              className="bg-card border border-border rounded-lg p-4 cursor-pointer hover:bg-accent/50 transition-colors text-left"
-            >
-              <GraduationCap className="w-6 h-6 text-primary mb-2" />
-              <span className="text-sm font-medium text-foreground">Practice Test</span>
-            </button>
-            <button
-              onClick={() => changeView('random-practice')}
-              className="bg-card border border-border rounded-lg p-4 cursor-pointer hover:bg-accent/50 transition-colors text-left"
-            >
-              <Shuffle className="w-6 h-6 text-primary mb-2" />
-              <span className="text-sm font-medium text-foreground">Random Practice</span>
-            </button>
-            <button
-              onClick={() => changeView('topics')}
-              className="bg-card border border-border rounded-lg p-4 cursor-pointer hover:bg-accent/50 transition-colors text-left"
-            >
-              <BookOpen className="w-6 h-6 text-primary mb-2" />
-              <span className="text-sm font-medium text-foreground">Study by Topic</span>
-            </button>
-            <button
-              onClick={() => changeView('glossary')}
-              className="bg-card border border-border rounded-lg p-4 cursor-pointer hover:bg-accent/50 transition-colors text-left"
-            >
-              <BookMarked className="w-6 h-6 text-primary mb-2" />
-              <span className="text-sm font-medium text-foreground">Glossary</span>
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            <div className="bg-muted/50 border border-border rounded-lg p-4">
-              <p className="text-sm font-medium text-muted-foreground mb-1">Readiness Score</p>
-              <p className="text-sm text-muted-foreground mb-2">
-                Tracking your readiness over time requires an account — there's nowhere to save it without one.
-              </p>
-              <a href="/auth" className="text-sm text-primary hover:underline">Create a free account</a>
-            </div>
-
-            <div className="bg-muted/50 border border-border rounded-lg p-4">
-              <p className="text-sm font-medium text-muted-foreground mb-1">Streak</p>
-              <p className="text-sm text-muted-foreground mb-2">
-                Tracking your streak requires an account to record each session.
-              </p>
-              <a href="/auth" className="text-sm text-primary hover:underline">Create a free account</a>
-            </div>
-
-            <div className="bg-muted/50 border border-border rounded-lg p-4">
-              <p className="text-sm font-medium text-muted-foreground mb-1">Weak Questions</p>
-              <p className="text-sm text-muted-foreground mb-2">
-                Identifying weak areas requires a history of your answers, which needs an account.
-              </p>
-              <a href="/auth" className="text-sm text-primary hover:underline">Create a free account</a>
-            </div>
-
-            <div className="bg-muted/50 border border-border rounded-lg p-4">
-              <p className="text-sm font-medium text-muted-foreground mb-1">Recent Tests</p>
-              <p className="text-sm text-muted-foreground mb-2">
-                Tracking your progress over time requires an account — there's nowhere to save it without one.
-              </p>
-              <a href="/auth" className="text-sm text-primary hover:underline">Create a free account</a>
-            </div>
-
-            <div className="bg-muted/50 border border-border rounded-lg p-4">
-              <p className="text-sm font-medium text-muted-foreground mb-1">Bookmarks</p>
-              <p className="text-sm text-muted-foreground mb-2">
-                Bookmarks need an account to persist — otherwise they disappear when you close the tab.
-              </p>
-              <a href="/auth" className="text-sm text-primary hover:underline">Create a free account</a>
-            </div>
-          </div>
-        </PageContainer>
-      );
-    }
-
     // Calculate weekly goal progress
     const questionsGoal = weeklyGoals?.questions_goal || 50;
     const testsGoal = weeklyGoals?.tests_goal || 2;
@@ -491,6 +386,28 @@ export default function Dashboard() {
 
     return (
       <PageContainer width="standard" radioWaveBg>
+        {/* Guest banner — shown to unauthenticated users, dismissible */}
+        {!user && !guestBannerDismissed && (
+          <div className="flex items-center justify-between gap-3 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 mb-6">
+            <p className="text-sm text-foreground">
+              You're studying as a guest — progress isn't being saved.{' '}
+              <a href="/auth" className="text-primary hover:underline font-medium">
+                Create a free account
+              </a>
+            </p>
+            <button
+              onClick={() => {
+                localStorage.setItem('guest_banner_dismissed', 'true');
+                setGuestBannerDismissed(true);
+              }}
+              aria-label="Dismiss banner"
+              className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         <DashboardHero
           readinessLevel={readinessLevel}
           readinessTitle={readinessTitle}
