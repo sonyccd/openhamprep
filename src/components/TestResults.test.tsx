@@ -14,6 +14,10 @@ vi.mock('framer-motion', () => ({
   },
 }));
 
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({ user: null, loading: false }),
+}));
+
 vi.mock('@/hooks/useBookmarks', () => ({
   useBookmarks: () => ({
     isBookmarked: vi.fn(() => false),

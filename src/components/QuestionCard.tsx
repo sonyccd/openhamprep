@@ -48,6 +48,7 @@ export function QuestionCard({
   const { userFeedback, submitFeedback, removeFeedback } = useExplanationFeedback(question.id);
   const [noteText, setNoteText] = useState('');
   const [isNoteOpen, setIsNoteOpen] = useState(false);
+  const [showGuestBookmarkPopover, setShowGuestBookmarkPopover] = useState(false);
 
   const bookmarked = isBookmarked(question.id);
   const existingNote = getBookmarkNote(question.id);
@@ -220,10 +221,51 @@ export function QuestionCard({
           </div>
         )}
 
-        {/* Calculator for non-logged-in users */}
+        {/* Floating actions for guests */}
         {!user && (
-          <div className="absolute top-4 right-4 opacity-40 hover:opacity-100 transition-opacity duration-200">
+          <div className="absolute top-4 right-4 flex items-center gap-1 opacity-40 hover:opacity-100 transition-opacity duration-200">
             <Calculator key={question.id} />
+            <div className="relative">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setShowGuestBookmarkPopover(true)}
+                    aria-label="Bookmark this question"
+                  >
+                    <Bookmark className="w-3.5 h-3.5" aria-hidden="true" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Bookmark this question</p>
+                </TooltipContent>
+              </Tooltip>
+              {showGuestBookmarkPopover && (
+                <div
+                  className="absolute z-10 right-0 top-full mt-1 w-64 bg-popover border border-border rounded-lg shadow-lg p-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    onClick={() => setShowGuestBookmarkPopover(false)}
+                    className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-xs"
+                    aria-label="Close"
+                  >
+                    ✕
+                  </button>
+                  <p className="text-sm text-popover-foreground mb-2 pr-4">
+                    Bookmarks need an account to persist — they'd disappear when you close the tab.
+                  </p>
+                  <a
+                    href="/auth"
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    Create free account
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

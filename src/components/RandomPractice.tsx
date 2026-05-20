@@ -300,6 +300,15 @@ export function RandomPractice({
     setBestStreak(allTimeBestStreak);
   };
 
+  const handleBack = () => {
+    if (!user && stats.total > 0) {
+      toast("Your practice session wasn't saved — create a free account to track your progress.", {
+        duration: 5000,
+      });
+    }
+    onBack();
+  };
+
   const canGoBack = historyIndex > 0;
   const isViewingHistory = historyIndex < questionHistory.length - 1;
 
@@ -331,7 +340,7 @@ export function RandomPractice({
       <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
         <div className="text-center">
           <p className="text-destructive mb-4">Failed to load questions</p>
-          <Button onClick={onBack}>Go Back</Button>
+          <Button onClick={handleBack}>Go Back</Button>
         </div>
       </PageContainer>
     );

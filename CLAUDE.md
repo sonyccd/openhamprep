@@ -88,8 +88,9 @@ useQuery({
 
 The service layer foundation in `src/services/` includes:
 - `queryKeys.ts` - Centralized cache key registry (~60 keys)
-- `types.ts` - `ServiceResult<T>`, `ServiceError` types for future services
+- `types.ts` - `ServiceResult<T>`, `ServiceError` types
 - `shared/serviceBase.ts` - Base class for Supabase error handling
+- Subdirectories: `bookmarks/`, `dashboard/`, `examSession/`, `feedback/`, `glossary/`, `progress/`, `readiness/`, `search/`, `streak/`, `weeklyGoals/`
 
 **Cache Invalidation Patterns**:
 
@@ -251,6 +252,28 @@ When saving question attempts, use these `attempt_type` values:
 - `'weak_questions'` - From weak questions review
 - `'topic_quiz'` - From topic mastery quizzes (80% required to complete topic)
 
+### Guest Mode
+
+The app supports unauthenticated ("guest") access. Auth is only required to persist data.
+
+**What works without auth:**
+- All questions (public data — `useQuestions` has no auth requirement)
+- Practice Test, Random Practice, Study by Topic, Glossary
+
+**What requires auth (shows inline placeholder copy instead):**
+- Readiness score, streak, weak questions, recent tests, bookmarks
+
+**The `enabled: !!user` pattern**: All user-scoped TanStack Query hooks use `enabled: !!user`. When `user` is null, those queries never execute — no requests, no errors. Do not remove this guard.
+
+**Save-moment prompts** (dismissible, non-blocking — never gate content):
+- After practice test: inline card below score (`TestResults.tsx`)
+- Clicking bookmark icon: popover tooltip (`QuestionCard.tsx`)
+- Leaving random practice session: Sonner toast (`RandomPractice.tsx`)
+
+**Guest banner**: Dismissible blue banner on Dashboard. Dismissed state stored in `localStorage` key `guest_banner_dismissed`.
+
+**Copy rule**: Always explain what an account *enables technically*, never why the user "should" sign up. See `docs/superpowers/specs/2026-05-20-guest-mode-design.md`.
+
 ## Local Development Setup
 
 ### Prerequisites
@@ -336,6 +359,7 @@ Tests are colocated with components (e.g., `QuestionCard.test.tsx` next to `Ques
 4. **Don't create monolithic components** - Extract reusable pieces, keep files under 200 lines
 5. **Don't forget mobile** - The app is responsive; test on mobile viewports
 6. **Don't skip theme testing** - Verify both light and dark modes work
+7. **Don't add auth guards to `/dashboard`** - Dashboard is intentionally guest-accessible; `!user` renders guest placeholders, not a redirect
 
 ## Useful Patterns
 
@@ -359,10 +383,21 @@ await saveTestResult(questions, answers);
 await saveRandomAttempt(question, selectedAnswer);
 ```
 
-### Protected Routes
-```typescript
-const { user, loading } = useAuth();
+### Route Protection
 
+**Fully protected** (redirect guests to `/auth`):
+```typescript
+// Admin and other auth-only pages
+const { user, loading } = useAuth();
 if (loading) return <PageLoader />;
 if (!user) return <Navigate to="/auth" />;
 ```
+
+**Guest-accessible** (Dashboard pattern — `!user` means guest, not redirect):
+```typescript
+// Dashboard allows guests; data-dependent sections show placeholders
+const { user } = useAuth();
+if (!user) return <GuestView />;  // render placeholder, don't redirect
+```
+
+`/admin` is fully protected. `/dashboard` and all study modes are guest-accessible.

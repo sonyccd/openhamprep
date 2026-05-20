@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import { Question } from "@/hooks/useQuestions";
@@ -18,7 +19,9 @@ interface TestResultsProps {
 }
 
 export function TestResults({ questions, answers, onRetake, onBack, testType = 'technician' }: TestResultsProps) {
+  const { user } = useAuth();
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
+  const [saveCardDismissed, setSaveCardDismissed] = useState(false);
 
   const { questionCount, passingScore } = testConfig[testType];
   const correctCount = questions.filter(
@@ -168,6 +171,28 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
             Passing score: {passingScore} out of {questionCount} (74%)
           </p>
         </motion.div>
+
+        {!user && !saveCardDismissed && (
+          <div className="border border-border rounded-lg p-4 mb-6 bg-card">
+            <p className="text-sm text-muted-foreground mb-3">
+              Test results require an account to save — there's nowhere to put them without one.
+            </p>
+            <div className="flex items-center gap-3">
+              <a
+                href="/auth?returnTo=/dashboard"
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                Create free account
+              </a>
+              <button
+                onClick={() => setSaveCardDismissed(true)}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Continue without saving
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <motion.div

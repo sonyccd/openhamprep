@@ -202,9 +202,8 @@ describe('Dashboard', () => {
     });
   });
 
-  describe('Authentication Redirect', () => {
-    it('redirects to auth page when user is not authenticated', async () => {
-      // Override useAuth mock for this test
+  describe('Guest mode', () => {
+    it('shows guest dashboard (not redirect) when user is not authenticated', async () => {
       mockAuthHook.mockReturnValueOnce({
         user: null,
         loading: false,
@@ -213,8 +212,9 @@ describe('Dashboard', () => {
       renderDashboard();
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/auth');
+        expect(screen.getByText('Start Studying')).toBeInTheDocument();
       });
+      expect(mockNavigate).not.toHaveBeenCalledWith('/auth');
     });
   });
 });
