@@ -1,4 +1,4 @@
-import { Shield } from 'lucide-react';
+import { Shield, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -92,14 +92,33 @@ export function SidebarFooter({
 
       {/* Guest: Sign in link */}
       {!userInfo && (
-        <div className="p-3">
-          <a
-            href="/auth"
-            className="text-sm font-medium text-primary hover:underline"
-          >
-            Sign in →
-          </a>
-        </div>
+        !showExpanded ? (
+          <div className="p-2 flex justify-center">
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <a
+                  href="/auth"
+                  className="flex items-center justify-center w-10 h-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                  aria-label="Sign in"
+                >
+                  <LogIn className="w-5 h-5" />
+                </a>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-popover border-border">
+                <p>Sign in</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        ) : (
+          <div className="p-3">
+            <a
+              href="/auth"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              Sign in →
+            </a>
+          </div>
+        )
       )}
 
       {/* Authenticated: User Profile Section */}

@@ -157,5 +157,20 @@ describe('SidebarFooter', () => {
       expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
       expect(screen.queryByRole('link', { name: /sign in/i })).not.toBeInTheDocument();
     });
+
+    it('shows icon-only sign in when sidebar is collapsed', () => {
+      const baseProps = { ...defaultProps, isAdmin: false, onAdminClick: vi.fn() };
+      renderWithTooltip(
+        <SidebarFooter
+          {...baseProps}
+          isCollapsed={true}
+          isMobile={false}
+          userInfo={undefined}
+        />
+      );
+      expect(screen.getByRole('link', { name: /sign in/i })).toBeInTheDocument();
+      // Full text label should not be visible in collapsed state
+      expect(screen.queryByText('Sign in →')).not.toBeInTheDocument();
+    });
   });
 });
