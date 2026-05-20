@@ -142,7 +142,7 @@ describe('AppLayout', () => {
   });
 
   describe('Unauthenticated State', () => {
-    it('renders children without sidebar when user is not authenticated', () => {
+    it('renders children with sidebar when user is not authenticated', async () => {
       mockUseAuth.mockReturnValue({
         user: null,
         loading: false,
@@ -157,8 +157,10 @@ describe('AppLayout', () => {
       );
 
       expect(screen.getByText('Child Content')).toBeInTheDocument();
-      // Sidebar should not be rendered
-      expect(screen.queryByText('Dashboard')).not.toBeInTheDocument();
+      // Sidebar should be rendered for guests too
+      await waitFor(() => {
+        expect(screen.getByText('Dashboard')).toBeInTheDocument();
+      });
     });
   });
 
