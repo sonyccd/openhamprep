@@ -90,53 +90,67 @@ export function SidebarFooter({
         </div>
       )}
 
-      {/* User Profile Section */}
-      <div
-        className={cn(
-          'p-3',
-          !isMobile && isCollapsed && 'flex justify-center'
-        )}
-      >
-        {showExpanded ? (
-          <button
-            onClick={onProfileClick}
-            className="w-full flex items-center gap-3 p-2 -m-2 rounded-lg hover:bg-secondary transition-colors"
+      {/* Guest: Sign in link */}
+      {!userInfo && (
+        <div className="p-3">
+          <a
+            href="/auth"
+            className="text-sm font-medium text-primary hover:underline"
           >
-            <Avatar className="h-9 w-9 shrink-0">
-              <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-medium text-foreground truncate">
-                {userInfo?.displayName || 'User'}
-              </p>
-              <p className="text-sm text-muted-foreground truncate">
-                {userInfo?.email || ''}
-              </p>
-            </div>
-          </button>
-        ) : (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <button
-                onClick={onProfileClick}
-                className="rounded-full hover:ring-2 hover:ring-primary/20 transition-all"
-              >
-                <Avatar className="h-8 w-8 cursor-pointer">
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                    {getInitials()}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="bg-popover border-border">
-              <p className="font-medium">{userInfo?.displayName || 'User'}</p>
-              <p className="text-xs text-muted-foreground">{userInfo?.email}</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
+            Sign in →
+          </a>
+        </div>
+      )}
+
+      {/* Authenticated: User Profile Section */}
+      {userInfo && (
+        <div
+          className={cn(
+            'p-3',
+            !isMobile && isCollapsed && 'flex justify-center'
+          )}
+        >
+          {showExpanded ? (
+            <button
+              onClick={onProfileClick}
+              className="w-full flex items-center gap-3 p-2 -m-2 rounded-lg hover:bg-secondary transition-colors"
+            >
+              <Avatar className="h-9 w-9 shrink-0">
+                <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                  {getInitials()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {userInfo.displayName || 'User'}
+                </p>
+                <p className="text-sm text-muted-foreground truncate">
+                  {userInfo.email || ''}
+                </p>
+              </div>
+            </button>
+          ) : (
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onProfileClick}
+                  className="rounded-full hover:ring-2 hover:ring-primary/20 transition-all"
+                >
+                  <Avatar className="h-8 w-8 cursor-pointer">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                      {getInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-popover border-border">
+                <p className="font-medium">{userInfo.displayName || 'User'}</p>
+                <p className="text-xs text-muted-foreground">{userInfo.email}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      )}
     </div>
   );
 }

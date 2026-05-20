@@ -140,4 +140,22 @@ describe('SidebarFooter', () => {
       expect(screen.getByText('Admin')).toBeInTheDocument();
     });
   });
+
+  describe('Guest State', () => {
+    it('shows Sign in link when userInfo is undefined', () => {
+      renderWithTooltip(<SidebarFooter {...defaultProps} userInfo={undefined} />);
+      expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute('href', '/auth');
+    });
+
+    it('shows user profile button when userInfo is provided', () => {
+      renderWithTooltip(
+        <SidebarFooter
+          {...defaultProps}
+          userInfo={{ displayName: 'Ada Lovelace', email: 'ada@example.com', forumUsername: null }}
+        />
+      );
+      expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /sign in/i })).not.toBeInTheDocument();
+    });
+  });
 });
