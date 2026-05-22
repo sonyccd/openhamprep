@@ -124,7 +124,7 @@ export function DashboardSidebar({
         badgeAriaLabel: weakQuestionCount === 1 ? '1 weak question' : `${weakQuestionCount} weak questions`,
         disabled: !isTestAvailable || weakQuestionCount === 0,
       },
-      { id: 'bookmarks', label: 'Bookmarked', icon: Bookmark, badge: bookmarkCount, badgeAriaLabel: bookmarkCount === 1 ? '1 bookmark' : `${bookmarkCount} bookmarks` },
+      { id: 'bookmarks', label: 'Bookmarked', icon: Bookmark, badge: userId ? bookmarkCount : undefined, badgeAriaLabel: bookmarkCount === 1 ? '1 bookmark' : `${bookmarkCount} bookmarks`, disabled: !userId },
       { id: 'glossary-flashcards', label: 'Flashcards', icon: Square },
     ],
   };

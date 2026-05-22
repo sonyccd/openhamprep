@@ -1,8 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { TestResults } from './TestResults';
 import { Question } from '@/hooks/useQuestions';
 import confetti from 'canvas-confetti';
+
+const renderWithRouter = (ui: React.ReactElement) =>
+  render(<MemoryRouter>{ui}</MemoryRouter>);
 
 vi.mock('canvas-confetti', () => ({
   default: vi.fn(),
@@ -12,6 +16,16 @@ vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
   },
+}));
+
+// Default to an authenticated session so each test reflects realistic user state.
+// The Guest save card describe block overrides this to user: null.
+const mockUseAuth = vi.fn(() => ({
+  user: { id: 'test-user-id', email: 'test@example.com' },
+  loading: false,
+}));
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => mockUseAuth(),
 }));
 
 vi.mock('@/hooks/useBookmarks', () => ({
@@ -76,7 +90,7 @@ describe('TestResults', () => {
     it('shows PASSED when score >= 26', () => {
       const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -92,7 +106,7 @@ describe('TestResults', () => {
     it('shows NOT PASSED when score < 26', () => {
       const { questions, answers } = createQuestionsAndAnswers(35, 25, 'T');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -108,7 +122,7 @@ describe('TestResults', () => {
     it('shows correct passing score text for technician', () => {
       const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -125,7 +139,7 @@ describe('TestResults', () => {
     it('shows PASSED when score >= 26', () => {
       const { questions, answers } = createQuestionsAndAnswers(35, 26, 'G');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -140,7 +154,7 @@ describe('TestResults', () => {
     it('shows NOT PASSED when score < 26', () => {
       const { questions, answers } = createQuestionsAndAnswers(35, 25, 'G');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -155,7 +169,7 @@ describe('TestResults', () => {
     it('shows correct passing score text for general', () => {
       const { questions, answers } = createQuestionsAndAnswers(35, 26, 'G');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -172,7 +186,7 @@ describe('TestResults', () => {
     it('shows PASSED when score >= 37', () => {
       const { questions, answers } = createQuestionsAndAnswers(50, 37, 'E');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -188,7 +202,7 @@ describe('TestResults', () => {
     it('shows NOT PASSED when score < 37', () => {
       const { questions, answers } = createQuestionsAndAnswers(50, 36, 'E');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -204,7 +218,7 @@ describe('TestResults', () => {
     it('shows correct passing score text for extra', () => {
       const { questions, answers } = createQuestionsAndAnswers(50, 37, 'E');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -219,7 +233,7 @@ describe('TestResults', () => {
     it('shows 26 correct as NOT PASSED for extra (would pass technician)', () => {
       const { questions, answers } = createQuestionsAndAnswers(50, 26, 'E');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -236,7 +250,7 @@ describe('TestResults', () => {
     it('displays correct, incorrect, and percentage', () => {
       const { questions, answers } = createQuestionsAndAnswers(35, 30, 'T');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -256,7 +270,7 @@ describe('TestResults', () => {
     it('displays score labels', () => {
       const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -276,7 +290,7 @@ describe('TestResults', () => {
       const onRetake = vi.fn();
       const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -294,7 +308,7 @@ describe('TestResults', () => {
       const onBack = vi.fn();
       const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -313,7 +327,7 @@ describe('TestResults', () => {
     it('displays all questions in review list', () => {
       const { questions, answers } = createQuestionsAndAnswers(5, 3, 'T');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -334,7 +348,7 @@ describe('TestResults', () => {
     it('defaults to technician config when testType is not provided', () => {
       const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -360,7 +374,7 @@ describe('TestResults', () => {
     it('fires confetti when user passes (after delay)', () => {
       const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -385,7 +399,7 @@ describe('TestResults', () => {
     it('does not fire confetti when user fails', () => {
       const { questions, answers } = createQuestionsAndAnswers(35, 25, 'T');
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -403,24 +417,28 @@ describe('TestResults', () => {
       const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
 
       const { rerender } = render(
-        <TestResults
-          questions={questions}
-          answers={answers}
-          testType="technician"
-          {...defaultProps}
-        />
+        <MemoryRouter>
+          <TestResults
+            questions={questions}
+            answers={answers}
+            testType="technician"
+            {...defaultProps}
+          />
+        </MemoryRouter>
       );
 
       vi.advanceTimersByTime(200);
 
       // Re-render with same props
       rerender(
-        <TestResults
-          questions={questions}
-          answers={answers}
-          testType="technician"
-          {...defaultProps}
-        />
+        <MemoryRouter>
+          <TestResults
+            questions={questions}
+            answers={answers}
+            testType="technician"
+            {...defaultProps}
+          />
+        </MemoryRouter>
       );
 
       vi.advanceTimersByTime(200);
@@ -444,7 +462,7 @@ describe('TestResults', () => {
       }));
       window.matchMedia = matchMediaMock;
 
-      render(
+      renderWithRouter(
         <TestResults
           questions={questions}
           answers={answers}
@@ -456,6 +474,58 @@ describe('TestResults', () => {
       vi.advanceTimersByTime(200);
 
       expect(confetti).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Guest save card', () => {
+    beforeEach(() => {
+      mockUseAuth.mockReturnValue({ user: null, loading: false });
+    });
+    afterEach(() => {
+      mockUseAuth.mockReturnValue({
+        user: { id: 'test-user-id', email: 'test@example.com' },
+        loading: false,
+      });
+    });
+
+    it('shows save card for unauthenticated user', () => {
+      const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
+
+      renderWithRouter(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      expect(
+        screen.getByText(/test results require an account to save/i)
+      ).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /create free account/i })).toHaveAttribute(
+        'href',
+        '/auth?returnTo=/dashboard'
+      );
+    });
+
+    it('dismisses save card when "Continue without saving" is clicked', () => {
+      const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
+
+      renderWithRouter(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      fireEvent.click(screen.getByText(/continue without saving/i));
+
+      expect(
+        screen.queryByText(/test results require an account to save/i)
+      ).not.toBeInTheDocument();
     });
   });
 });

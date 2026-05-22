@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookmarks } from '@/hooks/useBookmarks';
@@ -12,7 +12,7 @@ import { queryKeys } from '@/services/queryKeys';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, AlertTriangle, Zap, Brain, Target, MapPin } from 'lucide-react';
+import { Loader2, AlertTriangle, Zap, Brain, Target, MapPin, X } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { PageContainer } from '@/components/ui/page-container';
 import {
@@ -82,6 +82,10 @@ export default function Dashboard() {
   const [showGoalsModal, setShowGoalsModal] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
+  const [guestBannerDismissed, setGuestBannerDismissed] = useState(
+    () => localStorage.getItem('guest_banner_dismissed') === 'true'
+  );
+
   // Global keyboard shortcut for search (Cmd/Ctrl+K)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -127,11 +131,6 @@ export default function Dashboard() {
       trackLicenseTypeChanged({ new_type: newType, previous_type: previousType });
     }
   };
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
   const {
     data: testResults,
     isLoading: testsLoading
@@ -301,13 +300,11 @@ export default function Dashboard() {
     if (currentView === 'lesson-detail' && selectedLessonSlug) {
       return <LessonDetailPage slug={selectedLessonSlug} onBack={navigateToLessons} />;
     }
-    if (authLoading || testsLoading || attemptsLoading) {
+    if (authLoading || (user && (testsLoading || attemptsLoading))) {
       return <div className="min-h-screen bg-background flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>;
     }
-    if (!user) return null;
-
     // Calculate weekly goal progress
     const questionsGoal = weeklyGoals?.questions_goal || 50;
     const testsGoal = weeklyGoals?.tests_goal || 2;
@@ -389,6 +386,28 @@ export default function Dashboard() {
 
     return (
       <PageContainer width="standard" radioWaveBg>
+        {/* Guest banner — shown to unauthenticated users, dismissible */}
+        {!user && !guestBannerDismissed && (
+          <div className="flex items-center justify-between gap-3 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 mb-6">
+            <p className="text-sm text-foreground">
+              You're studying as a guest — progress isn't being saved.{' '}
+              <Link to="/auth?returnTo=/dashboard" className="text-primary hover:underline font-medium">
+                Create a free account
+              </Link>
+            </p>
+            <button
+              onClick={() => {
+                localStorage.setItem('guest_banner_dismissed', 'true');
+                setGuestBannerDismissed(true);
+              }}
+              aria-label="Dismiss banner"
+              className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         <DashboardHero
           readinessLevel={readinessLevel}
           readinessTitle={readinessTitle}

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
@@ -10,6 +10,7 @@ import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useQuestionTimer } from "@/hooks/useQuestionTimer";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from '@/services/queryKeys';
 import { Zap, SkipForward, RotateCcw, Loader2, Flame, Trophy, Award, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -118,7 +119,7 @@ export function RandomPractice({
     }).eq('id', user.id);
 
     // Invalidate profile-stats query so dashboard updates
-    queryClient.invalidateQueries({ queryKey: ['profile-stats', user.id] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.progress.profileStats(user.id) });
   };
   const getRandomQuestion = useCallback((excludeIds: string[] = []): { question: Question; shouldResetAskedIds: boolean } | null => {
     if (!allQuestions || allQuestions.length === 0) return null;
@@ -299,6 +300,26 @@ export function RandomPractice({
     setStreak(0);
     setBestStreak(allTimeBestStreak);
   };
+
+  // Refs let the unmount cleanup read the latest user/stats without re-firing
+  // every time they change (an effect with [user, stats.total] deps would
+  // toast on each answered question).
+  const userRef = useRef(user);
+  const statsRef = useRef(stats);
+  useEffect(() => {
+    userRef.current = user;
+    statsRef.current = stats;
+  }, [user, stats]);
+
+  useEffect(() => {
+    return () => {
+      if (!userRef.current && statsRef.current.total > 0) {
+        toast("Your practice session wasn't saved — create a free account to track your progress.", {
+          duration: 5000,
+        });
+      }
+    };
+  }, []);
 
   const canGoBack = historyIndex > 0;
   const isViewingHistory = historyIndex < questionHistory.length - 1;

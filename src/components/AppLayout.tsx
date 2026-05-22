@@ -76,15 +76,11 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
     );
   }
 
-  if (!user) {
-    return <>{children}</>;
-  }
-
-  const userInfo = {
+  const userInfo = user ? {
     displayName: profile?.display_name || null,
     email: user.email || null,
     forumUsername: profile?.forum_username || null,
-  };
+  } : undefined;
 
   const currentTest = testTypes.find(t => t.id === selectedTest);
   const isTestAvailable = currentTest?.available ?? false;
@@ -103,8 +99,8 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
           bookmarkCount={filteredBookmarks.length}
           isTestAvailable={isTestAvailable}
           userInfo={userInfo}
-          userId={user.id}
-          onProfileUpdate={handleProfileUpdate}
+          userId={user?.id}
+          onProfileUpdate={user ? handleProfileUpdate : undefined}
           selectedTest={selectedTest}
           onTestChange={onTestChange}
           onSearch={onSearch}

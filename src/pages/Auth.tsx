@@ -556,6 +556,26 @@ export default function Auth() {
             Continue with Google
           </Button>
 
+          {/* Guest entry divider */}
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-card px-2 text-muted-foreground">or</span>
+            </div>
+          </div>
+
+          {/* Continue as guest */}
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="w-full text-left border border-dashed border-border rounded-md px-4 py-3 cursor-pointer hover:bg-accent/50 transition-colors"
+          >
+            <p className="text-foreground text-sm font-medium">Continue as guest →</p>
+            <p className="text-muted-foreground text-sm">Progress won't be saved</p>
+          </button>
+
           <div className="mt-6 text-center">
             <button
               type="button"

@@ -1,11 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { SidebarFooter } from './SidebarFooter';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 const renderWithTooltip = (component: React.ReactNode) => {
-  return render(<TooltipProvider>{component}</TooltipProvider>);
+  return render(
+    <MemoryRouter>
+      <TooltipProvider>{component}</TooltipProvider>
+    </MemoryRouter>
+  );
 };
 
 describe('SidebarFooter', () => {
@@ -138,6 +143,42 @@ describe('SidebarFooter', () => {
         <SidebarFooter {...defaultProps} isCollapsed={true} isMobile={true} isAdmin={true} />
       );
       expect(screen.getByText('Admin')).toBeInTheDocument();
+    });
+  });
+
+  describe('Guest State', () => {
+    it('shows Sign in link when userInfo is undefined', () => {
+      renderWithTooltip(<SidebarFooter {...defaultProps} userInfo={undefined} />);
+      expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute(
+        'href',
+        '/auth?returnTo=/dashboard'
+      );
+    });
+
+    it('shows user profile button when userInfo is provided', () => {
+      renderWithTooltip(
+        <SidebarFooter
+          {...defaultProps}
+          userInfo={{ displayName: 'Ada Lovelace', email: 'ada@example.com', forumUsername: null }}
+        />
+      );
+      expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /sign in/i })).not.toBeInTheDocument();
+    });
+
+    it('shows icon-only sign in when sidebar is collapsed', () => {
+      const baseProps = { ...defaultProps, isAdmin: false, onAdminClick: vi.fn() };
+      renderWithTooltip(
+        <SidebarFooter
+          {...baseProps}
+          isCollapsed={true}
+          isMobile={false}
+          userInfo={undefined}
+        />
+      );
+      expect(screen.getByRole('link', { name: /sign in/i })).toBeInTheDocument();
+      // Full text label should not be visible in collapsed state
+      expect(screen.queryByText('Sign in →')).not.toBeInTheDocument();
     });
   });
 });

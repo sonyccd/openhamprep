@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import { Question } from "@/hooks/useQuestions";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import { useAuth } from "@/hooks/useAuth";
@@ -48,6 +49,7 @@ export function QuestionCard({
   const { userFeedback, submitFeedback, removeFeedback } = useExplanationFeedback(question.id);
   const [noteText, setNoteText] = useState('');
   const [isNoteOpen, setIsNoteOpen] = useState(false);
+  const [showGuestBookmarkPopover, setShowGuestBookmarkPopover] = useState(false);
 
   const bookmarked = isBookmarked(question.id);
   const existingNote = getBookmarkNote(question.id);
@@ -220,10 +222,40 @@ export function QuestionCard({
           </div>
         )}
 
-        {/* Calculator for non-logged-in users */}
+        {/* Floating actions for guests */}
         {!user && (
-          <div className="absolute top-4 right-4 opacity-40 hover:opacity-100 transition-opacity duration-200">
+          <div className="absolute top-4 right-4 flex items-center gap-1 opacity-40 hover:opacity-100 transition-opacity duration-200">
             <Calculator key={question.id} />
+            <Popover open={showGuestBookmarkPopover} onOpenChange={setShowGuestBookmarkPopover}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      aria-label="Bookmark this question"
+                    >
+                      <Bookmark className="w-3.5 h-3.5" aria-hidden="true" />
+                    </Button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Bookmark this question</p>
+                </TooltipContent>
+              </Tooltip>
+              <PopoverContent className="w-64 bg-popover border-border" align="end">
+                <p className="text-sm text-popover-foreground mb-2">
+                  Bookmarks need an account to persist — they'd disappear when you close the tab.
+                </p>
+                <RouterLink
+                  to="/auth?returnTo=/dashboard"
+                  className="text-sm font-medium text-primary hover:underline"
+                >
+                  Create free account
+                </RouterLink>
+              </PopoverContent>
+            </Popover>
           </div>
         )}
 
