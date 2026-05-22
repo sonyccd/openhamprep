@@ -39,7 +39,7 @@ npm run test:local      # Run tests with local Supabase
 npx vitest              # Run vitest directly
 ```
 
-See `TESTING.md` for comprehensive testing guide.
+See `docs/TESTING.md` for comprehensive testing guide.
 
 ## Architecture Overview
 
@@ -52,11 +52,14 @@ See `TESTING.md` for comprehensive testing guide.
 ### Key Patterns
 
 **Context Providers (App.tsx)**:
-The app is wrapped in multiple providers in this order:
+The app is wrapped in this order (outermost → innermost):
 1. ThemeProvider (next-themes)
 2. QueryClientProvider (TanStack Query)
-3. AuthProvider (custom Supabase auth)
-4. AppNavigationProvider (global license filter state)
+3. TooltipProvider (Radix)
+4. AuthProvider (Supabase auth — gates user-scoped queries)
+5. PendoProvider + AmplitudeProvider (product analytics)
+6. AppNavigationProvider (global license filter state)
+7. AccessibilityProvider (a11y prefs)
 
 **Data Hooks Pattern**:
 - `useQuestions()` - Fetches all questions, caches for 1 hour
@@ -90,7 +93,7 @@ The service layer foundation in `src/services/` includes:
 - `queryKeys.ts` - Centralized cache key registry (~60 keys)
 - `types.ts` - `ServiceResult<T>`, `ServiceError` types
 - `shared/serviceBase.ts` - Base class for Supabase error handling
-- Subdirectories: `bookmarks/`, `dashboard/`, `examSession/`, `feedback/`, `glossary/`, `progress/`, `readiness/`, `search/`, `streak/`, `weeklyGoals/`
+- Subdirectories: `bookmarks/`, `dashboard/`, `examSession/`, `feedback/`, `glossary/`, `progress/`, `questions/`, `readiness/`, `search/`, `streak/`, `weeklyGoals/`
 
 **Cache Invalidation Patterns**:
 
@@ -120,6 +123,15 @@ queryClient.invalidateQueries({ queryKey: queryKeys.questions.root });
 - `src/components/*.tsx` - Feature components
 - `src/pages/*.tsx` - Route page components
 - `src/hooks/*.tsx` - Custom React hooks
+
+**Feature Areas (beyond raw question practice)**:
+- **Lessons** — `useLessons`, `LessonGallery`/`LessonPath`/`LessonDetailPage`. Curated study units.
+- **Topics + mastery** — `useTopics`, `TopicQuiz`, `TopicProgressButton`. 80% on a topic quiz marks the topic complete (`attempt_type: 'topic_quiz'`).
+- **ARRL chapters** — `useArrlChapters`, `ChapterPractice`. Practice scoped to ARRL book chapters via the `arrl_chapter_id` column on `questions`.
+- **Glossary + flashcards** — `useGlossaryTerms`, `GlossaryFlashcards`. Glossary terms have spaced-repetition tracking.
+- **Exam sessions** — `useExamSessions`, `ExamSessionMap`/`ExamSessionSearch`. Geolocated upcoming VE exam sessions.
+- **Ham radio tools gallery** — `useHamRadioTools`, `HamRadioToolsGallery`. Curated external tool links.
+- **PWA** — `PWAInstallBanner`, `usePushNotifications`, `useWindowControlsOverlay`.
 
 ### Design System (Critical)
 
@@ -162,6 +174,22 @@ All colors are HSL format defined as CSS custom properties. The design system su
 
 **Row Level Security (RLS)**: All user data is protected. Users can only access their own attempts/results/bookmarks.
 
+**Edge Functions** (`supabase/functions/`):
+Key functions: `calculate-readiness` (server-side scoring), `track-user-signup`, `question-opengraph` (OG image generation), `sync-discourse-topics` / `discourse-webhook` / `manage-question-links` / `update-discourse-post` (Discourse forum integration), `system-monitor`, `seed-questions`.
+- Local dev: `npm run supabase:functions` (auto-started by `npm run dev:full`)
+- Tests run via Deno: `npm run supabase:functions:test`
+- Deploy: `supabase functions deploy <name>`
+
+### Observability & Analytics
+
+Multiple analytics/monitoring SDKs are wired into `App.tsx` and `main.tsx`. When adding user-facing flows, be aware events may be auto-tracked:
+- **Sentry** (`@sentry/react`) — error monitoring; configured in `main.tsx`
+- **Amplitude** — product analytics; `useAmplitude` hook exposes typed `track()` events
+- **Pendo** — in-app guidance; `usePendo` hook
+- **Vercel Analytics + Speed Insights** — page-level metrics
+
+Don't add ad-hoc tracking calls; route new events through `useAmplitude` for consistency.
+
 ### TypeScript Configuration
 
 The project uses relaxed TypeScript settings for rapid development:
@@ -172,53 +200,13 @@ The project uses relaxed TypeScript settings for rapid development:
 
 When adding new code, prefer explicit typing but don't be overly strict to match existing patterns.
 
-## Code Style Guidelines
+## Code Style Quick Rules
 
-### React Components
-
-```typescript
-// ✅ Use const arrow functions
-const QuestionCard = ({ question, onAnswer }: QuestionCardProps) => {
-  // Extract logic into custom hooks
-  const { saveAttempt } = useProgress();
-
-  // Early returns for loading/error states
-  if (!question) return <Skeleton />;
-
-  return <div className="bg-card text-card-foreground">{/* ... */}</div>;
-};
-
-// ✅ Define explicit prop interfaces
-interface QuestionCardProps {
-  question: Question;
-  onAnswer: (answerId: string) => void;
-  showExplanation?: boolean;
-}
-```
-
-### Data Fetching
-
-```typescript
-// ✅ All data fetching uses TanStack Query via custom hooks
-const { data: questions, isLoading, error } = useQuestions();
-
-// ✅ Mutations are defined in hooks
-const { saveTestResult } = useProgress();
-await saveTestResult(questions, answers);
-```
-
-### Styling
-
-```typescript
-// ✅ Use Tailwind with semantic tokens
-<button className="bg-primary text-primary-foreground hover:bg-primary/90">
-
-// ✅ Use consistent spacing from Tailwind's scale
-<div className="p-4 space-y-2">
-
-// ❌ Avoid arbitrary values unless absolutely necessary
-<div className="p-[17px]">  // Bad
-```
+- Components: `const Foo = (props: FooProps) => …` with an explicit `FooProps` interface
+- All server state through TanStack Query hooks in `src/hooks/` — never call `supabase` from a component directly
+- All mutations defined inside hooks (e.g. `useProgress.saveTestResult`), not inline in components
+- Tailwind with semantic tokens only (see Design System above); avoid arbitrary values like `p-[17px]`
+- Keep component files under ~200 lines; extract sub-components when they grow
 
 ## Admin Features
 
@@ -273,6 +261,10 @@ The app supports unauthenticated ("guest") access. Auth is only required to pers
 **Guest banner**: Dismissible blue banner on Dashboard. Dismissed state stored in `localStorage` key `guest_banner_dismissed`.
 
 **Copy rule**: Always explain what an account *enables technically*, never why the user "should" sign up. See `docs/superpowers/specs/2026-05-20-guest-mode-design.md`.
+
+### Custom OAuth Provider
+
+The `/oauth/consent` route (`OAuthConsent.tsx` + `useOAuthConsent`) implements an OAuth 2.0 consent screen so other apps (e.g. the Discourse forum) can sign users in *via* Open Ham Prep. This is the app **as** an OAuth provider, not as a consumer. Setup details: `docs/OAUTH_SETUP.md`.
 
 ## Local Development Setup
 
@@ -350,6 +342,18 @@ Tests focus on:
 - UI components with conditional rendering
 
 Tests are colocated with components (e.g., `QuestionCard.test.tsx` next to `QuestionCard.tsx`).
+
+## Key Docs
+
+Detailed docs live in `docs/`. Read these when relevant:
+- `docs/TESTING.md` — testing patterns, mocking Supabase
+- `docs/Readiness_Scoring_Model.md` — how the readiness % is computed
+- `docs/OAUTH_SETUP.md` — registering OAuth client apps
+- `docs/event-system.md` — internal pub/sub events
+- `docs/SUPABASE_MIGRATION.md` — migration workflow
+- `docs/DEPLOYMENT_STEPS.md` — release checklist
+- `LOCAL_DEVELOPMENT.md` (repo root) — local Supabase setup details
+- `docs/superpowers/specs/` — feature design specs (e.g. `2026-05-20-guest-mode-design.md`)
 
 ## Common Pitfalls
 
