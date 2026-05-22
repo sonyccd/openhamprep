@@ -415,7 +415,7 @@ describe('QuestionCard', () => {
       ).toBeInTheDocument();
       expect(
         screen.getByRole('link', { name: /create free account/i })
-      ).toHaveAttribute('href', '/auth');
+      ).toHaveAttribute('href', '/auth?returnTo=/dashboard');
     });
 
     it('does not call addBookmark when guest clicks the bookmark icon', () => {

@@ -249,7 +249,7 @@ export function QuestionCard({
                   Bookmarks need an account to persist — they'd disappear when you close the tab.
                 </p>
                 <RouterLink
-                  to="/auth"
+                  to="/auth?returnTo=/dashboard"
                   className="text-sm font-medium text-primary hover:underline"
                 >
                   Create free account

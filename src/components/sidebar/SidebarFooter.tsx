@@ -98,7 +98,7 @@ export function SidebarFooter({
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <Link
-                  to="/auth"
+                  to="/auth?returnTo=/dashboard"
                   className="flex items-center justify-center w-10 h-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
                   aria-label="Sign in"
                 >
@@ -113,7 +113,7 @@ export function SidebarFooter({
         ) : (
           <div className="p-3">
             <Link
-              to="/auth"
+              to="/auth?returnTo=/dashboard"
               className="text-sm font-medium text-primary hover:underline"
             >
               Sign in →

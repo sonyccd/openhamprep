@@ -18,8 +18,14 @@ vi.mock('framer-motion', () => ({
   },
 }));
 
+// Default to an authenticated session so each test reflects realistic user state.
+// The Guest save card describe block overrides this to user: null.
+const mockUseAuth = vi.fn(() => ({
+  user: { id: 'test-user-id', email: 'test@example.com' },
+  loading: false,
+}));
 vi.mock('@/hooks/useAuth', () => ({
-  useAuth: () => ({ user: null, loading: false }),
+  useAuth: () => mockUseAuth(),
 }));
 
 vi.mock('@/hooks/useBookmarks', () => ({
@@ -472,6 +478,16 @@ describe('TestResults', () => {
   });
 
   describe('Guest save card', () => {
+    beforeEach(() => {
+      mockUseAuth.mockReturnValue({ user: null, loading: false });
+    });
+    afterEach(() => {
+      mockUseAuth.mockReturnValue({
+        user: { id: 'test-user-id', email: 'test@example.com' },
+        loading: false,
+      });
+    });
+
     it('shows save card for unauthenticated user', () => {
       const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
 

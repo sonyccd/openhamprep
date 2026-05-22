@@ -149,7 +149,10 @@ describe('SidebarFooter', () => {
   describe('Guest State', () => {
     it('shows Sign in link when userInfo is undefined', () => {
       renderWithTooltip(<SidebarFooter {...defaultProps} userInfo={undefined} />);
-      expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute('href', '/auth');
+      expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute(
+        'href',
+        '/auth?returnTo=/dashboard'
+      );
     });
 
     it('shows user profile button when userInfo is provided', () => {
