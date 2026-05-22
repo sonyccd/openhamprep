@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -154,6 +154,16 @@ vi.mock('@/components/WeeklyGoalsModal', () => ({
   WeeklyGoalsModal: () => null,
 }));
 
+// Mock dashboard subcomponents that have their own data dependencies
+vi.mock('@/components/dashboard', () => ({
+  DashboardHero: () => <div data-testid="dashboard-hero" />,
+  DashboardNextSteps: () => <div data-testid="dashboard-next-steps" />,
+  DashboardNotifications: () => <div data-testid="dashboard-notifications" />,
+  DashboardProgress: () => <div data-testid="dashboard-progress" />,
+  DashboardSectionInsights: () => <div data-testid="dashboard-section-insights" />,
+  StreakDisplay: () => <div data-testid="streak-display" />,
+}));
+
 const createTestQueryClient = () =>
   new QueryClient({
     defaultOptions: {
@@ -203,18 +213,51 @@ describe('Dashboard', () => {
   });
 
   describe('Guest mode', () => {
-    it('renders main dashboard (not a redirect) when user is not authenticated', async () => {
-      mockAuthHook.mockReturnValueOnce({
-        user: null,
-        loading: false,
-      });
+    const asGuest = () => {
+      // Set up the guest mock for every useAuth call this render makes,
+      // then reset back to the authed default after the test.
+      mockAuthHook.mockReturnValue({ user: null, loading: false });
+    };
 
+    beforeEach(() => {
+      localStorage.removeItem('guest_banner_dismissed');
+    });
+
+    afterEach(() => {
+      mockAuthHook.mockReturnValue({ user: mockUser, loading: false });
+    });
+
+    it('renders main dashboard (not a redirect) when user is not authenticated', async () => {
+      asGuest();
       renderDashboard();
 
       await waitFor(() => {
         expect(screen.getByText(/you're studying as a guest/i)).toBeInTheDocument();
       });
       expect(mockNavigate).not.toHaveBeenCalledWith('/auth');
+    });
+
+    it('persists banner dismissal to localStorage', async () => {
+      asGuest();
+      renderDashboard();
+
+      const dismissBtn = await screen.findByRole('button', { name: /dismiss banner/i });
+      fireEvent.click(dismissBtn);
+
+      expect(localStorage.getItem('guest_banner_dismissed')).toBe('true');
+      expect(screen.queryByText(/you're studying as a guest/i)).not.toBeInTheDocument();
+    });
+
+    it('hides banner on subsequent mounts when localStorage flag is set', async () => {
+      asGuest();
+      localStorage.setItem('guest_banner_dismissed', 'true');
+
+      renderDashboard();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('app-layout')).toBeInTheDocument();
+      });
+      expect(screen.queryByText(/you're studying as a guest/i)).not.toBeInTheDocument();
     });
   });
 });

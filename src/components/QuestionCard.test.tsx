@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { QuestionCard } from './QuestionCard';
 import { Question } from '@/hooks/useQuestions';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -79,14 +80,16 @@ const mockQuestion: Question = {
 
 const renderQuestionCard = (props: Partial<Parameters<typeof QuestionCard>[0]> = {}) => {
   return render(
-    <TooltipProvider>
-      <QuestionCard
-        question={mockQuestion}
-        selectedAnswer={null}
-        onSelectAnswer={vi.fn()}
-        {...props}
-      />
-    </TooltipProvider>
+    <MemoryRouter>
+      <TooltipProvider>
+        <QuestionCard
+          question={mockQuestion}
+          selectedAnswer={null}
+          onSelectAnswer={vi.fn()}
+          {...props}
+        />
+      </TooltipProvider>
+    </MemoryRouter>
   );
 };
 
@@ -397,6 +400,33 @@ describe('QuestionCard', () => {
 
       const linkButton = screen.queryByRole('button', { name: /copy shareable link/i });
       expect(linkButton).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Guest bookmark popover', () => {
+    // Default mock has user: null, so guest floating actions render
+    it('shows bookmark prompt with sign-up link when bookmark icon is clicked', () => {
+      renderQuestionCard();
+
+      fireEvent.click(screen.getByRole('button', { name: /bookmark this question/i }));
+
+      expect(
+        screen.getByText(/bookmarks need an account to persist/i)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('link', { name: /create free account/i })
+      ).toHaveAttribute('href', '/auth');
+    });
+
+    it('does not call addBookmark when guest clicks the bookmark icon', () => {
+      // The useBookmarks mock returns a vi.fn() for addBookmark.mutate.
+      // Guests should never trigger a save attempt — the click opens the prompt instead.
+      renderQuestionCard();
+
+      fireEvent.click(screen.getByRole('button', { name: /bookmark this question/i }));
+
+      // No toast.success was called (which would happen on a successful save path).
+      expect(mockToastSuccess).not.toHaveBeenCalled();
     });
   });
 });

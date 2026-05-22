@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
@@ -301,14 +301,25 @@ export function RandomPractice({
     setBestStreak(allTimeBestStreak);
   };
 
-  const handleBack = () => {
-    if (!user && stats.total > 0) {
-      toast("Your practice session wasn't saved — create a free account to track your progress.", {
-        duration: 5000,
-      });
-    }
-    onBack();
-  };
+  // Refs let the unmount cleanup read the latest user/stats without re-firing
+  // every time they change (an effect with [user, stats.total] deps would
+  // toast on each answered question).
+  const userRef = useRef(user);
+  const statsRef = useRef(stats);
+  useEffect(() => {
+    userRef.current = user;
+    statsRef.current = stats;
+  }, [user, stats]);
+
+  useEffect(() => {
+    return () => {
+      if (!userRef.current && statsRef.current.total > 0) {
+        toast("Your practice session wasn't saved — create a free account to track your progress.", {
+          duration: 5000,
+        });
+      }
+    };
+  }, []);
 
   const canGoBack = historyIndex > 0;
   const isViewingHistory = historyIndex < questionHistory.length - 1;
@@ -341,7 +352,7 @@ export function RandomPractice({
       <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
         <div className="text-center">
           <p className="text-destructive mb-4">Failed to load questions</p>
-          <Button onClick={handleBack}>Go Back</Button>
+          <Button onClick={onBack}>Go Back</Button>
         </div>
       </PageContainer>
     );

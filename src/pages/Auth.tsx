@@ -567,16 +567,14 @@ export default function Auth() {
           </div>
 
           {/* Continue as guest */}
-          <div
-            className="border border-dashed border-border rounded-md px-4 py-3 cursor-pointer hover:bg-accent/50 transition-colors"
+          <button
+            type="button"
             onClick={() => navigate('/dashboard')}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/dashboard'); }}
+            className="w-full text-left border border-dashed border-border rounded-md px-4 py-3 cursor-pointer hover:bg-accent/50 transition-colors"
           >
             <p className="text-foreground text-sm font-medium">Continue as guest →</p>
             <p className="text-muted-foreground text-sm">Progress won't be saved</p>
-          </div>
+          </button>
 
           <div className="mt-6 text-center">
             <button

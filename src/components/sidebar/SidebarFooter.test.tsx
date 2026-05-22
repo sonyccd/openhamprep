@@ -1,11 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { SidebarFooter } from './SidebarFooter';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 const renderWithTooltip = (component: React.ReactNode) => {
-  return render(<TooltipProvider>{component}</TooltipProvider>);
+  return render(
+    <MemoryRouter>
+      <TooltipProvider>{component}</TooltipProvider>
+    </MemoryRouter>
+  );
 };
 
 describe('SidebarFooter', () => {

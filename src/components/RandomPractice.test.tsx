@@ -88,6 +88,14 @@ vi.mock('@/hooks/useGlossaryTerms', () => ({
   useGlossaryTerms: () => ({ data: [] }),
 }));
 
+const mockToast = vi.fn();
+vi.mock('sonner', () => ({
+  toast: Object.assign((...args: unknown[]) => mockToast(...args), {
+    success: vi.fn(),
+    error: vi.fn(),
+  }),
+}));
+
 vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
@@ -345,6 +353,40 @@ describe('RandomPractice', () => {
         // Should be back to showing skip button (fresh question, not answered)
         expect(screen.getByRole('button', { name: /skip/i })).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Guest unmount toast', () => {
+    // The hook mock at the top of this file already returns { user: null }.
+
+    it('fires the save prompt toast when a guest unmounts after answering', async () => {
+      const { unmount } = renderRandomPractice();
+
+      // Answer one question so stats.total > 0
+      await waitFor(() => {
+        const optionA = screen
+          .getAllByRole('button')
+          .find((btn) => btn.textContent?.startsWith('A'));
+        expect(optionA).toBeDefined();
+      });
+      const optionA = screen
+        .getAllByRole('button')
+        .find((btn) => btn.textContent?.startsWith('A'));
+      fireEvent.click(optionA!);
+
+      unmount();
+
+      expect(mockToast).toHaveBeenCalledWith(
+        expect.stringContaining("wasn't saved"),
+        expect.objectContaining({ duration: 5000 })
+      );
+    });
+
+    it('does not fire the toast on unmount if no questions were answered', () => {
+      const { unmount } = renderRandomPractice();
+      unmount();
+
+      expect(mockToast).not.toHaveBeenCalled();
     });
   });
 });

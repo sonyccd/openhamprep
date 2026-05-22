@@ -1,4 +1,5 @@
 import { Shield, LogIn } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -96,13 +97,13 @@ export function SidebarFooter({
           <div className="p-2 flex justify-center">
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <a
-                  href="/auth"
+                <Link
+                  to="/auth"
                   className="flex items-center justify-center w-10 h-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
                   aria-label="Sign in"
                 >
                   <LogIn className="w-5 h-5" />
-                </a>
+                </Link>
               </TooltipTrigger>
               <TooltipContent side="right" className="bg-popover border-border">
                 <p>Sign in</p>
@@ -111,12 +112,12 @@ export function SidebarFooter({
           </div>
         ) : (
           <div className="p-3">
-            <a
-              href="/auth"
+            <Link
+              to="/auth"
               className="text-sm font-medium text-primary hover:underline"
             >
               Sign in →
-            </a>
+            </Link>
           </div>
         )
       )}

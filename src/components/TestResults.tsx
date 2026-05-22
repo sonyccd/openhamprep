@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
@@ -178,12 +179,12 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
               Test results require an account to save — there's nowhere to put them without one.
             </p>
             <div className="flex items-center gap-3">
-              <a
-                href="/auth?returnTo=/dashboard"
+              <Link
+                to="/auth?returnTo=/dashboard"
                 className="text-sm font-medium text-primary hover:underline"
               >
                 Create free account
-              </a>
+              </Link>
               <button
                 onClick={() => setSaveCardDismissed(true)}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"

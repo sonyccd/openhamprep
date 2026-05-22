@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookmarks } from '@/hooks/useBookmarks';
@@ -12,7 +12,7 @@ import { queryKeys } from '@/services/queryKeys';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, AlertTriangle, Zap, Brain, Target, MapPin } from 'lucide-react';
+import { Loader2, AlertTriangle, Zap, Brain, Target, MapPin, X } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { PageContainer } from '@/components/ui/page-container';
 import {
@@ -391,9 +391,9 @@ export default function Dashboard() {
           <div className="flex items-center justify-between gap-3 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 mb-6">
             <p className="text-sm text-foreground">
               You're studying as a guest — progress isn't being saved.{' '}
-              <a href="/auth?returnTo=/dashboard" className="text-primary hover:underline font-medium">
+              <Link to="/auth?returnTo=/dashboard" className="text-primary hover:underline font-medium">
                 Create a free account
-              </a>
+              </Link>
             </p>
             <button
               onClick={() => {
@@ -403,7 +403,7 @@ export default function Dashboard() {
               aria-label="Dismiss banner"
               className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
           </div>
         )}

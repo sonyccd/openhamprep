@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import { Question } from "@/hooks/useQuestions";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import { useAuth } from "@/hooks/useAuth";
@@ -247,12 +248,12 @@ export function QuestionCard({
                 <p className="text-sm text-popover-foreground mb-2">
                   Bookmarks need an account to persist — they'd disappear when you close the tab.
                 </p>
-                <a
-                  href="/auth"
+                <RouterLink
+                  to="/auth"
                   className="text-sm font-medium text-primary hover:underline"
                 >
                   Create free account
-                </a>
+                </RouterLink>
               </PopoverContent>
             </Popover>
           </div>
