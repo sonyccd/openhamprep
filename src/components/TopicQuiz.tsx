@@ -15,6 +15,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { TOPIC_QUIZ_PASSING_THRESHOLD } from "@/types/navigation";
+import { FigureImage } from "@/components/FigureImage";
 
 interface TopicQuizProps {
   questions: Question[];
@@ -178,6 +179,12 @@ export function TopicQuiz({
             <h3 className="text-lg font-medium text-foreground leading-relaxed">
               {currentQuestion.question}
             </h3>
+
+            {/* Question Figure */}
+            <FigureImage
+              figureUrl={currentQuestion.figureUrl}
+              questionId={currentQuestion.id}
+            />
 
             {/* Options */}
             <div className="space-y-3">
