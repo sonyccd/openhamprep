@@ -228,6 +228,35 @@ describe('TopicQuiz', () => {
         expect(screen.getByRole('button', { name: /submit quiz with/i })).toBeInTheDocument();
       });
     });
+
+    it('renders the figure for questions that have a figureUrl (#194)', () => {
+      const questionWithFigure: Question = {
+        id: 'T6C02',
+        displayName: 'T6C02',
+        question: 'What is component 1 in figure T-1?',
+        options: { A: 'Resistor', B: 'Transistor', C: 'Battery', D: 'Connector' },
+        correctAnswer: 'A',
+        subelement: 'T6',
+        question_group: 'C',
+        license_type: 'technician',
+        explanation: null,
+        fcc_reference: null,
+        created_at: '2024-01-01',
+        updated_at: '2024-01-01',
+        figure_id: null,
+        figureUrl: '/figures/T-1.png',
+      };
+
+      render(
+        <TopicQuiz
+          questions={[questionWithFigure]}
+          onComplete={vi.fn()}
+          onDone={vi.fn()}
+        />
+      );
+
+      expect(screen.getByAltText('Figure for question T6C02')).toBeInTheDocument();
+    });
   });
 
   describe('Quiz Submission', () => {
