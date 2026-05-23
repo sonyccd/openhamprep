@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, SupabaseClient } from "jsr:@supabase/supabase-js@2";
 import {
   getCorsHeaders,
+  isServiceRoleToken,
   ALERT_LOOKBACK_MS,
   MAX_LOG_ENTRIES,
   ANALYTICS_API_TIMEOUT_MS,
@@ -42,6 +43,12 @@ Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: getCorsHeaders(req) });
+  }
+
+  // Require service_role bearer — this function is only called by the cron job
+  const token = (req.headers.get("Authorization") ?? "").replace("Bearer ", "");
+  if (!isServiceRoleToken(token)) {
+    return new Response("Unauthorized", { status: 401 });
   }
 
   const errors: string[] = [];
