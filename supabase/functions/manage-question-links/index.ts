@@ -1,5 +1,8 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  getCorsHeaders,
+  isServiceRoleToken,
+} from "../_shared/constants.ts";
 import {
   extractMetaContent,
   extractTitle,
@@ -9,10 +12,8 @@ import {
   isLooseUUID,
 } from "./logic.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const MAX_UNFURL_BODY_BYTES = 256 * 1024; // 256 KB
+const UNFURL_TIMEOUT_MS = 5_000;
 
 interface UnfurledLink {
   url: string;
@@ -25,12 +26,22 @@ interface UnfurledLink {
 }
 
 async function unfurlUrl(url: string): Promise<UnfurledLink> {
+  // SSRF prevention: only allow HTTPS URLs
+  if (!url.startsWith('https://')) {
+    console.warn(`Blocked non-HTTPS URL: ${url.slice(0, 80)}`);
+    return { url, title: url, description: '', image: '', type: 'website', siteName: '', unfurledAt: new Date().toISOString() };
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), UNFURL_TIMEOUT_MS);
+
   try {
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; LinkPreview/1.0)',
         'Accept': 'text/html,application/xhtml+xml',
       },
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -45,7 +56,24 @@ async function unfurlUrl(url: string): Promise<UnfurledLink> {
       };
     }
 
-    const html = await response.text();
+    // Read response body with a hard size cap to prevent memory exhaustion
+    const reader = response.body?.getReader();
+    let html = '';
+    let totalBytes = 0;
+    if (reader) {
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        totalBytes += value.length;
+        if (totalBytes > MAX_UNFURL_BODY_BYTES) {
+          await reader.cancel();
+          break;
+        }
+        html += decoder.decode(value, { stream: true });
+      }
+    }
+
     return {
       url,
       title: extractTitle(html) || url,
@@ -66,11 +94,14 @@ async function unfurlUrl(url: string): Promise<UnfurledLink> {
       siteName: '',
       unfurledAt: new Date().toISOString(),
     };
+  } finally {
+    clearTimeout(timer);
   }
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
+  const corsHeaders = getCorsHeaders(req);
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -80,6 +111,41 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // ==========================================================================
+    // AUTHENTICATE REQUEST — require admin user or service_role bearer
+    // ==========================================================================
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Missing authorization' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    if (!isServiceRoleToken(token)) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: 'Invalid token' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      if (!roleData) {
+        return new Response(JSON.stringify({ error: 'Admin role required' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
     const { action, questionId, url } = await req.json();
 

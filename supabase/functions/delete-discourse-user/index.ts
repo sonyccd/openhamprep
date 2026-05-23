@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCorsHeaders } from "../_shared/constants.ts";
 import {
   buildUserLookupUrl,
   buildUserDeleteUrl,
@@ -23,11 +24,6 @@ import {
  * - SUPABASE_URL: Supabase project URL (auto-set by Supabase)
  * - SUPABASE_SERVICE_ROLE_KEY: Service role key (auto-set by Supabase)
  */
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
 
 const DEFAULT_DISCOURSE_URL = 'https://forum.openhamprep.com';
 
@@ -78,7 +74,7 @@ interface ApiResponse {
   message?: string;
 }
 
-function errorResponse(error: string, status: number): Response {
+function errorResponse(error: string, status: number, corsHeaders: Record<string, string>): Response {
   const body: ApiResponse = { success: false, error };
   return new Response(
     JSON.stringify(body),
@@ -86,7 +82,7 @@ function errorResponse(error: string, status: number): Response {
   );
 }
 
-function successResponse(data: Omit<ApiResponse, 'success'>): Response {
+function successResponse(data: Omit<ApiResponse, 'success'>, corsHeaders: Record<string, string>): Response {
   const body: ApiResponse = { success: true, ...data };
   return new Response(
     JSON.stringify(body),
@@ -189,6 +185,7 @@ async function deleteDiscourseUser(
 
 serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
+  const corsHeaders = getCorsHeaders(req);
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -201,7 +198,7 @@ serve(async (req) => {
     // Only allow POST requests
     if (req.method !== 'POST') {
       console.warn(`[${requestId}] Method not allowed: ${req.method}`);
-      return errorResponse('Method not allowed', 405);
+      return errorResponse('Method not allowed', 405, corsHeaders);
     }
 
     // Get configuration (validates required env vars)
@@ -215,7 +212,7 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       console.warn(`[${requestId}] Missing authorization header`);
-      return errorResponse('Unauthorized: Authentication required', 401);
+      return errorResponse('Unauthorized: Authentication required', 401, corsHeaders);
     }
 
     const token = authHeader.replace('Bearer ', '');
@@ -225,7 +222,7 @@ serve(async (req) => {
 
     if (authError || !user) {
       console.warn(`[${requestId}] Invalid token:`, authError?.message || 'no user');
-      return errorResponse('Unauthorized: Invalid token', 401);
+      return errorResponse('Unauthorized: Invalid token', 401, corsHeaders);
     }
 
     console.log(`[${requestId}] User ${user.id} requested Discourse account deletion`);
@@ -239,7 +236,7 @@ serve(async (req) => {
       return successResponse({
         discourseAccountFound: false,
         message: 'No Discourse account found for this user',
-      });
+      }, corsHeaders);
     }
 
     console.log(`[${requestId}] Found Discourse user: ${discourseUser.username} (ID: ${discourseUser.id})`);
@@ -261,7 +258,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: deleteResult.error,
+          error: 'Internal server error',
           discourseAccountFound: true,
           discourseUsername: discourseUser.username,
         }),
@@ -275,11 +272,10 @@ serve(async (req) => {
       discourseAccountFound: true,
       discourseUsername: discourseUser.username,
       message: 'Discourse account deleted successfully',
-    });
+    }, corsHeaders);
 
   } catch (error) {
     console.error(`[${requestId}] Error:`, error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return errorResponse(errorMessage, 500);
+    return errorResponse('Internal server error', 500, corsHeaders);
   }
 });

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCorsHeaders } from "../_shared/constants.ts";
 import {
   truncateText,
   isCrawler,
@@ -10,11 +11,6 @@ import {
   getLicenseName,
 } from "./logic.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 const SITE_URL = 'https://app.openhamprep.com';
 const SITE_NAME = 'Open Ham Prep';
 const DEFAULT_IMAGE = `${SITE_URL}/icons/icon-512.png`;
@@ -22,6 +18,7 @@ const MAX_DESCRIPTION_LENGTH = 200;
 
 serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
+  const corsHeaders = getCorsHeaders(req);
   const userAgent = req.headers.get('user-agent');
 
   console.log(`[${requestId}] question-opengraph: Request received, User-Agent: ${userAgent?.slice(0, 50) || 'none'}`);

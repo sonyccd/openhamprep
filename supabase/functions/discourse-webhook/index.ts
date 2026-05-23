@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { isValidUuid } from "../_shared/constants.ts";
+import { isValidUuid, getCorsHeaders } from "../_shared/constants.ts";
 import {
   parseExplanationFromPost,
   extractQuestionIdFromTitle,
@@ -19,11 +19,7 @@ import {
  * Security: Uses HMAC-SHA256 signature verification with shared secret.
  */
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-discourse-event-type, x-discourse-event, x-discourse-event-signature, x-discourse-instance",
-};
+// Discourse-specific headers merged at request time in the handler
 
 // Configuration
 const DISCOURSE_URL = "https://forum.openhamprep.com";
@@ -108,6 +104,12 @@ interface DiscourseTopic {
 
 serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
+  const corsHeaders = {
+    ...getCorsHeaders(req),
+    // Extend with Discourse webhook-specific request headers
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-discourse-event-type, x-discourse-event, x-discourse-event-signature, x-discourse-instance",
+  };
 
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
