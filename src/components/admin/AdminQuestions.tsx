@@ -33,7 +33,7 @@ const TEST_TYPE_TO_LICENSE: Record<AdminQuestionsProps['testType'], LicenseType>
 export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestionsProps) {
   const { data: feedbackStats = {} } = useExplanationFeedbackStats();
   const { data: allTopics = [] } = useAdminTopics();
-  const { addQuestion, updateQuestion, deleteQuestion } =
+  const { addQuestion, updateQuestion, deleteQuestion, retrySync } =
     useQuestionMutations(testType);
 
   // Fetch chapters for the current license type
@@ -247,6 +247,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
         onDeleteDialogOpenChange={setIsDeleteDialogOpen}
         onUpdate={handleUpdateQuestion}
         onDelete={handleDeleteQuestion}
+        onRetrySync={editingQuestion ? () => retrySync(editingQuestion) : undefined}
       />
 
       <Card className="flex-1 flex flex-col min-h-0">

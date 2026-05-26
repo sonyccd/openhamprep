@@ -36,6 +36,7 @@ import {
   Image,
   BookOpen,
   Book,
+  RefreshCw,
 } from 'lucide-react';
 import { FigureUpload } from '../FigureUpload';
 import { EditHistoryViewer } from '../EditHistoryViewer';
@@ -71,6 +72,7 @@ interface QuestionEditDialogProps {
   onDeleteDialogOpenChange: (open: boolean) => void;
   onUpdate: () => void;
   onDelete: () => void;
+  onRetrySync?: () => void;
 }
 
 export function QuestionEditDialog({
@@ -100,6 +102,7 @@ export function QuestionEditDialog({
   onDeleteDialogOpenChange,
   onUpdate,
   onDelete,
+  onRetrySync,
 }: QuestionEditDialogProps) {
   const safeForumUrl = getSafeUrl(editForumUrl);
 
@@ -266,6 +269,39 @@ export function QuestionEditDialog({
                 Invalid URL format. Please enter a valid http:// or https:// URL.
               </p>
             ) : null}
+            {question?.forum_url && onRetrySync && (
+              <div className="flex items-center gap-2 pt-1">
+                <span className="text-xs text-muted-foreground">
+                  Sync:{' '}
+                  <span
+                    className={
+                      question.discourse_sync_status === 'error'
+                        ? 'text-destructive'
+                        : question.discourse_sync_status === 'synced'
+                          ? 'text-success'
+                          : 'text-muted-foreground'
+                    }
+                  >
+                    {question.discourse_sync_status ?? 'unknown'}
+                  </span>
+                  {question.discourse_sync_error && (
+                    <span className="text-destructive ml-1">
+                      — {question.discourse_sync_error}
+                    </span>
+                  )}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-xs px-2"
+                  onClick={onRetrySync}
+                >
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  Retry
+                </Button>
+              </div>
+            )}
           </div>
 
           <Separator />

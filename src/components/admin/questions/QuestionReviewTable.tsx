@@ -29,7 +29,7 @@ export function QuestionReviewTable({
       <Table>
         <TableHeader className="sticky top-0 bg-background z-10">
           <TableRow>
-            <TableHead className="w-24 shrink-0">ID</TableHead>
+            <TableHead className="w-24">ID</TableHead>
             <TableHead className="min-w-[240px]">Question</TableHead>
             <TableHead className="min-w-[200px]">Answer</TableHead>
             <TableHead className="min-w-[240px]">Explanation</TableHead>
@@ -48,7 +48,7 @@ export function QuestionReviewTable({
                   highlightQuestionId === q.display_name && 'bg-amber-500/10'
                 )}
               >
-                <TableCell className="font-mono text-xs pt-3 shrink-0">
+                <TableCell className="font-mono text-xs pt-3">
                   {q.display_name}
                 </TableCell>
                 <TableCell className="text-sm pt-3">{q.question}</TableCell>
