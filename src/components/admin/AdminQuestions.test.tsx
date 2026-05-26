@@ -201,7 +201,7 @@ describe('AdminQuestions', () => {
     });
   });
 
-  describe('Question List', () => {
+  describe('Question Table', () => {
     it('should display question display names', async () => {
       renderComponent();
 
@@ -219,21 +219,33 @@ describe('AdminQuestions', () => {
       });
     });
 
-    it('should show linked topics badge when question has linked topics', async () => {
+    it('should display correct answer with letter prefix', async () => {
       renderComponent();
 
       await waitFor(() => {
-        expect(screen.getByText('1 topic')).toBeInTheDocument();
+        // T1A01 correct_answer=0 → "A. A radio hobby"
+        expect(screen.getByText('A radio hobby')).toBeInTheDocument();
+        // T1A02 correct_answer=1 → "B. Some VHF/UHF"
+        expect(screen.getByText('Some VHF/UHF')).toBeInTheDocument();
       });
     });
 
-    it('should not show linked topics badge when question has no linked topics', async () => {
+    it('should display explanation text', async () => {
       renderComponent();
 
       await waitFor(() => {
-        // T1A02 has no linked topics
-        const questionRow = screen.getByText('T1A02').closest('div');
-        expect(questionRow?.textContent).not.toContain('0 topics');
+        expect(screen.getByText('Amateur radio is a hobby.')).toBeInTheDocument();
+      });
+    });
+
+    it('should render table column headers', async () => {
+      renderComponent();
+
+      await waitFor(() => {
+        expect(screen.getByText('ID')).toBeInTheDocument();
+        expect(screen.getByText('Question')).toBeInTheDocument();
+        expect(screen.getByText('Answer')).toBeInTheDocument();
+        expect(screen.getByText('Explanation')).toBeInTheDocument();
       });
     });
   });
@@ -558,29 +570,7 @@ describe('AdminQuestions', () => {
     });
   });
 
-  describe('Feedback Stats Display', () => {
-    it('should show feedback stats badge for questions with feedback', async () => {
-      renderComponent();
-
-      await waitFor(() => {
-        // T1A01 has 5 helpful and 2 not helpful
-        expect(screen.getByText('5')).toBeInTheDocument();
-        expect(screen.getByText('2')).toBeInTheDocument();
-      });
-    });
-  });
-
   describe('Highlight Question', () => {
-    it('should highlight question when highlightQuestionId is set', async () => {
-      renderComponent({ testType: 'technician', highlightQuestionId: 'T1A01' });
-
-      await waitFor(() => {
-        // Find the row with border-amber-500 class
-        const highlightedRow = document.querySelector('.border-amber-500');
-        expect(highlightedRow).toBeInTheDocument();
-      });
-    });
-
     it('should auto-open edit dialog for highlighted question', async () => {
       renderComponent({ testType: 'technician', highlightQuestionId: 'T1A01' });
 
