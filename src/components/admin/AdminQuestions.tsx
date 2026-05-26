@@ -14,8 +14,8 @@ import type { LicenseType } from '@/types/chapters';
 import {
   QuestionEditDialog,
   QuestionAddDialog,
-  QuestionListItem,
   QuestionFiltersBar,
+  QuestionReviewTable,
   TEST_TYPE_PREFIXES,
   type Question,
   type LinkData,
@@ -214,13 +214,6 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
     }
   };
 
-  const handleRetrySync = (displayName: string) => {
-    const question = questions.find((q) => q.display_name === displayName);
-    if (question) {
-      retrySync(question);
-    }
-  };
-
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <QuestionEditDialog
@@ -254,6 +247,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
         onDeleteDialogOpenChange={setIsDeleteDialogOpen}
         onUpdate={handleUpdateQuestion}
         onDelete={handleDeleteQuestion}
+        onRetrySync={editingQuestion ? () => retrySync(editingQuestion) : undefined}
       />
 
       <Card className="flex-1 flex flex-col min-h-0">
@@ -330,29 +324,21 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
             filteredCount={filteredQuestions.length}
           />
         </CardHeader>
-        <CardContent className="flex-1 min-h-0 overflow-hidden">
+        <CardContent className="flex-1 min-h-0 overflow-hidden p-0">
           {isLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
+          ) : filteredQuestions.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">
+              {searchTerm ? 'No matching questions found' : 'No questions found'}
+            </p>
           ) : (
-            <div className="space-y-3 h-full overflow-y-auto pb-4">
-              {filteredQuestions.map((q) => (
-                <QuestionListItem
-                  key={q.id}
-                  question={q}
-                  isHighlighted={highlightQuestionId === q.display_name}
-                  feedbackStats={feedbackStats[q.display_name]}
-                  onEdit={() => handleEditClick(q)}
-                  onRetrySync={() => handleRetrySync(q.display_name)}
-                />
-              ))}
-              {filteredQuestions.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">
-                  {searchTerm ? 'No matching questions found' : 'No questions found'}
-                </p>
-              )}
-            </div>
+            <QuestionReviewTable
+              questions={filteredQuestions}
+              onEdit={handleEditClick}
+              highlightQuestionId={highlightQuestionId}
+            />
           )}
         </CardContent>
       </Card>
