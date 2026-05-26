@@ -154,7 +154,7 @@ describe('QuestionReviewTable', () => {
   it('shows fallback for out-of-bounds correct_answer', () => {
     render(
       <QuestionReviewTable
-        questions={[makeQuestion({ correct_answer: 9 as any })]}
+        questions={[makeQuestion({ correct_answer: 9 as unknown as 0 })]}
         onEdit={vi.fn()}
       />
     );
