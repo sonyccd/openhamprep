@@ -571,6 +571,18 @@ describe('AdminQuestions', () => {
   });
 
   describe('Highlight Question', () => {
+    it('should highlight the matching table row when highlightQuestionId is set', async () => {
+      renderComponent({ testType: 'technician', highlightQuestionId: 'T1A01' });
+
+      await waitFor(() => {
+        const rows = document.querySelectorAll('tbody tr');
+        const highlightedRow = Array.from(rows).find((r) =>
+          r.className.includes('bg-amber-500/10')
+        );
+        expect(highlightedRow).toBeInTheDocument();
+      });
+    });
+
     it('should auto-open edit dialog for highlighted question', async () => {
       renderComponent({ testType: 'technician', highlightQuestionId: 'T1A01' });
 

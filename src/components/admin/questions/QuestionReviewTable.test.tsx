@@ -150,4 +150,40 @@ describe('QuestionReviewTable', () => {
     render(<QuestionReviewTable questions={questions} onEdit={vi.fn()} />);
     expect(screen.getAllByRole('button')).toHaveLength(3);
   });
+
+  it('shows fallback for out-of-bounds correct_answer', () => {
+    render(
+      <QuestionReviewTable
+        questions={[makeQuestion({ correct_answer: 9 as any })]}
+        onEdit={vi.fn()}
+      />
+    );
+    expect(screen.getByText('?.')).toBeInTheDocument();
+    expect(screen.getByText('(missing)')).toBeInTheDocument();
+  });
+
+  it('applies highlight class to the matching row', () => {
+    const questions = [
+      makeQuestion({ id: 'uuid-1', display_name: 'T1A01' }),
+      makeQuestion({ id: 'uuid-2', display_name: 'T1A02' }),
+    ];
+    const { container } = render(
+      <QuestionReviewTable
+        questions={questions}
+        onEdit={vi.fn()}
+        highlightQuestionId="T1A01"
+      />
+    );
+    const rows = container.querySelectorAll('tbody tr');
+    expect(rows[0].className).toContain('bg-amber-500/10');
+    expect(rows[1].className).not.toContain('bg-amber-500/10');
+  });
+
+  it('applies no highlight when highlightQuestionId is not set', () => {
+    const { container } = render(
+      <QuestionReviewTable questions={[makeQuestion()]} onEdit={vi.fn()} />
+    );
+    const rows = container.querySelectorAll('tbody tr');
+    expect(rows[0].className).not.toContain('bg-amber-500/10');
+  });
 });

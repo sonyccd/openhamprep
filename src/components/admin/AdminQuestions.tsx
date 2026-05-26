@@ -33,7 +33,7 @@ const TEST_TYPE_TO_LICENSE: Record<AdminQuestionsProps['testType'], LicenseType>
 export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestionsProps) {
   const { data: feedbackStats = {} } = useExplanationFeedbackStats();
   const { data: allTopics = [] } = useAdminTopics();
-  const { addQuestion, updateQuestion, deleteQuestion, retrySync } =
+  const { addQuestion, updateQuestion, deleteQuestion } =
     useQuestionMutations(testType);
 
   // Fetch chapters for the current license type
@@ -214,13 +214,6 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
     }
   };
 
-  const handleRetrySync = (displayName: string) => {
-    const question = questions.find((q) => q.display_name === displayName);
-    if (question) {
-      retrySync(question);
-    }
-  };
-
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <QuestionEditDialog
@@ -340,7 +333,11 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
               {searchTerm ? 'No matching questions found' : 'No questions found'}
             </p>
           ) : (
-            <QuestionReviewTable questions={filteredQuestions} onEdit={handleEditClick} />
+            <QuestionReviewTable
+              questions={filteredQuestions}
+              onEdit={handleEditClick}
+              highlightQuestionId={highlightQuestionId}
+            />
           )}
         </CardContent>
       </Card>

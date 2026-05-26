@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import type { Question } from './types';
 
 const ANSWER_LETTERS = ['A', 'B', 'C', 'D'] as const;
@@ -15,9 +16,14 @@ const ANSWER_LETTERS = ['A', 'B', 'C', 'D'] as const;
 interface QuestionReviewTableProps {
   questions: Question[];
   onEdit: (question: Question) => void;
+  highlightQuestionId?: string;
 }
 
-export function QuestionReviewTable({ questions, onEdit }: QuestionReviewTableProps) {
+export function QuestionReviewTable({
+  questions,
+  onEdit,
+  highlightQuestionId,
+}: QuestionReviewTableProps) {
   return (
     <div className="h-full overflow-auto">
       <Table>
@@ -32,10 +38,16 @@ export function QuestionReviewTable({ questions, onEdit }: QuestionReviewTablePr
         </TableHeader>
         <TableBody>
           {questions.map((q) => {
-            const letter = ANSWER_LETTERS[q.correct_answer];
-            const answerText = q.options[q.correct_answer];
+            const letter = ANSWER_LETTERS[q.correct_answer] ?? '?';
+            const answerText = q.options[q.correct_answer] ?? '(missing)';
             return (
-              <TableRow key={q.id} className="align-top">
+              <TableRow
+                key={q.id}
+                className={cn(
+                  'align-top',
+                  highlightQuestionId === q.display_name && 'bg-amber-500/10'
+                )}
+              >
                 <TableCell className="font-mono text-xs pt-3 shrink-0">
                   {q.display_name}
                 </TableCell>
