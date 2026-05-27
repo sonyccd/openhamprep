@@ -156,6 +156,9 @@ Deno.serve(async (req: Request) => {
 
     const body: RequestBody = await req.json();
     const { questionId, explanation } = body;
+    // Captured here so the catch block can write discourse_sync_error without
+    // re-reading the already-consumed request body via req.clone().
+    const parsedQuestionId: string | undefined = questionId || undefined;
 
     if (!questionId) {
       console.warn(`[${requestId}] Missing questionId`);
@@ -416,11 +419,11 @@ Deno.serve(async (req: Request) => {
     console.error(`[${requestId}] Update Discourse post error:`, error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
-    // Try to update the sync status to error
-    try {
-      const bodyText = await req.clone().text();
-      const body = JSON.parse(bodyText);
-      if (body.questionId) {
+    // Try to update the sync status to error using parsedQuestionId captured
+    // before the try block — req.json() consumes the body, so req.clone() here
+    // would throw "Body is unusable".
+    if (parsedQuestionId) {
+      try {
         const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
         const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
         const supabase = createClient(supabaseUrl, supabaseKey);
@@ -428,12 +431,12 @@ Deno.serve(async (req: Request) => {
           discourse_sync_status: "error",
           discourse_sync_at: new Date().toISOString(),
           discourse_sync_error: errorMessage,
-        }).eq("id", body.questionId);
+        }).eq("id", parsedQuestionId);
+      } catch {
+        console.error(`[${requestId}] Failed to update sync status after error`);
       }
-    } catch {
-      console.error(`[${requestId}] Failed to update sync status after error`);
     }
 
-    return errorResponse('Internal server error', 500, undefined, corsHeaders);
+    return errorResponse('Internal server error', 500, error, corsHeaders);
   }
 });

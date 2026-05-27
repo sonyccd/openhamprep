@@ -230,7 +230,7 @@ export function errorResponse(
   err?: unknown,
   corsHeaders?: Record<string, string>
 ): Response {
-  if (err !== undefined) console.error(message, err);
+  if (err != null) console.error(message, err);
   return new Response(
     JSON.stringify({ error: message }),
     { status, headers: { 'Content-Type': 'application/json', ...(corsHeaders ?? {}) } }
@@ -245,12 +245,13 @@ export function errorResponse(
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function requireAdmin(supabase: any, userId: string): Promise<boolean> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('user_roles')
     .select('role')
     .eq('user_id', userId)
     .eq('role', 'admin')
     .maybeSingle();
+  if (error) console.error('[requireAdmin] DB error:', error);
   return Boolean(data);
 }
 

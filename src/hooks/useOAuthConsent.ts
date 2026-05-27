@@ -173,7 +173,7 @@ export function useOAuthConsent(): UseOAuthConsentReturn {
         .split(',')
         .map((id: string) => id.trim())
         .filter(Boolean);
-      const isTrustedClient = trustedIds.length > 0 && trustedIds.includes(clientId);
+      const isTrustedClient = trustedIds.includes(clientId);
 
       if (userForumUsername && isTrustedClient) {
         await autoApprove(authId);

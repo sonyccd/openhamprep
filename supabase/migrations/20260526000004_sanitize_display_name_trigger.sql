@@ -16,8 +16,17 @@ BEGIN
   v_raw_name := new.raw_user_meta_data ->> 'display_name';
 
   IF v_raw_name IS NOT NULL THEN
-    -- Strip HTML tags and truncate to 100 chars
-    v_safe_name := left(regexp_replace(v_raw_name, '<[^>]*>', '', 'g'), 100);
+    -- Strip literal HTML tags, then decode the four common HTML entities so
+    -- entity-encoded payloads (e.g. &lt;script&gt;) can't survive as raw tags
+    -- in any downstream context that HTML-unescapes before rendering.
+    v_safe_name := regexp_replace(v_raw_name, '<[^>]*>', '', 'g');
+    v_safe_name := replace(replace(replace(replace(v_safe_name,
+      '&lt;',  '<'),
+      '&gt;',  '>'),
+      '&amp;', '&'),
+      '&quot;', '"');
+    -- Strip again after entity decode, then cap at 100 chars
+    v_safe_name := left(regexp_replace(v_safe_name, '<[^>]*>', '', 'g'), 100);
   END IF;
 
   INSERT INTO public.profiles (id, email, display_name)
