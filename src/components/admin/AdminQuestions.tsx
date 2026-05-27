@@ -74,6 +74,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
         .select(
           `
           id, display_name, question, options, correct_answer,
+          subelement, question_group,
           links, explanation, edit_history, figure_url, forum_url,
           discourse_sync_status, discourse_sync_at, discourse_sync_error,
           arrl_chapter_id, arrl_page_reference,
@@ -273,9 +274,9 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
                       escapeCSVField(q.options[1]),
                       escapeCSVField(q.options[2]),
                       escapeCSVField(q.options[3]),
-                      ['A', 'B', 'C', 'D'][q.correct_answer],
-                      escapeCSVField(q.display_name.substring(0, 2)), // subelement e.g. T1
-                      escapeCSVField(q.display_name.substring(0, 3)), // question_group e.g. T1A
+                      escapeCSVField(['A', 'B', 'C', 'D'][q.correct_answer]),
+                      escapeCSVField(q.subelement),
+                      escapeCSVField(q.question_group),
                       escapeCSVField(q.explanation || ''),
                     ].join(',')
                   );

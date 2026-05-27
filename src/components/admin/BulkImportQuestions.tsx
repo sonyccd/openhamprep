@@ -25,6 +25,7 @@ import {
   parseCSV,
   parseJSON,
   validateQuestions,
+  mergeQuestion,
 } from "@/lib/questionImportParser";
 import { parseNCVECDocument, SyllabusEntry } from "@/lib/ncvecParser";
 
@@ -195,19 +196,6 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     }
   };
 
-  const mergeQuestion = (existing: ImportQuestion, incoming: ImportQuestion): ImportQuestion => {
-    const useIncomingOptions = incoming.options.every(o => o);
-    return {
-      id: existing.id,
-      question: incoming.question || existing.question,
-      options: useIncomingOptions ? incoming.options : existing.options,
-      correct_answer: useIncomingOptions ? incoming.correct_answer : existing.correct_answer,
-      subelement: incoming.subelement || existing.subelement,
-      question_group: incoming.question_group || existing.question_group,
-      explanation: existing.explanation || incoming.explanation, // Keep existing if present
-      links: (existing.links && existing.links.length > 0) ? existing.links : incoming.links, // Keep existing if present
-    };
-  };
 
   const handleConflictsResolved = async (resolvedConflicts: ConflictItem<ImportQuestion>[]) => {
     setConflicts(resolvedConflicts);

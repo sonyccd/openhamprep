@@ -16,6 +16,8 @@ export interface Question {
   question: string;
   options: string[];
   correct_answer: number;
+  subelement: string;      // e.g. T1, G2, E3
+  question_group: string;  // e.g. T1A, G2B, E3C
   links?: LinkData[];
   explanation?: string | null;
   edit_history?: EditHistoryEntry[];

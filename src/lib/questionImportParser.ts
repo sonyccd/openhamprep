@@ -181,3 +181,21 @@ export function validateQuestions(
 
   return { valid, errors };
 }
+
+/**
+ * Merge an incoming question over an existing one.
+ * Options and correct_answer always come from the same source so they stay aligned.
+ */
+export function mergeQuestion(existing: ImportQuestion, incoming: ImportQuestion): ImportQuestion {
+  const useIncomingOptions = incoming.options.every(o => o);
+  return {
+    id: existing.id,
+    question: incoming.question || existing.question,
+    options: useIncomingOptions ? incoming.options : existing.options,
+    correct_answer: useIncomingOptions ? incoming.correct_answer : existing.correct_answer,
+    subelement: incoming.subelement || existing.subelement,
+    question_group: incoming.question_group || existing.question_group,
+    explanation: existing.explanation || incoming.explanation,
+    links: (existing.links && existing.links.length > 0) ? existing.links : incoming.links,
+  };
+}

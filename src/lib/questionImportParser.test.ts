@@ -4,6 +4,7 @@ import {
   parseCSV,
   parseJSON,
   validateQuestions,
+  mergeQuestion,
   ImportQuestion,
   TEST_TYPE_PREFIXES,
 } from './questionImportParser';
@@ -114,6 +115,31 @@ T1A01,"What is 1, 2, and 3?","A, first","B, second","C, third","D, fourth",A,T1,
     const result = parseCSV(csv);
     expect(result[0].question).toBe('What is 1, 2, and 3?');
     expect(result[0].options[0]).toBe('A, first');
+  });
+
+  it('accepts display_name column as fallback for id (export round-trip)', () => {
+    const csv = `display_name,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Test question?","Option A","Option B","Option C","Option D",C,T1,T1A`;
+
+    const result = parseCSV(csv);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('T1A01');
+    expect(result[0].correct_answer).toBe(2);
+  });
+
+  it('fails validation when correct_answer is empty or unrecognized', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Test?","A","B","C","D",,T1,T1A
+T1A02,"Test?","A","B","C","D",B. Some full text,T1,T1A`;
+
+    const parsed = parseCSV(csv);
+    expect(parsed[0].correct_answer).toBe(-1);
+    expect(parsed[1].correct_answer).toBe(-1);
+
+    const { errors } = validateQuestions(parsed, 'technician');
+    expect(errors).toHaveLength(2);
+    expect(errors[0].errors[0]).toContain('Could not parse correct_answer');
+    expect(errors[1].errors[0]).toContain('Could not parse correct_answer');
   });
 });
 
@@ -437,6 +463,58 @@ describe('validateQuestions', () => {
     const result = validateQuestions([lowercaseId], 'technician');
     expect(result.valid).toHaveLength(1);
     expect(result.valid[0].id).toBe('T1A01'); // Normalized to uppercase
+  });
+});
+
+describe('mergeQuestion', () => {
+  const existing: ImportQuestion = {
+    id: 'T1A01',
+    question: 'Old question?',
+    options: ['Old A', 'Old B', 'Old C', 'Old D'],
+    correct_answer: 2,
+    subelement: 'T1',
+    question_group: 'T1A',
+    explanation: 'Old explanation',
+    links: [{ url: 'https://example.com', title: 'Link' } as never],
+  };
+
+  it('uses incoming options and correct_answer when all incoming options are present', () => {
+    const incoming: ImportQuestion = {
+      ...existing,
+      options: ['New A', 'New B', 'New C', 'New D'],
+      correct_answer: 3,
+    };
+    const merged = mergeQuestion(existing, incoming);
+    expect(merged.options).toEqual(['New A', 'New B', 'New C', 'New D']);
+    expect(merged.correct_answer).toBe(3);
+  });
+
+  it('falls back to existing options AND existing correct_answer when incoming options are incomplete', () => {
+    const incoming: ImportQuestion = {
+      ...existing,
+      options: ['New A', '', 'New C', 'New D'], // one empty → incomplete
+      correct_answer: 1, // would be wrong relative to existing options
+    };
+    const merged = mergeQuestion(existing, incoming);
+    expect(merged.options).toEqual(['Old A', 'Old B', 'Old C', 'Old D']);
+    expect(merged.correct_answer).toBe(2); // comes from existing, not incoming
+  });
+
+  it('keeps existing explanation and links when present', () => {
+    const incoming: ImportQuestion = {
+      ...existing,
+      explanation: 'New explanation',
+      links: [],
+    };
+    const merged = mergeQuestion(existing, incoming);
+    expect(merged.explanation).toBe('Old explanation');
+    expect(merged.links).toEqual(existing.links);
+  });
+
+  it('uses incoming question text when incoming has text', () => {
+    const incoming: ImportQuestion = { ...existing, question: 'New question?' };
+    const merged = mergeQuestion(existing, incoming);
+    expect(merged.question).toBe('New question?');
   });
 });
 
