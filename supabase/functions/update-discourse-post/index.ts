@@ -85,6 +85,10 @@ Deno.serve(async (req: Request) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // Hoisted outside try so the catch block can write discourse_sync_error
+  // after req.json() consumes the body (req.clone() would throw at that point).
+  let parsedQuestionId: string | undefined;
+
   try {
     console.log(`[${requestId}] update-discourse-post: Request received`);
 
@@ -156,9 +160,7 @@ Deno.serve(async (req: Request) => {
 
     const body: RequestBody = await req.json();
     const { questionId, explanation } = body;
-    // Captured here so the catch block can write discourse_sync_error without
-    // re-reading the already-consumed request body via req.clone().
-    const parsedQuestionId: string | undefined = questionId || undefined;
+    parsedQuestionId = questionId || undefined;
 
     if (!questionId) {
       console.warn(`[${requestId}] Missing questionId`);
