@@ -1,7 +1,9 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
   getCorsHeaders,
   isServiceRoleToken,
+  errorResponse,
 } from "../_shared/constants.ts";
 import {
   extractMetaContent,
@@ -464,11 +466,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error(`[${requestId}] Error:`, error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    console.error(`[${requestId}] Unhandled error:`, error);
+    return errorResponse('Internal server error', 500, undefined, corsHeaders);
   }
 });

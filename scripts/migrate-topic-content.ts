@@ -18,12 +18,14 @@
 import { createClient } from "@supabase/supabase-js";
 import * as readline from "readline";
 
-// Use environment variables or defaults for local development
+// Require env vars — no key fallback so a misconfigured SUPABASE_URL=<prod> never
+// silently falls through to the well-known local demo key.
 const supabaseUrl = process.env.SUPABASE_URL || "http://127.0.0.1:54321";
-const supabaseKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
+const supabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY) as string;
+if (!supabaseKey) {
+  console.error("Error: SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY must be set.");
+  process.exit(1);
+}
 
 // Check if running against production by parsing the URL properly
 function isProductionUrl(url: string): boolean {

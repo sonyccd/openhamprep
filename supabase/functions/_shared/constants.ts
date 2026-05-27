@@ -217,6 +217,44 @@ export function isServiceRoleToken(token: string): boolean {
   return payload?.role === 'service_role';
 }
 
+/**
+ * Return a safe error Response that logs full detail server-side but only
+ * sends a generic message to the caller. Use for all unhandled catch blocks.
+ *
+ * For 4xx responses where the message is intentional (e.g. "Unauthorized",
+ * "Question not found") keep the specific message and skip this helper.
+ */
+export function errorResponse(
+  message: string,
+  status: number,
+  err?: unknown,
+  corsHeaders?: Record<string, string>
+): Response {
+  if (err != null) console.error(message, err);
+  return new Response(
+    JSON.stringify({ error: message }),
+    { status, headers: { 'Content-Type': 'application/json', ...(corsHeaders ?? {}) } }
+  );
+}
+
+/**
+ * Check whether the authenticated user has the admin role.
+ * Returns true if admin, false otherwise (including on DB error).
+ * Uses maybeSingle + eq('role','admin') so it works regardless of
+ * how many roles the user has and doesn't throw on "no rows".
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function requireAdmin(supabase: any, userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('role', 'admin')
+    .maybeSingle();
+  if (error) console.error('[requireAdmin] DB error:', error);
+  return Boolean(data);
+}
+
 // ============================================================
 // System Monitoring Constants
 // ============================================================

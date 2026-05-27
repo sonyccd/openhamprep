@@ -70,9 +70,10 @@ export function AdminGlossary() {
 
   const addTerm = useMutation({
     mutationFn: async ({ term, definition }: { term: string; definition: string }) => {
+      if (!user) throw new Error('Not authenticated');
       const historyEntry: EditHistoryEntry = {
-        user_id: user?.id || '',
-        user_email: user?.email || 'Unknown',
+        user_id: user.id,
+        user_email: user.email || 'Unknown',
         action: 'created',
         changes: {},
         timestamp: new Date().toISOString(),
@@ -103,6 +104,7 @@ export function AdminGlossary() {
 
   const updateTerm = useMutation({
     mutationFn: async ({ id, term, definition, originalTerm }: { id: string; term: string; definition: string; originalTerm: GlossaryTerm }) => {
+      if (!user) throw new Error('Not authenticated');
       // Build changes object
       const changes: Record<string, { from: unknown; to: unknown }> = {};
       if (originalTerm.term !== term.trim()) {
@@ -113,8 +115,8 @@ export function AdminGlossary() {
       }
 
       const historyEntry: EditHistoryEntry = {
-        user_id: user?.id || '',
-        user_email: user?.email || 'Unknown',
+        user_id: user.id,
+        user_email: user.email || 'Unknown',
         action: 'updated',
         changes,
         timestamp: new Date().toISOString(),

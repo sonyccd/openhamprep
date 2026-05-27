@@ -91,6 +91,7 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async () => {
+      if (!user) throw new Error('Not authenticated');
       const changes: Record<string, { from: unknown; to: unknown }> = {};
 
       if (topic.title !== title.trim()) {
@@ -113,8 +114,8 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
       }
 
       const historyEntry: EditHistoryEntry = {
-        user_id: user?.id || "",
-        user_email: user?.email || "Unknown",
+        user_id: user.id,
+        user_email: user.email || "Unknown",
         action: "updated",
         changes,
         timestamp: new Date().toISOString(),

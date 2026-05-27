@@ -82,10 +82,11 @@ export function AdminLessons() {
       toast.error("A lesson with this slug already exists");
       return;
     }
+    if (!user) { toast.error('Your session has expired. Please sign in again.'); return; }
 
     const historyEntry: EditHistoryEntry = {
-      user_id: user?.id || "",
-      user_email: user?.email || "Unknown",
+      user_id: user.id,
+      user_email: user.email || "Unknown",
       action: "created",
       changes: {},
       timestamp: new Date().toISOString(),

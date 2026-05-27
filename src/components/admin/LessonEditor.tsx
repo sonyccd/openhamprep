@@ -85,6 +85,7 @@ export function LessonEditor({ lesson, onBack }: LessonEditorProps) {
       toast.error("Slug is required");
       return;
     }
+    if (!user) { toast.error('Your session has expired. Please sign in again.'); return; }
 
     const changes: Record<string, { from: unknown; to: unknown }> = {};
     if (title !== lesson.title) changes.title = { from: lesson.title, to: title };
@@ -97,8 +98,8 @@ export function LessonEditor({ lesson, onBack }: LessonEditorProps) {
     if (displayOrder !== lesson.display_order) changes.display_order = { from: lesson.display_order, to: displayOrder };
 
     const historyEntry: EditHistoryEntry = {
-      user_id: user?.id || "",
-      user_email: user?.email || "Unknown",
+      user_id: user.id,
+      user_email: user.email || "Unknown",
       action: "updated",
       changes,
       timestamp: new Date().toISOString(),
@@ -141,14 +142,15 @@ export function LessonEditor({ lesson, onBack }: LessonEditorProps) {
   };
 
   const handleTogglePublish = () => {
+    if (!user) { toast.error('Your session has expired. Please sign in again.'); return; }
     const previousState = isPublished;
     const newPublished = !previousState;
     setIsPublished(newPublished);
 
     // Auto-save publish status
     const historyEntry: EditHistoryEntry = {
-      user_id: user?.id || "",
-      user_email: user?.email || "Unknown",
+      user_id: user.id,
+      user_email: user.email || "Unknown",
       action: "updated",
       changes: { is_published: { from: previousState, to: newPublished } },
       timestamp: new Date().toISOString(),

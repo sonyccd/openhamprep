@@ -165,8 +165,17 @@ export function useOAuthConsent(): UseOAuthConsentReturn {
       const userForumUsername = profileData?.forum_username || null;
       setForumUsername(userForumUsername);
 
-      // If user already has a forum username, auto-approve (no consent needed - we own both apps)
-      if (userForumUsername) {
+      // Auto-approve only for first-party clients (Discourse forum integration).
+      // VITE_TRUSTED_OAUTH_CLIENT_IDS is a comma-separated list of client_id values
+      // that may be silently approved. If the env var is not set, always show the
+      // consent screen so the user is aware of what they're authorizing.
+      const trustedIds = (import.meta.env.VITE_TRUSTED_OAUTH_CLIENT_IDS || '')
+        .split(',')
+        .map((id: string) => id.trim())
+        .filter(Boolean);
+      const isTrustedClient = trustedIds.includes(clientId);
+
+      if (userForumUsername && isTrustedClient) {
         await autoApprove(authId);
         return;
       }

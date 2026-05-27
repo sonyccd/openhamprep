@@ -95,10 +95,11 @@ export function AdminHamRadioTools() {
       toast.error("Please fill in title, description, and URL");
       return;
     }
+    if (!user) { toast.error('Your session has expired. Please sign in again.'); return; }
 
     const historyEntry: EditHistoryEntry = {
-      user_id: user?.id || "",
-      user_email: user?.email || "Unknown",
+      user_id: user.id,
+      user_email: user.email || "Unknown",
       action: "created",
       changes: {},
       timestamp: new Date().toISOString(),
@@ -148,6 +149,7 @@ export function AdminHamRadioTools() {
       toast.error("Please fill in title, description, and URL");
       return;
     }
+    if (!user) { toast.error('Your session has expired. Please sign in again.'); return; }
 
     // Build changes object for edit history
     const changes: Record<string, { from: unknown; to: unknown }> = {};
@@ -171,8 +173,8 @@ export function AdminHamRadioTools() {
     }
 
     const historyEntry: EditHistoryEntry = {
-      user_id: user?.id || "",
-      user_email: user?.email || "Unknown",
+      user_id: user.id,
+      user_email: user.email || "Unknown",
       action: "updated",
       changes,
       timestamp: new Date().toISOString(),

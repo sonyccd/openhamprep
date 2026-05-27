@@ -1,9 +1,10 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
   corsHeaders,
   DISCOURSE_URL,
   isServiceRoleToken,
+  errorResponse,
 } from "../_shared/constants.ts";
 import {
   isValidDiscourseUrl,
@@ -119,7 +120,7 @@ async function updateTopicExternalIdWithRetry(
   return { success: false, error: "Max retries exceeded" };
 }
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   const requestId = crypto.randomUUID().slice(0, 8);
 
   // Handle CORS preflight
@@ -522,12 +523,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error(`[${requestId}] Error:`, error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error(`[${requestId}] Unhandled error:`, error);
+    return errorResponse('Internal server error', 500, undefined, corsHeaders);
   }
 });

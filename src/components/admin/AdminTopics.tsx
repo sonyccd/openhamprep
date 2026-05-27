@@ -73,9 +73,10 @@ export function AdminTopics() {
       license_types: string[];
       is_published: boolean;
     }) => {
+      if (!user) throw new Error('Not authenticated');
       const historyEntry: EditHistoryEntry = {
-        user_id: user?.id || "",
-        user_email: user?.email || "Unknown",
+        user_id: user.id,
+        user_email: user.email || "Unknown",
         action: "created",
         changes: {},
         timestamp: new Date().toISOString(),
