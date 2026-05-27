@@ -209,34 +209,16 @@ function cleanupStaleStorageKeys(): void {
 }
 
 /**
- * Calculate the number of whole days between two dates.
- * Uses floor rounding for consistency (partial days don't count).
- * Both dates are normalized to midnight local time to avoid timezone issues.
- *
- * @param fromDate - Start date (or null, returns Infinity)
- * @param toDate - End date
- * @returns Number of whole days between dates (negative if toDate is before fromDate)
- */
-function daysBetween(fromDate: string | null, toDate: Date): number {
-  if (!fromDate) return Infinity;
-
-  // Normalize both dates to midnight local time
-  const from = new Date(fromDate);
-  from.setHours(0, 0, 0, 0);
-
-  const to = new Date(toDate);
-  to.setHours(0, 0, 0, 0);
-
-  const diffMs = to.getTime() - from.getTime();
-  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
-}
-
-/**
  * Calculate days since a past date.
  * Returns Infinity if dateStr is null.
  */
 function daysSince(dateStr: string | null): number {
-  return daysBetween(dateStr, new Date());
+  if (!dateStr) return Infinity;
+  const from = new Date(dateStr);
+  from.setHours(0, 0, 0, 0);
+  const to = new Date();
+  to.setHours(0, 0, 0, 0);
+  return Math.floor((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 /**

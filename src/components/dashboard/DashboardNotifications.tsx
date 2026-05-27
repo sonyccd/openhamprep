@@ -175,7 +175,6 @@ function NotificationItem({
  *   userId={user?.id}
  *   thisWeekQuestions={thisWeekQuestions}
  *   questionsGoal={questionsGoal}
- *   userTarget={userTarget}
  *   onNavigate={changeView}
  * />
  * ```
