@@ -133,7 +133,7 @@ export function DashboardSidebar({
   const bottomNavItems: NavItem[] = [
     { id: 'glossary', label: 'Glossary', icon: BookText },
     { id: 'tools', label: 'Tools', icon: Wrench },
-    { id: 'find-test-site', label: 'Find Test Site', icon: MapPin },
+    { id: 'find-test-site', label: 'Find Test Site', icon: MapPin, external: 'https://hamstudy.org/sessions' },
     { id: 'forum', label: 'Community', icon: Users, external: 'https://forum.openhamprep.com/auth/oidc' },
   ];
 

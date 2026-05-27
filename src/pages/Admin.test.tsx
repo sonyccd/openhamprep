@@ -41,10 +41,6 @@ vi.mock('@/components/admin/AdminQuestions', () => ({
   ),
 }));
 
-vi.mock('@/components/admin/AdminExamSessions', () => ({
-  AdminExamSessions: () => <div data-testid="admin-exam-sessions">Admin Exam Sessions</div>,
-}));
-
 vi.mock('@/components/admin/AdminTopics', () => ({
   AdminTopics: () => <div data-testid="admin-topics">Admin Topics</div>,
 }));
@@ -187,12 +183,6 @@ describe('Admin', () => {
       expect(screen.getByRole('button', { name: /glossary/i })).toBeInTheDocument();
     });
 
-    it('displays Sessions section button', () => {
-      renderAdmin();
-
-      expect(screen.getByRole('button', { name: /sessions/i })).toBeInTheDocument();
-    });
-
     it('shows Questions (Exam) section by default', () => {
       renderAdmin();
 
@@ -208,14 +198,6 @@ describe('Admin', () => {
       expect(screen.getByTestId('admin-glossary')).toBeInTheDocument();
     });
 
-    it('switches to Sessions section when clicked', async () => {
-      const user = userEvent.setup();
-      renderAdmin();
-
-      await user.click(screen.getByRole('button', { name: /sessions/i }));
-
-      expect(screen.getByTestId('admin-exam-sessions')).toBeInTheDocument();
-    });
   });
 
   describe('Exam Section', () => {

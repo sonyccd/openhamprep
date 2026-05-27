@@ -10,7 +10,6 @@ import {
   type NotificationVariant,
 } from '@/hooks/useDashboardNotifications';
 import { TestType, View } from '@/types/navigation';
-import type { UserTargetExam } from '@/hooks/useExamSessions';
 
 /**
  * Props for the DashboardNotifications component.
@@ -24,8 +23,6 @@ export interface DashboardNotificationsProps {
   thisWeekQuestions: number;
   /** Weekly question goal */
   questionsGoal: number;
-  /** User's target exam */
-  userTarget: UserTargetExam | null;
   /** Navigation handler */
   onNavigate: (view: View) => void;
   /** Maximum notifications to show (default: 1) */
@@ -178,7 +175,6 @@ function NotificationItem({
  *   userId={user?.id}
  *   thisWeekQuestions={thisWeekQuestions}
  *   questionsGoal={questionsGoal}
- *   userTarget={userTarget}
  *   onNavigate={changeView}
  * />
  * ```
@@ -188,7 +184,6 @@ export function DashboardNotifications({
   userId,
   thisWeekQuestions,
   questionsGoal,
-  userTarget,
   onNavigate,
   maxVisible = 1,
   className,
@@ -203,7 +198,6 @@ export function DashboardNotifications({
     userId,
     thisWeekQuestions,
     questionsGoal,
-    userTarget,
     onNavigate,
     maxVisible,
   });

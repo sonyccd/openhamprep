@@ -4,7 +4,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
-import { useUserTargetExam } from '@/hooks/useExamSessions';
 import { useTestReadiness } from '@/hooks/useTestReadiness';
 import { useReadinessScore, recalculateReadiness } from '@/hooks/useReadinessScore';
 import { useTestResults, useQuestionAttemptsWithNames, useProfileStats, useWeeklyGoals } from '@/hooks/useDashboardData';
@@ -12,7 +11,7 @@ import { queryKeys } from '@/services/queryKeys';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, AlertTriangle, Zap, Brain, Target, MapPin, X } from 'lucide-react';
+import { Loader2, AlertTriangle, Zap, Brain, Target, X } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { PageContainer } from '@/components/ui/page-container';
 import {
@@ -35,7 +34,6 @@ import { AppLayout } from '@/components/AppLayout';
 import { Glossary } from '@/components/Glossary';
 import { GlossaryFlashcards } from '@/components/GlossaryFlashcards';
 import { WeeklyGoalsModal } from '@/components/WeeklyGoalsModal';
-import { ExamSessionSearch } from '@/components/ExamSessionSearch';
 import { TopicGallery } from '@/components/TopicGallery';
 import { TopicDetailPage } from '@/components/TopicDetailPage';
 import { LessonGallery } from '@/components/LessonGallery';
@@ -146,9 +144,6 @@ export default function Dashboard() {
     data: weeklyGoals
   } = useWeeklyGoals();
 
-  // Fetch user's target exam
-  const { data: userTarget } = useUserTargetExam(user?.id);
-
   // Calculate this week's progress (Sunday to Saturday)
   const getWeekStart = () => {
     const now = new Date();
@@ -213,7 +208,7 @@ export default function Dashboard() {
   const studyViews: View[] = [
     'practice-test', 'random-practice', 'weak-questions', 'bookmarks',
     'subelement-practice', 'chapter-practice', 'glossary', 'glossary-flashcards',
-    'topics', 'lessons', 'find-test-site', 'tools',
+    'topics', 'lessons', 'tools',
   ];
 
   // Handle view changes with test-in-progress check (user-initiated from sidebar/buttons)
@@ -281,9 +276,6 @@ export default function Dashboard() {
     }
     if (currentView === 'glossary-flashcards') {
       return <GlossaryFlashcards onBack={() => changeView('dashboard')} />;
-    }
-    if (currentView === 'find-test-site') {
-      return <ExamSessionSearch />;
     }
     if (currentView === 'tools') {
       return <HamRadioToolsGallery />;
@@ -368,18 +360,6 @@ export default function Dashboard() {
         });
       }
 
-      // If exam ready but no target exam, suggest finding one
-      if (readinessLevel === 'ready' && !userTarget?.exam_session) {
-        steps.push({
-          id: 'find-exam',
-          title: 'Find an Exam Session',
-          description: "You're ready! Schedule your real exam",
-          icon: MapPin,
-          onClick: () => changeView('find-test-site'),
-          variant: 'primary',
-        });
-      }
-
       // Limit to 3 steps max
       return steps.slice(0, 3);
     };
@@ -422,7 +402,6 @@ export default function Dashboard() {
           userId={user?.id}
           thisWeekQuestions={thisWeekQuestions}
           questionsGoal={questionsGoal}
-          userTarget={userTarget}
           onNavigate={changeView}
           maxVisible={1}
         />
@@ -444,16 +423,7 @@ export default function Dashboard() {
           questionsGoal={questionsGoal}
           thisWeekTests={thisWeekTests}
           testsGoal={testsGoal}
-          examDate={userTarget?.exam_session?.exam_date || userTarget?.custom_exam_date}
-          examLocation={
-            userTarget?.exam_session
-              ? `${userTarget.exam_session.city}, ${userTarget.exam_session.state}`
-              : userTarget?.custom_exam_date
-                ? 'Custom date'
-                : undefined
-          }
           onOpenGoalsModal={() => setShowGoalsModal(true)}
-          onFindTestSite={() => changeView('find-test-site')}
         />
       </PageContainer>
     );

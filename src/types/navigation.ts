@@ -9,7 +9,6 @@ export type View =
   | 'review-test'
   | 'glossary'
   | 'glossary-flashcards'
-  | 'find-test-site'
   | 'tools'
   | 'topics'
   | 'topic-detail'
