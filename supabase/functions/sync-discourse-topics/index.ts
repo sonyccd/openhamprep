@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
   corsHeaders,
   DISCOURSE_URL,
@@ -9,6 +9,8 @@ import {
   getCategorySlug,
   isServiceRoleToken,
   fetchWithBackoff,
+  errorResponse,
+  requireAdmin,
 } from "../_shared/constants.ts";
 import {
   formatTopicBody,
@@ -256,7 +258,7 @@ async function createDiscourseTopic(
   }
 }
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   const requestId = crypto.randomUUID().slice(0, 8);
 
   if (req.method === 'OPTIONS') {
@@ -301,13 +303,8 @@ serve(async (req) => {
       }
 
       // Verify user has admin role
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
-
-      if (roleError || roleData?.role !== 'admin') {
+      const isAdmin = await requireAdmin(supabase, user.id);
+      if (!isAdmin) {
         return new Response(
           JSON.stringify({ error: 'Forbidden: Admin access required' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -623,11 +620,6 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error(`[${requestId}] Error:`, error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return errorResponse('Internal server error', 500, error, corsHeaders);
   }
 });

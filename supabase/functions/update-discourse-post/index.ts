@@ -1,10 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
   isValidUuid,
   isServiceRoleToken,
   DISCOURSE_URL,
   getCorsHeaders,
+  errorResponse,
 } from "../_shared/constants.ts";
 import {
   extractTopicId,
@@ -75,7 +76,7 @@ async function getTopicByExternalId(
   }
 }
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   const requestId = crypto.randomUUID().slice(0, 8);
   const corsHeaders = getCorsHeaders(req);
 
@@ -133,11 +134,7 @@ serve(async (req) => {
       console.log(`[${requestId}] Role check - data:`, roleData, "error:", roleError?.message);
 
       if (roleError) {
-        console.error(`[${requestId}] Role check error:`, roleError);
-        return new Response(JSON.stringify({ error: "Failed to check admin role: " + roleError.message }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return errorResponse('Failed to verify access', 500, roleError, corsHeaders);
       }
 
       if (!roleData) {
@@ -417,20 +414,16 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error(`[${requestId}] Update Discourse post error:`, error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     // Try to update the sync status to error
-    // We need to extract questionId from the request if possible
     try {
       const bodyText = await req.clone().text();
       const body = JSON.parse(bodyText);
       if (body.questionId) {
-        console.log(`[${requestId}] Updating sync status to error for question ${body.questionId}`);
         const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
         const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
         const supabase = createClient(supabaseUrl, supabaseKey);
-
         await supabase.from("questions").update({
           discourse_sync_status: "error",
           discourse_sync_at: new Date().toISOString(),
@@ -438,13 +431,9 @@ serve(async (req) => {
         }).eq("id", body.questionId);
       }
     } catch {
-      // Ignore errors updating status - just log the main error
       console.error(`[${requestId}] Failed to update sync status after error`);
     }
 
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return errorResponse('Internal server error', 500, undefined, corsHeaders);
   }
 });

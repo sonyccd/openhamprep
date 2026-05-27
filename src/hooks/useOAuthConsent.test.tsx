@@ -178,7 +178,8 @@ describe('useOAuthConsent', () => {
   });
 
   describe('Auto-approve with existing forum username', () => {
-    it('should auto-approve when user has existing forum username', async () => {
+    it('should auto-approve when user has existing forum username and client is trusted', async () => {
+      vi.stubEnv('VITE_TRUSTED_OAUTH_CLIENT_IDS', 'test-client');
       const originalLocation = window.location;
       // @ts-expect-error - mocking window.location
       delete window.location;
@@ -206,6 +207,35 @@ describe('useOAuthConsent', () => {
       expect(mockApproveAuthorization).toHaveBeenCalledWith('test-auth-id');
 
       window.location = originalLocation;
+      vi.unstubAllEnvs();
+    });
+
+    it('should show consent form (not auto-approve) when client is not in trusted list', async () => {
+      vi.stubEnv('VITE_TRUSTED_OAUTH_CLIENT_IDS', 'other-client');
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'profiles') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                single: vi.fn(() => Promise.resolve({ data: { forum_username: 'existinguser' }, error: null })),
+              })),
+            })),
+          };
+        }
+        return {};
+      });
+
+      const { result } = renderHook(() => useOAuthConsent(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.isAutoApproving).toBe(false);
+      expect(mockApproveAuthorization).not.toHaveBeenCalled();
+
+      vi.unstubAllEnvs();
     });
 
     it('should show username form when user has no forum username', async () => {

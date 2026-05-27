@@ -1,6 +1,6 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getCorsHeaders } from "../_shared/constants.ts";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
+import { getCorsHeaders, errorResponse } from "../_shared/constants.ts";
 import {
   truncateText,
   isCrawler,
@@ -16,7 +16,7 @@ const SITE_NAME = 'Open Ham Prep';
 const DEFAULT_IMAGE = `${SITE_URL}/icons/icon-512.png`;
 const MAX_DESCRIPTION_LENGTH = 200;
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   const requestId = crypto.randomUUID().slice(0, 8);
   const corsHeaders = getCorsHeaders(req);
   const userAgent = req.headers.get('user-agent');
@@ -179,11 +179,6 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error(`[${requestId}] Error generating OpenGraph HTML:`, error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(`Internal server error: ${errorMessage}`, {
-      status: 500,
-      headers: corsHeaders,
-    });
+    return errorResponse('Internal server error', 500, error, corsHeaders);
   }
 });

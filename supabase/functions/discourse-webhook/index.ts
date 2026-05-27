@@ -1,6 +1,6 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { isValidUuid, getCorsHeaders } from "../_shared/constants.ts";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
+import { isValidUuid, getCorsHeaders, errorResponse } from "../_shared/constants.ts";
 import {
   parseExplanationFromPost,
   extractQuestionIdFromTitle,
@@ -102,7 +102,7 @@ interface DiscourseTopic {
 // MAIN HANDLER
 // =============================================================================
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   const requestId = crypto.randomUUID().slice(0, 8);
   const corsHeaders = {
     ...getCorsHeaders(req),
@@ -470,11 +470,6 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error(`[${requestId}] Webhook handler error:`, error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return errorResponse('Internal server error', 500, error, corsHeaders);
   }
 });
