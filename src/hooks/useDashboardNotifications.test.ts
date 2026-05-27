@@ -53,7 +53,6 @@ const defaultOptions = {
   userId: 'user-123',
   thisWeekQuestions: 30,
   questionsGoal: 50,
-  userTarget: null,
   onNavigate: vi.fn(),
   maxVisible: 1,
 };
@@ -147,83 +146,6 @@ describe('useDashboardNotifications', () => {
       const { result } = renderHook(() => useDashboardNotifications(defaultOptions));
 
       expect(result.current.isLoading).toBe(false);
-    });
-  });
-
-  describe('Exam Urgent Notification', () => {
-    it('shows exam urgent when exam is in 7 days and readiness < 75%', () => {
-      const options = {
-        ...defaultOptions,
-        userTarget: {
-          id: 'target-1',
-          user_id: 'user-123',
-          exam_session_id: null,
-          custom_exam_date: '2026-01-28', // 7 days from now
-          created_at: '2026-01-01',
-          exam_session: null,
-        },
-      };
-
-      mockUseReadinessScore.mockReturnValue({
-        data: { readiness_score: 70, last_study_at: '2026-01-21' },
-        isLoading: false,
-      });
-
-      const { result } = renderHook(() => useDashboardNotifications(options));
-
-      expect(result.current.notifications).toHaveLength(1);
-      expect(result.current.notifications[0].type).toBe('exam-urgent');
-      expect(result.current.notifications[0].priority).toBe(1);
-    });
-
-    it('does not show exam urgent when readiness >= 75%', () => {
-      const options = {
-        ...defaultOptions,
-        userTarget: {
-          id: 'target-1',
-          user_id: 'user-123',
-          exam_session_id: null,
-          custom_exam_date: '2026-01-28',
-          created_at: '2026-01-01',
-          exam_session: null,
-        },
-      };
-
-      mockUseReadinessScore.mockReturnValue({
-        data: { readiness_score: 80, last_study_at: '2026-01-21' },
-        isLoading: false,
-      });
-
-      const { result } = renderHook(() => useDashboardNotifications(options));
-
-      const examUrgent = result.current.notifications.find((n) => n.type === 'exam-urgent');
-      expect(examUrgent).toBeUndefined();
-    });
-
-    it('does not show exam urgent when exam is more than 7 days away', () => {
-      const options = {
-        ...defaultOptions,
-        userTarget: {
-          id: 'target-1',
-          user_id: 'user-123',
-          exam_session_id: null,
-          custom_exam_date: '2026-02-01', // 11 days from now
-          created_at: '2026-01-01',
-          exam_session: null,
-        },
-      };
-
-      const { result } = renderHook(() => useDashboardNotifications(options));
-
-      const examUrgent = result.current.notifications.find((n) => n.type === 'exam-urgent');
-      expect(examUrgent).toBeUndefined();
-    });
-
-    it('does not show exam urgent when no target exam', () => {
-      const { result } = renderHook(() => useDashboardNotifications(defaultOptions));
-
-      const examUrgent = result.current.notifications.find((n) => n.type === 'exam-urgent');
-      expect(examUrgent).toBeUndefined();
     });
   });
 
@@ -355,11 +277,11 @@ describe('useDashboardNotifications', () => {
       const { result } = renderHook(() => useDashboardNotifications(defaultOptions));
 
       act(() => {
-        result.current.dismissNotification('exam-urgent');
+        result.current.dismissNotification('inactivity');
       });
 
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-        'notification-dismissed-exam-urgent-2026-01-21',
+        'notification-dismissed-inactivity-2026-01-21',
         'true'
       );
     });
@@ -399,14 +321,6 @@ describe('useDashboardNotifications', () => {
         thisWeekQuestions: 40,
         questionsGoal: 50,
         maxVisible: 5,
-        userTarget: {
-          id: 'target-1',
-          user_id: 'user-123',
-          exam_session_id: null,
-          custom_exam_date: '2026-01-25', // 4 days away
-          created_at: '2026-01-01',
-          exam_session: null,
-        },
       };
 
       mockUseReadinessScore.mockReturnValue({
@@ -484,24 +398,13 @@ describe('useDashboardNotifications', () => {
         writable: true,
       });
 
-      const options = {
-        ...defaultOptions,
-        userTarget: {
-          id: 'target-1',
-          user_id: 'user-123',
-          exam_session_id: null,
-          custom_exam_date: '2026-01-25',
-          created_at: '2026-01-01',
-          exam_session: null,
-        },
-      };
-
+      // Use inactivity scenario for a high-priority notification
       mockUseReadinessScore.mockReturnValue({
-        data: { readiness_score: 70, last_study_at: '2026-01-21' },
+        data: { readiness_score: 70, last_study_at: '2026-01-17' }, // 4 days inactive
         isLoading: false,
       });
 
-      renderHook(() => useDashboardNotifications(options));
+      renderHook(() => useDashboardNotifications(defaultOptions));
 
       expect(mockUsePushNotifications().sendNotification).not.toHaveBeenCalled();
     });
@@ -529,7 +432,7 @@ describe('useDashboardNotifications', () => {
       // Should not throw
       expect(() => {
         act(() => {
-          result.current.dismissNotification('exam-urgent');
+          result.current.dismissNotification('inactivity');
         });
       }).not.toThrow();
     });

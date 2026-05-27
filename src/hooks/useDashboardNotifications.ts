@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
-import { LucideIcon, AlertTriangle, TrendingDown, Clock, Target, Trophy } from 'lucide-react';
+import { LucideIcon, TrendingDown, Clock, Target, Trophy } from 'lucide-react';
 import { useDailyStreak } from '@/hooks/useDailyStreak';
 import { useReadinessScore } from '@/hooks/useReadinessScore';
 import { useReadinessSnapshots, calculateTrend } from '@/hooks/useReadinessSnapshots';
@@ -7,7 +7,6 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { getLocalDateString } from '@/lib/streakConstants';
 import { safeGetItem, safeSetItem } from '@/lib/localStorage';
 import { TestType, View } from '@/types/navigation';
-import type { UserTargetExam } from '@/hooks/useExamSessions';
 
 // ============================================================================
 // Constants (exported for use in components)
@@ -36,20 +35,6 @@ export const PUSH_NOTIFICATION_PRIORITY_THRESHOLD = 3;
 const INACTIVITY_THRESHOLD_DAYS = 3;
 
 /**
- * Days before exam to show urgent notification.
- * 7 days gives users enough time to meaningfully improve readiness
- * while creating urgency to motivate action.
- */
-const EXAM_URGENCY_THRESHOLD_DAYS = 7;
-
-/**
- * Readiness threshold below which exam urgency notification shows.
- * 75% is the minimum passing score for ham radio exams (26/35 questions).
- * Users below this threshold need extra motivation to prepare.
- */
-const EXAM_URGENCY_READINESS_THRESHOLD = 75;
-
-/**
  * Weekly goal progress percentage to show "almost there" notification.
  * 80% is the psychological "near completion" threshold that motivates
  * finishing (goal gradient effect).
@@ -66,7 +51,6 @@ const WEEKLY_GOAL_CLOSE_THRESHOLD = 80;
  * Note: streak-at-risk is handled by StreakDisplay, not here.
  */
 export type NotificationType =
-  | 'exam-urgent'
   | 'declining-performance'
   | 'inactivity'
   | 'weekly-goal-close'
@@ -116,8 +100,6 @@ export interface UseDashboardNotificationsOptions {
   thisWeekQuestions: number;
   /** Weekly question goal */
   questionsGoal: number;
-  /** User's target exam (for exam urgency) */
-  userTarget: UserTargetExam | null;
   /** Navigation handler */
   onNavigate: (view: View) => void;
   /** Maximum notifications to show (default: 1) */
@@ -156,7 +138,6 @@ function getDismissKey(type: NotificationType, milestone?: number): string {
 
   switch (type) {
     // Day-based dismissals (reset daily)
-    case 'exam-urgent':
     case 'inactivity':
     case 'weekly-goal-close':
       return `${DISMISS_PREFIX}${type}-${today}`;
@@ -251,14 +232,6 @@ function daysBetween(fromDate: string | null, toDate: Date): number {
 }
 
 /**
- * Calculate days until a future date.
- * Returns negative if the date is in the past.
- */
-function daysUntil(dateStr: string): number {
-  return -daysBetween(dateStr, new Date());
-}
-
-/**
  * Calculate days since a past date.
  * Returns Infinity if dateStr is null.
  */
@@ -308,7 +281,6 @@ export function useDashboardNotifications(
     examType,
     thisWeekQuestions,
     questionsGoal,
-    userTarget,
     onNavigate,
     maxVisible = 1,
   } = options;
@@ -351,9 +323,6 @@ export function useDashboardNotifications(
   const lastStudyAt = readinessData?.last_study_at ?? null;
   const trend = snapshots ? calculateTrend(snapshots) : 'unknown';
 
-  // Get exam date from target
-  const examDate = userTarget?.exam_session?.exam_date ?? userTarget?.custom_exam_date ?? null;
-  const daysToExam = examDate ? daysUntil(examDate) : null;
   const inactivityDays = daysSince(lastStudyAt || lastActivityDate);
 
   // Weekly goal progress percentage
@@ -394,33 +363,7 @@ export function useDashboardNotifications(
   const allNotifications = useMemo((): DashboardNotification[] => {
     const notifications: DashboardNotification[] = [];
 
-    // 1. Exam Urgency (Priority 1)
-    // Trigger: Exam in ≤7 days AND readiness < 75%
-    if (
-      daysToExam !== null &&
-      daysToExam <= EXAM_URGENCY_THRESHOLD_DAYS &&
-      daysToExam > 0 &&
-      readinessScore !== null &&
-      readinessScore < EXAM_URGENCY_READINESS_THRESHOLD &&
-      !isDismissed('exam-urgent')
-    ) {
-      notifications.push({
-        id: 'exam-urgent',
-        type: 'exam-urgent',
-        priority: 1,
-        title: `Your exam is in ${daysToExam} day${daysToExam === 1 ? '' : 's'}!`,
-        description: `You're at ${Math.round(readinessScore)}% readiness. Take a practice test to prepare.`,
-        icon: AlertTriangle,
-        variant: 'destructive',
-        action: {
-          label: 'Take Practice Test',
-          onClick: () => onNavigate('practice-test'),
-        },
-        dismissible: true,
-      });
-    }
-
-    // 2. Declining Performance (Priority 2)
+    // 1. Declining Performance (Priority 1)
     // Note: streak-at-risk is handled by StreakDisplay, not here
     // Trigger: calculateTrend() === 'declining'
     if (trend === 'declining' && !isDismissed('declining-performance')) {
@@ -516,7 +459,6 @@ export function useDashboardNotifications(
     // Sort by priority and limit
     return notifications.sort((a, b) => a.priority - b.priority).slice(0, maxVisible);
   }, [
-    daysToExam,
     readinessScore,
     trend,
     inactivityDays,
@@ -542,7 +484,6 @@ export function useDashboardNotifications(
     } else {
       // Validate that id is a known notification type before casting
       const validTypes: NotificationType[] = [
-        'exam-urgent',
         'declining-performance',
         'inactivity',
         'weekly-goal-close',

@@ -5,7 +5,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminGlossary } from "@/components/admin/AdminGlossary";
 import { AdminQuestions } from "@/components/admin/AdminQuestions";
-import { AdminExamSessions } from "@/components/admin/AdminExamSessions";
 import { AdminTopics } from "@/components/admin/AdminTopics";
 import { AdminLessons } from "@/components/admin/AdminLessons";
 import { AdminChapters } from "@/components/admin/AdminChapters";
@@ -14,7 +13,7 @@ import { DiscourseSyncDashboard } from "@/components/admin/DiscourseSyncDashboar
 import { AdminAlerts } from "@/components/admin/AdminAlerts";
 import { AdminAlertRules } from "@/components/admin/AdminAlertRules";
 import { useUnacknowledgedAlertCount } from "@/hooks/useAlerts";
-import { Loader2, ShieldAlert, BookText, MapPin, MessageSquare, FileQuestion, Book, Wrench, Bell, GraduationCap } from "lucide-react";
+import { Loader2, ShieldAlert, BookText, MessageSquare, FileQuestion, Book, Wrench, Bell, GraduationCap } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { TestType } from "@/types/navigation";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -30,7 +29,7 @@ export default function Admin() {
   const navigate = useNavigate();
   const [sidebarTest, setSidebarTest] = useState<TestType>('technician');
   const [adminExamType, setAdminExamType] = useState<TestType>('technician');
-  const [activeSection, setActiveSection] = useState<"exam" | "glossary" | "sessions" | "learning" | "chapters" | "tools" | "discourse" | "alerts">("exam");
+  const [activeSection, setActiveSection] = useState<"exam" | "glossary" | "learning" | "chapters" | "tools" | "discourse" | "alerts">("exam");
   const { data: unacknowledgedCount = 0 } = useUnacknowledgedAlertCount();
   useEffect(() => {
     if (!authLoading && !user) {
@@ -56,7 +55,7 @@ export default function Admin() {
   };
 
   // Questions/Glossary need fixed viewport with internal scroll
-  const needsFixedHeight = activeSection === "glossary" || activeSection === "sessions" || activeSection === "learning" || activeSection === "chapters" || activeSection === "tools" || activeSection === "discourse" || activeSection === "alerts" || activeSection === "exam";
+  const needsFixedHeight = activeSection === "glossary" || activeSection === "learning" || activeSection === "chapters" || activeSection === "tools" || activeSection === "discourse" || activeSection === "alerts" || activeSection === "exam";
 
   return <AppLayout currentView="dashboard" onViewChange={handleViewChange} selectedTest={sidebarTest} onTestChange={setSidebarTest}>
       <div className={`flex-1 p-6 md:p-8 flex flex-col ${needsFixedHeight ? 'h-full overflow-hidden' : 'overflow-y-auto'}`}>
@@ -88,17 +87,6 @@ export default function Admin() {
               >
                 <BookText className="w-4 h-4" />
                 <span className="hidden sm:inline">Glossary</span>
-              </button>
-              <button
-                onClick={() => setActiveSection("sessions")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  activeSection === "sessions"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                }`}
-              >
-                <MapPin className="w-4 h-4" />
-                <span className="hidden sm:inline">Sessions</span>
               </button>
               <button
                 onClick={() => setActiveSection("learning")}
@@ -184,10 +172,6 @@ export default function Admin() {
           ) : activeSection === "glossary" ? (
               <div className="flex-1 flex flex-col min-h-0">
                 <AdminGlossary />
-              </div>
-            ) : activeSection === "sessions" ? (
-              <div className="flex-1 flex flex-col min-h-0">
-                <AdminExamSessions />
               </div>
             ) : activeSection === "learning" ? (
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">

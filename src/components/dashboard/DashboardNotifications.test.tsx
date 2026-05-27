@@ -16,7 +16,7 @@ const createMockNotification = (
   overrides: Partial<DashboardNotification> = {}
 ): DashboardNotification => ({
   id: 'test-notification',
-  type: 'exam-urgent',
+  type: 'inactivity',
   priority: 1,
   title: 'Test Title',
   description: 'Test description',
@@ -32,7 +32,6 @@ const defaultProps = {
   userId: 'user-123',
   thisWeekQuestions: 30,
   questionsGoal: 50,
-  userTarget: null,
   onNavigate: vi.fn(),
   maxVisible: 1,
 };
@@ -179,7 +178,7 @@ describe('DashboardNotifications', () => {
   describe('Dismissal', () => {
     it('calls dismissNotification when dismiss button is clicked', () => {
       const dismissNotification = vi.fn();
-      const notification = createMockNotification({ id: 'exam-urgent' });
+      const notification = createMockNotification({ id: 'inactivity' });
 
       mockUseDashboardNotifications.mockReturnValue({
         notifications: [notification],
@@ -196,7 +195,7 @@ describe('DashboardNotifications', () => {
       render(<DashboardNotifications {...defaultProps} />);
 
       fireEvent.click(screen.getByRole('button', { name: /dismiss/i }));
-      expect(dismissNotification).toHaveBeenCalledWith('exam-urgent');
+      expect(dismissNotification).toHaveBeenCalledWith('inactivity');
     });
   });
 
@@ -410,8 +409,8 @@ describe('DashboardNotifications', () => {
     it('renders multiple notifications when present', () => {
       const notifications = [
         createMockNotification({
-          id: 'exam-urgent',
-          title: 'Exam in 3 days!',
+          id: 'inactivity',
+          title: "You haven't studied in 3 days",
           priority: 1,
         }),
         createMockNotification({
@@ -435,19 +434,19 @@ describe('DashboardNotifications', () => {
 
       render(<DashboardNotifications {...defaultProps} maxVisible={2} />);
 
-      expect(screen.getByText('Exam in 3 days!')).toBeInTheDocument();
+      expect(screen.getByText("You haven't studied in 3 days")).toBeInTheDocument();
       expect(screen.getByText('Accuracy declining')).toBeInTheDocument();
     });
   });
 
   describe('Notification Types', () => {
-    it('renders exam-urgent notification correctly', () => {
+    it('renders inactivity notification correctly', () => {
       const notification = createMockNotification({
-        type: 'exam-urgent',
-        title: 'Your exam is in 3 days!',
-        description: "You're at 72% readiness. Take a practice test to prepare.",
-        icon: AlertTriangle,
-        variant: 'destructive',
+        type: 'inactivity',
+        title: "You haven't studied in 4 days",
+        description: 'Get back on track to reach your goals!',
+        icon: Clock,
+        variant: 'muted',
       });
 
       mockUseDashboardNotifications.mockReturnValue({
@@ -463,7 +462,7 @@ describe('DashboardNotifications', () => {
       });
 
       render(<DashboardNotifications {...defaultProps} />);
-      expect(screen.getByText('Your exam is in 3 days!')).toBeInTheDocument();
+      expect(screen.getByText("You haven't studied in 4 days")).toBeInTheDocument();
     });
 
     it('renders declining-performance notification correctly', () => {

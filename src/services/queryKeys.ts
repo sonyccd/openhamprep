@@ -41,16 +41,6 @@ import { AlertStatus } from '@/hooks/useAlerts';
 
 type LicenseType = 'technician' | 'general' | 'extra';
 
-interface ExamSessionFilters {
-  zip?: string;
-  startDate?: string;
-  endDate?: string;
-  state?: string;
-  walkInsOnly?: boolean;
-  page?: number;
-  pageSize?: number;
-}
-
 // ============================================================================
 // QUERY KEY FACTORIES
 // ============================================================================
@@ -194,50 +184,6 @@ export const queryKeys = {
   glossary: {
     /** All glossary terms */
     terms: () => ['glossary-terms'] as const,
-  },
-
-  // ---------------------------------------------------------------------------
-  // Exam Sessions Domain
-  // ---------------------------------------------------------------------------
-  examSessions: {
-    /** All exam sessions (with optional filters) */
-    all: (filters?: ExamSessionFilters) =>
-      filters ? ['exam-sessions', filters] as const : ['exam-sessions'] as const,
-
-    /** Total count of exam sessions */
-    count: () => ['exam-sessions-count'] as const,
-
-    /** Last updated timestamp for sessions */
-    lastUpdated: () => ['exam-sessions-last-updated'] as const,
-
-    /** Sessions needing geocoding (missing coordinates) */
-    needingGeocode: (includeAll = false) =>
-      ['sessions-needing-geocode', { includeAll }] as const,
-
-    /** Count of sessions needing geocoding */
-    needingGeocodeCount: () => ['sessions-needing-geocode-count'] as const,
-  },
-
-  // ---------------------------------------------------------------------------
-  // User Target Exam Domain
-  // ---------------------------------------------------------------------------
-  targetExam: {
-    /** User's target exam date */
-    byUser: (userId: string) => ['user-target-exam', userId] as const,
-
-    /** Root key for invalidation */
-    root: () => ['user-target-exam'] as const,
-  },
-
-  // ---------------------------------------------------------------------------
-  // Exam Attempts Domain
-  // ---------------------------------------------------------------------------
-  examAttempts: {
-    /** User's exam attempt history */
-    byUser: (userId: string) => ['exam-attempts', userId] as const,
-
-    /** Root key for invalidation */
-    root: () => ['exam-attempts'] as const,
   },
 
   // ---------------------------------------------------------------------------
