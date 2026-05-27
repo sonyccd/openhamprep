@@ -85,7 +85,7 @@ export function LessonEditor({ lesson, onBack }: LessonEditorProps) {
       toast.error("Slug is required");
       return;
     }
-    if (!user) return;
+    if (!user) { toast.error('Your session has expired. Please sign in again.'); return; }
 
     const changes: Record<string, { from: unknown; to: unknown }> = {};
     if (title !== lesson.title) changes.title = { from: lesson.title, to: title };
@@ -142,7 +142,7 @@ export function LessonEditor({ lesson, onBack }: LessonEditorProps) {
   };
 
   const handleTogglePublish = () => {
-    if (!user) return;
+    if (!user) { toast.error('Your session has expired. Please sign in again.'); return; }
     const previousState = isPublished;
     const newPublished = !previousState;
     setIsPublished(newPublished);

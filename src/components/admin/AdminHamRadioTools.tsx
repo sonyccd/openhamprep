@@ -95,7 +95,7 @@ export function AdminHamRadioTools() {
       toast.error("Please fill in title, description, and URL");
       return;
     }
-    if (!user) { console.warn('[AdminHamRadioTools] handleAddTool called without authenticated user'); return; }
+    if (!user) { toast.error('Your session has expired. Please sign in again.'); return; }
 
     const historyEntry: EditHistoryEntry = {
       user_id: user.id,
@@ -149,7 +149,7 @@ export function AdminHamRadioTools() {
       toast.error("Please fill in title, description, and URL");
       return;
     }
-    if (!user) { console.warn('[AdminHamRadioTools] handleUpdateTool called without authenticated user'); return; }
+    if (!user) { toast.error('Your session has expired. Please sign in again.'); return; }
 
     // Build changes object for edit history
     const changes: Record<string, { from: unknown; to: unknown }> = {};
