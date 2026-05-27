@@ -82,7 +82,7 @@ export function AdminLessons() {
       toast.error("A lesson with this slug already exists");
       return;
     }
-    if (!user) return;
+    if (!user) { console.warn('[AdminLessons] handleAddLesson called without authenticated user'); return; }
 
     const historyEntry: EditHistoryEntry = {
       user_id: user.id,

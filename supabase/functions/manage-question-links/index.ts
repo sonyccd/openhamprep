@@ -466,6 +466,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    return errorResponse('Internal server error', 500, error, corsHeaders);
+    console.error(`[${requestId}] Unhandled error:`, error);
+    return errorResponse('Internal server error', 500, undefined, corsHeaders);
   }
 });
