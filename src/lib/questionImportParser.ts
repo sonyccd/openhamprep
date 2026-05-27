@@ -72,14 +72,14 @@ export function parseCSV(content: string): ImportQuestion[] {
     };
 
     const correctAnswerRaw = getCol('correct_answer') || getCol('correct');
-    let correctAnswer = 0;
+    let correctAnswer = -1; // -1 = could not parse; fails validation
     if (['a', '0'].includes(correctAnswerRaw.toLowerCase())) correctAnswer = 0;
     else if (['b', '1'].includes(correctAnswerRaw.toLowerCase())) correctAnswer = 1;
     else if (['c', '2'].includes(correctAnswerRaw.toLowerCase())) correctAnswer = 2;
     else if (['d', '3'].includes(correctAnswerRaw.toLowerCase())) correctAnswer = 3;
 
     questions.push({
-      id: getCol('id'),
+      id: getCol('id') || getCol('display_name'),
       question: getCol('question'),
       options: [
         getCol('option_a') || getCol('a'),
@@ -122,7 +122,7 @@ export function parseJSON(content: string): ImportQuestion[] {
         ['a', '0'].includes(String(q.correct_answer).toLowerCase()) ? 0 :
         ['b', '1'].includes(String(q.correct_answer).toLowerCase()) ? 1 :
         ['c', '2'].includes(String(q.correct_answer).toLowerCase()) ? 2 :
-        ['d', '3'].includes(String(q.correct_answer).toLowerCase()) ? 3 : 0,
+        ['d', '3'].includes(String(q.correct_answer).toLowerCase()) ? 3 : -1,
       subelement: String(q.subelement || ''),
       question_group: String(q.question_group || q.group || ''),
       explanation: q.explanation ? String(q.explanation) : undefined,
@@ -159,7 +159,8 @@ export function validateQuestions(
     if (!q.options || q.options.length !== 4) rowErrors.push('Must have exactly 4 options');
     else if (q.options.some(o => !o?.trim())) rowErrors.push('All options must have text');
 
-    if (q.correct_answer < 0 || q.correct_answer > 3) rowErrors.push('Invalid correct answer');
+    if (q.correct_answer === -1) rowErrors.push('Could not parse correct_answer — use A/B/C/D or 0/1/2/3');
+    else if (q.correct_answer < 0 || q.correct_answer > 3) rowErrors.push('Invalid correct answer (must be 0–3)');
     if (!q.subelement) rowErrors.push('Missing subelement');
     if (!q.question_group) rowErrors.push('Missing question group');
 
@@ -179,4 +180,22 @@ export function validateQuestions(
   });
 
   return { valid, errors };
+}
+
+/**
+ * Merge an incoming question over an existing one.
+ * Options and correct_answer always come from the same source so they stay aligned.
+ */
+export function mergeQuestion(existing: ImportQuestion, incoming: ImportQuestion): ImportQuestion {
+  const useIncomingOptions = incoming.options.every(o => o);
+  return {
+    id: existing.id,
+    question: incoming.question || existing.question,
+    options: useIncomingOptions ? incoming.options : existing.options,
+    correct_answer: useIncomingOptions ? incoming.correct_answer : existing.correct_answer,
+    subelement: incoming.subelement || existing.subelement,
+    question_group: incoming.question_group || existing.question_group,
+    explanation: existing.explanation || incoming.explanation,
+    links: (existing.links && existing.links.length > 0) ? existing.links : incoming.links,
+  };
 }

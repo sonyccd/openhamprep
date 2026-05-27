@@ -74,6 +74,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
         .select(
           `
           id, display_name, question, options, correct_answer,
+          subelement, question_group,
           links, explanation, edit_history, figure_url, forum_url,
           discourse_sync_status, discourse_sync_at, discourse_sync_error,
           arrl_chapter_id, arrl_page_reference,
@@ -264,7 +265,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
                 itemLabel="questions"
                 formatCSV={(items) => {
                   const header =
-                    'display_name,question,option_a,option_b,option_c,option_d,correct_answer,explanation';
+                    'id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group,explanation';
                   const rows = items.map((q) =>
                     [
                       escapeCSVField(q.display_name),
@@ -273,7 +274,9 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
                       escapeCSVField(q.options[1]),
                       escapeCSVField(q.options[2]),
                       escapeCSVField(q.options[3]),
-                      ['A', 'B', 'C', 'D'][q.correct_answer],
+                      escapeCSVField(['A', 'B', 'C', 'D'][q.correct_answer]),
+                      escapeCSVField(q.subelement),
+                      escapeCSVField(q.question_group),
                       escapeCSVField(q.explanation || ''),
                     ].join(',')
                   );
