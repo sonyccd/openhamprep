@@ -362,10 +362,16 @@ describe('validateQuestions', () => {
     expect(result.errors[0].errors).toContain('All options must have text');
   });
 
-  it('rejects questions with invalid correct_answer', () => {
+  it('rejects questions with out-of-range correct_answer', () => {
     const invalidAnswer = { ...validQuestion, correct_answer: 5 };
     const result = validateQuestions([invalidAnswer], 'technician');
-    expect(result.errors[0].errors).toContain('Invalid correct answer');
+    expect(result.errors[0].errors).toContain('Invalid correct answer (must be 0–3)');
+  });
+
+  it('rejects questions with unparseable correct_answer (-1 sentinel)', () => {
+    const unparsed = { ...validQuestion, correct_answer: -1 };
+    const result = validateQuestions([unparsed], 'technician');
+    expect(result.errors[0].errors).toContain('Could not parse correct_answer — use A/B/C/D or 0/1/2/3');
   });
 
   it('rejects questions with missing subelement', () => {

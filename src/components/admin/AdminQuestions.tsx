@@ -264,7 +264,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
                 itemLabel="questions"
                 formatCSV={(items) => {
                   const header =
-                    'display_name,question,option_a,option_b,option_c,option_d,correct_answer,explanation';
+                    'id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group,explanation';
                   const rows = items.map((q) =>
                     [
                       escapeCSVField(q.display_name),
@@ -274,6 +274,8 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
                       escapeCSVField(q.options[2]),
                       escapeCSVField(q.options[3]),
                       ['A', 'B', 'C', 'D'][q.correct_answer],
+                      escapeCSVField(q.display_name.substring(0, 2)), // subelement e.g. T1
+                      escapeCSVField(q.display_name.substring(0, 3)), // question_group e.g. T1A
                       escapeCSVField(q.explanation || ''),
                     ].join(',')
                   );

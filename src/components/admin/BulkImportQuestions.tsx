@@ -196,11 +196,12 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
   };
 
   const mergeQuestion = (existing: ImportQuestion, incoming: ImportQuestion): ImportQuestion => {
+    const useIncomingOptions = incoming.options.every(o => o);
     return {
       id: existing.id,
       question: incoming.question || existing.question,
-      options: incoming.options.every(o => o) ? incoming.options : existing.options,
-      correct_answer: incoming.correct_answer,
+      options: useIncomingOptions ? incoming.options : existing.options,
+      correct_answer: useIncomingOptions ? incoming.correct_answer : existing.correct_answer,
       subelement: incoming.subelement || existing.subelement,
       question_group: incoming.question_group || existing.question_group,
       explanation: existing.explanation || incoming.explanation, // Keep existing if present
