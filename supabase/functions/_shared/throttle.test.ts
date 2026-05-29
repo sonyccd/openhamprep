@@ -93,6 +93,25 @@ Deno.test("checkThrottle - fails open on read error", async () => {
   assertEquals(decision, { allowed: true, retryAfterSeconds: 0 });
 });
 
+Deno.test("checkThrottle - fails open when the query REJECTS (network error)", async () => {
+  // supabase-js rejects (not {error}) on network-level failures.
+  const supabase = {
+    from() {
+      return {
+        select() {
+          return {
+            eq() {
+              return { maybeSingle: () => Promise.reject(new Error("network down")) };
+            },
+          };
+        },
+      };
+    },
+  };
+  const decision = await checkThrottle(supabase, "fn", 300);
+  assertEquals(decision, { allowed: true, retryAfterSeconds: 0 });
+});
+
 Deno.test("checkThrottle - is read-only (never upserts)", async () => {
   let upserted = false;
   const supabase = fakeSupabase({
@@ -119,5 +138,15 @@ Deno.test("recordRun - upserts the function name with a fresh timestamp", async 
 Deno.test("recordRun - swallows write errors (best-effort)", async () => {
   const supabase = fakeSupabase({ upsertResult: { error: { message: "write failed" } } });
   // Should not throw
+  await recordRun(supabase, "my-fn");
+});
+
+Deno.test("recordRun - swallows a REJECTED upsert (network error)", async () => {
+  const supabase = {
+    from() {
+      return { upsert: () => Promise.reject(new Error("network down")) };
+    },
+  };
+  // Must not throw — a rejection here must not turn a successful run into a 500.
   await recordRun(supabase, "my-fn");
 });

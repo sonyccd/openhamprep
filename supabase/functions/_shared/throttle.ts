@@ -87,18 +87,25 @@ export async function checkThrottle(
   functionName: string,
   minIntervalSeconds: number,
 ): Promise<ThrottleDecision> {
-  const { data, error } = await supabase
-    .from("edge_function_throttle")
-    .select("last_run_at")
-    .eq("function_name", functionName)
-    .maybeSingle();
+  try {
+    const { data, error } = await supabase
+      .from("edge_function_throttle")
+      .select("last_run_at")
+      .eq("function_name", functionName)
+      .maybeSingle();
 
-  if (error) {
-    console.error(`[throttle] read error for ${functionName}:`, error);
+    if (error) {
+      console.error(`[throttle] read error for ${functionName}:`, error);
+      return { allowed: true, retryAfterSeconds: 0 };
+    }
+
+    return evaluateThrottle(data?.last_run_at, minIntervalSeconds);
+  } catch (err) {
+    // supabase-js returns {error} for PostgREST errors but the underlying
+    // fetch REJECTS on network-level failures — fail open here too.
+    console.error(`[throttle] read threw for ${functionName}:`, err);
     return { allowed: true, retryAfterSeconds: 0 };
   }
-
-  return evaluateThrottle(data?.last_run_at, minIntervalSeconds);
 }
 
 /**
@@ -116,12 +123,18 @@ export async function recordRun(
   supabase: any,
   functionName: string,
 ): Promise<void> {
-  const { error } = await supabase
-    .from("edge_function_throttle")
-    .upsert({ function_name: functionName, last_run_at: new Date().toISOString() });
+  try {
+    const { error } = await supabase
+      .from("edge_function_throttle")
+      .upsert({ function_name: functionName, last_run_at: new Date().toISOString() });
 
-  if (error) {
-    console.error(`[throttle] write error for ${functionName}:`, error);
+    if (error) {
+      console.error(`[throttle] write error for ${functionName}:`, error);
+    }
+  } catch (err) {
+    // Best-effort: a network-level rejection must not turn a successful run
+    // into a 500. The only cost of a missed write is the cooldown not arming.
+    console.error(`[throttle] write threw for ${functionName}:`, err);
   }
 }
 
