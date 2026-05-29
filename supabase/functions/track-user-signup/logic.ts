@@ -41,6 +41,66 @@ export type PayloadValidationResult =
   | { valid: false; reason: string };
 
 /**
+ * Result of verifying the webhook caller's authorization.
+ */
+export type AuthVerificationResult =
+  | { authorized: true }
+  | { authorized: false; reason: string };
+
+/**
+ * Constant-time string comparison to avoid leaking match length/position via
+ * timing. Returns true only if both strings are identical.
+ */
+export function constantTimeEquals(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+
+  return result === 0;
+}
+
+/**
+ * Verifies the webhook caller presented the service role key as a Bearer token.
+ *
+ * The database trigger (`track_user_signup_trigger`) calls this function with
+ * `Authorization: Bearer <service_role_key>`. Validating that header confirms
+ * the request genuinely originated from our backend rather than an arbitrary
+ * client POSTing fake signup events.
+ *
+ * The env-absent skip-and-warn case is handled by the caller (see index.ts),
+ * mirroring the optional `PENDO_INTEGRATION_KEY` graceful-degradation pattern.
+ *
+ * @param authHeader - Raw `Authorization` request header (or null)
+ * @param expectedKey - The service role key to compare against
+ * @returns Whether the caller is authorized, with a reason on failure
+ */
+export function verifyServiceRoleAuth(
+  authHeader: string | null,
+  expectedKey: string
+): AuthVerificationResult {
+  if (!authHeader) {
+    return { authorized: false, reason: "missing_authorization" };
+  }
+
+  const prefix = "Bearer ";
+  if (!authHeader.startsWith(prefix)) {
+    return { authorized: false, reason: "invalid_authorization_format" };
+  }
+
+  const token = authHeader.slice(prefix.length);
+  if (!constantTimeEquals(token, expectedKey)) {
+    return { authorized: false, reason: "invalid_token" };
+  }
+
+  return { authorized: true };
+}
+
+/**
  * Validates the webhook payload has required user data.
  *
  * @param payload - Raw webhook payload from database trigger

@@ -5,6 +5,8 @@
 import { assertEquals, assertExists } from "jsr:@std/assert@1";
 import {
   validateWebhookPayload,
+  verifyServiceRoleAuth,
+  constantTimeEquals,
   buildPendoPayload,
   successResponse,
   skippedResponse,
@@ -196,4 +198,57 @@ Deno.test("errorResponse - includes status when provided", () => {
 
 Deno.test("PENDO_TRACK_URL - is correct endpoint", () => {
   assertEquals(PENDO_TRACK_URL, "https://app.pendo.io/data/track");
+});
+
+// ============================================================
+// constantTimeEquals Tests
+// ============================================================
+
+Deno.test("constantTimeEquals - returns true for identical strings", () => {
+  assertEquals(constantTimeEquals("secret-token", "secret-token"), true);
+});
+
+Deno.test("constantTimeEquals - returns false for different strings", () => {
+  assertEquals(constantTimeEquals("secret-token", "secret-tokem"), false);
+});
+
+Deno.test("constantTimeEquals - returns false for different lengths", () => {
+  assertEquals(constantTimeEquals("short", "longer-string"), false);
+});
+
+Deno.test("constantTimeEquals - returns true for two empty strings", () => {
+  assertEquals(constantTimeEquals("", ""), true);
+});
+
+// ============================================================
+// verifyServiceRoleAuth Tests
+// ============================================================
+
+Deno.test("verifyServiceRoleAuth - authorizes matching Bearer token", () => {
+  const result = verifyServiceRoleAuth("Bearer the-service-role-key", "the-service-role-key");
+  assertEquals(result.authorized, true);
+});
+
+Deno.test("verifyServiceRoleAuth - rejects missing header", () => {
+  const result = verifyServiceRoleAuth(null, "the-service-role-key");
+  assertEquals(result.authorized, false);
+  if (!result.authorized) {
+    assertEquals(result.reason, "missing_authorization");
+  }
+});
+
+Deno.test("verifyServiceRoleAuth - rejects header without Bearer prefix", () => {
+  const result = verifyServiceRoleAuth("the-service-role-key", "the-service-role-key");
+  assertEquals(result.authorized, false);
+  if (!result.authorized) {
+    assertEquals(result.reason, "invalid_authorization_format");
+  }
+});
+
+Deno.test("verifyServiceRoleAuth - rejects wrong token", () => {
+  const result = verifyServiceRoleAuth("Bearer wrong-key", "the-service-role-key");
+  assertEquals(result.authorized, false);
+  if (!result.authorized) {
+    assertEquals(result.reason, "invalid_token");
+  }
 });
