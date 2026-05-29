@@ -13,7 +13,7 @@ import {
   extractUrlsFromText,
   isLooseUUID,
 } from "./logic.ts";
-import { enforceThrottle, throttledResponse } from "../_shared/throttle.ts";
+import { checkThrottle, recordRun, throttledResponse } from "../_shared/throttle.ts";
 
 const MAX_UNFURL_BODY_BYTES = 256 * 1024; // 256 KB
 const UNFURL_TIMEOUT_MS = 5_000;
@@ -296,12 +296,17 @@ Deno.serve(async (req) => {
       );
 
     } else if (action === 'refresh') {
-      // Rate limit refresh runs globally (M2/#222): refreshing all stale links
-      // re-fetches across every question and generates outbound traffic.
-      const decision = await enforceThrottle(supabase, 'manage-question-links:refresh', REFRESH_MIN_INTERVAL_SECONDS);
-      if (!decision.allowed) {
-        console.warn(`[${requestId}] Throttled: refresh ran too recently, retry in ${decision.retryAfterSeconds}s`);
-        return throttledResponse('manage-question-links:refresh', decision, corsHeaders);
+      // Rate limit only the expensive bulk refresh (M2/#222): re-fetching every
+      // stale link across all questions. A targeted single-question refresh
+      // (questionId provided) is cheap and stays unthrottled. Read-only check;
+      // the cooldown is armed via recordRun() only on a fully-completed (not
+      // capped) bulk run, so partial runs can continue immediately.
+      if (!questionId) {
+        const decision = await checkThrottle(supabase, 'manage-question-links:refresh', REFRESH_MIN_INTERVAL_SECONDS);
+        if (!decision.allowed) {
+          console.warn(`[${requestId}] Throttled: bulk refresh ran too recently, retry in ${decision.retryAfterSeconds}s`);
+          return throttledResponse('manage-question-links:refresh', decision, corsHeaders);
+        }
       }
 
       // Refresh all links for a question or all stale links
@@ -381,6 +386,11 @@ Deno.serve(async (req) => {
 
       if (capped) {
         console.warn(`[${requestId}] Refresh hit unfurl cap (${MAX_REFRESH_UNFURLS}); remaining stale links left for a later run`);
+      }
+      // Arm the bulk-refresh cooldown only on a fully-completed run. A capped
+      // run left stale links unprocessed, so allow an immediate follow-up.
+      if (!questionId && !capped) {
+        await recordRun(supabase, 'manage-question-links:refresh');
       }
       console.log(`[${requestId}] Refresh complete: ${refreshedCount} questions updated`);
       return new Response(

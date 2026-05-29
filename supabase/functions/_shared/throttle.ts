@@ -4,12 +4,28 @@
 /**
  * Global rate limiting for expensive, admin-gated edge functions (M2 / #222).
  *
- * Backed by the `edge_function_throttle` table (one row per function). Edge
- * functions call `enforceThrottle()` after authenticating; if the operation
- * ran too recently, the caller returns `throttledResponse()` (HTTP 429).
+ * Backed by the `edge_function_throttle` table (one row per function). The
+ * intended usage is a two-phase check-then-record:
  *
- * This is a coarse, single-region, global throttle — appropriate for the
- * admin-only maintenance endpoints it guards. It is not per-IP rate limiting.
+ *   1. `checkThrottle()` (read-only) at the start of the handler — if the
+ *      operation ran too recently, return `throttledResponse()` (HTTP 429).
+ *   2. `recordRun()` only once the work has fully COMPLETED successfully.
+ *
+ * Recording on completion (rather than at the start) is deliberate:
+ *   - A malformed request or a transient failure never arms the cooldown, so
+ *     legitimate retries aren't locked out.
+ *   - Batched / resumable operations (e.g. sync-discourse-topics, which asks
+ *     the caller to "call again for the next batch") must NOT record while
+ *     work remains, or the continuation call would be throttled. Callers
+ *     record only on the terminal, fully-successful path.
+ *
+ * This is a coarse, single-region, global throttle for admin-only maintenance
+ * endpoints — not per-IP rate limiting. Because the check and the record are
+ * separate statements, two concurrent fresh invocations can both pass the
+ * check and run (TOCTOU). That is accepted here: these endpoints are
+ * admin-gated and have no automated callers, so a concurrent double-run is
+ * low-risk and not worth an atomic conditional-upsert (which would also break
+ * the batched-completion semantics above).
  */
 
 export interface ThrottleDecision {
@@ -53,18 +69,19 @@ export function evaluateThrottle(
 }
 
 /**
- * Read the last-run timestamp for `functionName`, decide whether it may run
- * now, and record the new run time when allowed.
+ * Read-only throttle check: look up when `functionName` last completed and
+ * decide whether it may run now. Does NOT record anything — call `recordRun()`
+ * after the work succeeds.
  *
- * Fails open: if the throttle table cannot be read or written, the operation
- * is allowed. These endpoints are already admin-gated, so availability is
- * preferred over hard-failing on a bookkeeping error.
+ * Fails open: if the throttle table cannot be read, the operation is allowed.
+ * These endpoints are already admin-gated, so availability is preferred over
+ * hard-failing on a bookkeeping error.
  *
  * @param supabase - A service_role Supabase client (bypasses RLS)
  * @param functionName - Stable identifier for the throttled operation
  * @param minIntervalSeconds - Minimum seconds required between runs
  */
-export async function enforceThrottle(
+export async function checkThrottle(
   // deno-lint-ignore no-explicit-any
   supabase: any,
   functionName: string,
@@ -81,20 +98,31 @@ export async function enforceThrottle(
     return { allowed: true, retryAfterSeconds: 0 };
   }
 
-  const decision = evaluateThrottle(data?.last_run_at, minIntervalSeconds);
-  if (!decision.allowed) {
-    return decision;
-  }
+  return evaluateThrottle(data?.last_run_at, minIntervalSeconds);
+}
 
-  const { error: upsertError } = await supabase
+/**
+ * Record that `functionName` just completed a run, arming its cooldown.
+ *
+ * Call this ONLY on the terminal, fully-successful path — never while work
+ * remains (batched continuations) or after a failure, or you'll lock out
+ * legitimate follow-up calls. Errors are logged but not thrown (best-effort).
+ *
+ * @param supabase - A service_role Supabase client (bypasses RLS)
+ * @param functionName - Stable identifier for the throttled operation
+ */
+export async function recordRun(
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  functionName: string,
+): Promise<void> {
+  const { error } = await supabase
     .from("edge_function_throttle")
     .upsert({ function_name: functionName, last_run_at: new Date().toISOString() });
 
-  if (upsertError) {
-    console.error(`[throttle] write error for ${functionName}:`, upsertError);
+  if (error) {
+    console.error(`[throttle] write error for ${functionName}:`, error);
   }
-
-  return decision;
 }
 
 /**

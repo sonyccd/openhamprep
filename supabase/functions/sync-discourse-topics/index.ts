@@ -17,13 +17,15 @@ import {
   formatTopicTitle,
   type Question as LogicQuestion,
 } from "./logic.ts";
-import { enforceThrottle, throttledResponse } from "../_shared/throttle.ts";
+import { checkThrottle, recordRun, throttledResponse } from "../_shared/throttle.ts";
 
 // Sync-specific configuration
 const DEFAULT_BATCH_SIZE = 50;
 const MAX_BATCH_SIZE = 100;
-// Minimum seconds between committing 'sync' runs (expensive: paginated
-// Discourse fetch + bulk DB writes).
+// Minimum seconds between *completed* sync runs (expensive: paginated Discourse
+// fetch + bulk DB writes). The cooldown is armed only when a sync finishes all
+// its work, so continuation batches ("call again for the next batch") are never
+// throttled.
 const SYNC_MIN_INTERVAL_SECONDS = 300;
 // 'dry-run' previews skip DB writes but still do the full paginated Discourse
 // read, so they get their own (shorter) throttle under a separate key — a
@@ -340,10 +342,14 @@ Deno.serve(async (req: Request) => {
 
     // Rate limit globally (M2/#222) before the expensive paginated Discourse
     // read. sync and dry-run are throttled under separate keys so a preview
-    // never consumes the real sync's cooldown (and vice versa).
+    // never consumes the real sync's cooldown (and vice versa). This is a
+    // read-only check; the cooldown is armed via recordRun() only on a
+    // terminal, fully-successful run (see the success returns below), so
+    // malformed input, transient failures, and continuation batches don't
+    // lock out legitimate retries.
     const throttleKey = action === 'sync' ? 'sync-discourse-topics' : 'sync-discourse-topics:dry-run';
     const throttleInterval = action === 'sync' ? SYNC_MIN_INTERVAL_SECONDS : DRY_RUN_MIN_INTERVAL_SECONDS;
-    const decision = await enforceThrottle(supabase, throttleKey, throttleInterval);
+    const decision = await checkThrottle(supabase, throttleKey, throttleInterval);
     if (!decision.allowed) {
       console.warn(`[${requestId}] Throttled: ${action} ran too recently, retry in ${decision.retryAfterSeconds}s`);
       return throttledResponse(throttleKey, decision, corsHeaders);
@@ -447,6 +453,8 @@ Deno.serve(async (req: Request) => {
     }
 
     if (questions.length === 0) {
+      // Terminal, clean completion (nothing to sync) — arm the cooldown.
+      await recordRun(supabase, throttleKey);
       return new Response(
         JSON.stringify({ success: true, message: 'No questions found to sync', created: 0, skipped: 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -505,6 +513,8 @@ Deno.serve(async (req: Request) => {
       const questionsToCreateIds = questionsToCreate.map((q: Question) => q.display_name);
       const questionsToSkipIds = skippedQuestions.map((q: Question) => q.display_name);
 
+      // Terminal dry-run completion — arm the dry-run cooldown.
+      await recordRun(supabase, throttleKey);
       return new Response(
         JSON.stringify({
           success: true,
@@ -612,6 +622,13 @@ Deno.serve(async (req: Request) => {
     const isComplete = remaining === 0;
 
     console.log(`[${requestId}] Batch complete. Created: ${created}, Errors: ${errors}, Remaining: ${remaining}`);
+
+    // Arm the cooldown only when the whole sync finished cleanly. `remaining`
+    // is slice-based, so a final batch with errors still has isComplete=true —
+    // gate on errors === 0 so a failed final batch can be retried immediately.
+    if (isComplete && errors === 0) {
+      await recordRun(supabase, throttleKey);
+    }
 
     return new Response(
       JSON.stringify({
