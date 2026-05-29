@@ -13,9 +13,16 @@ import {
   extractUrlsFromText,
   isLooseUUID,
 } from "./logic.ts";
+import { enforceThrottle, throttledResponse } from "../_shared/throttle.ts";
 
 const MAX_UNFURL_BODY_BYTES = 256 * 1024; // 256 KB
 const UNFURL_TIMEOUT_MS = 5_000;
+// Cap outbound unfurl fetches per 'refresh' request so one admin call can't
+// fan out into unbounded external traffic (M2/#222).
+const MAX_REFRESH_UNFURLS = 50;
+// Minimum seconds between global 'refresh' runs (re-fetches stale links across
+// every question).
+const REFRESH_MIN_INTERVAL_SECONDS = 120;
 
 interface UnfurledLink {
   url: string;
@@ -289,6 +296,14 @@ Deno.serve(async (req) => {
       );
 
     } else if (action === 'refresh') {
+      // Rate limit refresh runs globally (M2/#222): refreshing all stale links
+      // re-fetches across every question and generates outbound traffic.
+      const decision = await enforceThrottle(supabase, 'manage-question-links:refresh', REFRESH_MIN_INTERVAL_SECONDS);
+      if (!decision.allowed) {
+        console.warn(`[${requestId}] Throttled: refresh ran too recently, retry in ${decision.retryAfterSeconds}s`);
+        return throttledResponse('manage-question-links:refresh', decision, corsHeaders);
+      }
+
       // Refresh all links for a question or all stale links
       const maxAgeHours = 24 * 7; // Refresh links older than 7 days
       const cutoffDate = new Date(Date.now() - maxAgeHours * 60 * 60 * 1000).toISOString();
@@ -325,12 +340,26 @@ Deno.serve(async (req) => {
       console.log(`[${requestId}] Refreshing links for ${questionsToRefresh?.length || 0} questions`);
 
       let refreshedCount = 0;
+      // Bound total outbound fetches per request (M2/#222). Decremented
+      // synchronously before each unfurl so the cap holds across the
+      // concurrent per-question Promise.all without a race.
+      let unfurlsRemaining = MAX_REFRESH_UNFURLS;
+      let capped = false;
       for (const question of questionsToRefresh || []) {
+        if (unfurlsRemaining <= 0) {
+          capped = true;
+          break;
+        }
         const links = question.links as UnfurledLink[];
         console.log(`[${requestId}] Refreshing ${links.length} links for question ${question.id}`);
         const refreshedLinks = await Promise.all(
           links.map(async (link) => {
             if (!link.unfurledAt || link.unfurledAt < cutoffDate) {
+              if (unfurlsRemaining <= 0) {
+                capped = true;
+                return link; // budget exhausted; leave stale link unchanged
+              }
+              unfurlsRemaining--;
               console.log(`[${requestId}] Re-unfurling stale link: ${link.url.slice(0, 50)}`);
               return await unfurlUrl(link.url);
             }
@@ -350,9 +379,12 @@ Deno.serve(async (req) => {
         }
       }
 
+      if (capped) {
+        console.warn(`[${requestId}] Refresh hit unfurl cap (${MAX_REFRESH_UNFURLS}); remaining stale links left for a later run`);
+      }
       console.log(`[${requestId}] Refresh complete: ${refreshedCount} questions updated`);
       return new Response(
-        JSON.stringify({ success: true, refreshedCount }),
+        JSON.stringify({ success: true, refreshedCount, capped, maxUnfurls: MAX_REFRESH_UNFURLS }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
 

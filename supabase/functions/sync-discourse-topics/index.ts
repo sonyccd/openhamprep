@@ -17,10 +17,18 @@ import {
   formatTopicTitle,
   type Question as LogicQuestion,
 } from "./logic.ts";
+import { enforceThrottle, throttledResponse } from "../_shared/throttle.ts";
 
 // Sync-specific configuration
 const DEFAULT_BATCH_SIZE = 50;
 const MAX_BATCH_SIZE = 100;
+// Minimum seconds between committing 'sync' runs (expensive: paginated
+// Discourse fetch + bulk DB writes).
+const SYNC_MIN_INTERVAL_SECONDS = 300;
+// 'dry-run' previews skip DB writes but still do the full paginated Discourse
+// read, so they get their own (shorter) throttle under a separate key — a
+// preview must never consume the real sync's cooldown.
+const DRY_RUN_MIN_INTERVAL_SECONDS = 60;
 const MAX_QUESTION_IDS_IN_RESPONSE = 100;
 
 interface Question {
@@ -329,6 +337,17 @@ Deno.serve(async (req: Request) => {
 
     // Validate batch size (max 100 to stay well within timeout limits)
     const effectiveBatchSize = Math.min(Math.max(1, rawBatchSize), MAX_BATCH_SIZE);
+
+    // Rate limit globally (M2/#222) before the expensive paginated Discourse
+    // read. sync and dry-run are throttled under separate keys so a preview
+    // never consumes the real sync's cooldown (and vice versa).
+    const throttleKey = action === 'sync' ? 'sync-discourse-topics' : 'sync-discourse-topics:dry-run';
+    const throttleInterval = action === 'sync' ? SYNC_MIN_INTERVAL_SECONDS : DRY_RUN_MIN_INTERVAL_SECONDS;
+    const decision = await enforceThrottle(supabase, throttleKey, throttleInterval);
+    if (!decision.allowed) {
+      console.warn(`[${requestId}] Throttled: ${action} ran too recently, retry in ${decision.retryAfterSeconds}s`);
+      return throttledResponse(throttleKey, decision, corsHeaders);
+    }
 
     // Audit logging for security monitoring
     const authMethod = isServiceRole ? 'service_role' : 'user_jwt';
