@@ -82,7 +82,7 @@ export function evaluateThrottle(
  * @param minIntervalSeconds - Minimum seconds required between runs
  */
 export async function checkThrottle(
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   functionName: string,
   minIntervalSeconds: number,
@@ -119,7 +119,7 @@ export async function checkThrottle(
  * @param functionName - Stable identifier for the throttled operation
  */
 export async function recordRun(
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   functionName: string,
 ): Promise<void> {

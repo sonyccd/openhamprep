@@ -10,11 +10,22 @@ const NOW = Date.parse("2026-05-29T12:00:00.000Z");
 // Minimal stub mimicking the supabase-js chain used by checkThrottle/recordRun:
 //   from(t).select(c).eq(k,v).maybeSingle() -> { data, error }
 //   from(t).upsert(row)                     -> { error }
-// deno-lint-ignore no-explicit-any
+interface ThrottleRow {
+  function_name?: string;
+  last_run_at?: string;
+}
+interface DbError {
+  message: string;
+}
+interface SelectResult {
+  data: ThrottleRow | null;
+  error: DbError | null;
+}
+
 function fakeSupabase(opts: {
-  selectResult?: { data: any; error: any };
-  upsertResult?: { error: any };
-  onUpsert?: (row: any) => void;
+  selectResult?: SelectResult;
+  upsertResult?: { error: DbError | null };
+  onUpsert?: (row: ThrottleRow) => void;
 }) {
   return {
     from(_table: string) {
@@ -30,7 +41,7 @@ function fakeSupabase(opts: {
             },
           };
         },
-        upsert(row: any) {
+        upsert(row: ThrottleRow) {
           opts.onUpsert?.(row);
           return Promise.resolve(opts.upsertResult ?? { error: null });
         },
