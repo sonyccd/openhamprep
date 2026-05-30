@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { getCorsHeaders } from "../_shared/constants.ts";
 import {
   validateWebhookPayload,
+  verifyServiceRoleAuth,
   buildPendoPayload,
   successResponse,
   skippedResponse,
@@ -24,6 +25,32 @@ Deno.serve(async (req: Request) => {
   const requestId = crypto.randomUUID().slice(0, 8);
 
   try {
+    // Verify the caller is our database trigger, which sends the service role
+    // key as a Bearer token. This prevents arbitrary clients from POSTing fake
+    // signup events to Pendo. Skip-and-warn if the key is not configured (e.g.
+    // local dev), mirroring the optional PENDO_INTEGRATION_KEY pattern below.
+    const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!SERVICE_ROLE_KEY) {
+      console.warn(
+        `[${requestId}] SUPABASE_SERVICE_ROLE_KEY not configured; skipping webhook auth verification`
+      );
+    } else {
+      const authResult = verifyServiceRoleAuth(
+        req.headers.get("Authorization"),
+        SERVICE_ROLE_KEY
+      );
+      if (!authResult.authorized) {
+        console.warn(`[${requestId}] Unauthorized webhook call: ${authResult.reason}`);
+        return new Response(
+          JSON.stringify(errorResponse("unauthorized", "Invalid or missing authorization")),
+          {
+            status: 401,
+            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          }
+        );
+      }
+    }
+
     const payload = (await req.json()) as WebhookPayload;
 
     // Validate webhook payload
