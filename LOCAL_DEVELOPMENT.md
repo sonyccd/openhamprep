@@ -301,7 +301,6 @@ curl -i --location --request POST 'http://localhost:54321/functions/v1/function-
 - `delete-user` - Delete user account
 - `geocode-addresses` - Geocode exam session addresses
 - `manage-question-links` - Manage learning resource links
-- `seed-questions` - Seed initial questions
 
 ## Database Access
 
