@@ -3,7 +3,7 @@
 // ============================================================
 
 import { assertEquals } from "jsr:@std/assert@1";
-import { checkThrottle, evaluateThrottle, recordRun } from "./throttle.ts";
+import { checkThrottle, evaluateThrottle, recordRun, throttledResponse } from "./throttle.ts";
 
 const NOW = Date.parse("2026-05-29T12:00:00.000Z");
 
@@ -160,4 +160,27 @@ Deno.test("recordRun - swallows a REJECTED upsert (network error)", async () => 
   };
   // Must not throw — a rejection here must not turn a successful run into a 500.
   await recordRun(supabase, "my-fn");
+});
+
+// ============================================================
+// throttledResponse Tests
+// ============================================================
+
+Deno.test("throttledResponse - returns 429 with Retry-After and JSON body", async () => {
+  const res = throttledResponse(
+    "sync-discourse-topics",
+    { allowed: false, retryAfterSeconds: 42 },
+    { "Access-Control-Allow-Origin": "*" },
+  );
+
+  assertEquals(res.status, 429);
+  assertEquals(res.headers.get("Retry-After"), "42");
+  assertEquals(res.headers.get("Content-Type"), "application/json");
+  // CORS headers are merged through
+  assertEquals(res.headers.get("Access-Control-Allow-Origin"), "*");
+
+  const body = await res.json();
+  assertEquals(body.error, "Rate limited");
+  assertEquals(body.retryAfterSeconds, 42);
+  assertEquals(typeof body.message, "string");
 });

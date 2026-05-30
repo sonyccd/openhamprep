@@ -347,12 +347,21 @@ Deno.serve(async (req: Request) => {
     // terminal, fully-successful run (see the success returns below), so
     // malformed input, transient failures, and continuation batches don't
     // lock out legitimate retries.
-    const throttleKey = action === 'sync' ? 'sync-discourse-topics' : 'sync-discourse-topics:dry-run';
+    //
+    // throttleKey is null for any action that isn't explicitly mapped here, so
+    // a future action added to the validation above is left unthrottled rather
+    // than silently inheriting another action's cooldown.
+    const throttleKey: string | null =
+      action === 'sync' ? 'sync-discourse-topics'
+      : action === 'dry-run' ? 'sync-discourse-topics:dry-run'
+      : null;
     const throttleInterval = action === 'sync' ? SYNC_MIN_INTERVAL_SECONDS : DRY_RUN_MIN_INTERVAL_SECONDS;
-    const decision = await checkThrottle(supabase, throttleKey, throttleInterval);
-    if (!decision.allowed) {
-      console.warn(`[${requestId}] Throttled: ${action} ran too recently, retry in ${decision.retryAfterSeconds}s`);
-      return throttledResponse(throttleKey, decision, corsHeaders);
+    if (throttleKey) {
+      const decision = await checkThrottle(supabase, throttleKey, throttleInterval);
+      if (!decision.allowed) {
+        console.warn(`[${requestId}] Throttled: ${action} ran too recently, retry in ${decision.retryAfterSeconds}s`);
+        return throttledResponse(throttleKey, decision, corsHeaders);
+      }
     }
 
     // Audit logging for security monitoring
@@ -454,7 +463,7 @@ Deno.serve(async (req: Request) => {
 
     if (questions.length === 0) {
       // Terminal, clean completion (nothing to sync) — arm the cooldown.
-      await recordRun(supabase, throttleKey);
+      if (throttleKey) await recordRun(supabase, throttleKey);
       return new Response(
         JSON.stringify({ success: true, message: 'No questions found to sync', created: 0, skipped: 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -514,7 +523,7 @@ Deno.serve(async (req: Request) => {
       const questionsToSkipIds = skippedQuestions.map((q: Question) => q.display_name);
 
       // Terminal dry-run completion — arm the dry-run cooldown.
-      await recordRun(supabase, throttleKey);
+      if (throttleKey) await recordRun(supabase, throttleKey);
       return new Response(
         JSON.stringify({
           success: true,
@@ -626,7 +635,7 @@ Deno.serve(async (req: Request) => {
     // Arm the cooldown only when the whole sync finished cleanly. `remaining`
     // is slice-based, so a final batch with errors still has isComplete=true —
     // gate on errors === 0 so a failed final batch can be retried immediately.
-    if (isComplete && errors === 0) {
+    if (throttleKey && isComplete && errors === 0) {
       await recordRun(supabase, throttleKey);
     }
 
