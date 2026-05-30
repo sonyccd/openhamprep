@@ -22,7 +22,7 @@ Thank you for your interest in contributing to the Open Ham Prep application! Th
 
 ### Prerequisites
 
-1. Node.js 18+ installed
+1. Node.js 20+ installed
 2. Git configured with your GitHub account
 3. Familiarity with React, TypeScript, and Tailwind CSS
 
