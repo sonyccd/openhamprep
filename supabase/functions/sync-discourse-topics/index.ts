@@ -355,8 +355,8 @@ Deno.serve(async (req: Request) => {
       action === 'sync' ? 'sync-discourse-topics'
       : action === 'dry-run' ? 'sync-discourse-topics:dry-run'
       : null;
-    const throttleInterval = action === 'sync' ? SYNC_MIN_INTERVAL_SECONDS : DRY_RUN_MIN_INTERVAL_SECONDS;
     if (throttleKey) {
+      const throttleInterval = action === 'sync' ? SYNC_MIN_INTERVAL_SECONDS : DRY_RUN_MIN_INTERVAL_SECONDS;
       const decision = await checkThrottle(supabase, throttleKey, throttleInterval);
       if (!decision.allowed) {
         console.warn(`[${requestId}] Throttled: ${action} ran too recently, retry in ${decision.retryAfterSeconds}s`);

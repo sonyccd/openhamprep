@@ -345,9 +345,12 @@ Deno.serve(async (req) => {
       console.log(`[${requestId}] Refreshing links for ${questionsToRefresh?.length || 0} questions`);
 
       let refreshedCount = 0;
-      // Bound total outbound fetches per request (M2/#222). Decremented
-      // synchronously before each unfurl so the cap holds across the
-      // concurrent per-question Promise.all without a race.
+      // Bound total outbound fetches per request (M2/#222). The check and
+      // decrement below run in each map callback's synchronous preamble — i.e.
+      // before that callback's first `await unfurlUrl(...)` yields — and
+      // Promise.all kicks off the callbacks in order, so all decrements for a
+      // question settle before any unfurl is in flight. No race despite the
+      // concurrent-looking Promise.all.
       let unfurlsRemaining = MAX_REFRESH_UNFURLS;
       let capped = false;
       for (const question of questionsToRefresh || []) {

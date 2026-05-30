@@ -92,6 +92,9 @@ Deno.test("checkThrottle - allows when no row exists", async () => {
 });
 
 Deno.test("checkThrottle - blocks when last run is too recent", async () => {
+  // checkThrottle reads the real clock internally (no injectable now), so this
+  // is relative to Date.now() rather than the pinned NOW used above. The 240s
+  // margin makes wall-clock flake a non-issue.
   const recent = new Date(Date.now() - 60_000).toISOString(); // 60s ago
   const supabase = fakeSupabase({ selectResult: { data: { last_run_at: recent }, error: null } });
   const decision = await checkThrottle(supabase, "fn", 300);
