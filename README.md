@@ -15,11 +15,16 @@ A modern web application for studying US Amateur Radio license exams. Open sourc
 
 - **Practice Tests** - Simulated exam experience with optional timer
 - **Random Practice** - Study questions with instant feedback
-- **Study by Topics** - Focus on specific subelements with learning resources
+- **Study by Topics** - Focus on specific subelements with topic mastery quizzes
+- **Lessons** - Curated, guided study units
+- **ARRL Chapters** - Practice scoped to ARRL study-book chapters
 - **Weak Questions** - Review questions you've missed
 - **Glossary & Flashcards** - Learn key terms with spaced repetition
+- **Exam Sessions** - Find upcoming in-person VE exam sessions near you
+- **Ham Radio Tools** - Curated gallery of external ham radio tools
 - **Progress Tracking** - Dashboard with test readiness, streaks, and goals
 - **Bookmarks** - Save questions with personal notes
+- **Guest Mode + PWA** - Study without an account; installable as a Progressive Web App
 
 Supports all three license classes: Technician, General, and Extra.
 
@@ -45,7 +50,7 @@ See [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) for details.
 
 **Backend:** Supabase (PostgreSQL, Auth, Edge Functions, Realtime)
 
-**Tooling:** Vitest, ESLint, Pendo (analytics), Sentry (error tracking)
+**Tooling:** Vitest, ESLint, Amplitude & Pendo (product analytics), Sentry (error tracking), Vercel Analytics & Speed Insights
 
 ## Architecture
 
@@ -58,11 +63,14 @@ See [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) for details.
 
 ### Context Providers
 
-The app wraps components in this provider order (see `App.tsx`):
+The app wraps components in this provider order, outermost → innermost (see `App.tsx`):
 1. ThemeProvider (next-themes)
-2. QueryClientProvider (TanStack Query)
-3. AuthProvider (Supabase auth)
-4. AppNavigationProvider (license filter)
+2. AccessibilityProvider (a11y prefs)
+3. QueryClientProvider (TanStack Query)
+4. AuthProvider (Supabase auth — gates user-scoped queries)
+5. PendoProvider + AmplitudeProvider (product analytics)
+6. AppNavigationProvider (global license filter)
+7. TooltipProvider (Radix)
 
 ### Project Structure
 
@@ -74,8 +82,11 @@ src/
 │   └── *.tsx        # Feature components
 ├── hooks/           # Custom React hooks
 ├── pages/           # Route page components
+├── services/        # Service layer + centralized query keys
 ├── lib/             # Utilities
 ├── integrations/    # Supabase client (auto-generated)
+├── assets/          # Static assets
+├── test/            # Test setup and helpers
 └── types/           # TypeScript types
 ```
 
