@@ -175,7 +175,7 @@ All colors are HSL format defined as CSS custom properties. The design system su
 **Row Level Security (RLS)**: All user data is protected. Users can only access their own attempts/results/bookmarks.
 
 **Edge Functions** (`supabase/functions/`):
-Key functions: `calculate-readiness` (server-side scoring), `track-user-signup`, `question-opengraph` (OG image generation), `sync-discourse-topics` / `discourse-webhook` / `manage-question-links` / `update-discourse-post` (Discourse forum integration), `system-monitor`, `seed-questions`.
+Key functions: `calculate-readiness` (server-side scoring), `track-user-signup`, `question-opengraph` (OG image generation), `sync-discourse-topics` / `discourse-webhook` / `manage-question-links` / `update-discourse-post` (Discourse forum integration), `system-monitor`.
 - Local dev: `npm run supabase:functions` (auto-started by `npm run dev:full`)
 - Tests run via Deno: `npm run supabase:functions:test`
 - Deploy: `supabase functions deploy <name>`

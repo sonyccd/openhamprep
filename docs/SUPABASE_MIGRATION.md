@@ -533,7 +533,6 @@ Copy the edge functions from `supabase/functions/` to your new Supabase project:
 1. **delete-user** - Handles user account deletion
 2. **geocode-addresses** - Geocodes exam session addresses
 3. **manage-question-links** - Manages question learning resource links
-4. **seed-questions** - Seeds initial question data
 
 Deploy using the Supabase CLI:
 
@@ -541,7 +540,6 @@ Deploy using the Supabase CLI:
 supabase functions deploy delete-user
 supabase functions deploy geocode-addresses
 supabase functions deploy manage-question-links
-supabase functions deploy seed-questions
 ```
 
 ## Step 9: Update Environment Variables
