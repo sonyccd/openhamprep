@@ -34,9 +34,6 @@ verify_jwt = false
 [functions.question-opengraph]
 verify_jwt = false
 
-[functions.seed-questions]
-verify_jwt = false
-
 [functions.sync-discourse-topics]
 verify_jwt = false
 
