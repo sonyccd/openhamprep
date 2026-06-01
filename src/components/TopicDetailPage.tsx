@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, FileText, PlayCircle, Loader2, PanelLeftOpen, ChevronRight } from "lucide-react";
+import { ArrowLeft, FileText, PlayCircle, Loader2, PanelLeftOpen, PanelRightClose } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { trackTopicViewed, trackQuizStarted } from "@/lib/amplitude";
@@ -41,31 +41,22 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const railButtonRef = useRef<HTMLButtonElement>(null);
   const hideButtonRef = useRef<HTMLButtonElement>(null);
-  // Tracks whether the user has toggled the sidebar, so we only move focus on
-  // user-initiated changes (not on the initial collapsed-by-default mount).
-  const sidebarInteractedRef = useRef(false);
+  // Previous value of sidebarOpen, so the focus effect fires only on an actual
+  // change and never on the initial render — regardless of the default value.
+  const prevSidebarOpenRef = useRef(sidebarOpen);
 
   // When the sidebar is toggled, move focus to the control that is now visible
   // so keyboard / screen-reader users don't lose their place when the button
   // they clicked becomes hidden.
   useEffect(() => {
-    if (!sidebarInteractedRef.current) return;
+    if (prevSidebarOpenRef.current === sidebarOpen) return;
+    prevSidebarOpenRef.current = sidebarOpen;
     if (sidebarOpen) {
       hideButtonRef.current?.focus();
     } else {
       railButtonRef.current?.focus();
     }
   }, [sidebarOpen]);
-
-  const openSidebar = () => {
-    sidebarInteractedRef.current = true;
-    setSidebarOpen(true);
-  };
-
-  const closeSidebar = () => {
-    sidebarInteractedRef.current = true;
-    setSidebarOpen(false);
-  };
 
   // Track topic view in Amplitude when slug changes
   useEffect(() => {
@@ -280,9 +271,9 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
               {!sidebarOpen && (
                 <button
                   ref={railButtonRef}
-                  onClick={openSidebar}
+                  onClick={() => setSidebarOpen(true)}
                   aria-label="Show Questions & Resources"
-                  aria-expanded={false}
+                  aria-expanded={sidebarOpen}
                   aria-controls="topic-sidebar-panels"
                   className="hidden lg:flex sticky top-4 w-11 flex-col items-center gap-3 py-3 rounded-lg border border-border bg-card text-muted-foreground hover:text-primary hover:bg-secondary/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
@@ -302,14 +293,14 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
                   {/* Desktop-only collapse toggle */}
                   <button
                     ref={hideButtonRef}
-                    onClick={closeSidebar}
+                    onClick={() => setSidebarOpen(false)}
                     aria-label="Hide Questions & Resources"
-                    aria-expanded={true}
+                    aria-expanded={sidebarOpen}
                     aria-controls="topic-sidebar-panels"
                     className="hidden lg:flex items-center gap-1 ml-auto mb-2 text-xs font-medium text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
                   >
                     Hide
-                    <ChevronRight className="w-4 h-4" aria-hidden="true" />
+                    <PanelRightClose className="w-4 h-4" aria-hidden="true" />
                   </button>
                   <TopicQuestionsPanel
                     topicId={topic.id}

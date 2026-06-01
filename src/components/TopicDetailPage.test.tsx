@@ -382,5 +382,21 @@ describe('TopicDetailPage', () => {
       const grid = container.querySelector('div.grid') as HTMLElement;
       expect(grid.className).toContain('lg:grid-cols-[1fr_auto]');
     });
+
+    it('should render the sidebar when there are resources but no questions', () => {
+      // Exercises the `resources.length > 0` branch of hasSidebarContent
+      mockTopicData = { ...mockTopic }; // mockTopic has one resource
+      mockTopicQuestions = [];
+      const { container } = renderComponent();
+
+      expect(
+        screen.getByRole('button', { name: 'Show Questions & Resources' })
+      ).toBeInTheDocument();
+      expect(screen.getByTestId('resource-panel')).toBeInTheDocument();
+
+      // Grid reserves the collapsed sidebar column
+      const grid = container.querySelector('div.grid') as HTMLElement;
+      expect(grid.className).toContain('lg:grid-cols-[1fr_auto]');
+    });
   });
 });
