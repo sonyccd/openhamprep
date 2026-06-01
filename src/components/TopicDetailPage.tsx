@@ -3,7 +3,6 @@ import { useQuestionsByIds, Question } from "@/hooks/useQuestions";
 import { useAuth } from "@/hooks/useAuth";
 import { useProgress } from "@/hooks/useProgress";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
-import { TopicTableOfContents } from "./TopicTableOfContents";
 import { TopicContent } from "./TopicContent";
 import { TopicResourcePanel } from "./TopicResourcePanel";
 import { TopicQuestionsPanel } from "./TopicQuestionsPanel";
@@ -37,7 +36,6 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   const { topicSource } = useAppNavigation();
   const { data: topic, isLoading: topicLoading, error: topicError } = useTopic(slug);
   const { data: topicQuestions } = useTopicQuestions(topic?.id);
-  const [activeHeadingId, setActiveHeadingId] = useState<string>();
   const [isQuizOpen, setIsQuizOpen] = useState(false);
 
   // Track topic view in Amplitude when slug changes
@@ -190,29 +188,15 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
         </div>
       </motion.div>
 
-      {/* Main content area - three column layout */}
+      {/* Main content area - two column layout */}
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_280px] gap-8">
-          {/* Left sidebar - Table of Contents */}
-          <motion.aside
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="lg:order-1 order-2"
-          >
-            <TopicTableOfContents
-              content={displayContent}
-              activeId={activeHeadingId}
-              onItemClick={setActiveHeadingId}
-            />
-          </motion.aside>
-
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
           {/* Main content */}
           <motion.main
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="lg:order-2 order-1 min-w-0"
+            className="min-w-0"
           >
             <TopicContent content={displayContent} />
 
@@ -248,7 +232,6 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
-            className="lg:order-3 order-3"
           >
             <div className="sticky top-4 space-y-0">
               <TopicQuestionsPanel

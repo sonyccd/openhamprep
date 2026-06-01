@@ -16,12 +16,6 @@ vi.mock('framer-motion', () => ({
 }));
 
 // Mock child components to simplify testing
-vi.mock('./TopicTableOfContents', () => ({
-  TopicTableOfContents: ({ content }: { content?: string }) => (
-    <div data-testid="table-of-contents">TOC for content length: {content?.length || 0}</div>
-  ),
-}));
-
 vi.mock('./TopicContent', () => ({
   TopicContent: ({ content }: { content: string }) => (
     <div data-testid="topic-content">{content}</div>
@@ -195,11 +189,6 @@ describe('TopicDetailPage', () => {
       renderComponent();
       const backButtons = screen.getAllByText('Back to Topics');
       expect(backButtons.length).toBeGreaterThan(0);
-    });
-
-    it('should render table of contents', () => {
-      renderComponent();
-      expect(screen.getByTestId('table-of-contents')).toBeInTheDocument();
     });
 
     it('should render topic content', () => {
