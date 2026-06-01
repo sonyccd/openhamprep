@@ -128,6 +128,8 @@ describe('TopicDetailPage', () => {
     mockTopicQuestions = [];
   });
 
+  const getGrid = () => screen.getByTestId('topic-layout-grid');
+
   describe('Loading State', () => {
     it('should show loading skeleton when topic is loading', () => {
       mockTopicLoading = true;
@@ -263,11 +265,8 @@ describe('TopicDetailPage', () => {
   });
 
   describe('Collapsible sidebar', () => {
-    const getGrid = (container: HTMLElement) =>
-      container.querySelector('div.grid') as HTMLElement;
-
     it('should be collapsed by default, showing the rail and narrowing the grid', () => {
-      const { container } = renderComponent();
+      renderComponent();
 
       // Rail (expand control) is present when collapsed
       const rail = screen.getByRole('button', { name: 'Show Questions & Resources' });
@@ -275,12 +274,12 @@ describe('TopicDetailPage', () => {
       expect(rail).toHaveAttribute('aria-expanded', 'false');
 
       // Grid uses the collapsed (auto) template, not the 280px one
-      expect(getGrid(container).className).toContain('lg:grid-cols-[1fr_auto]');
-      expect(getGrid(container).className).not.toContain('lg:grid-cols-[1fr_280px]');
+      expect(getGrid().className).toContain('lg:grid-cols-[1fr_auto]');
+      expect(getGrid().className).not.toContain('lg:grid-cols-[1fr_280px]');
     });
 
     it('should expand to the wide sidebar when the rail is clicked', () => {
-      const { container } = renderComponent();
+      renderComponent();
 
       fireEvent.click(screen.getByRole('button', { name: 'Show Questions & Resources' }));
 
@@ -292,11 +291,11 @@ describe('TopicDetailPage', () => {
       expect(hide).toHaveAttribute('aria-expanded', 'true');
 
       // Grid switches to the fixed 280px template
-      expect(getGrid(container).className).toContain('lg:grid-cols-[1fr_280px]');
+      expect(getGrid().className).toContain('lg:grid-cols-[1fr_280px]');
     });
 
     it('should collapse again when the hide control is clicked', () => {
-      const { container } = renderComponent();
+      renderComponent();
 
       fireEvent.click(screen.getByRole('button', { name: 'Show Questions & Resources' }));
       fireEvent.click(screen.getByRole('button', { name: 'Hide Questions & Resources' }));
@@ -304,7 +303,7 @@ describe('TopicDetailPage', () => {
       expect(
         screen.getByRole('button', { name: 'Show Questions & Resources' })
       ).toBeInTheDocument();
-      expect(getGrid(container).className).toContain('lg:grid-cols-[1fr_auto]');
+      expect(getGrid().className).toContain('lg:grid-cols-[1fr_auto]');
     });
 
     it('should point both toggles at the panel region via aria-controls', () => {
@@ -353,7 +352,7 @@ describe('TopicDetailPage', () => {
     it('should not render the sidebar or rail when there are no questions and no resources', () => {
       mockTopicData = { ...mockTopic, resources: [] };
       mockTopicQuestions = [];
-      const { container } = renderComponent();
+      renderComponent();
 
       expect(
         screen.queryByRole('button', { name: 'Show Questions & Resources' })
@@ -362,16 +361,15 @@ describe('TopicDetailPage', () => {
       expect(screen.queryByTestId('resource-panel')).not.toBeInTheDocument();
 
       // Grid reserves no sidebar column
-      const grid = container.querySelector('div.grid') as HTMLElement;
-      expect(grid.className).not.toContain('lg:grid-cols-[1fr_280px]');
-      expect(grid.className).not.toContain('lg:grid-cols-[1fr_auto]');
+      expect(getGrid().className).not.toContain('lg:grid-cols-[1fr_280px]');
+      expect(getGrid().className).not.toContain('lg:grid-cols-[1fr_auto]');
     });
 
     it('should render the sidebar when there are questions but no resources', () => {
       // Exercises the `questionCount > 0` branch of hasSidebarContent
       mockTopicData = { ...mockTopic, resources: [] };
       mockTopicQuestions = [{ id: 'T1A01' }];
-      const { container } = renderComponent();
+      renderComponent();
 
       expect(
         screen.getByRole('button', { name: 'Show Questions & Resources' })
@@ -379,15 +377,14 @@ describe('TopicDetailPage', () => {
       expect(screen.getByTestId('questions-panel')).toBeInTheDocument();
 
       // Grid reserves the collapsed sidebar column
-      const grid = container.querySelector('div.grid') as HTMLElement;
-      expect(grid.className).toContain('lg:grid-cols-[1fr_auto]');
+      expect(getGrid().className).toContain('lg:grid-cols-[1fr_auto]');
     });
 
     it('should render the sidebar when there are resources but no questions', () => {
       // Exercises the `resources.length > 0` branch of hasSidebarContent
       mockTopicData = { ...mockTopic }; // mockTopic has one resource
       mockTopicQuestions = [];
-      const { container } = renderComponent();
+      renderComponent();
 
       expect(
         screen.getByRole('button', { name: 'Show Questions & Resources' })
@@ -395,8 +392,38 @@ describe('TopicDetailPage', () => {
       expect(screen.getByTestId('resource-panel')).toBeInTheDocument();
 
       // Grid reserves the collapsed sidebar column
-      const grid = container.querySelector('div.grid') as HTMLElement;
-      expect(grid.className).toContain('lg:grid-cols-[1fr_auto]');
+      expect(getGrid().className).toContain('lg:grid-cols-[1fr_auto]');
+    });
+  });
+
+  describe('Topic navigation', () => {
+    it('should collapse the sidebar again when navigating to a different topic', () => {
+      const { rerender } = renderComponent('topic-a');
+
+      // Expand on the first topic
+      fireEvent.click(screen.getByRole('button', { name: 'Show Questions & Resources' }));
+      expect(
+        screen.queryByRole('button', { name: 'Show Questions & Resources' })
+      ).not.toBeInTheDocument();
+
+      // Navigate to a different topic (component reconciles in place, no remount)
+      rerender(
+        <BrowserRouter>
+          <QueryClientProvider client={queryClient}>
+            <AppNavigationProvider>
+              <TopicDetailPage slug="topic-b" onBack={mockOnBack} />
+            </AppNavigationProvider>
+          </QueryClientProvider>
+        </BrowserRouter>
+      );
+
+      // Sidebar is collapsed again, and focus was not yanked to the rail
+      expect(
+        screen.getByRole('button', { name: 'Show Questions & Resources' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Show Questions & Resources' })
+      ).not.toHaveFocus();
     });
   });
 });

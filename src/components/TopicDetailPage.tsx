@@ -58,6 +58,15 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
     }
   }, [sidebarOpen]);
 
+  // Collapse the sidebar when navigating to a different topic so every topic
+  // opens at its default. prevSidebarOpenRef is synced here so the focus effect
+  // above treats this as "no change" and doesn't yank focus to the rail on
+  // navigation (the component reconciles in place rather than remounting).
+  useEffect(() => {
+    setSidebarOpen(false);
+    prevSidebarOpenRef.current = false;
+  }, [slug]);
+
   // Track topic view in Amplitude when slug changes
   useEffect(() => {
     trackTopicViewed(slug);
@@ -214,6 +223,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
       {/* Main content area - two column layout */}
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
         <div
+          data-testid="topic-layout-grid"
           className={cn(
             "grid grid-cols-1 gap-8",
             !hasSidebarContent
@@ -267,6 +277,10 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
               transition={{ delay: 0.2 }}
               aria-label="Questions and resources"
             >
+              {/* On mobile the panels are always visible (stacked below the
+                  content); the rail and Hide controls are desktop-only
+                  (hidden lg:flex), so this collapse behavior is intentionally
+                  asymmetric across breakpoints. */}
               {/* Desktop collapsed rail - click to reopen the sidebar */}
               {!sidebarOpen && (
                 <button
