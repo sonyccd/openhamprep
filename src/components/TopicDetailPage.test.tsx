@@ -67,6 +67,7 @@ const mockTopic: Topic = {
 let mockTopicData: Topic | null = mockTopic;
 let mockTopicLoading = false;
 let mockTopicError: Error | null = null;
+let mockTopicQuestions: Array<{ id: string }> = [];
 
 vi.mock('@/hooks/useTopics', () => ({
   useTopic: () => ({
@@ -75,7 +76,7 @@ vi.mock('@/hooks/useTopics', () => ({
     error: mockTopicError,
   }),
   useTopicQuestions: () => ({
-    data: [],
+    data: mockTopicQuestions,
     isLoading: false,
   }),
   useTopicCompleted: () => false,
@@ -124,7 +125,10 @@ describe('TopicDetailPage', () => {
     mockTopicData = mockTopic;
     mockTopicLoading = false;
     mockTopicError = null;
+    mockTopicQuestions = [];
   });
+
+  const getGrid = () => screen.getByTestId('topic-layout-grid');
 
   describe('Loading State', () => {
     it('should show loading skeleton when topic is loading', () => {
@@ -257,6 +261,169 @@ describe('TopicDetailPage', () => {
       renderComponent();
 
       expect(screen.queryByText('Introduction to amateur radio')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Collapsible sidebar', () => {
+    it('should be collapsed by default, showing the rail and narrowing the grid', () => {
+      renderComponent();
+
+      // Rail (expand control) is present when collapsed
+      const rail = screen.getByRole('button', { name: 'Show Questions & Resources' });
+      expect(rail).toBeInTheDocument();
+      expect(rail).toHaveAttribute('aria-expanded', 'false');
+
+      // Grid uses the collapsed (auto) template, not the 280px one
+      expect(getGrid().className).toContain('lg:grid-cols-[1fr_auto]');
+      expect(getGrid().className).not.toContain('lg:grid-cols-[1fr_280px]');
+    });
+
+    it('should expand to the wide sidebar when the rail is clicked', () => {
+      renderComponent();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Show Questions & Resources' }));
+
+      // Rail is gone; hide control is now the expanded toggle
+      expect(
+        screen.queryByRole('button', { name: 'Show Questions & Resources' })
+      ).not.toBeInTheDocument();
+      const hide = screen.getByRole('button', { name: 'Hide Questions & Resources' });
+      expect(hide).toHaveAttribute('aria-expanded', 'true');
+
+      // Grid switches to the fixed 280px template
+      expect(getGrid().className).toContain('lg:grid-cols-[1fr_280px]');
+    });
+
+    it('should collapse again when the hide control is clicked', () => {
+      renderComponent();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Show Questions & Resources' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Hide Questions & Resources' }));
+
+      expect(
+        screen.getByRole('button', { name: 'Show Questions & Resources' })
+      ).toBeInTheDocument();
+      expect(getGrid().className).toContain('lg:grid-cols-[1fr_auto]');
+    });
+
+    it('should point both toggles at the panel region via aria-controls', () => {
+      renderComponent();
+
+      const rail = screen.getByRole('button', { name: 'Show Questions & Resources' });
+      expect(rail).toHaveAttribute('aria-controls', 'topic-sidebar-panels');
+      expect(document.getElementById('topic-sidebar-panels')).toBeInTheDocument();
+    });
+
+    it('should label the sidebar landmark', () => {
+      renderComponent();
+      expect(
+        screen.getByRole('complementary', { name: 'Questions and resources' })
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe('Sidebar focus management', () => {
+    it('should move focus to the hide control when expanding', () => {
+      renderComponent();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Show Questions & Resources' }));
+
+      expect(screen.getByRole('button', { name: 'Hide Questions & Resources' })).toHaveFocus();
+    });
+
+    it('should move focus back to the rail when collapsing', () => {
+      renderComponent();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Show Questions & Resources' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Hide Questions & Resources' }));
+
+      expect(screen.getByRole('button', { name: 'Show Questions & Resources' })).toHaveFocus();
+    });
+
+    it('should not steal focus on the initial collapsed render', () => {
+      renderComponent();
+
+      // Nothing should be auto-focused before the user interacts
+      expect(document.body).toHaveFocus();
+    });
+  });
+
+  describe('Empty sidebar', () => {
+    it('should not render the sidebar or rail when there are no questions and no resources', () => {
+      mockTopicData = { ...mockTopic, resources: [] };
+      mockTopicQuestions = [];
+      renderComponent();
+
+      expect(
+        screen.queryByRole('button', { name: 'Show Questions & Resources' })
+      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId('questions-panel')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('resource-panel')).not.toBeInTheDocument();
+
+      // Grid reserves no sidebar column
+      expect(getGrid().className).not.toContain('lg:grid-cols-[1fr_280px]');
+      expect(getGrid().className).not.toContain('lg:grid-cols-[1fr_auto]');
+    });
+
+    it('should render the sidebar when there are questions but no resources', () => {
+      // Exercises the `questionCount > 0` branch of hasSidebarContent
+      mockTopicData = { ...mockTopic, resources: [] };
+      mockTopicQuestions = [{ id: 'T1A01' }];
+      renderComponent();
+
+      expect(
+        screen.getByRole('button', { name: 'Show Questions & Resources' })
+      ).toBeInTheDocument();
+      expect(screen.getByTestId('questions-panel')).toBeInTheDocument();
+
+      // Grid reserves the collapsed sidebar column
+      expect(getGrid().className).toContain('lg:grid-cols-[1fr_auto]');
+    });
+
+    it('should render the sidebar when there are resources but no questions', () => {
+      // Exercises the `resources.length > 0` branch of hasSidebarContent
+      mockTopicData = { ...mockTopic }; // mockTopic has one resource
+      mockTopicQuestions = [];
+      renderComponent();
+
+      expect(
+        screen.getByRole('button', { name: 'Show Questions & Resources' })
+      ).toBeInTheDocument();
+      expect(screen.getByTestId('resource-panel')).toBeInTheDocument();
+
+      // Grid reserves the collapsed sidebar column
+      expect(getGrid().className).toContain('lg:grid-cols-[1fr_auto]');
+    });
+  });
+
+  describe('Topic navigation', () => {
+    it('should collapse the sidebar again when navigating to a different topic', () => {
+      const { rerender } = renderComponent('topic-a');
+
+      // Expand on the first topic
+      fireEvent.click(screen.getByRole('button', { name: 'Show Questions & Resources' }));
+      expect(
+        screen.queryByRole('button', { name: 'Show Questions & Resources' })
+      ).not.toBeInTheDocument();
+
+      // Navigate to a different topic (component reconciles in place, no remount)
+      rerender(
+        <BrowserRouter>
+          <QueryClientProvider client={queryClient}>
+            <AppNavigationProvider>
+              <TopicDetailPage slug="topic-b" onBack={mockOnBack} />
+            </AppNavigationProvider>
+          </QueryClientProvider>
+        </BrowserRouter>
+      );
+
+      // Sidebar is collapsed again, and focus was not yanked to the rail
+      expect(
+        screen.getByRole('button', { name: 'Show Questions & Resources' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Show Questions & Resources' })
+      ).not.toHaveFocus();
     });
   });
 });

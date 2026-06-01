@@ -17,12 +17,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, FileText, PlayCircle, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { ArrowLeft, FileText, PlayCircle, Loader2, PanelLeftOpen, PanelRightClose } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { trackTopicViewed, trackQuizStarted } from "@/lib/amplitude";
 import { motion } from "framer-motion";
 import { PageContainer } from "@/components/ui/page-container";
+import { cn } from "@/lib/utils";
 import { TOPIC_QUIZ_PASSING_THRESHOLD } from "@/types/navigation";
 
 interface TopicDetailPageProps {
@@ -37,6 +38,34 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   const { data: topic, isLoading: topicLoading, error: topicError } = useTopic(slug);
   const { data: topicQuestions } = useTopicQuestions(topic?.id);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const railButtonRef = useRef<HTMLButtonElement>(null);
+  const hideButtonRef = useRef<HTMLButtonElement>(null);
+  // Previous value of sidebarOpen, so the focus effect fires only on an actual
+  // change and never on the initial render — regardless of the default value.
+  const prevSidebarOpenRef = useRef(sidebarOpen);
+
+  // When the sidebar is toggled, move focus to the control that is now visible
+  // so keyboard / screen-reader users don't lose their place when the button
+  // they clicked becomes hidden.
+  useEffect(() => {
+    if (prevSidebarOpenRef.current === sidebarOpen) return;
+    prevSidebarOpenRef.current = sidebarOpen;
+    if (sidebarOpen) {
+      hideButtonRef.current?.focus();
+    } else {
+      railButtonRef.current?.focus();
+    }
+  }, [sidebarOpen]);
+
+  // Collapse the sidebar when navigating to a different topic so every topic
+  // opens at its default. prevSidebarOpenRef is synced here so the focus effect
+  // above treats this as "no change" and doesn't yank focus to the rail on
+  // navigation (the component reconciles in place rather than remounting).
+  useEffect(() => {
+    setSidebarOpen(false);
+    prevSidebarOpenRef.current = false;
+  }, [slug]);
 
   // Track topic view in Amplitude when slug changes
   useEffect(() => {
@@ -139,6 +168,9 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   // Default content if no markdown is available
   const displayContent = topic.content || `# ${topic.title}\n\n${topic.description || "Content coming soon..."}\n\nThis topic is still being developed. Check back later for the full article.`;
 
+  // Only reserve the sidebar column when there's actually something to show in it
+  const hasSidebarContent = questionCount > 0 || (topic.resources?.length ?? 0) > 0;
+
   return (
     <div className="flex-1 overflow-y-auto">
       {/* Header */}
@@ -190,7 +222,17 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
 
       {/* Main content area - two column layout */}
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
+        <div
+          data-testid="topic-layout-grid"
+          className={cn(
+            "grid grid-cols-1 gap-8",
+            !hasSidebarContent
+              ? ""
+              : sidebarOpen
+                ? "lg:grid-cols-[1fr_280px]"
+                : "lg:grid-cols-[1fr_auto]"
+          )}
+        >
           {/* Main content */}
           <motion.main
             initial={{ opacity: 0, y: 20 }}
@@ -228,19 +270,61 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
           </motion.main>
 
           {/* Right sidebar - Questions and Resources */}
-          <motion.aside
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="sticky top-4 space-y-0">
-              <TopicQuestionsPanel
-                topicId={topic.id}
-                onQuestionClick={handleQuestionClick}
-              />
-              <TopicResourcePanel resources={topic.resources || []} />
-            </div>
-          </motion.aside>
+          {hasSidebarContent && (
+            <motion.aside
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              aria-label="Questions and resources"
+            >
+              {/* On mobile the panels are always visible (stacked below the
+                  content); the rail and Hide controls are desktop-only
+                  (hidden lg:flex), so this collapse behavior is intentionally
+                  asymmetric across breakpoints. */}
+              {/* Desktop collapsed rail - click to reopen the sidebar */}
+              {!sidebarOpen && (
+                <button
+                  ref={railButtonRef}
+                  onClick={() => setSidebarOpen(true)}
+                  aria-label="Show Questions & Resources"
+                  aria-expanded={sidebarOpen}
+                  aria-controls="topic-sidebar-panels"
+                  className="hidden lg:flex sticky top-4 w-11 flex-col items-center gap-3 py-3 rounded-lg border border-border bg-card text-muted-foreground hover:text-primary hover:bg-secondary/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <PanelLeftOpen className="w-4 h-4" aria-hidden="true" />
+                  <span className="text-xs font-medium tracking-wide [writing-mode:vertical-rl] rotate-180">
+                    Questions &amp; Resources
+                  </span>
+                </button>
+              )}
+
+              {/* Panels - always shown on mobile; on desktop only when open */}
+              <div
+                id="topic-sidebar-panels"
+                className={cn(sidebarOpen ? "lg:block" : "lg:hidden")}
+              >
+                <div className="sticky top-4 space-y-0">
+                  {/* Desktop-only collapse toggle */}
+                  <button
+                    ref={hideButtonRef}
+                    onClick={() => setSidebarOpen(false)}
+                    aria-label="Hide Questions & Resources"
+                    aria-expanded={sidebarOpen}
+                    aria-controls="topic-sidebar-panels"
+                    className="hidden lg:flex items-center gap-1 ml-auto mb-2 text-xs font-medium text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                  >
+                    Hide
+                    <PanelRightClose className="w-4 h-4" aria-hidden="true" />
+                  </button>
+                  <TopicQuestionsPanel
+                    topicId={topic.id}
+                    onQuestionClick={handleQuestionClick}
+                  />
+                  <TopicResourcePanel resources={topic.resources || []} />
+                </div>
+              </div>
+            </motion.aside>
+          )}
         </div>
       </div>
 
