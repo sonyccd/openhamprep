@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { HelpCircle, Keyboard, Lightbulb, ExternalLink, Activity, Bug, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -129,15 +129,12 @@ export function HelpButton() {
       </Tooltip>
 
       <Dialog open={open} onOpenChange={handleDialogChange}>
-        <DialogContent className="sm:max-w-lg" aria-describedby="help-description">
+        <DialogContent className="sm:max-w-lg" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <HelpCircle className="h-5 w-5" aria-hidden="true" />
               Help & Support
             </DialogTitle>
-            <DialogDescription id="help-description">
-              Keyboard shortcuts and ways to get help
-            </DialogDescription>
           </DialogHeader>
 
           <Tabs defaultValue="feedback" className="mt-2">

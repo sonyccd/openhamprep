@@ -105,15 +105,17 @@ describe('HelpButton', () => {
       });
     });
 
-    it('shows description in dialog', async () => {
+    it('does not render a dialog description', async () => {
       const user = userEvent.setup();
       renderHelpButton();
 
       await user.click(screen.getByRole('button', { name: /open help dialog/i }));
 
       await waitFor(() => {
-        expect(screen.getByText('Keyboard shortcuts and ways to get help')).toBeInTheDocument();
+        expect(screen.getByText('Help & Support')).toBeInTheDocument();
       });
+
+      expect(screen.queryByText('Keyboard shortcuts and ways to get help')).not.toBeInTheDocument();
     });
   });
 
