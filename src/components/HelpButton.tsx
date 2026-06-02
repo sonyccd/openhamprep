@@ -141,17 +141,22 @@ export function HelpButton() {
           </DialogHeader>
 
           <Tabs defaultValue="feedback" className="mt-2">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="feedback" className="flex items-center gap-2">
-                <Lightbulb className="h-4 w-4" aria-hidden="true" />
-                Feedback
-              </TabsTrigger>
-              <TabsTrigger value="shortcuts" className="flex items-center gap-2">
-                <Keyboard className="h-4 w-4" aria-hidden="true" />
-                Shortcuts
-              </TabsTrigger>
-            </TabsList>
+            {/* Keyboard shortcuts are irrelevant on touch devices, so on mobile
+                we drop the tab bar entirely and show feedback options directly. */}
+            {!isMobile && (
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="feedback" className="flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4" aria-hidden="true" />
+                  Feedback
+                </TabsTrigger>
+                <TabsTrigger value="shortcuts" className="flex items-center gap-2">
+                  <Keyboard className="h-4 w-4" aria-hidden="true" />
+                  Shortcuts
+                </TabsTrigger>
+              </TabsList>
+            )}
 
+              {!isMobile && (
               <TabsContent value="shortcuts" className="mt-4 space-y-4 h-[340px]">
                 {/* Answer keys in compact grid */}
                 <div>
@@ -195,6 +200,7 @@ export function HelpButton() {
                   </div>
                 ))}
               </TabsContent>
+              )}
 
               <TabsContent value="feedback" className="mt-4 h-[340px]">
                 {activeForm === null ? (

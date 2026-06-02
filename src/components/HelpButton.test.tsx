@@ -64,6 +64,22 @@ describe('HelpButton', () => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
       });
     });
+
+    it('hides the keyboard Shortcuts tab and shows feedback options directly', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('Give Feedback')).toBeInTheDocument();
+      });
+
+      // No tab bar on mobile — keyboard shortcuts aren't relevant
+      expect(screen.queryByRole('tab', { name: /shortcuts/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /feedback/i })).not.toBeInTheDocument();
+      expect(screen.queryByText('Answer Selection')).not.toBeInTheDocument();
+    });
   });
 
   describe('Dialog Behavior', () => {
