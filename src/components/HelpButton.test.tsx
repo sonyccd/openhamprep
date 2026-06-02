@@ -3,8 +3,18 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HelpButton } from './HelpButton';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { useIsMobile } from '@/hooks/use-mobile';
+
+vi.mock('@/hooks/use-mobile', () => ({
+  useIsMobile: vi.fn(() => false),
+}));
 
 describe('HelpButton', () => {
+  // Default to desktop layout; the mobile suite overrides per-test.
+  beforeEach(() => {
+    vi.mocked(useIsMobile).mockReturnValue(false);
+  });
+
   const renderHelpButton = () => {
     return render(
       <TooltipProvider>
@@ -13,17 +23,67 @@ describe('HelpButton', () => {
     );
   };
 
+  // Both the mobile (top-right) and desktop (floating) triggers live in the DOM;
+  // CSS (md:hidden / hidden md:flex) decides which is visible. jsdom doesn't apply
+  // those classes, so both are queryable — the mobile trigger is rendered first.
+  const getHelpButton = () => screen.getAllByRole('button', { name: /open help dialog/i })[0];
+
   describe('Button Rendering', () => {
     it('renders the help button', () => {
       renderHelpButton();
 
-      expect(screen.getByRole('button', { name: /open help dialog/i })).toBeInTheDocument();
+      expect(getHelpButton()).toBeInTheDocument();
     });
 
     it('has correct aria-label', () => {
       renderHelpButton();
 
-      expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Open help dialog');
+      expect(getHelpButton()).toHaveAttribute('aria-label', 'Open help dialog');
+    });
+  });
+
+  describe('Mobile Layout', () => {
+    beforeEach(() => {
+      vi.mocked(useIsMobile).mockReturnValue(true);
+    });
+
+    it('renders a top-right icon button matching the hamburger style', () => {
+      renderHelpButton();
+
+      const button = getHelpButton();
+      // Top-right placement aligned with the hamburger's top-safe-top row
+      expect(button).toHaveClass('fixed', 'right-4', 'top-safe-top');
+      // Outline / card styling to mirror the hamburger button
+      expect(button).toHaveClass('bg-card', 'border-border', 'shadow-lg');
+      // Not the desktop floating circle
+      expect(button).not.toHaveClass('rounded-full');
+    });
+
+    it('opens the dialog when the mobile button is clicked', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(getHelpButton());
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+    });
+
+    it('hides the keyboard Shortcuts tab and shows feedback options directly', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(getHelpButton());
+
+      await waitFor(() => {
+        expect(screen.getByText('Give Feedback')).toBeInTheDocument();
+      });
+
+      // No tab bar on mobile — keyboard shortcuts aren't relevant
+      expect(screen.queryByRole('tab', { name: /shortcuts/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /feedback/i })).not.toBeInTheDocument();
+      expect(screen.queryByText('Answer Selection')).not.toBeInTheDocument();
     });
   });
 
@@ -32,7 +92,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
 
       await waitFor(() => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -43,22 +103,27 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
 
       await waitFor(() => {
         expect(screen.getByText('Help & Support')).toBeInTheDocument();
       });
     });
 
-    it('shows description in dialog', async () => {
+    it('removes the visible "Keyboard shortcuts" subtitle but keeps an sr-only description', async () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
 
       await waitFor(() => {
-        expect(screen.getByText('Keyboard shortcuts and ways to get help')).toBeInTheDocument();
+        expect(screen.getByText('Help & Support')).toBeInTheDocument();
       });
+
+      // Old visible subtitle is gone...
+      expect(screen.queryByText('Keyboard shortcuts and ways to get help')).not.toBeInTheDocument();
+      // ...but a hidden description remains for screen readers
+      expect(screen.getByText('Help resources and feedback options')).toBeInTheDocument();
     });
   });
 
@@ -67,7 +132,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
 
       await waitFor(() => {
         expect(screen.getByRole('tab', { name: /shortcuts/i })).toBeInTheDocument();
@@ -80,7 +145,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
 
       await waitFor(() => {
         expect(screen.getByRole('tab', { name: /shortcuts/i })).toBeInTheDocument();
@@ -98,7 +163,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
 
       await waitFor(() => {
         expect(screen.getByRole('tab', { name: /shortcuts/i })).toBeInTheDocument();
@@ -117,7 +182,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
 
       await waitFor(() => {
         expect(screen.getByRole('tab', { name: /shortcuts/i })).toBeInTheDocument();
@@ -137,7 +202,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
@@ -148,7 +213,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /give feedback/i })).toBeInTheDocument();
@@ -159,7 +224,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
 
       await waitFor(() => {
         const statusLink = screen.getByRole('link', { name: /system status/i });
@@ -178,7 +243,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
       });
@@ -196,7 +261,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
       });
@@ -212,7 +277,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
       });
@@ -234,7 +299,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
       });
@@ -250,7 +315,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
       });
@@ -270,7 +335,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
       });
@@ -293,7 +358,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
       });
@@ -323,7 +388,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
       });
@@ -353,7 +418,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /give feedback/i })).toBeInTheDocument();
       });
@@ -373,7 +438,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /give feedback/i })).toBeInTheDocument();
       });
@@ -405,7 +470,7 @@ describe('HelpButton', () => {
       renderHelpButton();
 
       // Open dialog and fill bug form
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
       });
@@ -422,7 +487,7 @@ describe('HelpButton', () => {
       await user.keyboard('{Escape}');
 
       // Re-open dialog
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
 
       // Should show options view, not the form
       await waitFor(() => {
@@ -437,7 +502,7 @@ describe('HelpButton', () => {
       const user = userEvent.setup();
       renderHelpButton();
 
-      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+      await user.click(getHelpButton());
 
       await waitFor(() => {
         expect(screen.getByRole('tab', { name: /shortcuts/i })).toBeInTheDocument();

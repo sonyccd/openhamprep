@@ -8,6 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
+
+import { useIsMobile } from '@/hooks/use-mobile';
+
 interface ShortcutItem {
   keys: string[];
   description: string;
@@ -63,6 +66,7 @@ const buildForumUrl = (type: 'bug' | 'feature', title: string, description: stri
 
 export function HelpButton() {
   const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
   const [activeForm, setActiveForm] = useState<FormType>(null);
   const [bugTitle, setBugTitle] = useState('');
   const [bugDescription, setBugDescription] = useState('');
@@ -105,9 +109,25 @@ export function HelpButton() {
   };
 
   return <>
+      {/* Mobile: square icon button in the top-right, mirroring the hamburger
+          menu (DashboardSidebar) so the two corners pair up. Visibility is
+          CSS-only (`md:hidden`) so the correct button paints on first render —
+          no flash from a JS hook resolving after mount. */}
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="default" size="icon" className="fixed bottom-4 left-4 sm:left-auto sm:right-4 h-12 w-12 rounded-full shadow-lg z-50 [&_svg]:size-8" onClick={() => setOpen(true)} aria-label="Open help dialog">
+          <Button variant="outline" size="icon" className="md:hidden fixed right-4 top-safe-top z-50 bg-card border-border shadow-lg" onClick={() => setOpen(true)} aria-label="Open help dialog">
+            <HelpCircle className="w-5 h-5" aria-hidden="true" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>Help & Shortcuts (?)</p>
+        </TooltipContent>
+      </Tooltip>
+
+      {/* Desktop: floating circular button, bottom-right. Hidden below md. */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="default" size="icon" className="hidden md:flex fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg z-50 [&_svg]:size-8" onClick={() => setOpen(true)} aria-label="Open help dialog">
             <HelpCircle aria-hidden="true" />
           </Button>
         </TooltipTrigger>
@@ -117,29 +137,35 @@ export function HelpButton() {
       </Tooltip>
 
       <Dialog open={open} onOpenChange={handleDialogChange}>
-        <DialogContent className="sm:max-w-lg" aria-describedby="help-description">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <HelpCircle className="h-5 w-5" aria-hidden="true" />
               Help & Support
             </DialogTitle>
-            <DialogDescription id="help-description">
-              Keyboard shortcuts and ways to get help
+            {/* Visually hidden: gives screen readers context without showing a subtitle */}
+            <DialogDescription className="sr-only">
+              Help resources and feedback options
             </DialogDescription>
           </DialogHeader>
 
           <Tabs defaultValue="feedback" className="mt-2">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="feedback" className="flex items-center gap-2">
-                <Lightbulb className="h-4 w-4" aria-hidden="true" />
-                Feedback
-              </TabsTrigger>
-              <TabsTrigger value="shortcuts" className="flex items-center gap-2">
-                <Keyboard className="h-4 w-4" aria-hidden="true" />
-                Shortcuts
-              </TabsTrigger>
-            </TabsList>
+            {/* Keyboard shortcuts are irrelevant on touch devices, so on mobile
+                we drop the tab bar entirely and show feedback options directly. */}
+            {!isMobile && (
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="feedback" className="flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4" aria-hidden="true" />
+                  Feedback
+                </TabsTrigger>
+                <TabsTrigger value="shortcuts" className="flex items-center gap-2">
+                  <Keyboard className="h-4 w-4" aria-hidden="true" />
+                  Shortcuts
+                </TabsTrigger>
+              </TabsList>
+            )}
 
+            {!isMobile && (
               <TabsContent value="shortcuts" className="mt-4 space-y-4 h-[340px]">
                 {/* Answer keys in compact grid */}
                 <div>
@@ -183,6 +209,7 @@ export function HelpButton() {
                   </div>
                 ))}
               </TabsContent>
+            )}
 
               <TabsContent value="feedback" className="mt-4 h-[340px]">
                 {activeForm === null ? (
