@@ -3,8 +3,18 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HelpButton } from './HelpButton';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { useIsMobile } from '@/hooks/use-mobile';
+
+vi.mock('@/hooks/use-mobile', () => ({
+  useIsMobile: vi.fn(() => false),
+}));
 
 describe('HelpButton', () => {
+  // Default to desktop layout; the mobile suite overrides per-test.
+  beforeEach(() => {
+    vi.mocked(useIsMobile).mockReturnValue(false);
+  });
+
   const renderHelpButton = () => {
     return render(
       <TooltipProvider>
@@ -24,6 +34,35 @@ describe('HelpButton', () => {
       renderHelpButton();
 
       expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Open help dialog');
+    });
+  });
+
+  describe('Mobile Layout', () => {
+    beforeEach(() => {
+      vi.mocked(useIsMobile).mockReturnValue(true);
+    });
+
+    it('renders a top-right icon button matching the hamburger style', () => {
+      renderHelpButton();
+
+      const button = screen.getByRole('button', { name: /open help dialog/i });
+      // Top-right placement aligned with the hamburger's top-safe-top row
+      expect(button).toHaveClass('fixed', 'right-4', 'top-safe-top');
+      // Outline / card styling to mirror the hamburger button
+      expect(button).toHaveClass('bg-card', 'border-border', 'shadow-lg');
+      // Not the desktop floating circle
+      expect(button).not.toHaveClass('rounded-full');
+    });
+
+    it('opens the dialog when the mobile button is clicked', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+
+      await user.click(screen.getByRole('button', { name: /open help dialog/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
     });
   });
 

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 interface ShortcutItem {
   keys: string[];
   description: string;
@@ -63,6 +64,7 @@ const buildForumUrl = (type: 'bug' | 'feature', title: string, description: stri
 
 export function HelpButton() {
   const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
   const [activeForm, setActiveForm] = useState<FormType>(null);
   const [bugTitle, setBugTitle] = useState('');
   const [bugDescription, setBugDescription] = useState('');
@@ -107,11 +109,21 @@ export function HelpButton() {
   return <>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="default" size="icon" className="fixed bottom-4 left-4 sm:left-auto sm:right-4 h-12 w-12 rounded-full shadow-lg z-50 [&_svg]:size-8" onClick={() => setOpen(true)} aria-label="Open help dialog">
-            <HelpCircle aria-hidden="true" />
-          </Button>
+          {isMobile ? (
+            // Mobile: square icon button in the top-right, mirroring the
+            // hamburger menu (DashboardSidebar) so the two corners pair up.
+            // `md:hidden` guards the brief first render before useIsMobile resolves.
+            <Button variant="outline" size="icon" className="md:hidden fixed right-4 top-safe-top z-50 bg-card border-border shadow-lg" onClick={() => setOpen(true)} aria-label="Open help dialog">
+              <HelpCircle className="w-5 h-5" aria-hidden="true" />
+            </Button>
+          ) : (
+            // Desktop: floating circular button, bottom-right.
+            <Button variant="default" size="icon" className="fixed bottom-4 left-4 sm:left-auto sm:right-4 h-12 w-12 rounded-full shadow-lg z-50 [&_svg]:size-8" onClick={() => setOpen(true)} aria-label="Open help dialog">
+              <HelpCircle aria-hidden="true" />
+            </Button>
+          )}
         </TooltipTrigger>
-        <TooltipContent side="left">
+        <TooltipContent side={isMobile ? 'bottom' : 'left'}>
           <p>Help & Shortcuts (?)</p>
         </TooltipContent>
       </Tooltip>
