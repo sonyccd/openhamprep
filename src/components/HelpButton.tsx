@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 
 import { useIsMobile } from '@/hooks/use-mobile';
+
 interface ShortcutItem {
   keys: string[];
   description: string;
