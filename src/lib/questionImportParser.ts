@@ -53,14 +53,41 @@ export function parseCSVLine(line: string): string[] {
 }
 
 /**
- * Parse CSV content into an array of ImportQuestion objects.
+ * Heuristic message warning that numeric answer keys look 1-based.
+ *
+ * Digits in `correct_answer` are interpreted as 0-based indices (0=A … 3=D).
+ * A file whose numeric keys are all in 1–4 with no 0 is very likely 1-based,
+ * which would import every answer shifted by one (and reject the "4" rows).
+ * This is a heuristic: a genuinely 0-based file that simply never uses answer
+ * A would also trip it, hence a warning rather than a hard error.
  */
-export function parseCSV(content: string): ImportQuestion[] {
+const ONE_BASED_KEY_WARNING =
+  'correct_answer values look 1-based (all 1–4, no 0). This importer reads digits ' +
+  'as 0-based (0=A, 1=B, 2=C, 3=D), so 1-based keys import shifted by one and "4" is ' +
+  'rejected. Use letters A–D, or 0–3, to be unambiguous.';
+
+function looksOneBased(rawAnswerValues: string[]): boolean {
+  const nums = rawAnswerValues
+    .map(v => v.trim())
+    .filter(v => /^\d+$/.test(v))
+    .map(Number);
+  if (nums.length === 0) return false;
+  return nums.every(n => n >= 1 && n <= 4);
+}
+
+/**
+ * Parse CSV content into an array of ImportQuestion objects.
+ *
+ * Pass a `warnings` array to collect non-blocking advisories (e.g. answer keys
+ * that look 1-based).
+ */
+export function parseCSV(content: string, warnings?: string[]): ImportQuestion[] {
   const lines = content.trim().split('\n');
   if (lines.length < 2) return [];
 
   const headers = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g, ''));
   const questions: ImportQuestion[] = [];
+  const rawAnswers: string[] = [];
 
   for (let i = 1; i < lines.length; i++) {
     const values = parseCSVLine(lines[i]);
@@ -72,6 +99,7 @@ export function parseCSV(content: string): ImportQuestion[] {
     };
 
     const correctAnswerRaw = getCol('correct_answer') || getCol('correct');
+    rawAnswers.push(correctAnswerRaw);
     let correctAnswer = -1; // -1 = could not parse; fails validation
     if (['a', '0'].includes(correctAnswerRaw.toLowerCase())) correctAnswer = 0;
     else if (['b', '1'].includes(correctAnswerRaw.toLowerCase())) correctAnswer = 1;
@@ -94,6 +122,8 @@ export function parseCSV(content: string): ImportQuestion[] {
     });
   }
 
+  if (warnings && looksOneBased(rawAnswers)) warnings.push(ONE_BASED_KEY_WARNING);
+
   return questions;
 }
 
@@ -102,12 +132,19 @@ export function parseCSV(content: string): ImportQuestion[] {
  * Handles BOM (Byte Order Mark) if present.
  * Supports both array format and { questions: [...] } format.
  */
-export function parseJSON(content: string): ImportQuestion[] {
+export function parseJSON(content: string, warnings?: string[]): ImportQuestion[] {
   try {
     // Remove BOM if present
     const cleanContent = content.replace(/^\uFEFF/, '');
     const data = JSON.parse(cleanContent);
     const questions = Array.isArray(data) ? data : data.questions || [];
+
+    if (warnings) {
+      const rawAnswers = questions.map((q: Record<string, unknown>) =>
+        q.correct_answer === undefined || q.correct_answer === null ? '' : String(q.correct_answer)
+      );
+      if (looksOneBased(rawAnswers)) warnings.push(ONE_BASED_KEY_WARNING);
+    }
 
     return questions.map((q: Record<string, unknown>) => ({
       id: String(q.id || ''),

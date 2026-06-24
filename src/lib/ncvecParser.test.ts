@@ -774,6 +774,85 @@ D. D
   });
 
   // ===========================================================================
+  // SILENT ANSWER-CORRUPTION REGRESSION TESTS
+  // ===========================================================================
+
+  describe('silent answer-corruption regressions', () => {
+    it('joins answer option text that wraps onto a second line', () => {
+      // Real NCVEC docs can extract a long answer as the label line plus a
+      // continuation line. The continuation must NOT be silently dropped.
+      const text = `
+T1A01 (B) [97.1]
+Which of the following is a purpose of the Amateur Radio Service?
+A. Providing personal radio communications
+B. Advancing skills in the technical and
+communication phases of the radio art
+C. Providing communications for hire
+D. None of these choices
+~~
+`;
+      const result = parseNCVECText(text);
+      const q = result.questions[0];
+
+      expect(q.correct_answer).toBe(1);
+      expect(q.options[1]).toBe(
+        'Advancing skills in the technical and communication phases of the radio art'
+      );
+    });
+
+    it('parses both questions when a ~~ delimiter is missing between them', () => {
+      // A missing delimiter previously merged two questions: the first kept its
+      // stem + answer key but inherited the SECOND question's option text, and
+      // the second question was silently dropped.
+      const text = `
+T1A01 (A) [97.1]
+First question stem?
+A. First-correct-answer
+B. first wrong
+C. first wrong
+D. first wrong
+T1A02 (D) [97.3]
+Second question stem?
+A. second wrong
+B. second wrong
+C. second wrong
+D. Second-correct-answer
+~~
+`;
+      const result = parseNCVECText(text);
+
+      expect(result.questions).toHaveLength(2);
+
+      const first = result.questions.find(q => q.id === 'T1A01');
+      expect(first?.correct_answer).toBe(0);
+      expect(first?.options[0]).toBe('First-correct-answer');
+      expect(first?.question).toBe('First question stem?');
+
+      const second = result.questions.find(q => q.id === 'T1A02');
+      expect(second?.correct_answer).toBe(3);
+      expect(second?.options[3]).toBe('Second-correct-answer');
+
+      expect(result.warnings.some(w => /delimiter/i.test(w))).toBe(true);
+    });
+
+    it('parses a header whose answer key has spaces inside the parentheses', () => {
+      const text = `
+T1A01 ( B )
+Spaced parens around the answer key?
+A. First
+B. Second
+C. Third
+D. Fourth
+~~
+`;
+      const result = parseNCVECText(text);
+
+      expect(result.questions).toHaveLength(1);
+      expect(result.questions[0].correct_answer).toBe(1);
+    });
+  });
+
+  // ===========================================================================
   // FULL DOCUMENT SIMULATION TESTS
   // ===========================================================================
 

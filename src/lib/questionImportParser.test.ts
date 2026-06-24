@@ -143,6 +143,60 @@ T1A02,"Test?","A","B","C","D",B. Some full text,T1,T1A`;
   });
 });
 
+describe('numeric answer-key format warnings', () => {
+  it('warns when CSV numeric keys look 1-based (all 1–4, no 0)', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",1,T1,T1A
+T1A02,"Q2","A","B","C","D",2,T1,T1A
+T1A03,"Q3","A","B","C","D",3,T1,T1A
+T1A04,"Q4","A","B","C","D",4,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings.some(w => /1-based/i.test(w))).toBe(true);
+  });
+
+  it('does not warn when CSV numeric keys include 0 (clearly 0-based)', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",0,T1,T1A
+T1A02,"Q2","A","B","C","D",1,T1,T1A
+T1A03,"Q3","A","B","C","D",2,T1,T1A
+T1A04,"Q4","A","B","C","D",3,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('does not warn when CSV uses letter keys (A–D)', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",B,T1,T1A
+T1A02,"Q2","A","B","C","D",C,T1,T1A
+T1A03,"Q3","A","B","C","D",D,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('warns when JSON numeric keys look 1-based', () => {
+    const json = JSON.stringify([
+      { id: 'T1A01', question: 'Q', options: ['A', 'B', 'C', 'D'], correct_answer: 1, subelement: 'T1', question_group: 'T1A' },
+      { id: 'T1A02', question: 'Q', options: ['A', 'B', 'C', 'D'], correct_answer: 4, subelement: 'T1', question_group: 'T1A' },
+    ]);
+    const warnings: string[] = [];
+    parseJSON(json, warnings);
+    expect(warnings.some(w => /1-based/i.test(w))).toBe(true);
+  });
+
+  it('does not warn when JSON numeric keys include 0', () => {
+    const json = JSON.stringify([
+      { id: 'T1A01', question: 'Q', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A' },
+      { id: 'T1A02', question: 'Q', options: ['A', 'B', 'C', 'D'], correct_answer: 3, subelement: 'T1', question_group: 'T1A' },
+    ]);
+    const warnings: string[] = [];
+    parseJSON(json, warnings);
+    expect(warnings).toHaveLength(0);
+  });
+});
+
 describe('parseJSON', () => {
   it('parses valid JSON array', () => {
     const json = JSON.stringify([

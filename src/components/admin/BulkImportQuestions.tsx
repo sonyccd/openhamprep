@@ -155,10 +155,14 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
         }
       } else if (file.name.toLowerCase().endsWith('.json')) {
         const content = await file.text();
-        questions = parseJSON(content);
+        const parseWarnings: string[] = [];
+        questions = parseJSON(content, parseWarnings);
+        parseWarnings.forEach(w => toast.warning(w));
       } else if (file.name.toLowerCase().endsWith('.csv')) {
         const content = await file.text();
-        questions = parseCSV(content);
+        const parseWarnings: string[] = [];
+        questions = parseCSV(content, parseWarnings);
+        parseWarnings.forEach(w => toast.warning(w));
       } else {
         toast.error('Please upload a CSV, JSON, or DOCX file');
         return;
