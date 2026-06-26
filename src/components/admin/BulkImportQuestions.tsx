@@ -52,10 +52,10 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
   const [newQuestions, setNewQuestions] = useState<ImportQuestion[]>([]);
   const [parsedSyllabus, setParsedSyllabus] = useState<SyllabusEntry[]>([]);
   const [importWarnings, setImportWarnings] = useState<string[]>([]);
-  // True when the file's answer keys look 1-based; import is gated behind an
-  // explicit confirmation so a silent shift-by-one can't slip through.
-  const [requiresConfirmation, setRequiresConfirmation] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  // Derived: when the file's answer keys look 1-based, gate import behind an
+  // explicit confirmation so a silent shift-by-one can't slip through.
+  const requiresConfirmation = importWarnings.includes(ONE_BASED_KEY_WARNING);
 
   const prefix = TEST_TYPE_PREFIXES[testType];
 
@@ -145,7 +145,6 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     setNewQuestions([]);
     setParsedSyllabus([]);
     setImportWarnings([]);
-    setRequiresConfirmation(false);
     setConfirmed(false);
 
     try {
@@ -170,9 +169,6 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
       }
 
       setImportWarnings(parseWarnings);
-      if (parseWarnings.includes(ONE_BASED_KEY_WARNING)) {
-        setRequiresConfirmation(true);
-      }
       if (parseWarnings.length > 0) {
         toast.warning(`Parsed with ${parseWarnings.length} warning(s) — see details below`);
       }
@@ -339,7 +335,6 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     setNewQuestions([]);
     setParsedSyllabus([]);
     setImportWarnings([]);
-    setRequiresConfirmation(false);
     setConfirmed(false);
   };
 
@@ -634,7 +629,7 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
                       className="mt-0.5"
                     />
                     <span>
-                      I've verified these answer keys are 0-based; import anyway (1→B, 2→C, 3→D). Any row with 4 is rejected regardless.
+                      I've verified these answer keys are 0-based; import anyway (1→B, 2→C, 3→D). Any row with 4 is rejected regardless. (This warning is also expected for a 0-based file where no question answers A.)
                     </span>
                   </label>
                 )}

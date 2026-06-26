@@ -127,7 +127,11 @@ const HEADER_PATTERN = /^([TGE]\d[A-Z]\d{2})\s*\(\s*([A-D])\s*\)\s*(?:\[([^\]]+)
 // when splitting a block into questions. The whole line must be a header — ID,
 // answer key, and an optional FCC ref — with nothing after it, so a stem line
 // that merely starts like a header (e.g. quoting "T1A01 (A) ...") is not
-// miscounted as a second question.
+// miscounted as a second question. Strict anchoring is safe because NCVEC
+// header lines contain only that. Tradeoff: a header line with trailing
+// garbage beyond the FCC ref would not be detected here and its question would
+// be dropped — but we can't loosen this without re-admitting the stem-quote
+// false positive above (the two cases are indistinguishable).
 const HEADER_LINE_PATTERN = /^[TGE]\d[A-Z]\d{2}\s*\(\s*[A-D]\s*\)\s*(?:\[[^\]]+\])?\s*$/i;
 
 // Answer option "A. text", capturing [1] letter and [2] text. Case-sensitive
