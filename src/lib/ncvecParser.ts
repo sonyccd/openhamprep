@@ -38,11 +38,14 @@ async function extractTextFromDocx(file: File): Promise<string> {
 }
 
 /**
- * Convert answer letter (A, B, C, D) to 0-indexed number
+ * Convert answer letter (A, B, C, D) to 0-indexed number.
+ * Returns -1 for unrecognized input so callers fail loudly rather than
+ * silently defaulting to answer A (matches the -1 sentinel used by the
+ * CSV/JSON parser and caught by validateQuestions).
  */
-function convertAnswerToIndex(letter: string): number {
+export function convertAnswerToIndex(letter: string): number {
   const map: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
-  return map[letter.toUpperCase()] ?? 0;
+  return map[letter.toUpperCase()] ?? -1;
 }
 
 /**
@@ -137,10 +140,12 @@ function parseSyllabus(text: string): SyllabusEntry[] {
 const HEADER_PATTERN = /^([TGE]\d[A-Z]\d{2})\s*\(\s*([A-D])\s*\)\s*(?:\[([^\]]+)\])?/i;
 
 // Pattern for answer options: "A. Answer text here"
+// Case-insensitive: some PDF→DOCX converters lowercase the option letters.
+// The captured letter is upper-cased before use.
 // Capture groups:
 //   [1] = Option letter (A, B, C, or D)
 //   [2] = Option text
-const OPTION_PATTERN = /^([A-D])\.\s*(.+)/;
+const OPTION_PATTERN = /^([A-D])\.\s*(.+)/i;
 
 /**
  * Parse a single question from the lines of one question segment.
@@ -194,7 +199,9 @@ function parseQuestionSegment(lines: string[], warnings: string[]): ImportQuesti
     for (let i = optionsStartIndex; i < lines.length; i++) {
       const optionMatch = lines[i].match(OPTION_PATTERN);
       if (optionMatch) {
-        lastOptionIndex = convertAnswerToIndex(optionMatch[1].toUpperCase());
+        const idx = convertAnswerToIndex(optionMatch[1].toUpperCase());
+        if (idx < 0) continue; // unreachable given OPTION_PATTERN; guards options[-1]
+        lastOptionIndex = idx;
         options[lastOptionIndex] = optionMatch[2].trim();
       } else if (lastOptionIndex !== -1) {
         options[lastOptionIndex] = `${options[lastOptionIndex]} ${lines[i]}`.trim();

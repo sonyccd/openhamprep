@@ -53,24 +53,26 @@ export function parseCSVLine(line: string): string[] {
 }
 
 /**
- * Heuristic message warning that numeric answer keys look 1-based.
+ * Heuristic message warning that numeric answer keys may be 1-based.
  *
  * Digits in `correct_answer` are interpreted as 0-based indices (0=A … 3=D).
- * A file whose numeric keys are all in 1–4 with no 0 is very likely 1-based,
- * which would import every answer shifted by one (and reject the "4" rows).
- * This is a heuristic: a genuinely 0-based file that simply never uses answer
- * A would also trip it, hence a warning rather than a hard error.
+ * A file whose numeric keys are all in 1–4 with no 0 may be 1-based, which
+ * would import every answer shifted by one (and reject the "4" rows). This is
+ * a heuristic, not a certainty — a genuinely 0-based file where no question
+ * uses answer A would also trip it — hence a warning rather than a hard error.
  */
 const ONE_BASED_KEY_WARNING =
-  'correct_answer values look 1-based (all 1–4, no 0). This importer reads digits ' +
+  'correct_answer values may be 1-based (all 1–4, no 0). This importer reads digits ' +
   'as 0-based (0=A, 1=B, 2=C, 3=D), so 1-based keys import shifted by one and "4" is ' +
-  'rejected. Use letters A–D, or 0–3, to be unambiguous.';
+  'rejected. Use letters A–D, or 0–3, to be unambiguous. ' +
+  '(This warning can also fire for a 0-based file where no question uses answer A.)';
 
 function looksOneBased(rawAnswerValues: string[]): boolean {
-  const nums = rawAnswerValues
-    .map(v => v.trim())
-    .filter(v => /^\d+$/.test(v))
-    .map(Number);
+  const present = rawAnswerValues.map(v => v.trim()).filter(v => v !== '');
+  if (present.length === 0) return false;
+  // Letter keys (A–D) are unambiguous; if the file uses any, it isn't 1-based.
+  if (present.some(v => /^[A-Da-d]$/.test(v))) return false;
+  const nums = present.filter(v => /^\d+$/.test(v)).map(Number);
   if (nums.length === 0) return false;
   return nums.every(n => n >= 1 && n <= 4);
 }

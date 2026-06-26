@@ -176,6 +176,15 @@ T1A03,"Q3","A","B","C","D",D,T1,T1A`;
     expect(warnings).toHaveLength(0);
   });
 
+  it('does not warn when CSV mixes letter and digit answer keys', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",A,T1,T1A
+T1A02,"Q2","A","B","C","D",2,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings).toHaveLength(0);
+  });
+
   it('warns when JSON numeric keys look 1-based', () => {
     const json = JSON.stringify([
       { id: 'T1A01', question: 'Q', options: ['A', 'B', 'C', 'D'], correct_answer: 1, subelement: 'T1', question_group: 'T1A' },

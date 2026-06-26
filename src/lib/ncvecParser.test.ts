@@ -1,5 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { parseNCVECText } from './ncvecParser';
+import { parseNCVECText, convertAnswerToIndex } from './ncvecParser';
+
+describe('convertAnswerToIndex', () => {
+  it('maps A–D to 0–3 case-insensitively', () => {
+    expect(convertAnswerToIndex('A')).toBe(0);
+    expect(convertAnswerToIndex('b')).toBe(1);
+    expect(convertAnswerToIndex('C')).toBe(2);
+    expect(convertAnswerToIndex('d')).toBe(3);
+  });
+
+  it('returns -1 for unrecognized input instead of defaulting to answer A', () => {
+    expect(convertAnswerToIndex('X')).toBe(-1);
+    expect(convertAnswerToIndex('')).toBe(-1);
+  });
+});
 
 // =============================================================================
 // SAMPLE TEST DATA
@@ -833,6 +847,23 @@ D. Second-correct-answer
       expect(second?.options[3]).toBe('Second-correct-answer');
 
       expect(result.warnings.some(w => /delimiter/i.test(w))).toBe(true);
+    });
+
+    it('parses answer options whose letters are lowercase', () => {
+      const text = `
+T1A01 (b)
+What unit measures electrical current?
+a. Volts
+b. Amperes
+c. Watts
+d. Ohms
+~~
+`;
+      const result = parseNCVECText(text);
+      const q = result.questions[0];
+
+      expect(q.options).toEqual(['Volts', 'Amperes', 'Watts', 'Ohms']);
+      expect(q.correct_answer).toBe(1);
     });
 
     it('parses a header whose answer key has spaces inside the parentheses', () => {
