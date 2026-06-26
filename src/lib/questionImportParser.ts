@@ -82,6 +82,12 @@ export function parseAnswerKey(raw: string): number {
   return -1;
 }
 
+// A small all-in-1–3 file is indistinguishable from a 0-based file that just
+// never answers A, so only treat that ambiguous pattern as 1-based once there
+// are enough samples for it to be meaningful. A value of 4 is impossible in a
+// 0-based file, so it's a strong signal regardless of size.
+const MIN_ONE_BASED_SAMPLE = 5;
+
 function looksOneBased(rawAnswerValues: string[]): boolean {
   const present = rawAnswerValues.map(v => v.trim()).filter(v => v !== '');
   if (present.length === 0) return false;
@@ -89,7 +95,10 @@ function looksOneBased(rawAnswerValues: string[]): boolean {
   if (present.some(v => /^[A-Da-d]$/.test(v))) return false;
   const nums = present.filter(v => /^\d+$/.test(v)).map(Number);
   if (nums.length === 0) return false;
-  return nums.every(n => n >= 1 && n <= 4);
+  // A 0 means it's 0-based; anything above 4 isn't the 1-based pattern at all.
+  if (!nums.every(n => n >= 1 && n <= 4)) return false;
+  if (nums.includes(4)) return true; // 4 ∉ 0-based — strong signal even when small
+  return nums.length >= MIN_ONE_BASED_SAMPLE;
 }
 
 /**

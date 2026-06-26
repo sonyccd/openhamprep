@@ -1,19 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseNCVECText, convertAnswerToIndex } from './ncvecParser';
-
-describe('convertAnswerToIndex', () => {
-  it('maps A–D to 0–3 case-insensitively', () => {
-    expect(convertAnswerToIndex('A')).toBe(0);
-    expect(convertAnswerToIndex('b')).toBe(1);
-    expect(convertAnswerToIndex('C')).toBe(2);
-    expect(convertAnswerToIndex('d')).toBe(3);
-  });
-
-  it('returns -1 for unrecognized input instead of defaulting to answer A', () => {
-    expect(convertAnswerToIndex('X')).toBe(-1);
-    expect(convertAnswerToIndex('')).toBe(-1);
-  });
-});
+import { parseNCVECText } from './ncvecParser';
 
 // =============================================================================
 // SAMPLE TEST DATA

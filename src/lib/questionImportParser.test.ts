@@ -197,6 +197,40 @@ T1A03,"Q3","A","B","C","D",D,T1,T1A`;
     expect(warnings).toHaveLength(0);
   });
 
+  it('does not warn for a small all-1–3 file (below the sample-size threshold)', () => {
+    // 0-based files where no question happens to answer A look identical to
+    // 1-based at small sizes; don't gate the import on so little signal.
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",1,T1,T1A
+T1A02,"Q2","A","B","C","D",2,T1,T1A
+T1A03,"Q3","A","B","C","D",3,T1,T1A
+T1A04,"Q4","A","B","C","D",1,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('warns for an all-1–3 file once it reaches the sample-size threshold', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",1,T1,T1A
+T1A02,"Q2","A","B","C","D",2,T1,T1A
+T1A03,"Q3","A","B","C","D",3,T1,T1A
+T1A04,"Q4","A","B","C","D",1,T1,T1A
+T1A05,"Q5","A","B","C","D",2,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings.some(w => /1-based/i.test(w))).toBe(true);
+  });
+
+  it('warns for a small file that contains a 4 (impossible in 0-based)', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",3,T1,T1A
+T1A02,"Q2","A","B","C","D",4,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings.some(w => /1-based/i.test(w))).toBe(true);
+  });
+
   it('does not warn when CSV mixes letter and digit answer keys', () => {
     const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
 T1A01,"Q1","A","B","C","D",A,T1,T1A

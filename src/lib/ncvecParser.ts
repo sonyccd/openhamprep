@@ -38,16 +38,6 @@ async function extractTextFromDocx(file: File): Promise<string> {
 }
 
 /**
- * Convert answer letter (A, B, C, D) to 0-indexed number.
- * Delegates to the shared parseAnswerKey so all parsers map keys identically.
- * Returns -1 for unrecognized input so callers fail loudly rather than
- * silently defaulting to answer A (the -1 sentinel is caught by validateQuestions).
- */
-export function convertAnswerToIndex(letter: string): number {
-  return parseAnswerKey(letter);
-}
-
-/**
  * Extract FCC reference from question header line
  * e.g., "T1A01 (C) [97.1]" -> "97.1"
  */
@@ -128,14 +118,9 @@ function parseSyllabus(text: string): SyllabusEntry[] {
   return entries;
 }
 
-// Pattern for question header: "T1A01 (C) [97.1]" or "T1A01 (C)"
-// Uses 'i' flag for case-insensitive matching of question IDs and answer letters.
-// Whitespace is allowed inside the answer-key parentheses (e.g. "T1A01 ( C )")
-// because hand-edited pools sometimes pad them.
-// Capture groups:
-//   [1] = Question ID (e.g., "T1A01", "G2B03", "E3C12")
-//   [2] = Correct answer letter (A, B, C, or D)
-//   [3] = Optional FCC reference (e.g., "97.1", "97.3(a)(22)")
+// Question header, capturing [1] ID, [2] answer letter, [3] optional FCC ref:
+// "T1A01 (C) [97.1]". Whitespace inside the parentheses is tolerated because
+// hand-edited pools sometimes pad them (e.g. "T1A01 ( C )").
 const HEADER_PATTERN = /^([TGE]\d[A-Z]\d{2})\s*\(\s*([A-D])\s*\)\s*(?:\[([^\]]+)\])?/i;
 
 // Anchored variant used only to decide whether a line *is* a question header
@@ -145,13 +130,10 @@ const HEADER_PATTERN = /^([TGE]\d[A-Z]\d{2})\s*\(\s*([A-D])\s*\)\s*(?:\[([^\]]+)
 // miscounted as a second question.
 const HEADER_LINE_PATTERN = /^[TGE]\d[A-Z]\d{2}\s*\(\s*[A-D]\s*\)\s*(?:\[[^\]]+\])?\s*$/i;
 
-// Pattern for answer options: "A. Answer text here"
-// Case-sensitive on purpose: option letters are uppercase in the official
-// pools, and matching lowercase here would let a wrapped stem line beginning
-// with "a."/"b."/"c."/"d." be misread as the start of the options.
-// Capture groups:
-//   [1] = Option letter (A, B, C, or D)
-//   [2] = Option text
+// Answer option "A. text", capturing [1] letter and [2] text. Case-sensitive
+// on purpose: option letters are uppercase in the official pools, and matching
+// lowercase would let a wrapped stem line beginning with "a."/"b."/"c."/"d."
+// be misread as the start of the options.
 const OPTION_PATTERN = /^([A-D])\.\s*(.+)/;
 
 /**
@@ -206,7 +188,7 @@ function parseQuestionSegment(lines: string[], warnings: string[]): ImportQuesti
     for (let i = optionsStartIndex; i < lines.length; i++) {
       const optionMatch = lines[i].match(OPTION_PATTERN);
       if (optionMatch) {
-        const idx = convertAnswerToIndex(optionMatch[1].toUpperCase());
+        const idx = parseAnswerKey(optionMatch[1]);
         if (idx < 0) continue; // unreachable given OPTION_PATTERN; guards options[-1]
         lastOptionIndex = idx;
         options[lastOptionIndex] = optionMatch[2].trim();
@@ -226,7 +208,7 @@ function parseQuestionSegment(lines: string[], warnings: string[]): ImportQuesti
     id: questionId,
     question: questionText,
     options,
-    correct_answer: convertAnswerToIndex(correctAnswerLetter),
+    correct_answer: parseAnswerKey(correctAnswerLetter),
     subelement,
     question_group: questionGroup,
     fcc_reference: fccReference || undefined,

@@ -217,6 +217,11 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
   };
 
   const handleImport = async (resolvedConflicts?: ConflictItem<ImportQuestion>[]) => {
+    // Defense in depth: the action buttons are already disabled until the
+    // 1-based confirmation is checked, but never let any other call path import
+    // a suspected-1-based file without that explicit acknowledgement.
+    if (requiresConfirmation && !confirmed) return;
+
     const conflictsToProcess = resolvedConflicts || conflicts;
 
     setIsImporting(true);
@@ -459,10 +464,7 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
           <ConflictResolutionDialog
             conflicts={conflicts}
             onResolve={handleConflictsResolved}
-            onCancel={() => {
-              setStep('upload');
-              setConflicts([]);
-            }}
+            onCancel={resetState}
             renderExisting={renderQuestionPreview}
             renderIncoming={renderQuestionPreview}
             renderMerged={renderMergedQuestion}
@@ -632,7 +634,7 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
                       className="mt-0.5"
                     />
                     <span>
-                      I've verified these answer keys are 0-based (0=A, 1=B, 2=C, 3=D) and want to import anyway.
+                      I've verified these answer keys are 0-based; import anyway (1→B, 2→C, 3→D). Any row with 4 is rejected regardless.
                     </span>
                   </label>
                 )}
