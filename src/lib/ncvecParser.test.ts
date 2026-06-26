@@ -849,21 +849,25 @@ D. Second-correct-answer
       expect(result.warnings.some(w => /delimiter/i.test(w))).toBe(true);
     });
 
-    it('parses answer options whose letters are lowercase', () => {
+    it('does not split a question when a stem line starts with a question-ID-and-key string', () => {
+      // A stem/continuation line that merely begins like a header (e.g. quoting
+      // "T1A01 (A) ...") must not be miscounted as a second question header.
       const text = `
-T1A01 (b)
-What unit measures electrical current?
-a. Volts
-b. Amperes
-c. Watts
-d. Ohms
+E5C01 (B) [97.301]
+Per the rule, evaluate the following claim:
+T1A01 (A) describes the basis and purpose of the service
+A. First
+B. Second
+C. Third
+D. Fourth
 ~~
 `;
       const result = parseNCVECText(text);
-      const q = result.questions[0];
 
-      expect(q.options).toEqual(['Volts', 'Amperes', 'Watts', 'Ohms']);
-      expect(q.correct_answer).toBe(1);
+      expect(result.questions).toHaveLength(1);
+      expect(result.questions[0].id).toBe('E5C01');
+      expect(result.questions[0].correct_answer).toBe(1);
+      expect(result.warnings.some(w => /delimiter/i.test(w))).toBe(false);
     });
 
     it('parses a header whose answer key has spaces inside the parentheses', () => {

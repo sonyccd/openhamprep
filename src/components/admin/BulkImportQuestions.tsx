@@ -17,6 +17,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ConflictResolutionDialog, ConflictItem, ResolutionAction } from "./ConflictResolutionDialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   ImportQuestion,
   ValidationResult,
@@ -26,6 +27,7 @@ import {
   parseJSON,
   validateQuestions,
   mergeQuestion,
+  ONE_BASED_KEY_WARNING,
 } from "@/lib/questionImportParser";
 import { parseNCVECDocument, SyllabusEntry } from "@/lib/ncvecParser";
 
@@ -49,7 +51,11 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
   const [conflicts, setConflicts] = useState<ConflictItem<ImportQuestion>[]>([]);
   const [newQuestions, setNewQuestions] = useState<ImportQuestion[]>([]);
   const [parsedSyllabus, setParsedSyllabus] = useState<SyllabusEntry[]>([]);
-  const [ncvecWarnings, setNcvecWarnings] = useState<string[]>([]);
+  const [importWarnings, setImportWarnings] = useState<string[]>([]);
+  // True when the file's answer keys look 1-based; import is gated behind an
+  // explicit confirmation so a silent shift-by-one can't slip through.
+  const [requiresConfirmation, setRequiresConfirmation] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
 
   const prefix = TEST_TYPE_PREFIXES[testType];
 
@@ -138,34 +144,37 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     setConflicts([]);
     setNewQuestions([]);
     setParsedSyllabus([]);
-    setNcvecWarnings([]);
+    setImportWarnings([]);
+    setRequiresConfirmation(false);
+    setConfirmed(false);
 
     try {
       let questions: ImportQuestion[] = [];
+      const parseWarnings: string[] = [];
 
       if (file.name.toLowerCase().endsWith('.docx')) {
         // Parse NCVEC Word document
         const { questions: ncvecQuestions, syllabus, warnings } = await parseNCVECDocument(file);
         questions = ncvecQuestions;
         setParsedSyllabus(syllabus);
-        setNcvecWarnings(warnings);
-
-        if (warnings.length > 0) {
-          toast.warning(`Parsed with ${warnings.length} warning(s)`);
-        }
+        parseWarnings.push(...warnings);
       } else if (file.name.toLowerCase().endsWith('.json')) {
         const content = await file.text();
-        const parseWarnings: string[] = [];
         questions = parseJSON(content, parseWarnings);
-        parseWarnings.forEach(w => toast.warning(w));
       } else if (file.name.toLowerCase().endsWith('.csv')) {
         const content = await file.text();
-        const parseWarnings: string[] = [];
         questions = parseCSV(content, parseWarnings);
-        parseWarnings.forEach(w => toast.warning(w));
       } else {
         toast.error('Please upload a CSV, JSON, or DOCX file');
         return;
+      }
+
+      setImportWarnings(parseWarnings);
+      if (parseWarnings.includes(ONE_BASED_KEY_WARNING)) {
+        setRequiresConfirmation(true);
+      }
+      if (parseWarnings.length > 0) {
+        toast.warning(`Parsed with ${parseWarnings.length} warning(s) — see details below`);
       }
 
       if (questions.length === 0) {
@@ -324,7 +333,9 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     setConflicts([]);
     setNewQuestions([]);
     setParsedSyllabus([]);
-    setNcvecWarnings([]);
+    setImportWarnings([]);
+    setRequiresConfirmation(false);
+    setConfirmed(false);
   };
 
   const downloadExampleCSV = () => {
@@ -601,6 +612,33 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
               </div>
             )}
 
+            {/* Parse warnings (shown persistently, not just as a toast) */}
+            {importWarnings.length > 0 && (
+              <div className="space-y-2 rounded-lg border border-warning/30 bg-warning/10 p-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-warning">
+                  <AlertTriangle className="w-4 h-4" />
+                  {importWarnings.length} warning{importWarnings.length > 1 ? 's' : ''}
+                </div>
+                <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground">
+                  {importWarnings.map((w, i) => (
+                    <li key={i}>{w}</li>
+                  ))}
+                </ul>
+                {requiresConfirmation && (
+                  <label className="flex items-start gap-2 pt-1 text-xs text-foreground cursor-pointer">
+                    <Checkbox
+                      checked={confirmed}
+                      onCheckedChange={(v) => setConfirmed(v === true)}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      I've verified these answer keys are 0-based (0=A, 1=B, 2=C, 3=D) and want to import anyway.
+                    </span>
+                  </label>
+                )}
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setIsOpen(false)}>
@@ -608,12 +646,12 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
               </Button>
               {validationResult && validationResult.valid.length > 0 && (
                 conflicts.length > 0 ? (
-                  <Button onClick={() => setStep('conflicts')} disabled={isImporting}>
+                  <Button onClick={() => setStep('conflicts')} disabled={isImporting || (requiresConfirmation && !confirmed)}>
                     <GitMerge className="w-4 h-4 mr-2" />
                     Resolve {conflicts.length} Conflicts
                   </Button>
                 ) : (
-                  <Button onClick={() => handleImport()} disabled={isImporting}>
+                  <Button onClick={() => handleImport()} disabled={isImporting || (requiresConfirmation && !confirmed)}>
                     {isImporting ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     ) : (

@@ -3,11 +3,32 @@ import {
   parseCSVLine,
   parseCSV,
   parseJSON,
+  parseAnswerKey,
   validateQuestions,
   mergeQuestion,
   ImportQuestion,
   TEST_TYPE_PREFIXES,
 } from './questionImportParser';
+
+describe('parseAnswerKey', () => {
+  it('maps letters A–D (any case) to 0–3', () => {
+    expect(parseAnswerKey('A')).toBe(0);
+    expect(parseAnswerKey('b')).toBe(1);
+    expect(parseAnswerKey('C')).toBe(2);
+    expect(parseAnswerKey('d')).toBe(3);
+  });
+
+  it('maps digit strings 0–3 to 0–3', () => {
+    expect(parseAnswerKey('0')).toBe(0);
+    expect(parseAnswerKey('3')).toBe(3);
+  });
+
+  it('returns -1 for empty or unrecognized input', () => {
+    expect(parseAnswerKey('')).toBe(-1);
+    expect(parseAnswerKey('4')).toBe(-1);
+    expect(parseAnswerKey('B. full text')).toBe(-1);
+  });
+});
 
 describe('parseCSVLine', () => {
   it('parses simple comma-separated values', () => {

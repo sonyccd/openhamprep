@@ -61,11 +61,26 @@ export function parseCSVLine(line: string): string[] {
  * a heuristic, not a certainty — a genuinely 0-based file where no question
  * uses answer A would also trip it — hence a warning rather than a hard error.
  */
-const ONE_BASED_KEY_WARNING =
+export const ONE_BASED_KEY_WARNING =
   'correct_answer values may be 1-based (all 1–4, no 0). This importer reads digits ' +
   'as 0-based (0=A, 1=B, 2=C, 3=D), so 1-based keys import shifted by one and "4" is ' +
   'rejected. Use letters A–D, or 0–3, to be unambiguous. ' +
   '(This warning can also fire for a 0-based file where no question uses answer A.)';
+
+/**
+ * Map a single correct_answer token to a 0-based index (0=A … 3=D).
+ * Accepts letters A–D (any case) and digit strings 0–3. Returns -1 for empty
+ * or unrecognized input, which downstream validation reports as an error.
+ * Shared by the CSV, JSON, and NCVEC parsers so the three stay in lockstep.
+ */
+export function parseAnswerKey(raw: string): number {
+  const v = (raw ?? '').trim().toLowerCase();
+  if (v === 'a' || v === '0') return 0;
+  if (v === 'b' || v === '1') return 1;
+  if (v === 'c' || v === '2') return 2;
+  if (v === 'd' || v === '3') return 3;
+  return -1;
+}
 
 function looksOneBased(rawAnswerValues: string[]): boolean {
   const present = rawAnswerValues.map(v => v.trim()).filter(v => v !== '');
@@ -102,11 +117,7 @@ export function parseCSV(content: string, warnings?: string[]): ImportQuestion[]
 
     const correctAnswerRaw = getCol('correct_answer') || getCol('correct');
     rawAnswers.push(correctAnswerRaw);
-    let correctAnswer = -1; // -1 = could not parse; fails validation
-    if (['a', '0'].includes(correctAnswerRaw.toLowerCase())) correctAnswer = 0;
-    else if (['b', '1'].includes(correctAnswerRaw.toLowerCase())) correctAnswer = 1;
-    else if (['c', '2'].includes(correctAnswerRaw.toLowerCase())) correctAnswer = 2;
-    else if (['d', '3'].includes(correctAnswerRaw.toLowerCase())) correctAnswer = 3;
+    const correctAnswer = parseAnswerKey(correctAnswerRaw); // -1 if unparseable; fails validation
 
     questions.push({
       id: getCol('id') || getCol('display_name'),
@@ -157,11 +168,7 @@ export function parseJSON(content: string, warnings?: string[]): ImportQuestion[
         String(q.option_c || q.c || ''),
         String(q.option_d || q.d || ''),
       ],
-      correct_answer: typeof q.correct_answer === 'number' ? q.correct_answer :
-        ['a', '0'].includes(String(q.correct_answer).toLowerCase()) ? 0 :
-        ['b', '1'].includes(String(q.correct_answer).toLowerCase()) ? 1 :
-        ['c', '2'].includes(String(q.correct_answer).toLowerCase()) ? 2 :
-        ['d', '3'].includes(String(q.correct_answer).toLowerCase()) ? 3 : -1,
+      correct_answer: parseAnswerKey(q.correct_answer == null ? '' : String(q.correct_answer)),
       subelement: String(q.subelement || ''),
       question_group: String(q.question_group || q.group || ''),
       explanation: q.explanation ? String(q.explanation) : undefined,

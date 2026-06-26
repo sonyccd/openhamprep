@@ -8,7 +8,7 @@
  */
 
 import mammoth from 'mammoth';
-import { ImportQuestion } from './questionImportParser';
+import { ImportQuestion, parseAnswerKey } from './questionImportParser';
 
 export interface SyllabusEntry {
   code: string;
@@ -39,13 +39,12 @@ async function extractTextFromDocx(file: File): Promise<string> {
 
 /**
  * Convert answer letter (A, B, C, D) to 0-indexed number.
+ * Delegates to the shared parseAnswerKey so all parsers map keys identically.
  * Returns -1 for unrecognized input so callers fail loudly rather than
- * silently defaulting to answer A (matches the -1 sentinel used by the
- * CSV/JSON parser and caught by validateQuestions).
+ * silently defaulting to answer A (the -1 sentinel is caught by validateQuestions).
  */
 export function convertAnswerToIndex(letter: string): number {
-  const map: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
-  return map[letter.toUpperCase()] ?? -1;
+  return parseAnswerKey(letter);
 }
 
 /**
@@ -139,13 +138,21 @@ function parseSyllabus(text: string): SyllabusEntry[] {
 //   [3] = Optional FCC reference (e.g., "97.1", "97.3(a)(22)")
 const HEADER_PATTERN = /^([TGE]\d[A-Z]\d{2})\s*\(\s*([A-D])\s*\)\s*(?:\[([^\]]+)\])?/i;
 
+// Anchored variant used only to decide whether a line *is* a question header
+// when splitting a block into questions. The whole line must be a header — ID,
+// answer key, and an optional FCC ref — with nothing after it, so a stem line
+// that merely starts like a header (e.g. quoting "T1A01 (A) ...") is not
+// miscounted as a second question.
+const HEADER_LINE_PATTERN = /^[TGE]\d[A-Z]\d{2}\s*\(\s*[A-D]\s*\)\s*(?:\[[^\]]+\])?\s*$/i;
+
 // Pattern for answer options: "A. Answer text here"
-// Case-insensitive: some PDF→DOCX converters lowercase the option letters.
-// The captured letter is upper-cased before use.
+// Case-sensitive on purpose: option letters are uppercase in the official
+// pools, and matching lowercase here would let a wrapped stem line beginning
+// with "a."/"b."/"c."/"d." be misread as the start of the options.
 // Capture groups:
 //   [1] = Option letter (A, B, C, or D)
 //   [2] = Option text
-const OPTION_PATTERN = /^([A-D])\.\s*(.+)/i;
+const OPTION_PATTERN = /^([A-D])\.\s*(.+)/;
 
 /**
  * Parse a single question from the lines of one question segment.
@@ -263,7 +270,7 @@ function parseQuestions(text: string): { questions: ImportQuestion[]; warnings: 
     // silently overwrite the earlier question's answers.
     const headerIndices: number[] = [];
     for (let i = 0; i < lines.length; i++) {
-      if (HEADER_PATTERN.test(lines[i])) headerIndices.push(i);
+      if (HEADER_LINE_PATTERN.test(lines[i])) headerIndices.push(i);
     }
 
     if (headerIndices.length === 0) continue;
