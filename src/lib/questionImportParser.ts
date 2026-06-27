@@ -91,13 +91,19 @@ const MIN_ONE_BASED_SAMPLE = 5;
 function looksOneBased(rawAnswerValues: string[]): boolean {
   const present = rawAnswerValues.map(v => v.trim()).filter(v => v !== '');
   if (present.length === 0) return false;
-  // Letter keys (A–D) are unambiguous; if the file uses any, it isn't 1-based.
-  if (present.some(v => /^[A-Da-d]$/.test(v))) return false;
   const nums = present.filter(v => /^\d+$/.test(v)).map(Number);
+  // A 4 is impossible in a 0-based file (0=A … 3=D), so it's a definitive
+  // signal — check it before any early return, including the mixed-format
+  // (letter + digit) case, where a stray letter would otherwise mask it.
+  if (nums.includes(4)) return true;
+  // Letter keys (A–D) are unambiguous; if the file uses any (and there's no
+  // out-of-range 4), treat it as letter-keyed, not 1-based.
+  if (present.some(v => /^[A-Da-d]$/.test(v))) return false;
   if (nums.length === 0) return false;
   // A 0 means it's 0-based; anything above 4 isn't the 1-based pattern at all.
   if (!nums.every(n => n >= 1 && n <= 4)) return false;
-  if (nums.includes(4)) return true; // 4 ∉ 0-based — strong signal even when small
+  // All in 1–3 is ambiguous (could be a 0-based file that never answers A), so
+  // only trust it at scale.
   return nums.length >= MIN_ONE_BASED_SAMPLE;
 }
 

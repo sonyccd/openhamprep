@@ -56,14 +56,6 @@ function extractFigureReference(text: string): string | null {
 }
 
 /**
- * Detect license type from question ID prefix
- */
-function detectLicenseType(questionId: string): string {
-  const prefix = questionId.charAt(0).toUpperCase();
-  return prefix; // T, G, or E
-}
-
-/**
  * Parse syllabus entries from the document text
  */
 function parseSyllabus(text: string): SyllabusEntry[] {
@@ -202,10 +194,13 @@ function parseQuestionSegment(lines: string[], warnings: string[]): ImportQuesti
     }
   }
 
-  // Validate we have all 4 options
+  // Validate we have all 4 options. Drop the question (don't return it with
+  // empty slots) so it's reported once here, not a second time as a downstream
+  // "All options must have text" validation error.
   const missingOptions = options.map((o, i) => o ? null : ['A', 'B', 'C', 'D'][i]).filter(Boolean);
   if (missingOptions.length > 0) {
     warnings.push(`Question ${questionId}: Missing options ${missingOptions.join(', ')}`);
+    return null;
   }
 
   return {
@@ -259,7 +254,17 @@ function parseQuestions(text: string): { questions: ImportQuestion[]; warnings: 
       if (HEADER_LINE_PATTERN.test(lines[i])) headerIndices.push(i);
     }
 
-    if (headerIndices.length === 0) continue;
+    if (headerIndices.length === 0) {
+      // No strict header, but a line looks like one (lenient match) — e.g. a
+      // real header with trailing junk past the FCC ref. Warn instead of
+      // dropping the question silently. (Syllabus lines don't match the lenient
+      // pattern, so this doesn't fire on them.)
+      const looksLikeHeader = lines.find(l => HEADER_PATTERN.test(l));
+      if (looksLikeHeader) {
+        warnings.push(`Skipped a line that looks like a question header but isn't formatted as one: "${looksLikeHeader}"`);
+      }
+      continue;
+    }
 
     if (headerIndices.length > 1) {
       const ids = headerIndices.map(i => lines[i].match(HEADER_PATTERN)?.[1].toUpperCase());

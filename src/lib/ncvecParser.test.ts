@@ -492,7 +492,7 @@ D. ±5% tolerance
       expect(result.questions[0].options[3]).toBe('28.500 MHz to 28.600 MHz');
     });
 
-    it('should warn about missing options', () => {
+    it('warns about and drops a question with missing options', () => {
       const incompleteQuestion = `
 T1A01 (A)
 Test question?
@@ -503,6 +503,9 @@ B. Option B
       const result = parseNCVECText(incompleteQuestion);
 
       expect(result.warnings.some(w => w.includes('Missing options'))).toBe(true);
+      // Dropped (not returned with empty slots) so it isn't reported a second
+      // time as a validation error downstream.
+      expect(result.questions).toHaveLength(0);
     });
   });
 
@@ -854,6 +857,24 @@ D. Fourth
       expect(result.questions[0].id).toBe('E5C01');
       expect(result.questions[0].correct_answer).toBe(1);
       expect(result.warnings.some(w => /delimiter/i.test(w))).toBe(false);
+    });
+
+    it('warns instead of silently dropping a header line with trailing characters', () => {
+      // Strict header detection skips a header line with trailing junk (e.g. a
+      // footnote marker). Surface it rather than dropping the question silently.
+      const text = `
+T1A01 (A) [97.1] *
+What is the question?
+A. First
+B. Second
+C. Third
+D. Fourth
+~~
+`;
+      const result = parseNCVECText(text);
+
+      expect(result.questions).toHaveLength(0);
+      expect(result.warnings.some(w => /header/i.test(w))).toBe(true);
     });
 
     it('parses a header whose answer key has spaces inside the parentheses', () => {

@@ -231,6 +231,15 @@ T1A02,"Q2","A","B","C","D",4,T1,T1A`;
     expect(warnings.some(w => /1-based/i.test(w))).toBe(true);
   });
 
+  it('warns when a mixed letter/digit file contains a 4 (impossible in 0-based)', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",A,T1,T1A
+T1A02,"Q2","A","B","C","D",4,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings.some(w => /1-based/i.test(w))).toBe(true);
+  });
+
   it('does not warn when CSV mixes letter and digit answer keys', () => {
     const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
 T1A01,"Q1","A","B","C","D",A,T1,T1A
