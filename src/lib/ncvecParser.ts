@@ -191,12 +191,14 @@ function parseQuestionSegment(lines: string[], warnings: string[]): ImportQuesti
     for (let i = optionsStartIndex; i < lines.length; i++) {
       const optionMatch = lines[i].match(OPTION_PATTERN);
       const idx = optionMatch ? parseAnswerKey(optionMatch[1]) : -1;
-      // An option-shaped line starts a NEW option only if that slot is still
-      // empty. A repeat letter (e.g. option B wrapping onto a line that begins
-      // "A. ...") is a continuation, not a real second option A — NCVEC options
-      // never repeat a letter. The idx >= 0 check also keeps a future, wider
-      // OPTION_PATTERN from writing to options[-1].
-      if (optionMatch && idx >= 0 && !options[idx]) {
+      // NCVEC options always run strictly A→B→C→D, so an option-shaped line is
+      // a NEW option only when its letter is the next one expected. Any other
+      // option-shaped line (an earlier letter, a skip-ahead, or a repeat) is a
+      // wrapped continuation of the current option and is appended rather than
+      // overwriting a slot. The only case this can't resolve is a continuation
+      // that begins with exactly the next letter (B wrapping onto "C. ..."),
+      // which is genuinely indistinguishable from the real next option.
+      if (idx === lastOptionIndex + 1) {
         lastOptionIndex = idx;
         options[idx] = optionMatch[2].trim();
       } else if (lastOptionIndex !== -1) {
@@ -272,7 +274,8 @@ function parseQuestions(text: string): { questions: ImportQuestion[]; warnings: 
       // doesn't fire on them.)
       const looksLikeHeader = lines.find(l => HEADER_LIKE_PATTERN.test(l));
       if (looksLikeHeader) {
-        warnings.push(`Skipped a line that looks like a question header but isn't formatted as one: "${looksLikeHeader}"`);
+        const id = looksLikeHeader.match(/^[TGE]\d[A-Z]\d{2}/i)?.[0].toUpperCase() ?? 'unknown';
+        warnings.push(`Skipped question ${id}: a header-shaped line isn't formatted as a valid header (check for trailing characters or an invalid answer key): "${looksLikeHeader}"`);
       }
       continue;
     }

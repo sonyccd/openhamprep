@@ -635,19 +635,17 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
                   ))}
                 </ul>
                 {requiresConfirmation && (
-                  <div className="pt-1">
-                    <label className="flex items-start gap-2 text-xs font-medium text-foreground cursor-pointer">
-                      <Checkbox
-                        checked={confirmed}
-                        onCheckedChange={(v) => setConfirmed(v === true)}
-                        className="mt-0.5"
-                      />
-                      <span>I've verified these answer keys are 0-based — import anyway.</span>
-                    </label>
-                    <p className="ml-6 mt-1 text-xs text-muted-foreground">
-                      Digits import as 0=A, 1=B, 2=C, 3=D; any row with 4 is rejected. This warning can also fire for a 0-based file where no question answers A.
-                    </p>
-                  </div>
+                  <label className="flex items-start gap-2 pt-1 text-xs font-medium text-foreground cursor-pointer">
+                    <Checkbox
+                      checked={confirmed}
+                      onCheckedChange={(v) => setConfirmed(v === true)}
+                      className="mt-0.5"
+                    />
+                    {/* Details (0-based mapping, 4 rejected, false-positive note)
+                        live in the ONE_BASED_KEY_WARNING bullet rendered above,
+                        so they aren't restated here. */}
+                    <span>I've verified these answer keys are 0-based — import anyway.</span>
+                  </label>
                 )}
               </div>
             )}

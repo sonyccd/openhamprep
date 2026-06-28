@@ -882,6 +882,29 @@ D. Fourth option
       expect(q.options[3]).toBe('Fourth option');
     });
 
+    it('appends a continuation that skips ahead to a later option letter to the current option', () => {
+      // Option B wraps onto a line beginning "D. ..." while the real C and D
+      // still follow. Because options run strictly A→B→C→D, "D." here is not a
+      // new option D — it continues B, and the real C/D parse normally.
+      const text = `
+T1A01 (B)
+Question?
+A. First
+B. Second option that wraps
+D. extra wrapped text
+C. Third
+D. Fourth
+~~
+`;
+      const result = parseNCVECText(text);
+      const q = result.questions[0];
+
+      expect(q.options[0]).toBe('First');
+      expect(q.options[1]).toBe('Second option that wraps D. extra wrapped text');
+      expect(q.options[2]).toBe('Third');
+      expect(q.options[3]).toBe('Fourth');
+    });
+
     it('warns instead of silently dropping a header with an invalid answer letter', () => {
       const text = `
 T1A01 (X)
