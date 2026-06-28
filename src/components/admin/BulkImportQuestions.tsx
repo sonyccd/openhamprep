@@ -17,6 +17,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ConflictResolutionDialog, ConflictItem, ResolutionAction } from "./ConflictResolutionDialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   ImportQuestion,
   ValidationResult,
@@ -26,6 +27,7 @@ import {
   parseJSON,
   validateQuestions,
   mergeQuestion,
+  ONE_BASED_KEY_WARNING,
 } from "@/lib/questionImportParser";
 import { parseNCVECDocument, SyllabusEntry } from "@/lib/ncvecParser";
 
@@ -49,7 +51,11 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
   const [conflicts, setConflicts] = useState<ConflictItem<ImportQuestion>[]>([]);
   const [newQuestions, setNewQuestions] = useState<ImportQuestion[]>([]);
   const [parsedSyllabus, setParsedSyllabus] = useState<SyllabusEntry[]>([]);
-  const [ncvecWarnings, setNcvecWarnings] = useState<string[]>([]);
+  const [importWarnings, setImportWarnings] = useState<string[]>([]);
+  const [confirmed, setConfirmed] = useState(false);
+  // Derived: when the file's answer keys look 1-based, gate import behind an
+  // explicit confirmation so a silent shift-by-one can't slip through.
+  const requiresConfirmation = importWarnings.includes(ONE_BASED_KEY_WARNING);
 
   const prefix = TEST_TYPE_PREFIXES[testType];
 
@@ -138,30 +144,33 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     setConflicts([]);
     setNewQuestions([]);
     setParsedSyllabus([]);
-    setNcvecWarnings([]);
+    setImportWarnings([]);
+    setConfirmed(false);
 
     try {
       let questions: ImportQuestion[] = [];
+      const parseWarnings: string[] = [];
 
       if (file.name.toLowerCase().endsWith('.docx')) {
         // Parse NCVEC Word document
         const { questions: ncvecQuestions, syllabus, warnings } = await parseNCVECDocument(file);
         questions = ncvecQuestions;
         setParsedSyllabus(syllabus);
-        setNcvecWarnings(warnings);
-
-        if (warnings.length > 0) {
-          toast.warning(`Parsed with ${warnings.length} warning(s)`);
-        }
+        parseWarnings.push(...warnings);
       } else if (file.name.toLowerCase().endsWith('.json')) {
         const content = await file.text();
-        questions = parseJSON(content);
+        questions = parseJSON(content, parseWarnings);
       } else if (file.name.toLowerCase().endsWith('.csv')) {
         const content = await file.text();
-        questions = parseCSV(content);
+        questions = parseCSV(content, parseWarnings);
       } else {
         toast.error('Please upload a CSV, JSON, or DOCX file');
         return;
+      }
+
+      setImportWarnings(parseWarnings);
+      if (parseWarnings.length > 0) {
+        toast.warning(`Parsed with ${parseWarnings.length} warning(s) — see details below`);
       }
 
       if (questions.length === 0) {
@@ -204,6 +213,11 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
   };
 
   const handleImport = async (resolvedConflicts?: ConflictItem<ImportQuestion>[]) => {
+    // Defense in depth: the action buttons are already disabled until the
+    // 1-based confirmation is checked, but never let any other call path import
+    // a suspected-1-based file without that explicit acknowledgement.
+    if (requiresConfirmation && !confirmed) return;
+
     const conflictsToProcess = resolvedConflicts || conflicts;
 
     setIsImporting(true);
@@ -320,7 +334,8 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
     setConflicts([]);
     setNewQuestions([]);
     setParsedSyllabus([]);
-    setNcvecWarnings([]);
+    setImportWarnings([]);
+    setConfirmed(false);
   };
 
   const downloadExampleCSV = () => {
@@ -441,19 +456,29 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
         </DialogHeader>
 
         {step === 'conflicts' && conflicts.length > 0 ? (
-          <ConflictResolutionDialog
-            conflicts={conflicts}
-            onResolve={handleConflictsResolved}
-            onCancel={() => {
-              setStep('upload');
-              setConflicts([]);
-            }}
-            renderExisting={renderQuestionPreview}
-            renderIncoming={renderQuestionPreview}
-            renderMerged={renderMergedQuestion}
-            getItemLabel={(q) => q.id}
-            itemType="question"
-          />
+          <>
+            {requiresConfirmation && (
+              <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs text-warning">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>
+                  Heads up: this file's answer keys looked 1-based (digits read as 0=A…3=D). You confirmed import — double-check merged answers below.
+                </span>
+              </div>
+            )}
+            <ConflictResolutionDialog
+              conflicts={conflicts}
+              onResolve={handleConflictsResolved}
+              // Back out to the review screen with all parsed data (and the
+              // 1-based gate) intact — don't reset, which would force a full
+              // re-upload and re-parse of large DOCX files.
+              onCancel={() => setStep('upload')}
+              renderExisting={renderQuestionPreview}
+              renderIncoming={renderQuestionPreview}
+              renderMerged={renderMergedQuestion}
+              getItemLabel={(q) => q.id}
+              itemType="question"
+            />
+          </>
         ) : (
           <div className="space-y-4 py-4 flex-1 overflow-hidden flex flex-col">
             {/* File Format Info */}
@@ -597,6 +622,34 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
               </div>
             )}
 
+            {/* Parse warnings (shown persistently, not just as a toast) */}
+            {importWarnings.length > 0 && (
+              <div className="space-y-2 rounded-lg border border-warning/30 bg-warning/10 p-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-warning">
+                  <AlertTriangle className="w-4 h-4" />
+                  {importWarnings.length} warning{importWarnings.length > 1 ? 's' : ''}
+                </div>
+                <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground">
+                  {importWarnings.map((w, i) => (
+                    <li key={i}>{w}</li>
+                  ))}
+                </ul>
+                {requiresConfirmation && (
+                  <label className="flex items-start gap-2 pt-1 text-xs font-medium text-foreground cursor-pointer">
+                    <Checkbox
+                      checked={confirmed}
+                      onCheckedChange={(v) => setConfirmed(v === true)}
+                      className="mt-0.5"
+                    />
+                    {/* Details (0-based mapping, 4 rejected, false-positive note)
+                        live in the ONE_BASED_KEY_WARNING bullet rendered above,
+                        so they aren't restated here. */}
+                    <span>I've verified these answer keys are 0-based — import anyway.</span>
+                  </label>
+                )}
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setIsOpen(false)}>
@@ -604,12 +657,12 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
               </Button>
               {validationResult && validationResult.valid.length > 0 && (
                 conflicts.length > 0 ? (
-                  <Button onClick={() => setStep('conflicts')} disabled={isImporting}>
+                  <Button onClick={() => setStep('conflicts')} disabled={isImporting || (requiresConfirmation && !confirmed)}>
                     <GitMerge className="w-4 h-4 mr-2" />
                     Resolve {conflicts.length} Conflicts
                   </Button>
                 ) : (
-                  <Button onClick={() => handleImport()} disabled={isImporting}>
+                  <Button onClick={() => handleImport()} disabled={isImporting || (requiresConfirmation && !confirmed)}>
                     {isImporting ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     ) : (

@@ -53,14 +53,73 @@ export function parseCSVLine(line: string): string[] {
 }
 
 /**
- * Parse CSV content into an array of ImportQuestion objects.
+ * Heuristic message warning that numeric answer keys may be 1-based.
+ *
+ * Digits in `correct_answer` are interpreted as 0-based indices (0=A … 3=D).
+ * A file whose numeric keys are all in 1–4 with no 0 may be 1-based, which
+ * would import every answer shifted by one (and reject the "4" rows). This is
+ * a heuristic, not a certainty — a genuinely 0-based file where no question
+ * uses answer A would also trip it — hence a warning rather than a hard error.
  */
-export function parseCSV(content: string): ImportQuestion[] {
+export const ONE_BASED_KEY_WARNING =
+  'correct_answer values may be 1-based (all 1–4, no 0). This importer reads digits ' +
+  'as 0-based (0=A, 1=B, 2=C, 3=D), so 1-based keys import shifted by one and "4" is ' +
+  'rejected. Use letters A–D, or 0–3, to be unambiguous. ' +
+  '(This warning can also fire for a 0-based file where no question uses answer A.)';
+
+/**
+ * Map a single correct_answer token to a 0-based index (0=A … 3=D).
+ * Accepts letters A–D (any case) and digit strings 0–3. Returns -1 for empty
+ * or unrecognized input, which downstream validation reports as an error.
+ * Shared by the CSV, JSON, and NCVEC parsers so the three stay in lockstep.
+ */
+export function parseAnswerKey(raw: string): number {
+  const v = (raw ?? '').trim().toLowerCase();
+  if (v === 'a' || v === '0') return 0;
+  if (v === 'b' || v === '1') return 1;
+  if (v === 'c' || v === '2') return 2;
+  if (v === 'd' || v === '3') return 3;
+  return -1;
+}
+
+// A small all-in-1–3 file is indistinguishable from a 0-based file that just
+// never answers A, so only treat that ambiguous pattern as 1-based once there
+// are enough samples for it to be meaningful. A value of 4 is impossible in a
+// 0-based file, so it's a strong signal regardless of size.
+const MIN_ONE_BASED_SAMPLE = 5;
+
+function looksOneBased(rawAnswerValues: string[]): boolean {
+  const present = rawAnswerValues.map(v => v.trim()).filter(v => v !== '');
+  if (present.length === 0) return false;
+  const nums = present.filter(v => /^\d+$/.test(v)).map(Number);
+  // A 4 is impossible in a 0-based file (0=A … 3=D), so it's a definitive
+  // signal — check it before any early return, including the mixed-format
+  // (letter + digit) case, where a stray letter would otherwise mask it.
+  if (nums.includes(4)) return true;
+  // Letter keys (A–D) are unambiguous; if the file uses any (and there's no
+  // out-of-range 4), treat it as letter-keyed, not 1-based.
+  if (present.some(v => /^[A-Da-d]$/.test(v))) return false;
+  if (nums.length === 0) return false;
+  // A 0 means it's 0-based; anything above 4 isn't the 1-based pattern at all.
+  if (!nums.every(n => n >= 1 && n <= 4)) return false;
+  // All in 1–3 is ambiguous (could be a 0-based file that never answers A), so
+  // only trust it at scale.
+  return nums.length >= MIN_ONE_BASED_SAMPLE;
+}
+
+/**
+ * Parse CSV content into an array of ImportQuestion objects.
+ *
+ * Pass a `warnings` array to collect non-blocking advisories (e.g. answer keys
+ * that look 1-based).
+ */
+export function parseCSV(content: string, warnings?: string[]): ImportQuestion[] {
   const lines = content.trim().split('\n');
   if (lines.length < 2) return [];
 
   const headers = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g, ''));
   const questions: ImportQuestion[] = [];
+  const rawAnswers: string[] = [];
 
   for (let i = 1; i < lines.length; i++) {
     const values = parseCSVLine(lines[i]);
@@ -72,11 +131,8 @@ export function parseCSV(content: string): ImportQuestion[] {
     };
 
     const correctAnswerRaw = getCol('correct_answer') || getCol('correct');
-    let correctAnswer = -1; // -1 = could not parse; fails validation
-    if (['a', '0'].includes(correctAnswerRaw.toLowerCase())) correctAnswer = 0;
-    else if (['b', '1'].includes(correctAnswerRaw.toLowerCase())) correctAnswer = 1;
-    else if (['c', '2'].includes(correctAnswerRaw.toLowerCase())) correctAnswer = 2;
-    else if (['d', '3'].includes(correctAnswerRaw.toLowerCase())) correctAnswer = 3;
+    rawAnswers.push(correctAnswerRaw);
+    const correctAnswer = parseAnswerKey(correctAnswerRaw); // -1 if unparseable; fails validation
 
     questions.push({
       id: getCol('id') || getCol('display_name'),
@@ -94,6 +150,8 @@ export function parseCSV(content: string): ImportQuestion[] {
     });
   }
 
+  if (warnings && looksOneBased(rawAnswers)) warnings.push(ONE_BASED_KEY_WARNING);
+
   return questions;
 }
 
@@ -102,12 +160,19 @@ export function parseCSV(content: string): ImportQuestion[] {
  * Handles BOM (Byte Order Mark) if present.
  * Supports both array format and { questions: [...] } format.
  */
-export function parseJSON(content: string): ImportQuestion[] {
+export function parseJSON(content: string, warnings?: string[]): ImportQuestion[] {
   try {
     // Remove BOM if present
     const cleanContent = content.replace(/^\uFEFF/, '');
     const data = JSON.parse(cleanContent);
     const questions = Array.isArray(data) ? data : data.questions || [];
+
+    if (warnings) {
+      const rawAnswers = questions.map((q: Record<string, unknown>) =>
+        q.correct_answer === undefined || q.correct_answer === null ? '' : String(q.correct_answer)
+      );
+      if (looksOneBased(rawAnswers)) warnings.push(ONE_BASED_KEY_WARNING);
+    }
 
     return questions.map((q: Record<string, unknown>) => ({
       id: String(q.id || ''),
@@ -118,11 +183,7 @@ export function parseJSON(content: string): ImportQuestion[] {
         String(q.option_c || q.c || ''),
         String(q.option_d || q.d || ''),
       ],
-      correct_answer: typeof q.correct_answer === 'number' ? q.correct_answer :
-        ['a', '0'].includes(String(q.correct_answer).toLowerCase()) ? 0 :
-        ['b', '1'].includes(String(q.correct_answer).toLowerCase()) ? 1 :
-        ['c', '2'].includes(String(q.correct_answer).toLowerCase()) ? 2 :
-        ['d', '3'].includes(String(q.correct_answer).toLowerCase()) ? 3 : -1,
+      correct_answer: parseAnswerKey(q.correct_answer == null ? '' : String(q.correct_answer)),
       subelement: String(q.subelement || ''),
       question_group: String(q.question_group || q.group || ''),
       explanation: q.explanation ? String(q.explanation) : undefined,

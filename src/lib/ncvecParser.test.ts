@@ -492,7 +492,7 @@ D. ±5% tolerance
       expect(result.questions[0].options[3]).toBe('28.500 MHz to 28.600 MHz');
     });
 
-    it('should warn about missing options', () => {
+    it('warns about and drops a question with missing options', () => {
       const incompleteQuestion = `
 T1A01 (A)
 Test question?
@@ -503,6 +503,9 @@ B. Option B
       const result = parseNCVECText(incompleteQuestion);
 
       expect(result.warnings.some(w => w.includes('Missing options'))).toBe(true);
+      // Dropped (not returned with empty slots) so it isn't reported a second
+      // time as a validation error downstream.
+      expect(result.questions).toHaveLength(0);
     });
   });
 
@@ -770,6 +773,213 @@ D. D
       expect(result.questions).toHaveLength(1);
       expect(result.questions[0].id).toBe('T1A01');
       expect(result.syllabus.some(s => s.code === 'T1A')).toBe(true);
+    });
+  });
+
+  // ===========================================================================
+  // SILENT ANSWER-CORRUPTION REGRESSION TESTS
+  // ===========================================================================
+
+  describe('silent answer-corruption regressions', () => {
+    it('joins answer option text that wraps onto a second line', () => {
+      // Real NCVEC docs can extract a long answer as the label line plus a
+      // continuation line. The continuation must NOT be silently dropped.
+      const text = `
+T1A01 (B) [97.1]
+Which of the following is a purpose of the Amateur Radio Service?
+A. Providing personal radio communications
+B. Advancing skills in the technical and
+communication phases of the radio art
+C. Providing communications for hire
+D. None of these choices
+~~
+`;
+      const result = parseNCVECText(text);
+      const q = result.questions[0];
+
+      expect(q.correct_answer).toBe(1);
+      expect(q.options[1]).toBe(
+        'Advancing skills in the technical and communication phases of the radio art'
+      );
+    });
+
+    it('parses both questions when a ~~ delimiter is missing between them', () => {
+      // A missing delimiter previously merged two questions: the first kept its
+      // stem + answer key but inherited the SECOND question's option text, and
+      // the second question was silently dropped.
+      const text = `
+T1A01 (A) [97.1]
+First question stem?
+A. First-correct-answer
+B. first wrong
+C. first wrong
+D. first wrong
+T1A02 (D) [97.3]
+Second question stem?
+A. second wrong
+B. second wrong
+C. second wrong
+D. Second-correct-answer
+~~
+`;
+      const result = parseNCVECText(text);
+
+      expect(result.questions).toHaveLength(2);
+
+      const first = result.questions.find(q => q.id === 'T1A01');
+      expect(first?.correct_answer).toBe(0);
+      expect(first?.options[0]).toBe('First-correct-answer');
+      expect(first?.question).toBe('First question stem?');
+
+      const second = result.questions.find(q => q.id === 'T1A02');
+      expect(second?.correct_answer).toBe(3);
+      expect(second?.options[3]).toBe('Second-correct-answer');
+
+      expect(result.warnings.some(w => /delimiter/i.test(w))).toBe(true);
+    });
+
+    it('does not split a question when a stem line starts with a question-ID-and-key string', () => {
+      // A stem/continuation line that merely begins like a header (e.g. quoting
+      // "T1A01 (A) ...") must not be miscounted as a second question header.
+      const text = `
+E5C01 (B) [97.301]
+Per the rule, evaluate the following claim:
+T1A01 (A) describes the basis and purpose of the service
+A. First
+B. Second
+C. Third
+D. Fourth
+~~
+`;
+      const result = parseNCVECText(text);
+
+      expect(result.questions).toHaveLength(1);
+      expect(result.questions[0].id).toBe('E5C01');
+      expect(result.questions[0].correct_answer).toBe(1);
+      expect(result.warnings.some(w => /delimiter/i.test(w))).toBe(false);
+    });
+
+    it('treats a continuation line that starts like an option as continuation, not a new option', () => {
+      // Option B wraps onto a line that happens to begin "A. ...". Since NCVEC
+      // options never repeat a letter, that line continues B and must not
+      // overwrite the already-filled option A.
+      const text = `
+T1A01 (B)
+Question?
+A. First option
+B. Second option which wraps onto
+A. continuation that looks like option A
+C. Third option
+D. Fourth option
+~~
+`;
+      const result = parseNCVECText(text);
+      const q = result.questions[0];
+
+      expect(q.options[0]).toBe('First option');
+      expect(q.options[1]).toBe('Second option which wraps onto A. continuation that looks like option A');
+      expect(q.options[2]).toBe('Third option');
+      expect(q.options[3]).toBe('Fourth option');
+    });
+
+    it('appends a continuation that skips ahead to a later option letter to the current option', () => {
+      // Option B wraps onto a line beginning "D. ..." while the real C and D
+      // still follow. Because options run strictly A→B→C→D, "D." here is not a
+      // new option D — it continues B, and the real C/D parse normally.
+      const text = `
+T1A01 (B)
+Question?
+A. First
+B. Second option that wraps
+D. extra wrapped text
+C. Third
+D. Fourth
+~~
+`;
+      const result = parseNCVECText(text);
+      const q = result.questions[0];
+
+      expect(q.options[0]).toBe('First');
+      expect(q.options[1]).toBe('Second option that wraps D. extra wrapped text');
+      expect(q.options[2]).toBe('Third');
+      expect(q.options[3]).toBe('Fourth');
+    });
+
+    it('warns instead of silently dropping a header with an invalid answer letter', () => {
+      const text = `
+T1A01 (X)
+Header with a typo in the answer key?
+A. First
+B. Second
+C. Third
+D. Fourth
+~~
+T1B02 (A)
+A good question?
+A. W
+B. X
+C. Y
+D. Z
+~~
+`;
+      const result = parseNCVECText(text);
+
+      expect(result.questions).toHaveLength(1);
+      expect(result.questions[0].id).toBe('T1B02');
+      expect(result.warnings.some(w => /header/i.test(w))).toBe(true);
+    });
+
+    it('flags rather than silently mis-parsing a bare header-shaped stem line (known boundary)', () => {
+      // A stem line that is exactly "ID (X) [ref]" is indistinguishable from a
+      // real second header, so the block is split and flagged — the point is
+      // that the admin is warned, not that parsing is silently wrong.
+      const text = `
+E5C01 (B)
+Per the cited rule:
+T1A01 (A) [97.1]
+A. First
+B. Second
+C. Third
+D. Fourth
+~~
+`;
+      const result = parseNCVECText(text);
+
+      expect(result.warnings.length).toBeGreaterThan(0);
+    });
+
+    it('warns instead of silently dropping a header line with trailing characters', () => {
+      // Strict header detection skips a header line with trailing junk (e.g. a
+      // footnote marker). Surface it rather than dropping the question silently.
+      const text = `
+T1A01 (A) [97.1] *
+What is the question?
+A. First
+B. Second
+C. Third
+D. Fourth
+~~
+`;
+      const result = parseNCVECText(text);
+
+      expect(result.questions).toHaveLength(0);
+      expect(result.warnings.some(w => /header/i.test(w))).toBe(true);
+    });
+
+    it('parses a header whose answer key has spaces inside the parentheses', () => {
+      const text = `
+T1A01 ( B )
+Spaced parens around the answer key?
+A. First
+B. Second
+C. Third
+D. Fourth
+~~
+`;
+      const result = parseNCVECText(text);
+
+      expect(result.questions).toHaveLength(1);
+      expect(result.questions[0].correct_answer).toBe(1);
     });
   });
 

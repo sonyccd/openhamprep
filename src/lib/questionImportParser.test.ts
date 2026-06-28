@@ -3,11 +3,32 @@ import {
   parseCSVLine,
   parseCSV,
   parseJSON,
+  parseAnswerKey,
   validateQuestions,
   mergeQuestion,
   ImportQuestion,
   TEST_TYPE_PREFIXES,
 } from './questionImportParser';
+
+describe('parseAnswerKey', () => {
+  it('maps letters A–D (any case) to 0–3', () => {
+    expect(parseAnswerKey('A')).toBe(0);
+    expect(parseAnswerKey('b')).toBe(1);
+    expect(parseAnswerKey('C')).toBe(2);
+    expect(parseAnswerKey('d')).toBe(3);
+  });
+
+  it('maps digit strings 0–3 to 0–3', () => {
+    expect(parseAnswerKey('0')).toBe(0);
+    expect(parseAnswerKey('3')).toBe(3);
+  });
+
+  it('returns -1 for empty or unrecognized input', () => {
+    expect(parseAnswerKey('')).toBe(-1);
+    expect(parseAnswerKey('4')).toBe(-1);
+    expect(parseAnswerKey('B. full text')).toBe(-1);
+  });
+});
 
 describe('parseCSVLine', () => {
   it('parses simple comma-separated values', () => {
@@ -140,6 +161,112 @@ T1A02,"Test?","A","B","C","D",B. Some full text,T1,T1A`;
     expect(errors).toHaveLength(2);
     expect(errors[0].errors[0]).toContain('Could not parse correct_answer');
     expect(errors[1].errors[0]).toContain('Could not parse correct_answer');
+  });
+});
+
+describe('numeric answer-key format warnings', () => {
+  it('warns when CSV numeric keys look 1-based (all 1–4, no 0)', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",1,T1,T1A
+T1A02,"Q2","A","B","C","D",2,T1,T1A
+T1A03,"Q3","A","B","C","D",3,T1,T1A
+T1A04,"Q4","A","B","C","D",4,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings.some(w => /1-based/i.test(w))).toBe(true);
+  });
+
+  it('does not warn when CSV numeric keys include 0 (clearly 0-based)', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",0,T1,T1A
+T1A02,"Q2","A","B","C","D",1,T1,T1A
+T1A03,"Q3","A","B","C","D",2,T1,T1A
+T1A04,"Q4","A","B","C","D",3,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('does not warn when CSV uses letter keys (A–D)', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",B,T1,T1A
+T1A02,"Q2","A","B","C","D",C,T1,T1A
+T1A03,"Q3","A","B","C","D",D,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('does not warn for a small all-1–3 file (below the sample-size threshold)', () => {
+    // 0-based files where no question happens to answer A look identical to
+    // 1-based at small sizes; don't gate the import on so little signal.
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",1,T1,T1A
+T1A02,"Q2","A","B","C","D",2,T1,T1A
+T1A03,"Q3","A","B","C","D",3,T1,T1A
+T1A04,"Q4","A","B","C","D",1,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('warns for an all-1–3 file once it reaches the sample-size threshold', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",1,T1,T1A
+T1A02,"Q2","A","B","C","D",2,T1,T1A
+T1A03,"Q3","A","B","C","D",3,T1,T1A
+T1A04,"Q4","A","B","C","D",1,T1,T1A
+T1A05,"Q5","A","B","C","D",2,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings.some(w => /1-based/i.test(w))).toBe(true);
+  });
+
+  it('warns for a small file that contains a 4 (impossible in 0-based)', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",3,T1,T1A
+T1A02,"Q2","A","B","C","D",4,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings.some(w => /1-based/i.test(w))).toBe(true);
+  });
+
+  it('warns when a mixed letter/digit file contains a 4 (impossible in 0-based)', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",A,T1,T1A
+T1A02,"Q2","A","B","C","D",4,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings.some(w => /1-based/i.test(w))).toBe(true);
+  });
+
+  it('does not warn when CSV mixes letter and digit answer keys', () => {
+    const csv = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group
+T1A01,"Q1","A","B","C","D",A,T1,T1A
+T1A02,"Q2","A","B","C","D",2,T1,T1A`;
+    const warnings: string[] = [];
+    parseCSV(csv, warnings);
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('warns when JSON numeric keys look 1-based', () => {
+    const json = JSON.stringify([
+      { id: 'T1A01', question: 'Q', options: ['A', 'B', 'C', 'D'], correct_answer: 1, subelement: 'T1', question_group: 'T1A' },
+      { id: 'T1A02', question: 'Q', options: ['A', 'B', 'C', 'D'], correct_answer: 4, subelement: 'T1', question_group: 'T1A' },
+    ]);
+    const warnings: string[] = [];
+    parseJSON(json, warnings);
+    expect(warnings.some(w => /1-based/i.test(w))).toBe(true);
+  });
+
+  it('does not warn when JSON numeric keys include 0', () => {
+    const json = JSON.stringify([
+      { id: 'T1A01', question: 'Q', options: ['A', 'B', 'C', 'D'], correct_answer: 0, subelement: 'T1', question_group: 'T1A' },
+      { id: 'T1A02', question: 'Q', options: ['A', 'B', 'C', 'D'], correct_answer: 3, subelement: 'T1', question_group: 'T1A' },
+    ]);
+    const warnings: string[] = [];
+    parseJSON(json, warnings);
+    expect(warnings).toHaveLength(0);
   });
 });
 

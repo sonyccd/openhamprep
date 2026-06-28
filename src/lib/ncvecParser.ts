@@ -8,7 +8,7 @@
  */
 
 import mammoth from 'mammoth';
-import { ImportQuestion } from './questionImportParser';
+import { ImportQuestion, parseAnswerKey } from './questionImportParser';
 
 export interface SyllabusEntry {
   code: string;
@@ -38,14 +38,6 @@ async function extractTextFromDocx(file: File): Promise<string> {
 }
 
 /**
- * Convert answer letter (A, B, C, D) to 0-indexed number
- */
-function convertAnswerToIndex(letter: string): number {
-  const map: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
-  return map[letter.toUpperCase()] ?? 0;
-}
-
-/**
  * Extract FCC reference from question header line
  * e.g., "T1A01 (C) [97.1]" -> "97.1"
  */
@@ -61,14 +53,6 @@ function extractFccReference(headerLine: string): string | null {
 function extractFigureReference(text: string): string | null {
   const match = text.match(/\([Ss]ee\s+[Ff]igure\s+([TGE][-\d]+)\)/i);
   return match ? match[1].trim() : null;
-}
-
-/**
- * Detect license type from question ID prefix
- */
-function detectLicenseType(questionId: string): string {
-  const prefix = questionId.charAt(0).toUpperCase();
-  return prefix; // T, G, or E
 }
 
 /**
@@ -126,6 +110,124 @@ function parseSyllabus(text: string): SyllabusEntry[] {
   return entries;
 }
 
+// Question header, capturing [1] ID, [2] answer letter, [3] optional FCC ref:
+// "T1A01 (C) [97.1]". Whitespace inside the parentheses is tolerated because
+// hand-edited pools sometimes pad them (e.g. "T1A01 ( C )").
+const HEADER_PATTERN = /^([TGE]\d[A-Z]\d{2})\s*\(\s*([A-D])\s*\)\s*(?:\[([^\]]+)\])?/i;
+
+// Anchored variant used only to decide whether a line *is* a question header
+// when splitting a block into questions. The whole line must be a header — ID,
+// answer key, and an optional FCC ref — with nothing after it, so a stem line
+// that merely starts like a header (e.g. quoting "T1A01 (A) ...") is not
+// miscounted as a second question. Strict anchoring is safe because NCVEC
+// header lines contain only that. Tradeoff: a header line with trailing
+// garbage beyond the FCC ref would not be detected here and its question would
+// be dropped — but we can't loosen this without re-admitting the stem-quote
+// false positive above (the two cases are indistinguishable).
+const HEADER_LINE_PATTERN = /^[TGE]\d[A-Z]\d{2}\s*\(\s*[A-D]\s*\)\s*(?:\[[^\]]+\])?\s*$/i;
+
+// Looser still — a question ID immediately followed by "(" — used only to warn
+// when a header-shaped line was skipped (e.g. a trailing footnote marker, or a
+// typo'd answer key like "T1A01 (X)" that the stricter patterns reject). It
+// stays quiet on syllabus lines ("T1A - ...") since those have no "(" after a
+// two-digit number.
+const HEADER_LIKE_PATTERN = /^[TGE]\d[A-Z]\d{2}\s*\(/i;
+
+// Answer option "A. text", capturing [1] letter and [2] text. Case-sensitive
+// on purpose: option letters are uppercase in the official pools, and matching
+// lowercase would let a wrapped stem line beginning with "a."/"b."/"c."/"d."
+// be misread as the start of the options.
+const OPTION_PATTERN = /^([A-D])\.\s*(.+)/;
+
+/**
+ * Parse a single question from the lines of one question segment.
+ * The segment's first line is the header; the remainder is question text
+ * followed by the answer options.
+ *
+ * Returns null (and pushes a warning) if the segment has no question text.
+ */
+function parseQuestionSegment(lines: string[], warnings: string[]): ImportQuestion | null {
+  const headerMatch = lines[0].match(HEADER_PATTERN);
+  if (!headerMatch) return null;
+
+  const questionId = headerMatch[1].toUpperCase();
+  const correctAnswerLetter = headerMatch[2].toUpperCase();
+  const fccReference = headerMatch[3] ? headerMatch[3].trim() : null;
+
+  // Extract subelement and question group from ID
+  // T1A01 -> subelement: T1, group: T1A
+  const subelement = questionId.substring(0, 2); // T1, G2, E3, etc.
+  const questionGroup = questionId.substring(0, 3); // T1A, G2B, etc.
+
+  // Collect question text (lines after header until we hit options)
+  const questionLines: string[] = [];
+  let optionsStartIndex = -1;
+
+  for (let i = 1; i < lines.length; i++) {
+    if (OPTION_PATTERN.test(lines[i])) {
+      optionsStartIndex = i;
+      break;
+    }
+    questionLines.push(lines[i]);
+  }
+
+  const questionText = questionLines.join(' ').trim();
+
+  if (!questionText) {
+    warnings.push(`Question ${questionId}: Missing question text`);
+    return null;
+  }
+
+  // Extract figure reference from question text
+  const figureReference = extractFigureReference(questionText);
+
+  // Collect options. Each "A."–"D." line starts an option; any following line
+  // that is not itself an option is a continuation of the previous option
+  // (wrapped answer text), so it is appended rather than silently dropped.
+  const options: string[] = ['', '', '', ''];
+  let lastOptionIndex = -1;
+
+  if (optionsStartIndex !== -1) {
+    for (let i = optionsStartIndex; i < lines.length; i++) {
+      const optionMatch = lines[i].match(OPTION_PATTERN);
+      const idx = optionMatch ? parseAnswerKey(optionMatch[1]) : -1;
+      // NCVEC options always run strictly A→B→C→D, so an option-shaped line is
+      // a NEW option only when its letter is the next one expected. Any other
+      // option-shaped line (an earlier letter, a skip-ahead, or a repeat) is a
+      // wrapped continuation of the current option and is appended rather than
+      // overwriting a slot. The only case this can't resolve is a continuation
+      // that begins with exactly the next letter (B wrapping onto "C. ..."),
+      // which is genuinely indistinguishable from the real next option.
+      if (idx === lastOptionIndex + 1) {
+        lastOptionIndex = idx;
+        options[idx] = optionMatch[2].trim();
+      } else if (lastOptionIndex !== -1) {
+        options[lastOptionIndex] = `${options[lastOptionIndex]} ${lines[i]}`.trim();
+      }
+    }
+  }
+
+  // Validate we have all 4 options. Drop the question (don't return it with
+  // empty slots) so it's reported once here, not a second time as a downstream
+  // "All options must have text" validation error.
+  const missingOptions = options.map((o, i) => o ? null : ['A', 'B', 'C', 'D'][i]).filter(Boolean);
+  if (missingOptions.length > 0) {
+    warnings.push(`Question ${questionId}: Missing options ${missingOptions.join(', ')}`);
+    return null;
+  }
+
+  return {
+    id: questionId,
+    question: questionText,
+    options,
+    correct_answer: parseAnswerKey(correctAnswerLetter),
+    subelement,
+    question_group: questionGroup,
+    fcc_reference: fccReference || undefined,
+    figure_reference: figureReference || undefined,
+  };
+}
+
 /**
  * Parse questions from the document text
  */
@@ -139,115 +241,61 @@ function parseQuestions(text: string): { questions: ImportQuestion[]; warnings: 
   // Track seen question IDs to detect duplicates
   const seenIds = new Set<string>();
 
-  // Pattern for question header: "T1A01 (C) [97.1]" or "T1A01 (C)"
-  // Uses 'i' flag for case-insensitive matching of question IDs and answer letters
-  // Capture groups:
-  //   [1] = Question ID (e.g., "T1A01", "G2B03", "E3C12")
-  //   [2] = Correct answer letter (A, B, C, or D)
-  //   [3] = Optional FCC reference (e.g., "97.1", "97.3(a)(22)")
-  const headerPattern = /^([TGE]\d[A-Z]\d{2})\s*\(([A-D])\)\s*(?:\[([^\]]+)\])?/i;
-
-  // Pattern for answer options: "A. Answer text here"
-  // Capture groups:
-  //   [1] = Option letter (A, B, C, or D)
-  //   [2] = Option text
-  const optionPattern = /^([A-D])\.\s*(.+)/;
+  const addQuestion = (q: ImportQuestion) => {
+    // Check for duplicate question IDs — keep only the last occurrence
+    if (seenIds.has(q.id)) {
+      warnings.push(`Question ${q.id}: Duplicate ID found, only last occurrence will be used`);
+      const prevIndex = questions.findIndex(existing => existing.id === q.id);
+      if (prevIndex !== -1) {
+        questions.splice(prevIndex, 1);
+      }
+    }
+    seenIds.add(q.id);
+    questions.push(q);
+  };
 
   for (const block of blocks) {
     const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l.length > 0);
     if (lines.length === 0) continue;
 
-    // Find the header line (contains question ID and correct answer)
-    let headerLineIndex = -1;
-    let headerMatch: RegExpMatchArray | null = null;
-
+    // Find every question header in the block. A well-formed block has exactly
+    // one. More than one means a "~~" delimiter is missing between questions —
+    // we still parse each one rather than letting the later question's options
+    // silently overwrite the earlier question's answers.
+    const headerIndices: number[] = [];
     for (let i = 0; i < lines.length; i++) {
-      const match = lines[i].match(headerPattern);
-      if (match) {
-        headerLineIndex = i;
-        headerMatch = match;
-        break;
-      }
+      if (HEADER_LINE_PATTERN.test(lines[i])) headerIndices.push(i);
     }
 
-    if (!headerMatch || headerLineIndex === -1) {
-      // Not a question block, skip
+    if (headerIndices.length === 0) {
+      // No strict header, but a line looks like one — e.g. a real header with
+      // trailing junk past the FCC ref, or a typo'd answer key. Warn instead of
+      // dropping the question silently. (Syllabus lines don't match, so this
+      // doesn't fire on them.)
+      const looksLikeHeader = lines.find(l => HEADER_LIKE_PATTERN.test(l));
+      if (looksLikeHeader) {
+        const id = looksLikeHeader.match(/^[TGE]\d[A-Z]\d{2}/i)?.[0].toUpperCase() ?? 'unknown';
+        warnings.push(`Skipped question ${id}: a header-shaped line isn't formatted as a valid header (check for trailing characters or an invalid answer key): "${looksLikeHeader}"`);
+      }
       continue;
     }
 
-    const questionId = headerMatch[1].toUpperCase();
-    const correctAnswerLetter = headerMatch[2].toUpperCase();
-    const fccReference = headerMatch[3] ? headerMatch[3].trim() : null;
-
-    // Check for duplicate question IDs
-    if (seenIds.has(questionId)) {
-      warnings.push(`Question ${questionId}: Duplicate ID found, only last occurrence will be used`);
-      // Remove the previous occurrence so only the last one is kept
-      const prevIndex = questions.findIndex(q => q.id === questionId);
-      if (prevIndex !== -1) {
-        questions.splice(prevIndex, 1);
-      }
-    }
-    seenIds.add(questionId);
-
-    // Extract subelement and question group from ID
-    // T1A01 -> subelement: T1, group: T1A
-    const subelement = questionId.substring(0, 2); // T1, G2, E3, etc.
-    const questionGroup = questionId.substring(0, 3); // T1A, G2B, etc.
-
-    // Collect question text (lines after header until we hit options)
-    const questionLines: string[] = [];
-    let optionsStartIndex = -1;
-
-    for (let i = headerLineIndex + 1; i < lines.length; i++) {
-      if (lines[i].match(optionPattern)) {
-        optionsStartIndex = i;
-        break;
-      }
-      questionLines.push(lines[i]);
+    if (headerIndices.length > 1) {
+      const ids = headerIndices.map(i => lines[i].match(HEADER_PATTERN)?.[1].toUpperCase());
+      warnings.push(
+        `Missing "~~" delimiter: ${headerIndices.length} questions (${ids.join(', ')}) ` +
+        `found in one block. Parsed them separately.`
+      );
     }
 
-    const questionText = questionLines.join(' ').trim();
-
-    if (!questionText) {
-      warnings.push(`Question ${questionId}: Missing question text`);
-      continue;
+    // Each header starts a segment that runs until the next header (or the end
+    // of the block).
+    for (let h = 0; h < headerIndices.length; h++) {
+      const start = headerIndices[h];
+      const end = h + 1 < headerIndices.length ? headerIndices[h + 1] : lines.length;
+      const parsed = parseQuestionSegment(lines.slice(start, end), warnings);
+      if (parsed) addQuestion(parsed);
     }
-
-    // Extract figure reference from question text
-    const figureReference = extractFigureReference(questionText);
-
-    // Collect options
-    const options: string[] = ['', '', '', ''];
-
-    if (optionsStartIndex !== -1) {
-      for (let i = optionsStartIndex; i < lines.length; i++) {
-        const optionMatch = lines[i].match(optionPattern);
-        if (optionMatch) {
-          const optionLetter = optionMatch[1].toUpperCase();
-          const optionText = optionMatch[2].trim();
-          const optionIndex = convertAnswerToIndex(optionLetter);
-          options[optionIndex] = optionText;
-        }
-      }
-    }
-
-    // Validate we have all 4 options
-    const missingOptions = options.map((o, i) => o ? null : ['A', 'B', 'C', 'D'][i]).filter(Boolean);
-    if (missingOptions.length > 0) {
-      warnings.push(`Question ${questionId}: Missing options ${missingOptions.join(', ')}`);
-    }
-
-    questions.push({
-      id: questionId,
-      question: questionText,
-      options,
-      correct_answer: convertAnswerToIndex(correctAnswerLetter),
-      subelement,
-      question_group: questionGroup,
-      fcc_reference: fccReference || undefined,
-      figure_reference: figureReference || undefined,
-    });
   }
 
   return { questions, warnings };
