@@ -126,6 +126,13 @@ const HEADER_PATTERN = /^([TGE]\d[A-Z]\d{2})\s*\(\s*([A-D])\s*\)\s*(?:\[([^\]]+)
 // false positive above (the two cases are indistinguishable).
 const HEADER_LINE_PATTERN = /^[TGE]\d[A-Z]\d{2}\s*\(\s*[A-D]\s*\)\s*(?:\[[^\]]+\])?\s*$/i;
 
+// Looser still — a question ID immediately followed by "(" — used only to warn
+// when a header-shaped line was skipped (e.g. a trailing footnote marker, or a
+// typo'd answer key like "T1A01 (X)" that the stricter patterns reject). It
+// stays quiet on syllabus lines ("T1A - ...") since those have no "(" after a
+// two-digit number.
+const HEADER_LIKE_PATTERN = /^[TGE]\d[A-Z]\d{2}\s*\(/i;
+
 // Answer option "A. text", capturing [1] letter and [2] text. Case-sensitive
 // on purpose: option letters are uppercase in the official pools, and matching
 // lowercase would let a wrapped stem line beginning with "a."/"b."/"c."/"d."
@@ -183,11 +190,15 @@ function parseQuestionSegment(lines: string[], warnings: string[]): ImportQuesti
   if (optionsStartIndex !== -1) {
     for (let i = optionsStartIndex; i < lines.length; i++) {
       const optionMatch = lines[i].match(OPTION_PATTERN);
-      if (optionMatch) {
-        const idx = parseAnswerKey(optionMatch[1]);
-        if (idx < 0) continue; // unreachable given OPTION_PATTERN; guards options[-1]
+      const idx = optionMatch ? parseAnswerKey(optionMatch[1]) : -1;
+      // An option-shaped line starts a NEW option only if that slot is still
+      // empty. A repeat letter (e.g. option B wrapping onto a line that begins
+      // "A. ...") is a continuation, not a real second option A — NCVEC options
+      // never repeat a letter. The idx >= 0 check also keeps a future, wider
+      // OPTION_PATTERN from writing to options[-1].
+      if (optionMatch && idx >= 0 && !options[idx]) {
         lastOptionIndex = idx;
-        options[lastOptionIndex] = optionMatch[2].trim();
+        options[idx] = optionMatch[2].trim();
       } else if (lastOptionIndex !== -1) {
         options[lastOptionIndex] = `${options[lastOptionIndex]} ${lines[i]}`.trim();
       }
@@ -255,11 +266,11 @@ function parseQuestions(text: string): { questions: ImportQuestion[]; warnings: 
     }
 
     if (headerIndices.length === 0) {
-      // No strict header, but a line looks like one (lenient match) — e.g. a
-      // real header with trailing junk past the FCC ref. Warn instead of
-      // dropping the question silently. (Syllabus lines don't match the lenient
-      // pattern, so this doesn't fire on them.)
-      const looksLikeHeader = lines.find(l => HEADER_PATTERN.test(l));
+      // No strict header, but a line looks like one — e.g. a real header with
+      // trailing junk past the FCC ref, or a typo'd answer key. Warn instead of
+      // dropping the question silently. (Syllabus lines don't match, so this
+      // doesn't fire on them.)
+      const looksLikeHeader = lines.find(l => HEADER_LIKE_PATTERN.test(l));
       if (looksLikeHeader) {
         warnings.push(`Skipped a line that looks like a question header but isn't formatted as one: "${looksLikeHeader}"`);
       }

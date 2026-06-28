@@ -859,6 +859,72 @@ D. Fourth
       expect(result.warnings.some(w => /delimiter/i.test(w))).toBe(false);
     });
 
+    it('treats a continuation line that starts like an option as continuation, not a new option', () => {
+      // Option B wraps onto a line that happens to begin "A. ...". Since NCVEC
+      // options never repeat a letter, that line continues B and must not
+      // overwrite the already-filled option A.
+      const text = `
+T1A01 (B)
+Question?
+A. First option
+B. Second option which wraps onto
+A. continuation that looks like option A
+C. Third option
+D. Fourth option
+~~
+`;
+      const result = parseNCVECText(text);
+      const q = result.questions[0];
+
+      expect(q.options[0]).toBe('First option');
+      expect(q.options[1]).toBe('Second option which wraps onto A. continuation that looks like option A');
+      expect(q.options[2]).toBe('Third option');
+      expect(q.options[3]).toBe('Fourth option');
+    });
+
+    it('warns instead of silently dropping a header with an invalid answer letter', () => {
+      const text = `
+T1A01 (X)
+Header with a typo in the answer key?
+A. First
+B. Second
+C. Third
+D. Fourth
+~~
+T1B02 (A)
+A good question?
+A. W
+B. X
+C. Y
+D. Z
+~~
+`;
+      const result = parseNCVECText(text);
+
+      expect(result.questions).toHaveLength(1);
+      expect(result.questions[0].id).toBe('T1B02');
+      expect(result.warnings.some(w => /header/i.test(w))).toBe(true);
+    });
+
+    it('flags rather than silently mis-parsing a bare header-shaped stem line (known boundary)', () => {
+      // A stem line that is exactly "ID (X) [ref]" is indistinguishable from a
+      // real second header, so the block is split and flagged — the point is
+      // that the admin is warned, not that parsing is silently wrong.
+      const text = `
+E5C01 (B)
+Per the cited rule:
+T1A01 (A) [97.1]
+A. First
+B. Second
+C. Third
+D. Fourth
+~~
+`;
+      const result = parseNCVECText(text);
+
+      expect(result.warnings.length).toBeGreaterThan(0);
+    });
+
     it('warns instead of silently dropping a header line with trailing characters', () => {
       // Strict header detection skips a header line with trailing junk (e.g. a
       // footnote marker). Surface it rather than dropping the question silently.

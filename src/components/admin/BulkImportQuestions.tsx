@@ -456,16 +456,29 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
         </DialogHeader>
 
         {step === 'conflicts' && conflicts.length > 0 ? (
-          <ConflictResolutionDialog
-            conflicts={conflicts}
-            onResolve={handleConflictsResolved}
-            onCancel={resetState}
-            renderExisting={renderQuestionPreview}
-            renderIncoming={renderQuestionPreview}
-            renderMerged={renderMergedQuestion}
-            getItemLabel={(q) => q.id}
-            itemType="question"
-          />
+          <>
+            {requiresConfirmation && (
+              <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs text-warning">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>
+                  Heads up: this file's answer keys looked 1-based (digits read as 0=A…3=D). You confirmed import — double-check merged answers below.
+                </span>
+              </div>
+            )}
+            <ConflictResolutionDialog
+              conflicts={conflicts}
+              onResolve={handleConflictsResolved}
+              // Back out to the review screen with all parsed data (and the
+              // 1-based gate) intact — don't reset, which would force a full
+              // re-upload and re-parse of large DOCX files.
+              onCancel={() => setStep('upload')}
+              renderExisting={renderQuestionPreview}
+              renderIncoming={renderQuestionPreview}
+              renderMerged={renderMergedQuestion}
+              getItemLabel={(q) => q.id}
+              itemType="question"
+            />
+          </>
         ) : (
           <div className="space-y-4 py-4 flex-1 overflow-hidden flex flex-col">
             {/* File Format Info */}
@@ -622,16 +635,19 @@ ${prefix}1A03,"What is the minimum age requirement for an amateur radio license?
                   ))}
                 </ul>
                 {requiresConfirmation && (
-                  <label className="flex items-start gap-2 pt-1 text-xs text-foreground cursor-pointer">
-                    <Checkbox
-                      checked={confirmed}
-                      onCheckedChange={(v) => setConfirmed(v === true)}
-                      className="mt-0.5"
-                    />
-                    <span>
-                      I've verified these answer keys are 0-based; import anyway (1→B, 2→C, 3→D). Any row with 4 is rejected regardless. (This warning is also expected for a 0-based file where no question answers A.)
-                    </span>
-                  </label>
+                  <div className="pt-1">
+                    <label className="flex items-start gap-2 text-xs font-medium text-foreground cursor-pointer">
+                      <Checkbox
+                        checked={confirmed}
+                        onCheckedChange={(v) => setConfirmed(v === true)}
+                        className="mt-0.5"
+                      />
+                      <span>I've verified these answer keys are 0-based — import anyway.</span>
+                    </label>
+                    <p className="ml-6 mt-1 text-xs text-muted-foreground">
+                      Digits import as 0=A, 1=B, 2=C, 3=D; any row with 4 is rejected. This warning can also fire for a 0-based file where no question answers A.
+                    </p>
+                  </div>
                 )}
               </div>
             )}
