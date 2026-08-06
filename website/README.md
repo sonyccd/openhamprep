@@ -5,33 +5,42 @@ This directory contains the static marketing website for Open Ham Prep, deployed
 ## Structure
 
 ```
-marketing/
-├── index.html          # Landing page
-├── about.html          # About page
-├── faq.html            # FAQ page
-├── features.html       # Features page
+website/
+├── index.html          # The site — a single landing page
+├── about.html          # Redirect stub → /
+├── faq.html            # Redirect stub → /#faq
+├── features.html       # Redirect stub → /#method
 ├── CNAME               # Custom domain configuration
 ├── css/
-│   └── styles.css      # Custom CSS styles
+│   └── signal.css      # "Signal" design system + page styles
+├── img/                # Brand assets
 └── js/
-    └── theme.js        # Theme toggle functionality
+    ├── config.js       # Analytics config (injected at deploy)
+    └── analytics.js    # Amplitude loader
 ```
+
+The marketing site is **one page**. Its nav links (`Method` / `Licenses` / `FAQ`)
+are in-page anchors. The three `.html` files beside `index.html` exist only so
+old inbound links and search results redirect instead of 404ing — they hold no
+content. Their previous long-form content is in git history if it is ever wanted
+back as additional sections.
 
 ## Deployment
 
-The marketing site is automatically deployed to GitHub Pages when changes are pushed to the `marketing/` directory on the main branch.
+The marketing site is automatically deployed to GitHub Pages when changes are pushed to the `website/` directory on the main branch.
 
 - **URL:** https://openhamprep.com
 - **Deployment:** GitHub Pages (free)
-- **Workflow:** `.github/workflows/deploy-marketing.yml`
+- **Workflow:** `.github/workflows/deploy-website.yml`
 
 ## Development
 
 The site uses:
-- Tailwind CSS (via CDN)
-- Lucide Icons (via CDN)
-- Vanilla JavaScript for interactivity
-- Google Fonts (Space Grotesk & JetBrains Mono)
+- The "Signal" design system (`css/signal.css`) — 2px grid, zero radius,
+  amber as the only interactive colour. Source of truth is the Claude Design
+  project `ui_kits/marketing/`.
+- IBM Plex Sans / Sans Condensed / Mono via Google Fonts
+- Inline SVG icons (no icon library)
 
 No build step is required - all files are static HTML/CSS/JS.
 
