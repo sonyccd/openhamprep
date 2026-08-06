@@ -394,6 +394,7 @@ a:hover { color: var(--interactive-hover); text-decoration-thickness: 2px; }
   .section-head { grid-template-columns: 1fr; gap: 32px; }
   .act { grid-template-columns: 1fr; gap: 24px; }
   .ribbon { grid-template-columns: repeat(2, 1fr); }
+  .ribbon > div:nth-child(2n) { border-right: 0; }
   .ladder { grid-template-columns: 1fr; }
   .rung { border-right: 1px solid var(--border-subtle); }
   /* .section-dark .rung sets border-right:0 at a higher specificity — match it here */
@@ -404,16 +405,17 @@ a:hover { color: var(--interactive-hover); text-decoration-thickness: 2px; }
 }
 @media (max-width: 640px) {
   .wrap { padding: 0 20px; }
-  /* Header wraps to two rows rather than dropping navigation entirely. */
-  .masthead .wrap { height: auto; flex-wrap: wrap; padding-top: 14px; }
-  .masthead .brand { order: 1; }
-  .masthead .btn { order: 2; }
-  .masthead nav {
-    order: 3; width: 100%; margin-top: 14px; padding: 12px 0;
-    gap: 24px; border-top: 1px solid var(--border-subtle);
-  }
+  /* Header wraps rather than dropping navigation entirely.
+     Deliberately no `order` here: CSS order does not move tab order, so
+     reordering visually would leave the keyboard focus sequence
+     disagreeing with what is on screen (WCAG 2.4.3 Focus Order).
+     Instead the brand claims the first row and nav -> CTA follow on the
+     next, which is already their DOM order. */
+  .masthead .wrap { height: auto; flex-wrap: wrap; padding: 14px 0; row-gap: 14px; }
+  .masthead .brand { flex: 0 0 100%; }
+  .masthead nav { gap: 20px; }
   .masthead .brand .tl { display: none; }
-  /* Header is ~118px tall here, so anchors need a deeper scroll offset. */
+  /* Header is ~113px tall here, so anchors need a deeper scroll offset. */
   html { scroll-padding-top: 124px; }
   /* Utility bar: let the labels wrap instead of bursting a fixed 40px row. */
   .utility .wrap { height: auto; min-height: 40px; padding-top: 8px; padding-bottom: 8px;
@@ -427,6 +429,7 @@ a:hover { color: var(--interactive-hover); text-decoration-thickness: 2px; }
   .section { padding: 64px 0; }
   .ribbon { grid-template-columns: 1fr; margin-top: 56px; }
   .ribbon > div { border-right: 0; border-bottom: 1px solid var(--border-dark); }
+  .ribbon > div:last-child { border-bottom: 0; }
   .act .n { font-size: 72px; }
   .rung .L { font-size: 80px; }
   .faq-item { grid-template-columns: 1fr; gap: 10px; }
