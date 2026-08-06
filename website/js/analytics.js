@@ -25,9 +25,15 @@
     function setup() {
       document.querySelectorAll('a[href*="app.openhamprep.com"]').forEach(function(link) {
         link.addEventListener('click', function() {
+          // Some CTAs (the license cards) wrap a whole block of copy, so
+          // textContent would ship a few hundred characters of markup
+          // whitespace as the label. Prefer an explicit one.
+          var label = this.dataset.ctaLabel ||
+                      this.getAttribute('aria-label') ||
+                      this.textContent;
           window.amplitude.track('CTA Clicked', {
             page: window.location.pathname,
-            button_text: this.textContent.trim(),
+            button_text: label.replace(/\s+/g, ' ').trim().slice(0, 100),
             destination_url: this.href,
           });
         });
