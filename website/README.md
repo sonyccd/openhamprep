@@ -49,7 +49,7 @@ No build step is required - all files are static HTML/CSS/JS.
 Simply open any HTML file in a browser, or use a local server:
 
 ```bash
-cd marketing
+cd website
 python3 -m http.server 8000
 # Visit http://localhost:8000
 ```
