@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, Dispatch, SetStateAction, ReactNode } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { GlossaryTerm } from "@/hooks/useGlossaryTerms";
 import {
@@ -15,7 +15,7 @@ import {
 // Context to ensure only one glossary term popover is open at a time on mobile
 interface GlossaryTermContextValue {
   openTermId: string | null;
-  setOpenTermId: (id: string | null) => void;
+  setOpenTermId: Dispatch<SetStateAction<string | null>>;
 }
 
 const GlossaryTermContext = createContext<GlossaryTermContextValue | null>(null);
@@ -61,7 +61,14 @@ export function GlossaryTermTooltip({ term, children }: GlossaryTermTooltipProps
     const isOpen = context?.openTermId === term.id;
 
     const handleOpenChange = (open: boolean) => {
-      context?.setOpenTermId(open ? term.id : null);
+      if (open) {
+        context?.setOpenTermId(term.id);
+      } else {
+        // Only clear if this term is still the active one - a stale close
+        // (e.g. from Popover A's outside-click dismiss firing after Popover
+        // B has already become active) must not clobber B's open state.
+        context?.setOpenTermId((current) => (current === term.id ? null : current));
+      }
     };
 
     return (
