@@ -360,7 +360,7 @@ export function AdminChapters() {
 
         <CardContent className="flex-1 min-h-0 overflow-hidden">
           {isLoading ? (
-            <div className="flex justify-center py-8">
+            <div className="flex justify-center py-8" role="status" aria-label="Loading chapters">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : filteredChapters.length === 0 ? (
@@ -413,6 +413,7 @@ export function AdminChapters() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label={`Edit ${chapter.title}`}
                     className="text-muted-foreground hover:text-primary"
                     onClick={() => handleEditClick(chapter)}
                   >
