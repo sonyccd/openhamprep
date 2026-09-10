@@ -61,7 +61,7 @@ describe('Glossary', () => {
       render(<Glossary />, { wrapper: createWrapper() });
 
       // Check for the loading spinner by its class (Loader2 from lucide-react)
-      const spinner = document.querySelector('.animate-spin');
+      const spinner = screen.queryByRole('status', { name: /loading glossary/i });
       expect(spinner).toBeInTheDocument();
     });
   });

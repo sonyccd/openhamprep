@@ -192,6 +192,7 @@ export function TopicQuiz({
                 <button
                   key={option}
                   onClick={() => handleSelectAnswer(option)}
+                  aria-pressed={selectedAnswer === option}
                   className={cn(
                     "w-full text-left p-4 rounded-xl border transition-all duration-200",
                     "flex items-start gap-3",

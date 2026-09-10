@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter, MemoryRouter, Routes, Route } from 'react-router-dom';
 import Index from './Index';
 
@@ -37,7 +37,7 @@ describe('Index Page', () => {
       );
 
       // Check for the loading spinner by its class
-      const spinner = container.querySelector('.animate-spin');
+      const spinner = screen.queryByRole('status', { name: /loading/i });
       expect(spinner).toBeInTheDocument();
     });
   });

@@ -283,6 +283,7 @@ export function QuestionCard({
               key={option}
               onClick={() => !showResult && onSelectAnswer(option)}
               disabled={showResult}
+              aria-pressed={selectedAnswer === option}
               className={cn(
                 "w-full text-left p-5 rounded-xl border transition-all duration-200",
                 "flex items-start gap-4",

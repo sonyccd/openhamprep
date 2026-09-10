@@ -135,7 +135,7 @@ describe('TopicDetailPage', () => {
       mockTopicLoading = true;
       const { container } = renderComponent();
 
-      const skeletons = container.querySelectorAll('[class*="animate-pulse"]');
+      const skeletons = screen.getAllByTestId('skeleton');
       expect(skeletons.length).toBeGreaterThan(0);
     });
   });
