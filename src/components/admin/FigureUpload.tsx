@@ -153,6 +153,9 @@ export function FigureUpload({ questionId, currentFigureUrl, onUpload, onRemove 
           onChange={handleFileSelect}
           className="hidden"
           id={`figure-upload-${questionId}`}
+          // display:none keeps this out of the accessibility tree, so there is
+          // no role or label to query it by; it is driven programmatically.
+          data-testid="figure-file-input"
         />
 
         <Button
@@ -191,6 +194,7 @@ export function FigureUpload({ questionId, currentFigureUrl, onUpload, onRemove 
                 type="button"
                 variant="ghost"
                 size="sm"
+                aria-label="Remove figure"
                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 disabled={isRemoving}
               >

@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { CircularProgress } from './circular-progress';
 
+// Exempt from the semantic-query conversion in #257. This primitive renders raw
+// SVG geometry with no accessible role of its own, so querySelector is the only
+// way to reach the circles whose stroke maths is the thing worth testing. The
+// file retires with the primitive itself when shadcn is removed in #266.
 describe('CircularProgress', () => {
   it('renders correctly with default props', () => {
     const { container } = render(<CircularProgress value={50} />);

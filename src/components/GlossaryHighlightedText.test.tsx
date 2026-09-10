@@ -44,37 +44,33 @@ describe('GlossaryHighlightedText', () => {
     it('highlights a single term in text', () => {
       render(<GlossaryHighlightedText text="An Antenna is used for radio." />);
 
-      // The term should be highlighted with underline styling
-      const highlightedTerm = screen.getByText('Antenna');
-      expect(highlightedTerm).toHaveClass('underline');
+      // A highlighted term becomes an interactive glossary trigger.
+      expect(screen.getByRole('button', { name: /^Antenna:/ })).toHaveTextContent('Antenna');
     });
 
     it('highlights multiple terms in text', () => {
       render(<GlossaryHighlightedText text="Use an Antenna for CW communication." />);
 
-      expect(screen.getByText('Antenna')).toHaveClass('underline');
-      expect(screen.getByText('CW')).toHaveClass('underline');
+      expect(screen.getByRole('button', { name: /^Antenna:/ })).toHaveTextContent('Antenna');
+      expect(screen.getByRole('button', { name: /^CW:/ })).toHaveTextContent('CW');
     });
 
     it('matches terms case-insensitively', () => {
       render(<GlossaryHighlightedText text="The antenna is important." />);
 
-      const highlightedTerm = screen.getByText('antenna');
-      expect(highlightedTerm).toHaveClass('underline');
+      expect(screen.getByRole('button', { name: /^Antenna:/ })).toHaveTextContent('antenna');
     });
 
     it('matches uppercase terms', () => {
       render(<GlossaryHighlightedText text="THE ANTENNA IS IMPORTANT." />);
 
-      const highlightedTerm = screen.getByText('ANTENNA');
-      expect(highlightedTerm).toHaveClass('underline');
+      expect(screen.getByRole('button', { name: /^Antenna:/ })).toHaveTextContent('ANTENNA');
     });
 
     it('matches multi-word terms', () => {
       render(<GlossaryHighlightedText text="I love Amateur Radio." />);
 
-      const highlightedTerm = screen.getByText('Amateur Radio');
-      expect(highlightedTerm).toHaveClass('underline');
+      expect(screen.getByRole('button', { name: /^Amateur Radio:/ })).toHaveTextContent('Amateur Radio');
     });
   });
 
@@ -82,22 +78,21 @@ describe('GlossaryHighlightedText', () => {
     it('does not match partial words', () => {
       render(<GlossaryHighlightedText text="Antennas are useful." />);
 
-      // "Antennas" should NOT be highlighted because we match "Antenna" with word boundaries
-      // The text should be rendered without underline on "Antennas"
-      const container = document.querySelector('span');
-      expect(container?.textContent).toContain('Antennas are useful.');
+      // "Antennas" must stay plain text: no glossary trigger is created for it.
+      expect(screen.getByText(/Antennas are useful\./)).toBeInTheDocument();
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
 
     it('matches terms at start of text', () => {
       render(<GlossaryHighlightedText text="Antenna is great." />);
 
-      expect(screen.getByText('Antenna')).toHaveClass('underline');
+      expect(screen.getByRole('button', { name: /^Antenna:/ })).toHaveTextContent('Antenna');
     });
 
     it('matches terms at end of text', () => {
       render(<GlossaryHighlightedText text="This is an Antenna" />);
 
-      expect(screen.getByText('Antenna')).toHaveClass('underline');
+      expect(screen.getByRole('button', { name: /^Antenna:/ })).toHaveTextContent('Antenna');
     });
   });
 
@@ -140,19 +135,20 @@ describe('GlossaryHighlightedText', () => {
 
       // The term with parentheses may or may not be matched depending on regex escaping
       // At minimum, the component should not crash and should render the text
-      const container = document.querySelector('span');
-      expect(container?.textContent).toContain('Test (item)');
+      expect(screen.getByText(/Test \(item\)/)).toBeInTheDocument();
     });
   });
 
   describe('Tooltip Styling', () => {
-    it('applies correct styling to highlighted terms', () => {
+    // Was three class assertions with no behavioural meaning. The part worth
+    // keeping is that the definition reaches assistive tech, which nothing else
+    // covers.
+    it('exposes the definition as the accessible name', () => {
       render(<GlossaryHighlightedText text="An Antenna example." />);
 
-      const highlightedTerm = screen.getByText('Antenna');
-      expect(highlightedTerm).toHaveClass('underline');
-      expect(highlightedTerm).toHaveClass('decoration-dotted');
-      expect(highlightedTerm).toHaveClass('cursor-help');
+      const highlightedTerm = screen.getByRole('button', { name: /^Antenna:/ });
+      expect(highlightedTerm).toHaveAccessibleName(/Device for transmitting\/receiving radio waves/i);
+      expect(highlightedTerm).toHaveAttribute('tabIndex', '0');
     });
   });
 
@@ -168,7 +164,7 @@ describe('GlossaryHighlightedText', () => {
       render(<GlossaryHighlightedText text="I use Amateur Radio daily." />);
 
       // "Amateur Radio" should be matched as a single term, not just "Radio"
-      expect(screen.getByText('Amateur Radio')).toHaveClass('underline');
+      expect(screen.getByRole('button', { name: /^Amateur Radio:/ })).toHaveTextContent('Amateur Radio');
     });
   });
 });

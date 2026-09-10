@@ -84,9 +84,7 @@ describe('FigureUpload', () => {
           currentFigureUrl="https://storage.example.com/figures/E9B05.png"
         />
       );
-      // Delete button is inside the component
-      const deleteButton = document.querySelector('[class*="text-destructive"]');
-      expect(deleteButton).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /remove figure/i })).toBeInTheDocument();
     });
 
     it('should render file size info text', () => {
@@ -103,13 +101,13 @@ describe('FigureUpload', () => {
   describe('File Selection', () => {
     it('should accept image files', () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
       expect(fileInput).toHaveAttribute('accept', 'image/png,image/jpeg,image/gif,image/webp,image/svg+xml');
     });
 
     it('should trigger file input when upload button is clicked', () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
       const clickSpy = vi.spyOn(fileInput, 'click');
 
       fireEvent.click(screen.getByText('Upload Figure'));
@@ -120,7 +118,7 @@ describe('FigureUpload', () => {
   describe('File Validation', () => {
     it('should reject files larger than 2MB', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
 
       // Create a file larger than 2MB
       const largeFile = new File(['x'.repeat(3 * 1024 * 1024)], 'large.png', { type: 'image/png' });
@@ -139,7 +137,7 @@ describe('FigureUpload', () => {
 
     it('should reject non-image file types', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
 
       const textFile = new File(['test content'], 'test.txt', { type: 'text/plain' });
 
@@ -157,7 +155,7 @@ describe('FigureUpload', () => {
 
     it('should accept PNG files', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
 
       const pngFile = new File(['test'], 'test.png', { type: 'image/png' });
 
@@ -174,7 +172,7 @@ describe('FigureUpload', () => {
 
     it('should accept JPEG files', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
 
       const jpegFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
 
@@ -191,7 +189,7 @@ describe('FigureUpload', () => {
 
     it('should accept GIF files', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
 
       const gifFile = new File(['test'], 'test.gif', { type: 'image/gif' });
 
@@ -208,7 +206,7 @@ describe('FigureUpload', () => {
 
     it('should accept WebP files', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
 
       const webpFile = new File(['test'], 'test.webp', { type: 'image/webp' });
 
@@ -225,7 +223,7 @@ describe('FigureUpload', () => {
 
     it('should accept SVG files', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
 
       const svgFile = new File(['<svg></svg>'], 'test.svg', { type: 'image/svg+xml' });
 
@@ -250,7 +248,7 @@ describe('FigureUpload', () => {
       }));
 
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
 
       const pngFile = new File(['test'], 'test.png', { type: 'image/png' });
       Object.defineProperty(fileInput, 'files', { value: [pngFile] });
@@ -273,7 +271,7 @@ describe('FigureUpload', () => {
     it('should call onUpload with URL on successful upload', async () => {
       const onUpload = vi.fn();
       render(<FigureUpload {...defaultProps} onUpload={onUpload} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
 
       const pngFile = new File(['test'], 'test.png', { type: 'image/png' });
       Object.defineProperty(fileInput, 'files', { value: [pngFile] });
@@ -289,7 +287,7 @@ describe('FigureUpload', () => {
 
     it('should show success toast on successful upload', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
 
       const pngFile = new File(['test'], 'test.png', { type: 'image/png' });
       Object.defineProperty(fileInput, 'files', { value: [pngFile] });
@@ -305,7 +303,7 @@ describe('FigureUpload', () => {
       mockUpload.mockResolvedValue({ error: { message: 'Upload failed' } });
 
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
 
       const pngFile = new File(['test'], 'test.png', { type: 'image/png' });
       Object.defineProperty(fileInput, 'files', { value: [pngFile] });
@@ -319,7 +317,7 @@ describe('FigureUpload', () => {
 
     it('should use question ID as filename', async () => {
       render(<FigureUpload {...defaultProps} questionId="T1A01" />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
 
       const pngFile = new File(['test'], 'original-name.png', { type: 'image/png' });
       Object.defineProperty(fileInput, 'files', { value: [pngFile] });
@@ -346,7 +344,7 @@ describe('FigureUpload', () => {
       );
 
       // Find and click the delete button
-      const deleteButton = document.querySelector('[class*="text-destructive"]') as HTMLElement;
+      const deleteButton = screen.getByRole('button', { name: /remove figure/i });
       fireEvent.click(deleteButton);
 
       await waitFor(() => {
@@ -366,7 +364,7 @@ describe('FigureUpload', () => {
       );
 
       // Click delete button
-      const deleteButton = document.querySelector('[class*="text-destructive"]') as HTMLElement;
+      const deleteButton = screen.getByRole('button', { name: /remove figure/i });
       fireEvent.click(deleteButton);
 
       // Wait for dialog and click confirm
@@ -391,7 +389,7 @@ describe('FigureUpload', () => {
         />
       );
 
-      const deleteButton = document.querySelector('[class*="text-destructive"]') as HTMLElement;
+      const deleteButton = screen.getByRole('button', { name: /remove figure/i });
       fireEvent.click(deleteButton);
 
       await waitFor(() => {
@@ -416,7 +414,7 @@ describe('FigureUpload', () => {
         />
       );
 
-      const deleteButton = document.querySelector('[class*="text-destructive"]') as HTMLElement;
+      const deleteButton = screen.getByRole('button', { name: /remove figure/i });
       fireEvent.click(deleteButton);
 
       await waitFor(() => {
@@ -438,7 +436,7 @@ describe('FigureUpload', () => {
       }));
 
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
 
       const pngFile = new File(['test'], 'test.png', { type: 'image/png' });
       Object.defineProperty(fileInput, 'files', { value: [pngFile] });
@@ -472,7 +470,7 @@ describe('FigureUpload', () => {
         />
       );
 
-      const deleteButton = document.querySelector('[class*="text-destructive"]') as HTMLElement;
+      const deleteButton = screen.getByRole('button', { name: /remove figure/i });
       fireEvent.click(deleteButton);
 
       await waitFor(() => {
@@ -484,9 +482,7 @@ describe('FigureUpload', () => {
 
       // The button should be disabled during remove
       await waitFor(() => {
-        const removeBtn = document.querySelector('[class*="text-destructive"]');
-        // During remove, the button shows a loader
-        expect(removeBtn?.querySelector('.animate-spin') || removeBtn?.hasAttribute('disabled')).toBeTruthy();
+        expect(screen.getByRole('button', { name: /remove figure/i })).toBeDisabled();
       });
 
       // Resolve the mock to allow cleanup to complete properly
