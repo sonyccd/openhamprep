@@ -69,8 +69,7 @@ describe('LicenseSelectModal', () => {
     it('highlights the currently selected license card', () => {
       render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />);
 
-      const technicianCard = screen.getByText('Technician').closest('[role="radio"]');
-      expect(technicianCard).toHaveClass('border-primary');
+      expect(screen.getByRole('radio', { name: /Technician/ })).toBeChecked();
     });
 
     it('allows selecting a different license', async () => {
@@ -80,8 +79,7 @@ describe('LicenseSelectModal', () => {
       const generalCard = screen.getByText('General').closest('[role="radio"]');
       await user.click(generalCard!);
 
-      // The General card should now be highlighted
-      expect(generalCard).toHaveClass('border-primary');
+      expect(generalCard).toBeChecked();
     });
 
     it('updates pending selection when clicking a card', async () => {
@@ -183,8 +181,7 @@ describe('LicenseSelectModal', () => {
       const generalCard = screen.getByText('General').closest('[role="radio"]');
       await user.click(generalCard!);
 
-      // Verify General is now highlighted
-      expect(generalCard).toHaveClass('border-primary');
+      expect(generalCard).toBeChecked();
 
       // Click Cancel - this should reset the pending selection
       await user.click(screen.getByRole('button', { name: /cancel/i }));
@@ -197,22 +194,19 @@ describe('LicenseSelectModal', () => {
       // When modal opens with technician selected, technician should be pending selection
       render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />);
 
-      const technicianCard = screen.getByText('Technician').closest('[role="radio"]');
-      expect(technicianCard).toHaveClass('border-primary');
+      expect(screen.getByRole('radio', { name: /Technician/ })).toBeChecked();
     });
 
     it('starts with correct pending selection for general', () => {
       render(<LicenseSelectModal {...defaultProps} selectedTest="general" />);
 
-      const generalCard = screen.getByText('General').closest('[role="radio"]');
-      expect(generalCard).toHaveClass('border-primary');
+      expect(screen.getByRole('radio', { name: /General/ })).toBeChecked();
     });
 
     it('starts with correct pending selection for extra', () => {
       render(<LicenseSelectModal {...defaultProps} selectedTest="extra" />);
 
-      const extraCard = screen.getByText('Amateur Extra').closest('[role="radio"]');
-      expect(extraCard).toHaveClass('border-primary');
+      expect(screen.getByRole('radio', { name: /Amateur Extra/ })).toBeChecked();
     });
   });
 
