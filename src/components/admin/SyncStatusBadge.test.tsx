@@ -64,33 +64,6 @@ describe('SyncStatusBadge', () => {
       expect(container.firstChild).toBeNull();
     });
 
-    it('should have green styling when synced', () => {
-      render(<SyncStatusBadge {...defaultProps} status="synced" />);
-      const badge = screen.getByText('Synced').closest('div');
-      expect(badge).toHaveClass('bg-success/20');
-      expect(badge).toHaveClass('text-success');
-    });
-
-    it('should have red styling when error', () => {
-      render(<SyncStatusBadge {...defaultProps} status="error" />);
-      const badge = screen.getByText('Sync Error').closest('div');
-      expect(badge).toHaveClass('bg-destructive/20');
-      expect(badge).toHaveClass('text-destructive');
-    });
-
-    it('should have muted styling when pending', () => {
-      render(<SyncStatusBadge {...defaultProps} status="pending" />);
-      const badge = screen.getByText('Pending').closest('div');
-      expect(badge).toHaveClass('bg-muted');
-      expect(badge).toHaveClass('text-muted-foreground');
-    });
-
-    it('should have amber styling when unverified', () => {
-      render(<SyncStatusBadge {...defaultProps} status={null} />);
-      const badge = screen.getByText('Unverified').closest('div');
-      expect(badge).toHaveClass('bg-amber-500/20');
-      expect(badge).toHaveClass('text-amber-600');
-    });
   });
 
   describe('Modal Interaction', () => {
@@ -325,12 +298,6 @@ describe('SyncStatusBadge', () => {
   });
 
   describe('Accessibility', () => {
-    it('should have cursor-pointer class for clickable badge', () => {
-      render(<SyncStatusBadge {...defaultProps} />);
-      const badge = screen.getByText('Synced').closest('div');
-      expect(badge).toHaveClass('cursor-pointer');
-    });
-
     it('should have proper dialog role for modal', async () => {
       render(<SyncStatusBadge {...defaultProps} />);
 

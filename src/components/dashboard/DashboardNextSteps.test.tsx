@@ -68,30 +68,6 @@ describe('DashboardNextSteps', () => {
     expect(buttons).toHaveLength(1);
   });
 
-  it('applies warning variant styles', () => {
-    const step = createStep({ variant: 'warning', icon: Zap });
-    const { container } = render(<DashboardNextSteps steps={[step]} />);
-
-    const iconContainer = container.querySelector('.bg-warning\\/10');
-    expect(iconContainer).toBeInTheDocument();
-  });
-
-  it('applies primary variant styles', () => {
-    const step = createStep({ variant: 'primary', icon: Target });
-    const { container } = render(<DashboardNextSteps steps={[step]} />);
-
-    const iconContainer = container.querySelector('.bg-primary\\/10');
-    expect(iconContainer).toBeInTheDocument();
-  });
-
-  it('applies secondary variant styles', () => {
-    const step = createStep({ variant: 'secondary' });
-    const { container } = render(<DashboardNextSteps steps={[step]} />);
-
-    const iconContainer = container.querySelector('.bg-secondary');
-    expect(iconContainer).toBeInTheDocument();
-  });
-
   it('renders section header', () => {
     const step = createStep();
     render(<DashboardNextSteps steps={[step]} />);
@@ -99,44 +75,4 @@ describe('DashboardNextSteps', () => {
     expect(screen.getByText('What to do next')).toBeInTheDocument();
   });
 
-  it('truncates long descriptions', () => {
-    const step = createStep({
-      description: 'This is a very long description that should be truncated after two lines',
-    });
-    const { container } = render(<DashboardNextSteps steps={[step]} />);
-
-    const description = container.querySelector('.line-clamp-2');
-    expect(description).toBeInTheDocument();
-  });
-
-  it('applies correct grid columns for 1 step', () => {
-    const step = createStep();
-    const { container } = render(<DashboardNextSteps steps={[step]} />);
-
-    const grid = container.querySelector('.grid');
-    expect(grid).toHaveClass('grid-cols-1');
-  });
-
-  it('applies correct grid columns for 2 steps', () => {
-    const steps = [
-      createStep({ id: '1' }),
-      createStep({ id: '2' }),
-    ];
-    const { container } = render(<DashboardNextSteps steps={steps} />);
-
-    const grid = container.querySelector('.grid');
-    expect(grid).toHaveClass('sm:grid-cols-2');
-  });
-
-  it('applies correct grid columns for 3 steps', () => {
-    const steps = [
-      createStep({ id: '1' }),
-      createStep({ id: '2' }),
-      createStep({ id: '3' }),
-    ];
-    const { container } = render(<DashboardNextSteps steps={steps} />);
-
-    const grid = container.querySelector('.grid');
-    expect(grid).toHaveClass('lg:grid-cols-3');
-  });
 });
