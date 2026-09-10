@@ -125,7 +125,7 @@ describe('LessonPath', () => {
   });
 
   describe('Topic States', () => {
-    it('should show checkmark for completed topics', () => {
+    it('should mark completed topics as completed', () => {
       render(
         <LessonPath
           topics={mockTopics}
@@ -134,8 +134,7 @@ describe('LessonPath', () => {
           onTopicClick={mockOnTopicClick}
         />
       );
-      // The Check icon should be present for completed topic
-      expect(document.querySelector('.lucide-check')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /\(completed\)$/ })).toBeInTheDocument();
     });
 
     it('should show "Next" badge for current topic', () => {
@@ -150,7 +149,7 @@ describe('LessonPath', () => {
       expect(screen.getByText('Next')).toBeInTheDocument();
     });
 
-    it('should show Zap icon for current topic', () => {
+    it('should mark the current topic as the current step', () => {
       render(
         <LessonPath
           topics={mockTopics}
@@ -159,10 +158,10 @@ describe('LessonPath', () => {
           onTopicClick={mockOnTopicClick}
         />
       );
-      expect(document.querySelector('.lucide-zap')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /\(current\)$/ })).toHaveAttribute('aria-current', 'step');
     });
 
-    it('should show lock icon for locked topics', () => {
+    it('should disable locked topics', () => {
       render(
         <LessonPath
           topics={mockTopics}
@@ -171,8 +170,8 @@ describe('LessonPath', () => {
           onTopicClick={mockOnTopicClick}
         />
       );
-      // Topic 3 (index 2) should be locked since current is 1 and it's not completed
-      expect(document.querySelector('.lucide-lock')).toBeInTheDocument();
+      // Topic 3 (index 2) is locked: current is 1 and it is not completed.
+      expect(screen.getByRole('button', { name: /\(locked\)$/ })).toBeDisabled();
     });
 
     it('should show step number badge for completed topics', () => {
@@ -273,9 +272,7 @@ describe('LessonPath', () => {
           onTopicClick={mockOnTopicClick}
         />
       );
-      // All topics should have checkmarks
-      const checkIcons = document.querySelectorAll('.lucide-check');
-      expect(checkIcons.length).toBe(3);
+      expect(screen.getAllByRole('button', { name: /\(completed\)$/ })).toHaveLength(3);
     });
 
     it('should handle undefined topicProgress', () => {

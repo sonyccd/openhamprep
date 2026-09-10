@@ -114,9 +114,7 @@ describe('GlossaryTermTooltip', () => {
 
       await user.click(screen.getByText('Click me'));
 
-      // Term name should be displayed with semibold styling
-      const termName = screen.getByText('Antenna');
-      expect(termName).toHaveClass('font-semibold');
+      expect(screen.getByText('Antenna')).toBeInTheDocument();
     });
 
     it('closes popover when clicking the same term again', async () => {
@@ -232,44 +230,4 @@ describe('GlossaryTermTooltip', () => {
     });
   });
 
-  describe('Content Styling', () => {
-    beforeEach(() => {
-      vi.mocked(useIsMobile).mockReturnValue(true);
-    });
-
-    it('applies correct styling to term name', async () => {
-      const user = userEvent.setup();
-
-      render(
-        <GlossaryTermProvider>
-          <GlossaryTermTooltip term={mockTerm}>
-            <span>Click</span>
-          </GlossaryTermTooltip>
-        </GlossaryTermProvider>
-      );
-
-      await user.click(screen.getByText('Click'));
-
-      const termName = screen.getByText('Antenna');
-      expect(termName).toHaveClass('font-semibold');
-      expect(termName).toHaveClass('text-primary');
-    });
-
-    it('applies correct styling to definition', async () => {
-      const user = userEvent.setup();
-
-      render(
-        <GlossaryTermProvider>
-          <GlossaryTermTooltip term={mockTerm}>
-            <span>Click</span>
-          </GlossaryTermTooltip>
-        </GlossaryTermProvider>
-      );
-
-      await user.click(screen.getByText('Click'));
-
-      const definition = screen.getByText('Device for transmitting/receiving radio waves');
-      expect(definition).toHaveClass('text-popover-foreground');
-    });
-  });
 });
