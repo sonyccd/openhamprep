@@ -20,6 +20,24 @@ interface GlossaryTermContextValue {
 
 const GlossaryTermContext = createContext<GlossaryTermContextValue | null>(null);
 
+// Computes the next shared openTermId for a single popover's open/close
+// event. Exported (and pure) so the "stale close after a newer open"
+// ordering race can be tested directly, without depending on real DOM
+// event timing to reproduce it.
+export function nextOpenTermId(
+  current: string | null,
+  termId: string,
+  open: boolean
+): string | null {
+  if (open) {
+    return termId;
+  }
+  // Only clear if this term is still the active one - a stale close (e.g.
+  // from Popover A's outside-click dismiss firing after Popover B has
+  // already become active) must not clobber B's open state.
+  return current === termId ? null : current;
+}
+
 interface GlossaryTermProviderProps {
   children: ReactNode;
 }
@@ -61,14 +79,7 @@ export function GlossaryTermTooltip({ term, children }: GlossaryTermTooltipProps
     const isOpen = context?.openTermId === term.id;
 
     const handleOpenChange = (open: boolean) => {
-      if (open) {
-        context?.setOpenTermId(term.id);
-      } else {
-        // Only clear if this term is still the active one - a stale close
-        // (e.g. from Popover A's outside-click dismiss firing after Popover
-        // B has already become active) must not clobber B's open state.
-        context?.setOpenTermId((current) => (current === term.id ? null : current));
-      }
+      context?.setOpenTermId((current) => nextOpenTermId(current, term.id, open));
     };
 
     return (

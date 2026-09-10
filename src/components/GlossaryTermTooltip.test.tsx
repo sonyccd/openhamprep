@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { GlossaryTermTooltip, GlossaryTermProvider } from './GlossaryTermTooltip';
+import { GlossaryTermTooltip, GlossaryTermProvider, nextOpenTermId } from './GlossaryTermTooltip';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -163,6 +163,38 @@ describe('GlossaryTermTooltip', () => {
       await user.click(screen.getByText('Band'));
       expect(screen.queryByText('Device for transmitting/receiving radio waves')).not.toBeInTheDocument();
       expect(screen.getByText('A range of frequencies')).toBeInTheDocument();
+    });
+  });
+
+  describe('nextOpenTermId (regression: stale close after a newer open)', () => {
+    it('keeps the newly-opened term when its own open call arrives before a different term\'s stale close', () => {
+      // Term A opens.
+      let state = nextOpenTermId(null, 'A', true);
+      expect(state).toBe('A');
+
+      // Term B opens - e.g. the user clicked B's trigger, which reads B's
+      // own (still-closed) toggle state independently of A.
+      state = nextOpenTermId(state, 'B', true);
+      expect(state).toBe('B');
+
+      // A's dismiss-on-outside-click handler fires last (it was triggered
+      // by the same click that opened B, but resolves after B's own click
+      // handler). It must not clobber B's now-active state.
+      state = nextOpenTermId(state, 'A', false);
+      expect(state).toBe('B');
+    });
+
+    it('clears the term when its own close call is the most recent event for it', () => {
+      let state = nextOpenTermId(null, 'A', true);
+      expect(state).toBe('A');
+
+      state = nextOpenTermId(state, 'A', false);
+      expect(state).toBeNull();
+    });
+
+    it('ignores a stale close for a term that was never the active one', () => {
+      const state = nextOpenTermId('B', 'A', false);
+      expect(state).toBe('B');
     });
   });
 

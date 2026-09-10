@@ -16,6 +16,10 @@ MotionGlobalConfig.skipAnimations = true;
 // WAAPI path even with skipAnimations set, hitting the same unhandled
 // rejection on unmount. Hiding Element.prototype.animate makes framer-motion
 // fall back to its own main-thread animation driver instead.
+// Note: this is global, so a component that calls element.animate(...)
+// directly (not through framer-motion) will throw "animate is not a
+// function" under test - if that ever happens, this is the first place
+// to check.
 delete (Element.prototype as { animate?: unknown }).animate;
 
 // Mock window.matchMedia
