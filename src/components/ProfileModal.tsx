@@ -694,6 +694,7 @@ export function ProfileModal({
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Back"
                 onClick={handleBack}
                 className="h-8 w-8 shrink-0 -ml-1"
               >

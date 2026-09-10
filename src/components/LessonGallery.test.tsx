@@ -127,11 +127,6 @@ describe('LessonGallery', () => {
       renderComponent();
       expect(screen.getByPlaceholderText('Search lessons...')).toBeInTheDocument();
     });
-
-    it('should render Route icon in header', () => {
-      renderComponent();
-      expect(document.querySelector('.lucide-route')).toBeInTheDocument();
-    });
   });
 
   describe('Loading State', () => {

@@ -296,9 +296,7 @@ describe('GlossaryFlashcards', () => {
       await user.click(screen.getByRole('button', { name: /start studying/i }));
 
       await waitFor(() => {
-        const buttons = screen.getAllByRole('button');
-        const prevButton = buttons.find(btn => btn.querySelector('svg.lucide-chevron-left'));
-        expect(prevButton).toBeDisabled();
+        expect(screen.getByRole('button', { name: /previous term/i })).toBeDisabled();
       });
     });
   });

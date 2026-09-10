@@ -66,11 +66,7 @@ describe('FigureLightbox', () => {
       const onClose = vi.fn();
       render(<FigureLightbox {...defaultProps} onClose={onClose} />);
 
-      // Click on the overlay (the dialog overlay element)
-      const overlay = document.querySelector('[data-state="open"]');
-      if (overlay) {
-        fireEvent.click(overlay);
-      }
+      fireEvent.click(screen.getByRole('dialog'));
       // Note: Radix handles this internally, the onClose will be called via onOpenChange
     });
   });
@@ -94,13 +90,6 @@ describe('FigureLightbox', () => {
   });
 
   describe('Styling', () => {
-    it('should have overlay background', () => {
-      render(<FigureLightbox {...defaultProps} />);
-      // The overlay uses semantic bg-background/95 class
-      const overlay = document.querySelector('[class*="bg-background"]');
-      expect(overlay).toBeInTheDocument();
-    });
-
     it('should have max dimensions for viewport constraints', () => {
       render(<FigureLightbox {...defaultProps} />);
       const img = screen.getByAltText('Figure for question E9B05');

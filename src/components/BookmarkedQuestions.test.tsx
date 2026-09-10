@@ -197,11 +197,7 @@ describe('BookmarkedQuestions', () => {
     it('renders delete button for each bookmark', () => {
       renderBookmarkedQuestions();
       
-      const deleteButtons = screen.getAllByRole('button').filter(btn => 
-        btn.querySelector('svg')?.classList.contains('lucide-trash-2') ||
-        btn.textContent === ''
-      );
-      expect(deleteButtons.length).toBeGreaterThan(0);
+      expect(screen.getAllByRole('button', { name: /^Remove bookmark for / }).length).toBeGreaterThan(0);
     });
   });
 
@@ -314,18 +310,10 @@ describe('BookmarkedQuestions', () => {
     it('calls removeBookmark when delete button is clicked', async () => {
       renderBookmarkedQuestions();
 
-      // Find and click the delete button (the trash icon button)
-      const allButtons = screen.getAllByRole('button');
-      const deleteButton = allButtons.find(btn => {
-        // Look for button with trash icon
-        return btn.querySelector('svg.lucide-trash-2') !== null ||
-               btn.classList.contains('text-muted-foreground');
-      });
-
-      if (deleteButton) {
-        fireEvent.click(deleteButton);
-        expect(mockRemoveBookmark.mutate).toHaveBeenCalledWith('uuid-t1a01');
-      }
+      // Previously this searched for a trash icon and asserted nothing if it
+      // came up empty; the button has a name now, so a miss fails the test.
+      fireEvent.click(screen.getAllByRole('button', { name: /^Remove bookmark for / })[0]);
+      expect(mockRemoveBookmark.mutate).toHaveBeenCalledWith('uuid-t1a01');
     });
   });
 

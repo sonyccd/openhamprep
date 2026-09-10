@@ -193,15 +193,15 @@ describe('TopicResourcePanel', () => {
       expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     });
 
-    it('should show external link icon for URL resources', () => {
+    it('should open URL resources in a new tab', () => {
       const resources = [createResource({ resource_type: 'video', url: 'https://example.com' })];
-      const { container } = render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />);
 
       // Click to expand the Videos group
       const videosButton = screen.getAllByText('Videos')[0];
       fireEvent.click(videosButton);
 
-      expect(container.querySelector('svg[class*="external-link"]')).toBeInTheDocument();
+      expect(screen.getAllByRole('link')[0]).toHaveAttribute('target', '_blank');
     });
   });
 
@@ -268,14 +268,14 @@ describe('TopicResourcePanel', () => {
           url: null,
         }),
       ];
-      const { container } = render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />);
 
       // Click to expand the Videos group
       const videosButton = screen.getAllByText('Videos')[0];
       fireEvent.click(videosButton);
 
-      const downloadIcon = container.querySelector('svg[class*="download"]');
-      expect(downloadIcon).toBeInTheDocument();
+      // A stored file is offered as a download rather than a plain link out.
+      expect(screen.getAllByRole('link')[0]).toHaveAttribute('download');
     });
   });
 
