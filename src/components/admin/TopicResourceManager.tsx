@@ -400,6 +400,7 @@ export function TopicResourceManager({
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label={`Edit ${resource.title}`}
                     className="h-8 w-8"
                     onClick={() => handleEditClick(resource)}
                   >
@@ -408,6 +409,7 @@ export function TopicResourceManager({
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label={`Delete ${resource.title}`}
                     className="h-8 w-8 text-destructive hover:text-destructive"
                     onClick={() => setDeleteResourceId(resource.id)}
                   >

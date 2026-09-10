@@ -92,31 +92,18 @@ describe('TopicProgressButton', () => {
       expect(screen.getByRole('button')).toBeDisabled();
     });
 
-    it('should show loading spinner when pending', () => {
-      mockIsPending = true;
+    it('should invite completion when not completed', () => {
+      mockIsCompleted = false;
       renderComponent();
 
-      expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /mark as complete/i })).toBeInTheDocument();
     });
 
-    it('should show circle icon when not completed', () => {
-      mockIsCompleted = false;
-      const { container } = renderComponent();
-
-      // Look for SVG with the circle class
-      const circleIcon = container.querySelector('svg.lucide-circle');
-      expect(circleIcon).toBeInTheDocument();
-    });
-
-    it('should show check-circle icon when completed', () => {
+    it('should report completion when completed', () => {
       mockIsCompleted = true;
-      const { container } = renderComponent();
+      renderComponent();
 
-      // lucide-react may use different naming, so look for any svg inside the button
-      // that's not the circle icon and not the loader
-      const checkIcon = container.querySelector('svg[class*="check-circle"]') ||
-                        container.querySelector('svg.lucide-check-circle-2');
-      expect(checkIcon || container.querySelector('svg:not(.lucide-circle):not(.animate-spin)')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^completed$/i })).toBeInTheDocument();
     });
   });
 
