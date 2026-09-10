@@ -643,10 +643,12 @@ function RuleCard({ rule, onToggle, onEdit, onDelete, isToggling }: RuleCardProp
             checked={rule.is_enabled}
             onCheckedChange={(checked) => onToggle(rule.id, checked)}
             disabled={isToggling}
+            aria-label={`Enable ${rule.name}`}
           />
           <Button
             size="icon"
             variant="ghost"
+            aria-label={`Edit ${rule.name}`}
             onClick={() => onEdit(rule)}
           >
             <Pencil className="w-4 h-4" />
@@ -654,6 +656,7 @@ function RuleCard({ rule, onToggle, onEdit, onDelete, isToggling }: RuleCardProp
           <Button
             size="icon"
             variant="ghost"
+            aria-label={`Delete ${rule.name}`}
             className="text-destructive hover:text-destructive"
             onClick={() => onDelete(rule)}
           >
@@ -783,7 +786,7 @@ export function AdminAlertRules() {
 
       {/* Rules list */}
       {isLoading ? (
-        <div className="flex justify-center py-12">
+        <div className="flex justify-center py-12" role="status" aria-label="Loading alert rules">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       ) : rules.length === 0 ? (

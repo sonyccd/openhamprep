@@ -36,9 +36,9 @@ describe('MarkdownText', () => {
     });
 
     it('handles line breaks', () => {
-      const { container } = render(<MarkdownText text="Line 1\nLine 2" />);
-      const paragraphs = container.querySelectorAll('p');
-      expect(paragraphs.length).toBeGreaterThanOrEqual(1);
+      render(<MarkdownText text="Line 1\nLine 2" />);
+      expect(screen.getByText(/Line 1/)).toBeInTheDocument();
+      expect(screen.getByText(/Line 2/)).toBeInTheDocument();
     });
 
     it('handles empty text', () => {
@@ -206,6 +206,9 @@ describe('MarkdownText', () => {
   });
 
   describe('math rendering', () => {
+    // The three assertions below stay as class selectors on purpose: .katex is
+    // KaTeX's own render output, not styling of ours, so it is unaffected by the
+    // MUI port and there is no role or accessible name to query instead.
     it('renders inline math with $ delimiters', () => {
       const { container } = render(<MarkdownText text="The formula is $E = mc^2$ here" />);
       // KaTeX renders math into span elements with katex class
