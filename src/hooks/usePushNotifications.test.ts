@@ -266,6 +266,12 @@ describe('usePushNotifications', () => {
       });
     });
 
+    afterEach(() => {
+      // Restore document.addEventListener so the next test's spy wraps the
+      // real implementation instead of the previous test's mock
+      vi.restoreAllMocks();
+    });
+
     it('updates permission state when tab becomes visible and permission changed', () => {
       const { result } = renderHook(() => usePushNotifications());
 
