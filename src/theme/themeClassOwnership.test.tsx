@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render } from "@testing-library/react";
-import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
+import { render, screen, waitFor } from "@testing-library/react";
+import { ThemeProvider as MuiThemeProvider, useColorScheme } from "@mui/material/styles";
+import { ThemeProvider } from "next-themes";
 import { muiTheme } from "./muiTheme";
+import { MuiColorSchemeSync } from "./MuiColorSchemeSync";
 
 // next-themes owns the light/dark class on <html>, and Tailwind's `dark:`
 // variants key off it app-wide. MUI's cssVars provider will also write that
@@ -30,6 +32,7 @@ describe("light/dark class ownership", () => {
   afterEach(() => {
     window.matchMedia = originalMatchMedia;
     document.documentElement.className = "";
+    localStorage.removeItem("theme");
   });
 
   it("leaves an explicit user choice alone when the OS disagrees", () => {
@@ -57,5 +60,31 @@ describe("light/dark class ownership", () => {
     );
 
     expect(document.documentElement.className).toBe("");
+  });
+
+  it("keeps useColorScheme in step with the class actually rendered", async () => {
+    // Without MuiColorSchemeSync, MUI tracks the OS preference on its own and
+    // reports colorScheme 'dark' here while the page renders light.
+    setOsPrefersDark(true);
+    localStorage.setItem("theme", "light");
+
+    const Probe = () => {
+      const { colorScheme } = useColorScheme();
+      return <span data-testid="probe">{colorScheme ?? "unset"}</span>;
+    };
+
+    render(
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <MuiThemeProvider theme={muiTheme} defaultMode="system" storageManager={null} colorSchemeNode={null} noSsr>
+          <MuiColorSchemeSync />
+          <Probe />
+        </MuiThemeProvider>
+      </ThemeProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("probe")).toHaveTextContent("light");
+    });
+    expect(document.documentElement.classList.contains("light")).toBe(true);
   });
 });

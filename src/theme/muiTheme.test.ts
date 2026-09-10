@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { muiTheme } from "./muiTheme";
+import tailwindConfig from "../../tailwind.config";
 
 // muiTheme.ts duplicates the HSL tokens from index.css because MUI needs
 // concrete values at theme-build time. Asserting literals here would just
@@ -64,9 +65,17 @@ describe("muiTheme", () => {
     });
   });
 
-  it("matches the Tailwind font stack and --radius", () => {
-    expect(muiTheme.typography.fontFamily).toBe("'DM Sans', 'Space Grotesk', sans-serif");
+  it("matches the Tailwind sans stack", () => {
+    // Read from tailwind.config.ts for the same reason the colors are read from
+    // index.css: a literal here would only agree with muiTheme.ts's literal
+    // while both drifted from the Tailwind config.
+    const sans = tailwindConfig.theme.extend.fontFamily.sans as string[];
+    const expected = sans.map((f) => (f.includes(" ") ? `'${f}'` : f)).join(", ");
 
+    expect(muiTheme.typography.fontFamily).toBe(expected);
+  });
+
+  it("matches --radius", () => {
     const radiusRem = parseFloat(token(":root", "radius"));
     expect(muiTheme.shape.borderRadius).toBe(radiusRem * 16);
   });

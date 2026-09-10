@@ -13,6 +13,7 @@ import { useWindowControlsOverlay } from "@/hooks/useWindowControlsOverlay";
 import { ThemeProvider } from "next-themes";
 import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
 import { muiTheme } from "@/theme/muiTheme";
+import { MuiColorSchemeSync } from "@/theme/MuiColorSchemeSync";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
 // Lazy load pages for code splitting
@@ -86,6 +87,7 @@ const App = () => (
       colorSchemeNode={null}
       noSsr
     >
+      <MuiColorSchemeSync />
       <AccessibilityProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>

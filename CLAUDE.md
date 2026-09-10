@@ -53,13 +53,14 @@ See `docs/TESTING.md` for comprehensive testing guide.
 
 **Context Providers (App.tsx)**:
 The app is wrapped in this order (outermost → innermost):
-1. ThemeProvider (next-themes)
-2. QueryClientProvider (TanStack Query)
-3. TooltipProvider (Radix)
-4. AuthProvider (Supabase auth — gates user-scoped queries)
-5. PendoProvider + AmplitudeProvider (product analytics)
-6. AppNavigationProvider (global license filter state)
-7. AccessibilityProvider (a11y prefs)
+1. ThemeProvider (next-themes) — sole writer of the light/dark class on `<html>`
+2. MuiThemeProvider (MUI) — mounted with `colorSchemeNode={null}` so it never writes that class; see `src/theme/muiTheme.ts`
+3. AccessibilityProvider (a11y prefs)
+4. QueryClientProvider (TanStack Query)
+5. AuthProvider (Supabase auth — gates user-scoped queries)
+6. PendoProvider → AmplitudeProvider (product analytics)
+7. AppNavigationProvider (global license filter state)
+8. TooltipProvider (Radix)
 
 **Data Hooks Pattern**:
 - `useQuestions()` - Fetches all questions, caches for 1 hour
