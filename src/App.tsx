@@ -1,6 +1,5 @@
 import { Suspense, lazy } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -44,8 +43,10 @@ const AppContent = () => {
 
   return (
     <>
+      {/* sonner is the app's toast system, and a deliberate exception to the
+          MUI-only rule: MUI's Snackbar shows one notification at a time, while
+          sonner stacks them. See docs/MUI_MIGRATION_STRATEGY.md §5.3. */}
       <Toaster />
-      <Sonner />
       <PWAInstallBanner />
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>

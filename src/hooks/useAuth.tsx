@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { trackSignIn, trackSignOut } from '@/lib/amplitude';
 
 interface AuthContextType {
@@ -74,8 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             // Show success toast for email verification
             if (isEmailVerification) {
-              toast({
-                title: "Email verified!",
+              toast("Email verified!", {
                 description: "Your email has been verified successfully. Welcome!",
               });
             }

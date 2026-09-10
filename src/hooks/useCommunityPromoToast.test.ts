@@ -1,16 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useCommunityPromoToast } from './useCommunityPromoToast';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
-// Mock the toast hook
-vi.mock('@/hooks/use-toast', () => ({
+// Mock the toast library
+vi.mock('sonner', () => ({
   toast: vi.fn(),
-}));
-
-// Mock the ToastAction component
-vi.mock('@/components/ui/toast', () => ({
-  ToastAction: 'button',
 }));
 
 // Mock the PWA install hook
@@ -183,6 +178,7 @@ describe('useCommunityPromoToast', () => {
 
     expect(mockToast).toHaveBeenCalledTimes(1);
     expect(mockToast).toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({
         description: expect.stringContaining('Connect with fellow ham radio'),
       })
@@ -217,9 +213,9 @@ describe('useCommunityPromoToast', () => {
     vi.advanceTimersByTime(2000);
 
     // Simulate the toast being dismissed by calling onOpenChange
-    const toastCall = mockToast.mock.calls[0][0];
-    expect(toastCall.onOpenChange).toBeDefined();
-    toastCall.onOpenChange(false);
+    const toastOptions = mockToast.mock.calls[0][1];
+    expect(toastOptions.onDismiss).toBeDefined();
+    toastOptions.onDismiss();
 
     expect(localStorage.getItem('community-toast-shown')).toBe('true');
   });
@@ -349,12 +345,10 @@ describe('useCommunityPromoToast', () => {
     vi.advanceTimersByTime(2000);
 
     // Get the action element and simulate click
-    const toastCall = mockToast.mock.calls[0][0];
-    expect(toastCall.action).toBeDefined();
+    const toastOptions = mockToast.mock.calls[0][1];
+    expect(toastOptions.action).toBeDefined();
 
-    // The action is a createElement result, so we need to get the onClick from props
-    const actionProps = toastCall.action.props;
-    actionProps.onClick();
+    toastOptions.action.onClick();
 
     // Should log a warning about popup blocker
     expect(consoleWarnSpy).toHaveBeenCalledWith(
