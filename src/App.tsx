@@ -11,6 +11,9 @@ import { AppNavigationProvider } from "@/hooks/useAppNavigation";
 import { AccessibilityProvider } from "@/hooks/useAccessibility";
 import { useWindowControlsOverlay } from "@/hooks/useWindowControlsOverlay";
 import { ThemeProvider } from "next-themes";
+import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
+import { muiTheme } from "@/theme/muiTheme";
+import { MuiColorSchemeSync } from "@/theme/MuiColorSchemeSync";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
 // Lazy load pages for code splitting
@@ -66,21 +69,41 @@ const AppContent = () => {
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
-    <AccessibilityProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <PendoProvider>
-          <AmplitudeProvider>
-            <AppNavigationProvider>
-              <TooltipProvider>
-                <AppContent />
-              </TooltipProvider>
-            </AppNavigationProvider>
-          </AmplitudeProvider>
-          </PendoProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </AccessibilityProvider>
+    {/* next-themes is the only writer of the light/dark class on <html>.
+        colorSchemeNode={null} is what enforces that: MUI's cssVars provider
+        otherwise runs classList.remove('light','dark') + add(its own resolved
+        mode) on documentElement, which would overwrite an explicit user choice
+        that disagrees with the OS preference — and since Tailwind's dark:
+        variants read the same class, that would flip the entire app, not just
+        MUI components. MUI's own styles still follow next-themes, because the
+        theme's CSS variables are scoped to those same .light/.dark selectors.
+        storageManager={null} stops MUI keeping a competing copy of the
+        preference in localStorage. No CssBaseline — Tailwind's preflight is
+        already the reset, and MUI's would restyle every existing page. */}
+    <MuiThemeProvider
+      theme={muiTheme}
+      defaultMode="system"
+      storageManager={null}
+      colorSchemeNode={null}
+      noSsr
+    >
+      <MuiColorSchemeSync />
+      <AccessibilityProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <PendoProvider>
+              <AmplitudeProvider>
+                <AppNavigationProvider>
+                  <TooltipProvider>
+                    <AppContent />
+                  </TooltipProvider>
+                </AppNavigationProvider>
+              </AmplitudeProvider>
+            </PendoProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </AccessibilityProvider>
+    </MuiThemeProvider>
   </ThemeProvider>
 );
 

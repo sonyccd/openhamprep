@@ -48,7 +48,10 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^3.10.0",
+    "@mui/material": "^9.4.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -113,6 +116,17 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
     "zod": "^3.25.76"
+  },
+  "overrides": {
+    "@mui/material": {
+      "react-is": "^18.3.1",
+      "prop-types": {
+        "react-is": "^16.13.1"
+      }
+    },
+    "@mui/utils": {
+      "react-is": "^18.3.1"
+    }
   },
   "devDependencies": {
     "@axe-core/react": "^4.11.0",
