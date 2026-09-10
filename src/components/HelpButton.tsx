@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -91,8 +91,7 @@ export function HelpButton() {
   const handleSubmitBug = () => {
     const url = buildForumUrl('bug', bugTitle, bugDescription);
     window.open(url, '_blank', 'noopener,noreferrer');
-    toast({
-      title: 'Opening forum',
+    toast('Opening forum', {
       description: 'Complete your bug report in the new tab.',
     });
     resetForms();
@@ -101,8 +100,7 @@ export function HelpButton() {
   const handleSubmitFeedback = () => {
     const url = buildForumUrl('feature', feedbackTitle, feedbackDescription);
     window.open(url, '_blank', 'noopener,noreferrer');
-    toast({
-      title: 'Opening forum',
+    toast('Opening forum', {
       description: 'Complete your feedback in the new tab.',
     });
     resetForms();

@@ -1,16 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useCommunityPromoToast } from './useCommunityPromoToast';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
-// Mock the toast hook
-vi.mock('@/hooks/use-toast', () => ({
+// Mock the toast library
+vi.mock('sonner', () => ({
   toast: vi.fn(),
-}));
-
-// Mock the ToastAction component
-vi.mock('@/components/ui/toast', () => ({
-  ToastAction: 'button',
 }));
 
 // Mock the PWA install hook
@@ -183,6 +178,7 @@ describe('useCommunityPromoToast', () => {
 
     expect(mockToast).toHaveBeenCalledTimes(1);
     expect(mockToast).toHaveBeenCalledWith(
+      expect.anything(),
       expect.objectContaining({
         description: expect.stringContaining('Connect with fellow ham radio'),
       })
@@ -205,7 +201,7 @@ describe('useCommunityPromoToast', () => {
     expect(localStorage.getItem('community-toast-shown')).toBeNull();
   });
 
-  it('sets localStorage when toast is dismissed via onOpenChange', () => {
+  it('sets localStorage when the toast is dismissed via onDismiss', () => {
     renderHook(() =>
       useCommunityPromoToast({
         userCreatedAt: getDateDaysAgo(5),
@@ -216,12 +212,54 @@ describe('useCommunityPromoToast', () => {
 
     vi.advanceTimersByTime(2000);
 
-    // Simulate the toast being dismissed by calling onOpenChange
-    const toastCall = mockToast.mock.calls[0][0];
-    expect(toastCall.onOpenChange).toBeDefined();
-    toastCall.onOpenChange(false);
+    // Simulate the user dismissing the toast with the close button
+    const toastOptions = mockToast.mock.calls[0][1];
+    expect(toastOptions.onDismiss).toBeDefined();
+    toastOptions.onDismiss();
 
     expect(localStorage.getItem('community-toast-shown')).toBe('true');
+  });
+
+  // duration: Infinity means this toast never expires on its own. Without an
+  // explicit close button sonner renders no dismissal control whatsoever, so
+  // the only way out would be dragging it — unreachable by keyboard.
+  it('gives the never-expiring toast a close button', () => {
+    renderHook(() =>
+      useCommunityPromoToast({
+        userCreatedAt: getDateDaysAgo(5),
+        forumUsername: null,
+        isAuthenticated: true,
+      })
+    );
+
+    vi.advanceTimersByTime(2000);
+
+    const toastOptions = mockToast.mock.calls[0][1];
+    expect(toastOptions.duration).toBe(Infinity);
+    expect(toastOptions.closeButton).toBe(true);
+  });
+
+  // sonner closes the toast on an action click without firing onDismiss, so
+  // this path sets the flag itself. Without it the promo re-appears for every
+  // user who actually clicked through to the forum.
+  it('sets localStorage when the action button is clicked', () => {
+    const windowOpenSpy = vi.spyOn(window, 'open').mockReturnValue({} as Window);
+
+    renderHook(() =>
+      useCommunityPromoToast({
+        userCreatedAt: getDateDaysAgo(5),
+        forumUsername: null,
+        isAuthenticated: true,
+      })
+    );
+
+    vi.advanceTimersByTime(2000);
+
+    const toastOptions = mockToast.mock.calls[0][1];
+    toastOptions.action.onClick();
+
+    expect(localStorage.getItem('community-toast-shown')).toBe('true');
+    windowOpenSpy.mockRestore();
   });
 
   it('only shows toast once even with re-renders', () => {
@@ -349,12 +387,10 @@ describe('useCommunityPromoToast', () => {
     vi.advanceTimersByTime(2000);
 
     // Get the action element and simulate click
-    const toastCall = mockToast.mock.calls[0][0];
-    expect(toastCall.action).toBeDefined();
+    const toastOptions = mockToast.mock.calls[0][1];
+    expect(toastOptions.action).toBeDefined();
 
-    // The action is a createElement result, so we need to get the onClick from props
-    const actionProps = toastCall.action.props;
-    actionProps.onClick();
+    toastOptions.action.onClick();
 
     // Should log a warning about popup blocker
     expect(consoleWarnSpy).toHaveBeenCalledWith(

@@ -1,6 +1,5 @@
 import { useEffect, useRef, createElement } from 'react';
-import { toast } from '@/hooks/use-toast';
-import { ToastAction } from '@/components/ui/toast';
+import { toast } from 'sonner';
 import { Users } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
@@ -8,6 +7,13 @@ const COMMUNITY_URL = 'https://forum.openhamprep.com/auth/oidc';
 const STORAGE_KEY = 'community-toast-shown';
 const TEST_MODE_KEY = 'community-toast-test-mode';
 const DAYS_AFTER_SIGNUP = 3;
+
+// The Radix toast set this from a single onOpenChange(false), which covered
+// both the close button and the action button. sonner splits those: verified
+// against sonner 1.7.4 that clicking the action closes the toast WITHOUT
+// firing onDismiss. So both call sites below are load-bearing — dropping
+// either one silently re-shows this toast to that group of users.
+const markShown = () => localStorage.setItem(STORAGE_KEY, 'true');
 
 interface UseCommunityPromoToastOptions {
   userCreatedAt: string | null | undefined;
@@ -84,8 +90,8 @@ export function useCommunityPromoToast({
 
     // Small delay to ensure the page is fully loaded
     timeoutRef.current = setTimeout(() => {
-      toast({
-        title: createElement('div', {
+      toast(
+        createElement('div', {
           className: 'flex items-center gap-3',
           role: 'status',
           'aria-live': 'polite',
@@ -95,33 +101,31 @@ export function useCommunityPromoToast({
           ),
           createElement('span', { className: 'font-semibold text-foreground' }, 'Join the Community!')
         ),
-        description: 'Connect with fellow ham radio enthusiasts, ask questions, and share your progress.',
-        duration: Infinity, // Stay open until manually dismissed
-        action: createElement(ToastAction, {
-          altText: 'Visit the Open Ham Prep community forum',
-          className: 'bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-4 py-2 h-auto rounded-lg',
-          onClick: () => {
-            const newWindow = window.open(COMMUNITY_URL, '_blank', 'noopener,noreferrer');
-            if (!newWindow) {
-              // Popup was blocked - still mark as shown since user attempted to visit
-              // The toast will close via onOpenChange which also sets localStorage
-              console.warn('Popup blocked. Please allow popups to visit the community forum.');
-            }
-            // Note: localStorage is set via onOpenChange when toast closes, avoiding duplicate writes
+        {
+          description: 'Connect with fellow ham radio enthusiasts, ask questions, and share your progress.',
+          duration: Infinity, // Stay open until manually dismissed
+          // The Radix toaster rendered an always-visible, focusable close
+          // button on every toast. sonner's is opt-in, and without it a toast
+          // that never expires can only be dismissed by dragging it — no
+          // keyboard path at all. Set per-toast rather than on the Toaster, so
+          // the 44 auto-dismissing toasts elsewhere keep their current look.
+          closeButton: true,
+          action: {
+            label: createElement('span', { className: 'flex items-center gap-2' },
+              createElement(Users, { className: 'w-4 h-4', 'aria-hidden': true }),
+              'Visit Community'
+            ),
+            onClick: () => {
+              const newWindow = window.open(COMMUNITY_URL, '_blank', 'noopener,noreferrer');
+              if (!newWindow) {
+                console.warn('Popup blocked. Please allow popups to visit the community forum.');
+              }
+              markShown();
+            },
           },
+          onDismiss: markShown,
         },
-          createElement('span', { className: 'flex items-center gap-2' },
-            createElement(Users, { className: 'w-4 h-4', 'aria-hidden': true }),
-            'Visit Community'
-          )
-        ),
-        // Only mark as shown when user dismisses the toast (clicks X or action button)
-        onOpenChange: (open: boolean) => {
-          if (!open) {
-            localStorage.setItem(STORAGE_KEY, 'true');
-          }
-        },
-      });
+      );
     }, 1500);
   // Note: Only props are in deps array. isTestMode is read from localStorage inside
   // the effect and doesn't need to trigger re-runs (it's checked fresh each time).
