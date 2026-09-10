@@ -1,5 +1,22 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+import { MotionGlobalConfig } from 'framer-motion';
+
+// Skip framer-motion's WAAPI-accelerated animations in tests. Without this,
+// happy-dom's Animation.cancel() rejects the animation's "finished" promise
+// when a motion component unmounts mid-animation, and framer-motion doesn't
+// catch it - producing an unhandled rejection that fails the test run even
+// though every assertion passes.
+MotionGlobalConfig.skipAnimations = true;
+
+// Belt and suspenders: framer-motion feature-detects WAAPI support once per
+// module instance (memoized) via `Object.hasOwnProperty(Element.prototype,
+// "animate")`. When AnimatePresence exit/enter cycles run during a test
+// (e.g. clicking through a flashcard), it still routes through the real
+// WAAPI path even with skipAnimations set, hitting the same unhandled
+// rejection on unmount. Hiding Element.prototype.animate makes framer-motion
+// fall back to its own main-thread animation driver instead.
+delete (Element.prototype as { animate?: unknown }).animate;
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
