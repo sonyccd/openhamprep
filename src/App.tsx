@@ -11,6 +11,8 @@ import { AppNavigationProvider } from "@/hooks/useAppNavigation";
 import { AccessibilityProvider } from "@/hooks/useAccessibility";
 import { useWindowControlsOverlay } from "@/hooks/useWindowControlsOverlay";
 import { ThemeProvider } from "next-themes";
+import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
+import { muiTheme } from "@/theme/muiTheme";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 
 // Lazy load pages for code splitting
@@ -66,7 +68,12 @@ const AppContent = () => {
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
-    <AccessibilityProvider>
+    {/* next-themes owns the light/dark class and its persistence; storageManager
+        null stops MUI keeping a second, competing copy of that preference. No
+        CssBaseline — Tailwind's preflight is already the reset, and MUI's would
+        restyle every existing page. */}
+    <MuiThemeProvider theme={muiTheme} defaultMode="system" storageManager={null} noSsr>
+      <AccessibilityProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <PendoProvider>
@@ -80,7 +87,8 @@ const App = () => (
           </PendoProvider>
         </AuthProvider>
       </QueryClientProvider>
-    </AccessibilityProvider>
+      </AccessibilityProvider>
+    </MuiThemeProvider>
   </ThemeProvider>
 );
 
