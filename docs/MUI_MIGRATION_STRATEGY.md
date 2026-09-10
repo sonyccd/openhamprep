@@ -492,20 +492,23 @@ rather than running them as their own project.
 
 ## 10. Decisions still open
 
-Two of the original four are now settled: the driver is coverage and vendor
-consolidation (§4.5), and `sonner` + `framer-motion` stay (§5.3, Tier C).
+Three of the original four are now settled: the driver is coverage and vendor
+consolidation (§4.5), `sonner` + `framer-motion` stay (§5.3, Tier C), and MUI X
+licensing is decided.
 
-1. **MUI X licensing.** DataGrid Community is free but lacks column pinning,
-   row grouping, and Excel export. Admin is the main beneficiary and the Stage B
-   pilot depends on it — is Community enough, or do we need Pro? **Decide before
-   B1**, since it changes what the pilot proves.
-2. **How far from Material do we want to land?** §5 recommends theming lightly
+**MUI X licensing — settled: Community only.** Open Ham Prep is free and open
+source, so no paid tier is on the table. Build the B1 pilot on
+`@mui/x-data-grid` and work within what Community offers. If a missing feature
+(column pinning, row grouping, Excel export) ever becomes a real requirement,
+evaluate the lost capability at that point rather than pre-paying for it.
+
+1. **How far from Material do we want to land?** §5 recommends theming lightly
    and accepting Material's defaults for shape, elevation, and motion. That is
    the posture that actually delivers the "reach for an existing component"
    benefit. If the app must keep its current visual identity closely, say so now
    — it is a legitimate call, but it costs a meaningful share of the benefit and
    the plan should be re-scoped accordingly rather than discovering it at C5.
-3. **Icons.** `lucide-react` → `@mui/icons-material` is one fewer vendor, but
+2. **Icons.** `lucide-react` → `@mui/icons-material` is one fewer vendor, but
    the icon sets differ visually and it is a large mechanical change with no
    functional payoff. Reasonable to defer to C7 or skip entirely.
 
