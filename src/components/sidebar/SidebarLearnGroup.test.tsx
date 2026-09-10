@@ -220,21 +220,6 @@ describe('SidebarLearnGroup', () => {
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
-  it('shows ChevronDown when expanded', () => {
-    renderWithTooltip(<SidebarLearnGroup {...defaultProps} isExpanded={true} />);
-    // ChevronDown should be present when expanded
-    const chevrons = document.querySelectorAll('svg');
-    // Should have the header icon and a chevron
-    expect(chevrons.length).toBeGreaterThan(1);
-  });
-
-  it('shows ChevronRight when not expanded', () => {
-    renderWithTooltip(<SidebarLearnGroup {...defaultProps} isExpanded={false} />);
-    // ChevronRight should be present when collapsed
-    const chevrons = document.querySelectorAll('svg');
-    expect(chevrons.length).toBeGreaterThan(0);
-  });
-
   it('sets aria-expanded correctly on header', () => {
     const { rerender } = renderWithTooltip(
       <SidebarLearnGroup {...defaultProps} isExpanded={true} />

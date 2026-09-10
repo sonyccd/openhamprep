@@ -177,8 +177,7 @@ describe('FigureImage', () => {
         />
       );
 
-      // Loading spinner should be present (has animate-spin class)
-      const spinner = document.querySelector('.animate-spin');
+      const spinner = screen.queryByRole('status', { name: /loading figure/i });
       expect(spinner).toBeInTheDocument();
     });
 
@@ -194,7 +193,7 @@ describe('FigureImage', () => {
       fireEvent.load(img);
 
       await waitFor(() => {
-        const spinner = document.querySelector('.animate-spin');
+        const spinner = screen.queryByRole('status', { name: /loading figure/i });
         expect(spinner).not.toBeInTheDocument();
       });
     });

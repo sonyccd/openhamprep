@@ -107,7 +107,7 @@ describe('WeakQuestionsReview', () => {
 
       render(<WeakQuestionsReview {...defaultProps} />, { wrapper: createWrapper() });
 
-      const spinner = document.querySelector('.animate-spin');
+      const spinner = screen.queryByText('Loading questions...');
       expect(spinner).toBeInTheDocument();
       expect(screen.getByText('Loading questions...')).toBeInTheDocument();
     });
@@ -538,11 +538,8 @@ describe('WeakQuestionsReview', () => {
       const questionButtons = screen.getAllByRole('button', { name: /What is|What band/i });
       expect(questionButtons.length).toBe(3);
 
-      // In simple mode, streak dots should not be present in question items
-      questionButtons.forEach(button => {
-        const streakDots = button.querySelectorAll('.rounded-full');
-        expect(streakDots.length).toBe(0);
-      });
+      // In simple mode there is no streak indicator on the question items.
+      expect(screen.queryByRole('img', { name: /correct in a row/i })).not.toBeInTheDocument();
     });
 
     it('shows all cleared message when all questions are cleared in simple mode', async () => {
@@ -755,10 +752,8 @@ describe('WeakQuestionsReview', () => {
         // Get question buttons (not the toggle card)
         const questionButtons = screen.getAllByRole('button', { name: /What is|What band/i });
         expect(questionButtons.length).toBe(3);
-        // In streak mode, streak dots should be present
-        const firstButton = questionButtons[0];
-        const streakDots = firstButton.querySelectorAll('.rounded-full');
-        expect(streakDots.length).toBe(3); // 3 dots for streak
+        // In streak mode each question carries its streak indicator.
+        expect(screen.getAllByRole('img', { name: /of 3 correct in a row/i })).toHaveLength(3);
       });
     });
 

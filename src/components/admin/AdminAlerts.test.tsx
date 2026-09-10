@@ -152,10 +152,7 @@ describe('AdminAlerts', () => {
     it('should display pending count in metric cards', () => {
       renderComponent();
 
-      // The pending count of 1 should be displayed in the metrics area
-      // Find by the specific card structure
-      const metricCards = document.querySelectorAll('.text-2xl.font-bold');
-      expect(metricCards.length).toBeGreaterThan(0);
+      expect(screen.getByLabelText('1 pending')).toHaveTextContent('1');
     });
 
     it('should render filter tabs', () => {
@@ -194,7 +191,7 @@ describe('AdminAlerts', () => {
 
       renderComponent();
 
-      expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: /loading alerts/i })).toBeInTheDocument();
     });
   });
 

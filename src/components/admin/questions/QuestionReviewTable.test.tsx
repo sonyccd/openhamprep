@@ -174,7 +174,8 @@ describe('QuestionReviewTable', () => {
         highlightQuestionId="T1A01"
       />
     );
-    const rows = container.querySelectorAll('tbody tr');
+    // getAllByRole('row') includes the header row.
+    const rows = screen.getAllByRole('row').slice(1);
     expect(rows[0].className).toContain('bg-amber-500/10');
     expect(rows[1].className).not.toContain('bg-amber-500/10');
   });
@@ -183,7 +184,8 @@ describe('QuestionReviewTable', () => {
     const { container } = render(
       <QuestionReviewTable questions={[makeQuestion()]} onEdit={vi.fn()} />
     );
-    const rows = container.querySelectorAll('tbody tr');
+    // getAllByRole('row') includes the header row.
+    const rows = screen.getAllByRole('row').slice(1);
     expect(rows[0].className).not.toContain('bg-amber-500/10');
   });
 });

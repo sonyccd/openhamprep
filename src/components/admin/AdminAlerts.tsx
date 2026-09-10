@@ -387,7 +387,10 @@ export function AdminAlerts() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${pendingCount > 0 ? 'text-amber-500' : 'text-foreground'}`}>
+            <div
+              aria-label={`${pendingCount} pending`}
+              className={`text-2xl font-bold ${pendingCount > 0 ? 'text-amber-500' : 'text-foreground'}`}
+            >
               {pendingCount}
             </div>
           </CardContent>
@@ -488,7 +491,7 @@ export function AdminAlerts() {
 
         <TabsContent value={statusFilter || 'all'} className="mt-4">
           {isLoading ? (
-            <div className="flex justify-center py-12">
+            <div className="flex justify-center py-12" role="status" aria-label="Loading alerts">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : alerts.length === 0 ? (
