@@ -104,6 +104,12 @@ export function useCommunityPromoToast({
         {
           description: 'Connect with fellow ham radio enthusiasts, ask questions, and share your progress.',
           duration: Infinity, // Stay open until manually dismissed
+          // The Radix toaster rendered an always-visible, focusable close
+          // button on every toast. sonner's is opt-in, and without it a toast
+          // that never expires can only be dismissed by dragging it — no
+          // keyboard path at all. Set per-toast rather than on the Toaster, so
+          // the 44 auto-dismissing toasts elsewhere keep their current look.
+          closeButton: true,
           action: {
             label: createElement('span', { className: 'flex items-center gap-2' },
               createElement(Users, { className: 'w-4 h-4', 'aria-hidden': true }),

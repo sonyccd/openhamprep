@@ -220,6 +220,25 @@ describe('useCommunityPromoToast', () => {
     expect(localStorage.getItem('community-toast-shown')).toBe('true');
   });
 
+  // duration: Infinity means this toast never expires on its own. Without an
+  // explicit close button sonner renders no dismissal control whatsoever, so
+  // the only way out would be dragging it — unreachable by keyboard.
+  it('gives the never-expiring toast a close button', () => {
+    renderHook(() =>
+      useCommunityPromoToast({
+        userCreatedAt: getDateDaysAgo(5),
+        forumUsername: null,
+        isAuthenticated: true,
+      })
+    );
+
+    vi.advanceTimersByTime(2000);
+
+    const toastOptions = mockToast.mock.calls[0][1];
+    expect(toastOptions.duration).toBe(Infinity);
+    expect(toastOptions.closeButton).toBe(true);
+  });
+
   // sonner closes the toast on an action click without firing onDismiss, so
   // this path sets the flag itself. Without it the promo re-appears for every
   // user who actually clicked through to the forum.

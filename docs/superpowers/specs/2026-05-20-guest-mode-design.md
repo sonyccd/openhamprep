@@ -130,7 +130,7 @@ A Sonner toast appears using the existing toast pattern.
 
 **Copy:** *"Your practice session wasn't saved — create a free account to track your progress."*
 
-No action button — just the message with a link. Uses the existing `toast()` call pattern from `src/hooks/use-toast.ts`.
+No action button — just the message with a link. Uses the existing `toast()` call pattern from `sonner`.
 
 **File to modify:** `src/components/RandomPractice.tsx`
 
