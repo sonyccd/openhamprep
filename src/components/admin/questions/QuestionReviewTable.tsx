@@ -43,6 +43,7 @@ export function QuestionReviewTable({
             return (
               <TableRow
                 key={q.id}
+                aria-current={highlightQuestionId === q.display_name ? 'true' : undefined}
                 className={cn(
                   'align-top',
                   highlightQuestionId === q.display_name && 'bg-amber-500/10'

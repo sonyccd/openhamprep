@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TopicEditor } from './TopicEditor';
@@ -540,9 +540,9 @@ describe('TopicEditor', () => {
     it('should not show badge count when no resources', () => {
       renderComponent({ ...mockTopic, resources: [] });
 
-      const resourcesTab = screen.getByRole('tab', { name: /Resources/i });
-      // Should not contain a number badge
-      expect(resourcesTab.querySelector('.badge')).toBeNull();
+      // With no resources the tab is just its label; a count badge would show
+      // up in the accessible name.
+      expect(screen.getByRole('tab', { name: /Resources/i })).toHaveAccessibleName('Resources');
     });
   });
 
@@ -673,9 +673,8 @@ describe('TopicEditor', () => {
       });
 
       // Find and click the confirm button in the dialog (role="alertdialog" content)
-      const confirmButton = screen.getByRole('alertdialog').querySelector('button.bg-destructive');
-      expect(confirmButton).toBeTruthy();
-      fireEvent.click(confirmButton!);
+      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: /delete topic/i });
+      fireEvent.click(confirmButton);
 
       await waitFor(() => {
         expect(mockDeleteFn).toHaveBeenCalled();
@@ -725,8 +724,8 @@ describe('TopicEditor', () => {
         expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
       });
 
-      const confirmButton = screen.getByRole('alertdialog').querySelector('button.bg-destructive');
-      fireEvent.click(confirmButton!);
+      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: /delete topic/i });
+      fireEvent.click(confirmButton);
 
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith('Topic deleted successfully');
@@ -776,8 +775,8 @@ describe('TopicEditor', () => {
         expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
       });
 
-      const confirmButton = screen.getByRole('alertdialog').querySelector('button.bg-destructive');
-      fireEvent.click(confirmButton!);
+      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: /delete topic/i });
+      fireEvent.click(confirmButton);
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Failed to delete topic'));
@@ -826,8 +825,8 @@ describe('TopicEditor', () => {
         expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
       });
 
-      const confirmButton = screen.getByRole('alertdialog').querySelector('button.bg-destructive');
-      fireEvent.click(confirmButton!);
+      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: /delete topic/i });
+      fireEvent.click(confirmButton);
 
       await waitFor(() => {
         // Storage remove should be called with the content path
@@ -882,8 +881,8 @@ describe('TopicEditor', () => {
         expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
       });
 
-      const confirmButton = screen.getByRole('alertdialog').querySelector('button.bg-destructive');
-      fireEvent.click(confirmButton!);
+      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: /delete topic/i });
+      fireEvent.click(confirmButton);
 
       await waitFor(() => {
         // Database delete should still be called even if storage fails
@@ -939,8 +938,8 @@ describe('TopicEditor', () => {
         expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
       });
 
-      const confirmButton = screen.getByRole('alertdialog').querySelector('button.bg-destructive');
-      fireEvent.click(confirmButton!);
+      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: /delete topic/i });
+      fireEvent.click(confirmButton);
 
       // Wait a tick for the mutation to start
       await waitFor(() => {
