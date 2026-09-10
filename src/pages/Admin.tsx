@@ -37,7 +37,7 @@ export default function Admin() {
     }
   }, [user, authLoading, navigate]);
   if (authLoading || adminLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-label="Loading admin">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>;
   }

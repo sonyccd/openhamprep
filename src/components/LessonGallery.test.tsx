@@ -139,8 +139,7 @@ describe('LessonGallery', () => {
       mockIsLoading = true;
       const { container } = renderComponent();
 
-      // Check for skeleton elements
-      const skeletons = container.querySelectorAll('[class*="animate-pulse"]');
+      const skeletons = screen.getAllByTestId('skeleton');
       expect(skeletons.length).toBeGreaterThan(0);
     });
 

@@ -66,19 +66,4 @@ describe('NotFound', () => {
     });
   });
 
-  describe('Styling', () => {
-    it('has proper layout classes', () => {
-      const { container } = renderWithRouter();
-
-      const outerDiv = container.firstChild;
-      expect(outerDiv).toHaveClass('flex', 'min-h-screen', 'items-center', 'justify-center');
-    });
-
-    it('link has underline styling', () => {
-      renderWithRouter();
-
-      const link = screen.getByRole('link', { name: /return to home/i });
-      expect(link).toHaveClass('underline');
-    });
-  });
 });

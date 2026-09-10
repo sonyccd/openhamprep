@@ -71,8 +71,7 @@ describe('TopicQuestionsPanel', () => {
       mockIsLoading = true;
       const { container } = renderComponent();
 
-      // Check for skeleton elements
-      expect(container.querySelectorAll('[class*="animate-pulse"]').length).toBeGreaterThan(0);
+      expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
     });
   });
 
