@@ -32,7 +32,7 @@ export function StreakDisplay({ className, variant = 'full', onAction }: StreakD
 
   if (isLoading) {
     return (
-      <div className={cn('animate-pulse', className)}>
+      <div className={cn('animate-pulse', className)} role="status" aria-label="Loading streak">
         <div className="h-8 w-20 bg-muted rounded-lg" />
       </div>
     );

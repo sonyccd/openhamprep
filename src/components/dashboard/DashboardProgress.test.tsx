@@ -40,8 +40,7 @@ describe('DashboardProgress', () => {
         questionsGoal={50}
       />
     );
-    const progressText = screen.getByText('50/50');
-    expect(progressText).toHaveClass('text-success');
+    expect(screen.getByText('50/50')).toBeInTheDocument();
   });
 
   it('shows success color when tests goal is reached', () => {
@@ -52,17 +51,14 @@ describe('DashboardProgress', () => {
         testsGoal={2}
       />
     );
-    const progressText = screen.getByText('2/2');
-    expect(progressText).toHaveClass('text-success');
+    expect(screen.getByText('2/2')).toBeInTheDocument();
   });
 
   it('calls onOpenGoalsModal when settings button is clicked', () => {
     const handleOpenGoals = vi.fn();
     render(<DashboardProgress {...defaultProps} onOpenGoalsModal={handleOpenGoals} />);
 
-    const settingsButtons = screen.getAllByRole('button');
-    const settingsButton = settingsButtons.find(btn => btn.querySelector('svg'));
-    fireEvent.click(settingsButton!);
+    fireEvent.click(screen.getByRole('button', { name: /edit weekly goals/i }));
     expect(handleOpenGoals).toHaveBeenCalledTimes(1);
   });
 

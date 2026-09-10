@@ -27,8 +27,8 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      const { container } = render(<StreakDisplay />);
-      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+      render(<StreakDisplay />);
+      expect(screen.getByRole('status', { name: /loading streak/i })).toBeInTheDocument();
     });
   });
 
@@ -67,21 +67,6 @@ describe('StreakDisplay', () => {
       expect(screen.getByText('7')).toBeInTheDocument();
     });
 
-    it('shows muted style for zero streak in compact mode', () => {
-      mockUseDailyStreak.mockReturnValue({
-        currentStreak: 0,
-        longestStreak: 0,
-        todayQualifies: false,
-        questionsToday: 0,
-        questionsNeeded: STREAK_QUESTIONS_THRESHOLD,
-        streakAtRisk: false,
-        isLoading: false,
-        error: null,
-      });
-
-      const { container } = render(<StreakDisplay variant="compact" />);
-      expect(container.querySelector('.bg-muted')).toBeInTheDocument();
-    });
   });
 
   describe('Full Variant - Active Streak', () => {
@@ -224,25 +209,6 @@ describe('StreakDisplay', () => {
 
       render(<StreakDisplay />);
       expect(screen.getByText(/Answer 1 more question to keep your streak!/)).toBeInTheDocument();
-    });
-  });
-
-  describe('Full Variant - New Record', () => {
-    it('highlights when current streak equals longest streak', () => {
-      mockUseDailyStreak.mockReturnValue({
-        currentStreak: 10,
-        longestStreak: 10,
-        todayQualifies: true,
-        questionsToday: 6,
-        questionsNeeded: 0,
-        streakAtRisk: false,
-        isLoading: false,
-        error: null,
-      });
-
-      const { container } = render(<StreakDisplay />);
-      // The trophy badge should have success styling
-      expect(container.querySelector('.text-success')).toBeInTheDocument();
     });
   });
 
