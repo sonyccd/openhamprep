@@ -149,7 +149,7 @@ export function ChapterQuestionManager({
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-8">
+        <div className="flex items-center justify-center py-8" role="status" aria-label="Loading questions">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
       ) : (
@@ -250,7 +250,11 @@ function LinkedQuestionRow({
         isPending && "opacity-50"
       )}
     >
-      <Checkbox checked={true} className="mt-0.5 pointer-events-none" />
+      <Checkbox
+        checked={true}
+        aria-label={`${question.display_name} is linked`}
+        className="mt-0.5 pointer-events-none"
+      />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-mono text-sm text-primary bg-primary/10 px-2 py-0.5 rounded">

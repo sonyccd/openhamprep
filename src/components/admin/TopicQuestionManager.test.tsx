@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TopicQuestionManager } from './TopicQuestionManager';
 
@@ -137,9 +137,7 @@ describe('TopicQuestionManager', () => {
 
       renderComponent();
 
-      // Should show loading spinner
-      const loader = document.querySelector('.animate-spin');
-      expect(loader).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: /loading questions/i })).toBeInTheDocument();
     });
 
     it('should display linked questions count badge', async () => {
@@ -716,9 +714,8 @@ describe('TopicQuestionManager', () => {
       });
 
       // Find the linked question row and check its checkbox
-      const linkedQuestionRow = screen.getByText('What is amateur radio?').closest('button');
-      const checkbox = linkedQuestionRow?.querySelector('[role="checkbox"]');
-      expect(checkbox).toHaveAttribute('data-state', 'checked');
+      const linkedQuestionRow = screen.getByText('What is amateur radio?').closest('button')!;
+      expect(within(linkedQuestionRow).getByRole('checkbox')).toBeChecked();
     });
 
     it('should show unchecked checkbox for unlinked questions', async () => {
@@ -729,9 +726,8 @@ describe('TopicQuestionManager', () => {
       });
 
       // Find an unlinked question row and check its checkbox
-      const unlinkedQuestionRow = screen.getByText('What frequencies can Technician use?').closest('button');
-      const checkbox = unlinkedQuestionRow?.querySelector('[role="checkbox"]');
-      expect(checkbox).toHaveAttribute('data-state', 'unchecked');
+      const unlinkedQuestionRow = screen.getByText('What frequencies can Technician use?').closest('button')!;
+      expect(within(unlinkedQuestionRow).getByRole('checkbox')).not.toBeChecked();
     });
   });
 
