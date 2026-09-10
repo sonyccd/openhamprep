@@ -8,19 +8,29 @@
 
 ## 1. Executive summary
 
-The proposal is to migrate the front end to Material UI (MUI) so we lean on
-off-the-shelf components, apply a custom theme, and keep a small in-house
-component library for the gaps. The stated goals: more stability, easier
-collaboration, less development effort, smaller codebase.
+The driver for this migration is **component coverage and vendor consolidation**:
+the current design system is an abstract layer stitched over a large number of
+separate UI libraries, and as the interface expands there is no single
+externally-maintained library to reach into for the next component. The goal is
+one complete off-the-shelf library with a theme on top, and a small in-house
+library only where nothing off-the-shelf exists.
 
-**I measured the codebase before writing this plan, and two of those four goals
-will not be met by a MUI migration.** They will be met — cheaply — by work that
-is a prerequisite for a MUI migration anyway.
+**That justification holds up, and the measurements support it more strongly
+than I expected.** The front end currently depends on **20 distinct UI-layer
+libraries**, including 27 separate Radix packages and **two toast systems
+mounted simultaneously in `App.tsx`**. MUI + MUI X would realistically
+consolidate that to five or six.
 
-Recommendation: **do not run a big-bang MUI migration.** Run a three-stage
-program where Stage 0 delivers most of the stability benefit at roughly 5% of
-the cost, and MUI adoption follows as a strangler-fig migration starting with
-Admin. Stage 0 is worth doing whether or not we ever adopt MUI.
+Two secondary goals in the original framing will *not* be met, and the plan
+should not be sold on them: MUI will not shrink the codebase, and it will not
+fix the current instability. Both are addressed by separate work (§3), which is
+worth doing anyway because it makes the migration cheaper.
+
+**Recommendation:** proceed with MUI, as a strangler-fig migration in three
+stages. Land the theme foundation early so new features stop accruing onto the
+system we're leaving. Extract the duplicated quiz engine *before* porting quiz
+screens, or we port four copies of it. And **theme MUI lightly** — heavy theming
+rebuilds the abstract design layer we're trying to escape (§5).
 
 ---
 
@@ -35,8 +45,8 @@ Measured on the current `main`:
 | Tests | 3,335 — **all passing** |
 | `tsc --noEmit` | **clean** |
 | shadcn/ui primitive layer (`src/components/ui/`) | 4,459 LOC |
-| ...of which **unused** | **2,759 LOC across 23 primitives** |
-| ...live primitive surface | **~1,700 LOC across 31 primitives** |
+| ...of which **unused** | **2,295 LOC across 17 primitives** |
+| ...live primitive surface | **~2,160 LOC across 37 primitives** |
 | Feature components (`src/components/*.tsx`) | 10,766 LOC |
 | Admin (`src/components/admin/`) | 10,184 LOC |
 | Hooks | ~14,000 LOC non-test |
@@ -55,14 +65,16 @@ component primitives.
 
 ---
 
-## 3. Where I disagree with the premise
+## 3. Two goals MUI will not deliver
 
-I want to be direct about this, because the plan changes shape depending on
-which parts of the premise hold up.
+These are not objections to the migration — the coverage argument (§4) stands on
+its own. They are cautions about *justification*. If the project is sold on
+"less code and more stability," it will be judged against outcomes it cannot
+produce, and the work in §3.3 that *would* produce them will get skipped.
 
 ### 3.1 "Reduce the size of the codebase" — MUI will not do this
 
-The shadcn layer is ~1,700 live LOC, about **4% of non-test source**. That is
+The shadcn layer is ~2,160 live LOC, about **5% of non-test source**. That is
 the only part MUI replaces outright. The other 96% — feature components, admin,
 hooks, services — gets *rewritten*, not deleted.
 
@@ -83,16 +95,16 @@ Expect the feature layer to grow 10–25% in LOC. Bundle size will also grow:
 MUI core + Emotion is heavier than Radix primitives + a Tailwind stylesheet, and
 we would carry Emotion's runtime CSS-in-JS cost on top of the existing 743 kB.
 
-**If codebase size is a real goal, the lever is deleting duplication (§3.3),
-not swapping component libraries.**
+**If codebase size matters, the lever is deleting duplication (§3.3), not
+swapping component libraries. Budget for growth here, don't promise shrinkage.**
 
-### 3.2 "Use off-the-shelf components" — we already do
+### 3.2 Swapping the primitive layer won't change how feature code is written
 
-shadcn/ui *is* off-the-shelf. It is Radix primitives (a mature, accessible,
-widely-used library) with a Tailwind skin, vendored into the repo. The
-"hodgepodge" feeling isn't coming from the primitives; it's coming from how
-feature code composes them. Swapping the primitive layer does not change how
-feature code is written.
+shadcn/ui is Radix with a Tailwind skin, vendored into the repo. It is
+individually fine. The 700-line components and the duplicated quiz engine
+(§3.3) are a *composition* problem, and they will survive the port unchanged
+unless we address them directly. MUI raises the floor on what a single component
+looks like; it does nothing about how they are assembled.
 
 ### 3.3 The real instability is duplication and God components
 
@@ -137,8 +149,8 @@ none of them.**
 
 ## 4. Where MUI genuinely wins
 
-I don't think the idea is wrong — I think the justification is aimed at the
-wrong target. There are four real arguments for it.
+Five real arguments. §4.5 is the decisive one and the stated driver; the rest
+are supporting benefits that come along with it.
 
 ### 4.1 Admin is the strongest case (10,184 LOC)
 
@@ -161,15 +173,15 @@ maps. A MUI `createTheme()` call consolidates all of it into one typed object
 with autocomplete. That is a genuine reduction in the number of places you have
 to look to answer "why is this button that color."
 
-### 4.3 Collaboration and onboarding — the best argument
+### 4.3 Collaboration and onboarding
 
-This is the strongest goal on the list and it is worth stating plainly. A new
-contributor who knows MUI can read `<Button variant="contained" color="error">`
+A close second to §4.5, and the same problem viewed from the contributor's
+side. A new contributor who knows MUI can read `<Button variant="contained" color="error">`
 immediately. Our current `<Button variant="destructive">` requires reading
 `button.tsx` to learn the variant vocabulary, because shadcn is vendored source
 that every project forks differently. MUI has canonical docs, a stable API, and
-a large hiring pool. **For an open-source project taking outside contributions,
-this alone may justify the migration.**
+a large hiring pool. For an open-source project taking outside contributions,
+that legibility compounds with the consolidation argument below.
 
 ### 4.4 Accessibility consistency
 
@@ -177,78 +189,195 @@ MUI ships accessible-by-default components with strong focus management. We
 already have one shipped a11y bug (`fix(a11y): align mobile header focus order
 with visual order`) and hand-composed Radix leaves room for more.
 
+### 4.5 Vendor consolidation — the strongest argument, and the actual driver
+
+The front end depends on **20 distinct UI-layer libraries**:
+
+```
+@radix-ui (27 packages)   lucide-react        framer-motion      sonner
+cmdk                      vaul *              embla-carousel *    recharts *
+react-day-picker *        input-otp *         react-resizable-panels *
+@dnd-kit                  next-themes         class-variance-authority
+clsx                      tailwind-merge      tailwindcss-animate
+leaflet (0 imports)       katex               react-markdown
+```
+
+`*` = reachable only from a `ui/` primitive that nothing imports. Seven of the
+twenty are already dead weight, `recharts` among them — **the app currently
+renders no charts at all.**
+
+The symptom is visible in `App.tsx`, which mounts **two toast systems at once**:
+
+```tsx
+import { Toaster } from "@/components/ui/toaster";        // Radix toast
+import { Toaster as Sonner } from "@/components/ui/sonner"; // Sonner
+…
+<Toaster />
+<Sonner />
+```
+
+Sonner is used in 29 files, the Radix toast in 4. Nobody decided this; it
+accumulated. That is what an abstract design system over many vendors produces
+under growth — and it is the real problem statement.
+
+**The cost isn't the packages, it's the decision each time the UI expands.**
+Today, adding a component means: does shadcn have it? If not, which of the
+20 libraries does? If none, hand-roll it and add a 21st. Each answer is a
+research task with no default, and each new vendor brings its own theming
+model, a11y posture, and upgrade cadence.
+
+Realistic end state after migration:
+
+| Today | After |
+|---|---|
+| 27 × `@radix-ui/*` | `@mui/material` |
+| `recharts` *, `react-day-picker` * | deleted now; `@mui/x-charts` / `@mui/x-date-pickers` available if ever needed |
+| `cva`, `clsx`, `tailwind-merge`, `tailwindcss-animate`, `tailwindcss` | MUI `sx` / `styled` |
+| `next-themes` | MUI `CssVarsProvider` |
+| `cmdk` (live — powers `GlobalSearch`) | MUI `Autocomplete` — evaluate, not an automatic win |
+| `vaul` *, `embla` *, `input-otp` *, `react-resizable-panels` * | deleted in A2a; nothing to port |
+| `lucide-react` | `@mui/icons-material` |
+| `sonner`, Radix toast | **pick one** — see §5.3 |
+| `framer-motion`, `react-markdown`, `katex`, `@dnd-kit` | **unchanged — no MUI equivalent** |
+| `leaflet` | deleted (unused) |
+| **20 libraries** | **~6 libraries** |
+
+**Be honest that it is 6, not 1.** MUI is not a complete answer to every UI
+need — it has no animation system, no markdown/math renderer, and no
+drag-and-drop. But going from 20 vendors to 6, with one of them covering the
+great majority of call sites and having a documented answer for the next
+component, is a real and defensible win. It is the reason to do this project.
+
 ---
 
-## 5. Recommended strategy
+## 5. Theming philosophy: theme lightly
 
-Three stages. **Each stage ships value on its own and is a valid stopping
-point.** Do not start Stage 2 before Stage 0 is done.
+This deserves its own section because it is the decision most likely to quietly
+undo the whole effort.
+
+### 5.1 The trap
+
+The instinct after adopting MUI is to theme it heavily so the app keeps its
+current look. **Resist this.** A heavily-themed MUI is an abstract design system
+over MUI — the same structure we're leaving, with a different vendor
+underneath. Every new component then needs bespoke theming work before it can
+be used, which is exactly the friction the migration is meant to remove.
+
+### 5.2 Recommended posture
+
+Since the current design is itself part of what we want to move away from, we
+have an unusually free hand. Recommended:
+
+- **Adopt Material's defaults for shape, elevation, spacing, and motion.**
+  Don't fight them.
+- **Theme only the brand surface:** palette (primary/secondary/error/success),
+  typography family and scale, and border radius. That is roughly 30–40 lines
+  of `createTheme()`.
+- **Cap `styleOverrides`.** Propose a hard rule: if a component needs more than
+  a few lines of override, either accept Material's default or the component
+  belongs in Tier C as a deliberate custom piece. Review overrides like code.
+- **Zero `sx` for anything the theme should own.** Colors, spacing, and radii
+  come from theme tokens, never literals.
+
+The measurable test: **`muiTheme.ts` should stay under ~150 lines.** If it grows
+past that, we are rebuilding the thing we left.
+
+### 5.3 Corollary: pick one toast system
+
+Whatever else happens, `App.tsx` should mount one. Both are genuinely in use:
+`sonner` in 29 files, the Radix toast in three real consumers (`HelpButton`,
+`useAuth`, `useCommunityPromoToast`) plus its `Toaster` and a 3-line re-export
+shim at `ui/use-toast.ts`.
+
+Recommendation: keep `sonner` (better stacking than MUI `Snackbar`, which shows
+one at a time) and migrate those three consumers off the Radix toast. That is a
+small, well-bounded change — and it makes `sonner` a **deliberate, documented
+exception** to the one-library rule rather than an accident. The current state,
+where both are mounted and nobody chose, is the actual bug.
+
+---
+
+## 6. Recommended strategy
+
+Three stages. The ordering below differs from a stability-driven plan: because
+the goal is **coverage for a growing UI**, the theme foundation is urgent —
+every feature shipped before it lands is one more thing built on the system
+we're leaving.
 
 ```
-Stage 0 — Stabilize          (do this regardless of MUI)
+Stage A — Foundation        (theme + deletions; unblocks all new work)
    ↓
-Stage 1 — Prove MUI on Admin (reversible, low blast radius)
+Stage B — Prove it on Admin (reversible, low blast radius)
    ↓
-Stage 2 — Strangler-fig the app surface
+Stage C — Strangler-fig     (with one hard prerequisite: C0 before C4)
 ```
 
-### Stage 0 — Stabilize and shrink (no MUI)
+### Stage A — Foundation
 
-This is the work that actually delivers "more stable, less code," and it makes
-any subsequent MUI port dramatically cheaper because there's less to port.
+Two independent tracks; run them in parallel.
+
+**A1 — Theme foundation (the urgent one).** Install `@mui/material`,
+`@emotion/react`, `@emotion/styled`. Write `src/theme/muiTheme.ts` per §5:
+brand palette, typography, radius, light + dark. Mount `CssVarsProvider`
+alongside Tailwind with `CssBaseline` configured not to fight Tailwind's
+preflight. **From this point, all new UI is built in MUI.** Nothing is ported
+yet; we just stop making the problem bigger.
+
+**A2 — Reduce the surface to port.** Every line deleted here is a line we
+don't pay to migrate:
 
 | Task | Impact |
 |---|---|
-| Delete 23 unused `ui/` primitives | **−2,759 LOC** |
-| Drop dead deps: `leaflet`, `@types/leaflet`, `@hookform/resolvers` (0 imports); `embla-carousel-react`, `vaul`, `cmdk`, `input-otp`, `react-day-picker`, `react-resizable-panels` (only used by the deleted primitives) | smaller install + bundle |
-| Extract a `useQuizSession` hook + `<QuizShell>` from the 4 practice modes | **−800 to −1,200 LOC**, one place to fix quiz bugs |
-| Split the 9 files over 500 LOC | matches the repo's own 200-LOC rule |
-| Move the 53 manual inputs in Admin onto RHF + Zod | fewer validation bugs, less state code |
+| Delete 17 unused `ui/` primitives + the `ui/use-toast` re-export shim | **−2,295 LOC never ported** |
+| Drop 9 dead deps: `leaflet`, `@types/leaflet`, `@hookform/resolvers` (zero imports); `recharts`, `vaul`, `embla-carousel-react`, `input-otp`, `react-day-picker`, `react-resizable-panels` (reachable only from the deleted primitives). **Keep `cmdk`** — it is live via `GlobalSearch`. | **20 → 13 libraries before MUI lands** |
+| Resolve the dual toast system (§5.3) | one vendor, deliberately chosen |
+| Rewrite the 122 `toHaveClass` assertions to semantic queries | prevents ~318 test breaks later; far cheaper now |
 
-**Expected net: −4,000 to −5,000 LOC (roughly 10% of non-test source), zero
-visual change, zero new dependencies.**
+### Stage B — Prove it on Admin
 
-This is the honest answer to "reduce the size of the codebase."
+Admin is role-gated, has the weakest UI, benefits most from DataGrid, and is
+the safest place to be wrong. Convert **one** screen end-to-end — recommend
+`AdminQuestions`, the most table-shaped.
 
-### Stage 1 — Prove MUI on Admin
+**Gate criteria, matched to the actual goal.** Do not gate on LOC or bundle
+size; those will move the wrong way (§3.1) and that is expected:
 
-Admin is behind a role gate, has the weakest UI, benefits most from DataGrid,
-and is the lowest-risk place to be wrong.
+1. **Coverage** — how many components did MUI supply outright, vs. need a Tier B
+   adapter, vs. have no answer at all? A high "no answer" count is the signal
+   that MUI is not the complete library we're betting on.
+2. **Theme discipline** — did `muiTheme.ts` stay under ~150 lines, or did the
+   screen demand a pile of `styleOverrides`? Overrides sprawl is the early
+   warning that we're rebuilding an abstract design layer.
+3. **Brand fidelity** — is the result acceptable *without* heavy theming? If it
+   is not, that is a design decision to make now (§10.2), not in Stage C.
 
-1. Add `@mui/material`, `@emotion/react`, `@emotion/styled`, `@mui/x-data-grid`.
-2. Build `src/theme/muiTheme.ts` — map the existing 76 CSS custom properties
-   into a MUI theme with light/dark palettes so both systems render identically.
-3. Run MUI's `CssVarsProvider` alongside Tailwind. They coexist; set
-   `CssBaseline` to not fight Tailwind's preflight.
-4. Convert **one** admin screen end-to-end (recommend `AdminQuestions` — it's
-   the most table-shaped).
-5. **Measure, then decide.** Record LOC delta, bundle delta, test-fix count, and
-   wall-clock hours. Compare against the estimates in this document.
+If coverage is poor or the theme balloons, stop. Stage A's wins are permanent
+and the app still works.
 
-**Stage 1 has a real kill switch.** If converting one admin screen costs more
-than projected or the LOC goes up rather than down, stop here. Tailwind +
-shadcn stays, Stage 0's wins are already banked, and we've spent one screen's
-worth of effort finding out.
+### Stage C — Strangler-fig the app surface
 
-### Stage 2 — Strangler-fig the app surface
-
-Only if Stage 1's numbers hold. Convert leaf-first, one route at a time,
-shipping continuously. Never run both libraries inside a single component;
-the boundary is always a whole component.
-
-Order (least → most coupled):
-1. Leaf display components (`LessonCard`, `TopicCard`, `HamRadioToolCard`, `Glossary`)
-2. Modals and dialogs (`WeeklyGoalsModal`, `LicenseSelectModal`, `ProfileModal`)
-3. Layout and navigation (`AppLayout`, `DashboardSidebar`, `sidebar/*`)
-4. `<QuizShell>` from Stage 0 — one port covers all six quiz modes
-5. Dashboard
-6. `Auth.tsx`
-
+Leaf-first, one route at a time, shipping continuously. Never mix both
+libraries inside a single component; the boundary is always a whole component.
 Delete each shadcn primitive the moment its last consumer is converted.
+
+| Step | Scope |
+|---|---|
+| **C0** | **Prerequisite:** extract `useQuizSession` + `<QuizShell>` from the four duplicated practice modes (§3.3) |
+| C1 | Leaf display components (`LessonCard`, `TopicCard`, `HamRadioToolCard`, `Glossary`) |
+| C2 | Modals and dialogs (`WeeklyGoalsModal`, `LicenseSelectModal`, `ProfileModal`) |
+| C3 | Layout and navigation (`AppLayout`, `DashboardSidebar`, `sidebar/*`) |
+| C4 | `<QuizShell>` — **one port covers all six quiz modes** |
+| C5 | Dashboard |
+| C6 | `Auth.tsx` |
+| C7 | Remove Tailwind + shadcn; delete `ui/` |
+
+**C0 is not optional.** Porting C4 without it means writing four near-identical
+MUI components and keeping a six-way bug surface. It is the single highest-
+leverage item in the plan.
 
 ---
 
-## 6. Component classification
+## 7. Component classification
 
 ### Tier A — Mechanical port (near-1:1 API map)
 
@@ -281,8 +410,7 @@ These are prop renames. A codemod plus review handles most of them.
 
 ### Tier B — Adapter needed (in-house wrapper over MUI)
 
-Keep our call-site API; swap the implementation underneath. These go in
-`src/components/ohp/`.
+Keep our call-site API; swap the implementation underneath. These go in `src/components/ohp/`.
 
 | Component | Why |
 |---|---|
@@ -300,83 +428,98 @@ These belong in `src/components/ohp/` as the "own library" from the proposal.
 | Component | LOC | Why custom |
 |---|---|---|
 | `QuestionCard` | 430 | Core domain object — answer states, figures, bookmarking, glossary tooltips |
-| `<QuizShell>` (from Stage 0) | ~400 | The quiz engine. Highest-value custom component in the app. |
+| `<QuizShell>` (from C0) | ~400 | The quiz engine. Highest-value custom component in the app. |
 | `GlossaryFlashcards` | 498 | Spaced-repetition card flip; framer-motion driven |
 | `Calculator` | 248 | Domain tool |
 | `MarkdownText` / `TopicContent` | 282 | `react-markdown` + `remark-math` + KaTeX pipeline |
 | `FigureImage` / `FigureLightbox` | 158 | Exam figure zoom/pan |
 | `GlossaryHighlightedText` / `GlossaryTermTooltip` | 190 | Inline term detection |
 | `OHPLogo` | 76 | Brand SVG |
-| `GlobalSearch` | 301 | Currently `cmdk`; MUI `Autocomplete` is a plausible port but not obviously better — evaluate, don't assume |
+| `GlobalSearch` | 301 | Built on `cmdk` via `ui/command`. MUI `Autocomplete` is a plausible port but not obviously better — evaluate, don't assume. This is the one live non-Radix vendor that survives A2a. |
 | `LessonPath` | 239 | Bespoke path visualization |
 | `PWAInstallBanner` | 183 | Platform-specific install flows |
-| Charts | — | Keep `recharts` (1 file) or move to `@mui/x-charts` if we're already paying for MUI X |
+| Charts | 0 | **None exist.** `recharts` reaches only dead code and is deleted in A2a. Use `@mui/x-charts` if charts are ever added. |
 | Animation | 29 files | Keep `framer-motion`. MUI has no equivalent. |
 
 ---
 
-## 7. Roadmap
+## 8. Roadmap
 
-Sizing is deliberately given as ranges. These are estimates from LOC and
-call-site counts, not from a completed pilot — **Stage 1 exists specifically to
-replace them with measured numbers.**
+Sizing is given as ranges. These are estimates from LOC and call-site counts,
+not from a completed pilot — **Stage B exists to replace them with measured
+numbers.**
 
 | Phase | Scope | Rough size | Exit criteria |
 |---|---|---|---|
-| **0.1** | Delete 23 dead primitives + 9 dead deps | Small | Build green, bundle measured |
-| **0.2** | Extract `useQuizSession` + `<QuizShell>`; refit 4 practice modes | Large | All quiz tests green; net LOC negative |
-| **0.3** | Split the 9 files >500 LOC | Medium | No non-generated file over ~300 LOC |
-| **0.4** | Admin forms → RHF + Zod | Medium | 53 manual inputs → 0 |
-| **1.1** | MUI install + `muiTheme.ts` mapping all 76 tokens | Medium | Side-by-side renders identical, light + dark |
-| **1.2** | Convert `AdminQuestions` to MUI + DataGrid | Medium | **Measure & decide.** Publish LOC/bundle/hours delta. |
-| **2.1** | Leaf display components | Medium | Per-component; ship each |
-| **2.2** | Modals + dialogs | Medium | |
-| **2.3** | Layout + navigation | Large | |
-| **2.4** | `<QuizShell>` port | Medium | One port covers 6 quiz modes |
-| **2.5** | Dashboard, Auth | Large | |
-| **2.6** | Remove Tailwind + shadcn; delete `ui/` | Medium | Bundle re-measured against baseline |
+| **A1** | MUI install + `muiTheme.ts` (all 76 tokens → brand palette, light + dark) | Medium | Both providers coexist; **all new UI is MUI from here** |
+| **A2a** | Delete 17 dead primitives + 9 dead deps | Small | Build green; 20 → 13 UI libraries |
+| **A2b** | Resolve dual toast system | Small | One `<Toaster>` in `App.tsx` |
+| **A2c** | 122 `toHaveClass` → semantic queries | Medium | Class-coupled assertions at 0 |
+| **B1** | Convert `AdminQuestions` to MUI + DataGrid | Medium | **Measure & decide** on the three §6 gate criteria |
+| **C0** | Extract `useQuizSession` + `<QuizShell>` | Large | Quiz tests green; net LOC negative |
+| **C1** | Leaf display components | Medium | Ship each independently |
+| **C2** | Modals + dialogs | Medium | |
+| **C3** | Layout + navigation | Large | |
+| **C4** | `<QuizShell>` port | Medium | Covers 6 quiz modes in one port |
+| **C5–C6** | Dashboard, Auth | Large | |
+| **C7** | Remove Tailwind + shadcn; delete `ui/` | Medium | **~6 UI libraries**; bundle re-measured |
+
+Remaining Stage-0 items from the stability track — splitting the 9 files over
+500 LOC, and moving Admin's 53 manual inputs onto RHF + Zod — are **not on the
+critical path** for this goal. Fold them into whichever phase touches the file,
+rather than running them as their own project.
 
 **Gate between every phase:** `npm run test:run` green, `tsc --noEmit` clean,
 `npm run lint` clean, both themes verified, mobile viewport verified.
 
 ---
 
-## 8. Risks
+## 9. Risks
 
 | Risk | Assessment | Mitigation |
 |---|---|---|
-| **Test breakage** | ~318 structure-coupled assertions (122 `toHaveClass` in 20 files, 196 `querySelector`) will break. Offset by 2,145 semantic queries (`getByText`/`getByRole`/`getByLabelText`) that survive a DOM swap. | Rewrite class assertions to semantic queries *during Stage 0*, before any MUI work. Cheaper then. |
-| **Bundle grows** | Likely. MUI + Emotion > Radix + Tailwind CSS. Baseline is 742.9 kB gz JS + 23.6 kB gz CSS. | Track per-phase. Emotion's runtime cost is real; consider `@mui/material-pigment-css` if it becomes a problem. |
+| **Test breakage** | ~318 structure-coupled assertions (122 `toHaveClass` in 20 files, 196 `querySelector`) will break. Offset by 2,145 semantic queries (`getByText`/`getByRole`/`getByLabelText`) that survive a DOM swap. | Rewrite class assertions to semantic queries in **A2c**, before any MUI work. Far cheaper then. |
+| **Bundle grows** | Likely. MUI + Emotion > Radix + Tailwind CSS. Baseline is 742.9 kB gz JS + 23.6 kB gz CSS. | Track per-phase, but **do not gate on it** — it is an accepted cost of consolidation. Consider `@mui/material-pigment-css` if Emotion's runtime cost becomes a real problem. |
 | **LOC grows in feature layer** | Likely, 10–25%. `sx` is more verbose than utility classes. | Accept it, or use MUI's `styled()` for repeated patterns. **Don't sell this migration on LOC reduction.** |
 | **Dual-library period** | Unavoidable in strangler-fig. Two theme systems live simultaneously. | Single source of truth: theme values defined once in `muiTheme.ts`, Tailwind config *derives from it*. Never both libraries inside one component. |
-| **Migration stalls half-done** | The real failure mode for this kind of project. | Stage 1's kill switch. If Stage 2 stalls, Stage 0's wins are permanent and the app still works. |
-| **Visual regressions across 95 files** | High, and hard to catch with unit tests. | Consider adding Playwright + visual snapshots during Stage 0. Chromium is already available in CI. |
-| **`framer-motion` interop** | 29 files. MUI components need `component`/`forwardRef` bridging for motion. | Build a `MotionBox` helper once in Stage 1. |
+| **Migration stalls half-done** | The real failure mode, and the dual-vendor period makes the codebase *more* fragmented while it lasts. | Stage B's gate. If Stage C stalls, Stage A's wins are permanent, new work is already on MUI, and the app still runs. |
+| **Visual regressions across 95 files** | High, and hard to catch with unit tests. | Add Playwright + visual snapshots in Stage A, before the first port. Chromium is already available in CI. |
+| **Over-theming** | **The highest risk given the goal.** Recreating the current look in `styleOverrides` reproduces the abstract design layer on a new vendor, and every new component again needs bespoke work before use. | The §5 rules, enforced in review: ~150-line theme cap, overrides reviewed like code, §10.2 decided up front. |
+| **MUI coverage gaps** | MUI has no animation, markdown/math, or drag-and-drop story. The end state is ~6 libraries, not 1. | Accept it explicitly (Tier C). Measure the gap count in Stage B before committing to Stage C. |
+| **`framer-motion` interop** | 29 files. MUI components need `component`/`forwardRef` bridging for motion. | Build a `MotionBox` helper once in A1. |
 
 ---
 
-## 9. Decisions needed before Stage 1
+## 10. Decisions still open
 
-1. **Is collaboration/onboarding the primary goal?** If yes, MUI is justified on
-   §4.3 alone and Stage 2 should target user-facing surfaces (which contributors
-   read first). If the primary goal is stability, Stage 0 may be sufficient and
-   we should reconsider whether Stage 2 is worth it.
-2. **MUI X licensing.** DataGrid Community is free but lacks column pinning,
-   grouping, and Excel export. Admin is the main beneficiary — is Community
-   enough, or do we need a Pro license?
-3. **Design direction.** Do we want to *look like* Material Design, or theme MUI
-   heavily to preserve the current look? Heavy theming erodes the "off-the-shelf"
-   savings — that tension should be resolved deliberately, not discovered in
-   phase 2.4.
-4. **Keep `sonner` and `framer-motion`?** My recommendation is yes for both.
-   Purity is not a goal worth paying for.
+Two of the original four are now settled: the driver is coverage and vendor
+consolidation (§4.5), and `sonner` + `framer-motion` stay (§5.3, Tier C).
+
+1. **MUI X licensing.** DataGrid Community is free but lacks column pinning,
+   row grouping, and Excel export. Admin is the main beneficiary and the Stage B
+   pilot depends on it — is Community enough, or do we need Pro? **Decide before
+   B1**, since it changes what the pilot proves.
+2. **How far from Material do we want to land?** §5 recommends theming lightly
+   and accepting Material's defaults for shape, elevation, and motion. That is
+   the posture that actually delivers the "reach for an existing component"
+   benefit. If the app must keep its current visual identity closely, say so now
+   — it is a legitimate call, but it costs a meaningful share of the benefit and
+   the plan should be re-scoped accordingly rather than discovering it at C5.
+3. **Icons.** `lucide-react` → `@mui/icons-material` is one fewer vendor, but
+   the icon sets differ visually and it is a large mechanical change with no
+   functional payoff. Reasonable to defer to C7 or skip entirely.
 
 ---
 
-## 10. If you only take one thing from this document
+## 11. If you only take one thing from this document
 
-Stage 0 costs a fraction of the full migration, requires no new dependencies,
-delivers the "more stable / less code" outcomes the proposal is aimed at, and
-makes MUI adoption meaningfully cheaper if we go ahead.
+The case for MUI is **20 UI libraries becoming 6, with a documented default for
+the next component you need** — not less code and not fewer bugs. Plan, measure,
+and defend the project on that basis.
 
-**Do Stage 0 first. Decide on MUI after Stage 1 gives us a real number.**
+Two things will decide whether it works:
+
+- **Theme lightly.** If `muiTheme.ts` grows past ~150 lines, we have rebuilt the
+  abstract design system we set out to escape, on a new vendor.
+- **Do C0 before C4.** Extract the quiz engine first, or the migration ports
+  four copies of the same component and inherits a six-way bug surface.
