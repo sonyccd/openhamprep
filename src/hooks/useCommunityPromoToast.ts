@@ -9,8 +9,10 @@ const TEST_MODE_KEY = 'community-toast-test-mode';
 const DAYS_AFTER_SIGNUP = 3;
 
 // The Radix toast set this from a single onOpenChange(false), which covered
-// both the close button and the action button. sonner has no equivalent, so
-// both paths call this instead. Writing the same value twice is harmless.
+// both the close button and the action button. sonner splits those: verified
+// against sonner 1.7.4 that clicking the action closes the toast WITHOUT
+// firing onDismiss. So both call sites below are load-bearing — dropping
+// either one silently re-shows this toast to that group of users.
 const markShown = () => localStorage.setItem(STORAGE_KEY, 'true');
 
 interface UseCommunityPromoToastOptions {

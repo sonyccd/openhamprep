@@ -201,7 +201,7 @@ describe('useCommunityPromoToast', () => {
     expect(localStorage.getItem('community-toast-shown')).toBeNull();
   });
 
-  it('sets localStorage when toast is dismissed via onOpenChange', () => {
+  it('sets localStorage when the toast is dismissed via onDismiss', () => {
     renderHook(() =>
       useCommunityPromoToast({
         userCreatedAt: getDateDaysAgo(5),
@@ -212,12 +212,35 @@ describe('useCommunityPromoToast', () => {
 
     vi.advanceTimersByTime(2000);
 
-    // Simulate the toast being dismissed by calling onOpenChange
+    // Simulate the user dismissing the toast with the close button
     const toastOptions = mockToast.mock.calls[0][1];
     expect(toastOptions.onDismiss).toBeDefined();
     toastOptions.onDismiss();
 
     expect(localStorage.getItem('community-toast-shown')).toBe('true');
+  });
+
+  // sonner closes the toast on an action click without firing onDismiss, so
+  // this path sets the flag itself. Without it the promo re-appears for every
+  // user who actually clicked through to the forum.
+  it('sets localStorage when the action button is clicked', () => {
+    const windowOpenSpy = vi.spyOn(window, 'open').mockReturnValue({} as Window);
+
+    renderHook(() =>
+      useCommunityPromoToast({
+        userCreatedAt: getDateDaysAgo(5),
+        forumUsername: null,
+        isAuthenticated: true,
+      })
+    );
+
+    vi.advanceTimersByTime(2000);
+
+    const toastOptions = mockToast.mock.calls[0][1];
+    toastOptions.action.onClick();
+
+    expect(localStorage.getItem('community-toast-shown')).toBe('true');
+    windowOpenSpy.mockRestore();
   });
 
   it('only shows toast once even with re-renders', () => {
