@@ -24,10 +24,12 @@ export default defineConfig({
   },
 
   projects: [
-    // Guest routes need no database, so they stay independent of the setup step.
-    { name: "chromium-light", testIgnore: /admin/, use: { ...devices["Desktop Chrome"], colorScheme: "light" } },
-    { name: "chromium-dark", testIgnore: /admin/, use: { ...devices["Desktop Chrome"], colorScheme: "dark" } },
-    { name: "mobile", testIgnore: /admin/, use: { ...devices["Pixel 7"] } },
+    // Guest routes need no database. They must also skip auth.setup.ts, which
+    // does — otherwise running only these projects (as CI does) drags the admin
+    // login in with them and fails with no Supabase.
+    { name: "chromium-light", testMatch: /smoke\.e2e\.ts/, use: { ...devices["Desktop Chrome"], colorScheme: "light" } },
+    { name: "chromium-dark", testMatch: /smoke\.e2e\.ts/, use: { ...devices["Desktop Chrome"], colorScheme: "dark" } },
+    { name: "mobile", testMatch: /smoke\.e2e\.ts/, use: { ...devices["Pixel 7"] } },
 
     { name: "setup", testMatch: /auth\.setup\.ts/ },
 
