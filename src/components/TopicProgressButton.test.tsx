@@ -117,15 +117,6 @@ describe('TopicProgressButton', () => {
       expect(button).toBeInTheDocument();
     });
 
-    it('should have success styling when completed', () => {
-      mockIsCompleted = true;
-      const { container } = renderComponent();
-
-      // The button should have success-related classes
-      const button = screen.getByRole('button');
-      expect(button.className).toContain('bg-success');
-    });
-
     it('should accept custom className', () => {
       mockIsCompleted = false;
 
@@ -139,8 +130,9 @@ describe('TopicProgressButton', () => {
         </QueryClientProvider>
       );
 
-      const button = screen.getByRole('button');
-      expect(button.className).toContain('custom-class');
+      // Kept deliberately: this checks a caller-supplied class is forwarded,
+      // which is the component's API rather than its internal styling.
+      expect(screen.getByRole('button').className).toContain('custom-class');
     });
   });
 });

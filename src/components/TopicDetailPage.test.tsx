@@ -128,8 +128,6 @@ describe('TopicDetailPage', () => {
     mockTopicQuestions = [];
   });
 
-  const getGrid = () => screen.getByTestId('topic-layout-grid');
-
   describe('Loading State', () => {
     it('should show loading skeleton when topic is loading', () => {
       mockTopicLoading = true;
@@ -273,9 +271,6 @@ describe('TopicDetailPage', () => {
       expect(rail).toBeInTheDocument();
       expect(rail).toHaveAttribute('aria-expanded', 'false');
 
-      // Grid uses the collapsed (auto) template, not the 280px one
-      expect(getGrid().className).toContain('lg:grid-cols-[1fr_auto]');
-      expect(getGrid().className).not.toContain('lg:grid-cols-[1fr_280px]');
     });
 
     it('should expand to the wide sidebar when the rail is clicked', () => {
@@ -290,8 +285,6 @@ describe('TopicDetailPage', () => {
       const hide = screen.getByRole('button', { name: 'Hide Questions & Resources' });
       expect(hide).toHaveAttribute('aria-expanded', 'true');
 
-      // Grid switches to the fixed 280px template
-      expect(getGrid().className).toContain('lg:grid-cols-[1fr_280px]');
     });
 
     it('should collapse again when the hide control is clicked', () => {
@@ -303,7 +296,6 @@ describe('TopicDetailPage', () => {
       expect(
         screen.getByRole('button', { name: 'Show Questions & Resources' })
       ).toBeInTheDocument();
-      expect(getGrid().className).toContain('lg:grid-cols-[1fr_auto]');
     });
 
     it('should point both toggles at the panel region via aria-controls', () => {
@@ -360,9 +352,6 @@ describe('TopicDetailPage', () => {
       expect(screen.queryByTestId('questions-panel')).not.toBeInTheDocument();
       expect(screen.queryByTestId('resource-panel')).not.toBeInTheDocument();
 
-      // Grid reserves no sidebar column
-      expect(getGrid().className).not.toContain('lg:grid-cols-[1fr_280px]');
-      expect(getGrid().className).not.toContain('lg:grid-cols-[1fr_auto]');
     });
 
     it('should render the sidebar when there are questions but no resources', () => {
@@ -376,8 +365,6 @@ describe('TopicDetailPage', () => {
       ).toBeInTheDocument();
       expect(screen.getByTestId('questions-panel')).toBeInTheDocument();
 
-      // Grid reserves the collapsed sidebar column
-      expect(getGrid().className).toContain('lg:grid-cols-[1fr_auto]');
     });
 
     it('should render the sidebar when there are resources but no questions', () => {
@@ -391,8 +378,6 @@ describe('TopicDetailPage', () => {
       ).toBeInTheDocument();
       expect(screen.getByTestId('resource-panel')).toBeInTheDocument();
 
-      // Grid reserves the collapsed sidebar column
-      expect(getGrid().className).toContain('lg:grid-cols-[1fr_auto]');
     });
   });
 

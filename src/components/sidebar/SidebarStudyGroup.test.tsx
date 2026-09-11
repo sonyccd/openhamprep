@@ -102,8 +102,7 @@ describe('SidebarStudyGroup', () => {
         isExpanded={true}
       />
     );
-    const button = screen.getByText('Random Practice').closest('button');
-    expect(button?.className).toContain('bg-primary/10');
+    expect(screen.getByText('Random Practice').closest('button')).toHaveAttribute('aria-current', 'page');
   });
 
   it('does not apply active style when on admin page', () => {
@@ -115,8 +114,7 @@ describe('SidebarStudyGroup', () => {
         isExpanded={true}
       />
     );
-    const button = screen.getByText('Random Practice').closest('button');
-    expect(button?.className).not.toContain('bg-primary/10');
+    expect(screen.getByText('Random Practice').closest('button')).not.toHaveAttribute('aria-current');
   });
 
   it('disables items marked as disabled', () => {

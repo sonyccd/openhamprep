@@ -48,17 +48,14 @@ describe('SidebarNavItem', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('applies active styles when isActive is true', () => {
+  it('marks the item as the current page when active', () => {
     renderWithTooltip(<SidebarNavItem {...defaultProps} isActive={true} />);
-    const button = screen.getByRole('button');
-    expect(button.className).toContain('bg-primary/10');
-    expect(button.className).toContain('text-primary');
+    expect(screen.getByRole('button')).toHaveAttribute('aria-current', 'page');
   });
 
-  it('applies inactive styles when isActive is false', () => {
+  it('does not mark the item as current when inactive', () => {
     renderWithTooltip(<SidebarNavItem {...defaultProps} isActive={false} />);
-    const button = screen.getByRole('button');
-    expect(button.className).toContain('text-muted-foreground');
+    expect(screen.getByRole('button')).not.toHaveAttribute('aria-current');
   });
 
   it('is disabled when item.disabled is true', () => {
@@ -79,9 +76,7 @@ describe('SidebarNavItem', () => {
         item={{ ...defaultProps.item, disabled: true }}
       />
     );
-    const button = screen.getByRole('button');
-    expect(button.className).toContain('opacity-50');
-    expect(button.className).toContain('cursor-not-allowed');
+    expect(screen.getByRole('button')).toBeDisabled();
   });
 
   it('does not call onClick when disabled', async () => {

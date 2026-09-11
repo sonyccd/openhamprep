@@ -253,7 +253,7 @@ describe('PracticeTest', () => {
       });
 
       // Click on an answer option
-      const buttons = screen.getAllByRole('radio');
+      const buttons = screen.getAllByRole('button');
       const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
       if (optionA) {
         fireEvent.click(optionA);

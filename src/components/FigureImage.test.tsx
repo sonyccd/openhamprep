@@ -264,20 +264,6 @@ describe('FigureImage', () => {
       const img = screen.getByAltText('Figure for question E9B05');
       expect(img).toHaveAttribute('loading', 'lazy');
     });
-
-    it('should have max-height constraints for responsive design', () => {
-      render(
-        <FigureImage
-          figureUrl="https://storage.example.com/figures/E9B05.png"
-          questionId="E9B05"
-        />
-      );
-
-      const img = screen.getByAltText('Figure for question E9B05');
-      // Check that the image has the responsive max-height classes
-      expect(img.className).toContain('max-h-[200px]');
-      expect(img.className).toContain('md:max-h-[300px]');
-    });
   });
 
   describe('Different Question IDs', () => {

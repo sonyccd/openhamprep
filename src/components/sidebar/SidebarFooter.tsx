@@ -59,6 +59,7 @@ export function SidebarFooter({
                   variant="ghost"
                   size="icon"
                   onClick={onAdminClick}
+                  aria-current={isOnAdminPage ? 'page' : undefined}
                   className={cn(
                     'w-full h-10',
                     isOnAdminPage
@@ -77,6 +78,7 @@ export function SidebarFooter({
             <Button
               variant="ghost"
               onClick={onAdminClick}
+              aria-current={isOnAdminPage ? 'page' : undefined}
               className={cn(
                 'w-full justify-start gap-3',
                 isOnAdminPage

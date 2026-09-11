@@ -116,9 +116,7 @@ describe('SidebarFooter', () => {
       renderWithTooltip(
         <SidebarFooter {...defaultProps} isAdmin={true} isOnAdminPage={true} />
       );
-      const button = screen.getByText('Admin').closest('button');
-      expect(button?.className).toContain('text-primary');
-      expect(button?.className).toContain('bg-primary/10');
+      expect(screen.getByText('Admin').closest('button')).toHaveAttribute('aria-current', 'page');
     });
   });
 

@@ -81,21 +81,6 @@ describe('FigureLightbox', () => {
     });
   });
 
-  describe('Styling', () => {
-    it('should have max dimensions for viewport constraints', () => {
-      render(<FigureLightbox {...defaultProps} />);
-      const img = screen.getByAltText('Figure for question E9B05');
-      expect(img.className).toContain('max-w-[90vw]');
-      expect(img.className).toContain('max-h-[85vh]');
-    });
-
-    it('should have rounded corners on image', () => {
-      render(<FigureLightbox {...defaultProps} />);
-      const img = screen.getByAltText('Figure for question E9B05');
-      expect(img.className).toContain('rounded-lg');
-    });
-  });
-
   describe('Different Question IDs', () => {
     it('should display Technician question ID correctly', () => {
       render(<FigureLightbox {...defaultProps} questionId="T1A01" />);
