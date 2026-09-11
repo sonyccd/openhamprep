@@ -55,8 +55,7 @@ describe('QuestionReviewTable', () => {
         onEdit={vi.fn()}
       />
     );
-    expect(screen.getByText('A radio hobby')).toBeInTheDocument();
-    expect(screen.getByText('A.')).toBeInTheDocument();
+    expect(screen.getByText('A. A radio hobby')).toBeInTheDocument();
   });
 
   it('shows correct answer text for answer index 1 (B)', () => {
@@ -66,8 +65,7 @@ describe('QuestionReviewTable', () => {
         onEdit={vi.fn()}
       />
     );
-    expect(screen.getByText('Commercial radio')).toBeInTheDocument();
-    expect(screen.getByText('B.')).toBeInTheDocument();
+    expect(screen.getByText('B. Commercial radio')).toBeInTheDocument();
   });
 
   it('shows correct answer text for answer index 2 (C)', () => {
@@ -77,8 +75,7 @@ describe('QuestionReviewTable', () => {
         onEdit={vi.fn()}
       />
     );
-    expect(screen.getByText('TV broadcasting')).toBeInTheDocument();
-    expect(screen.getByText('C.')).toBeInTheDocument();
+    expect(screen.getByText('C. TV broadcasting')).toBeInTheDocument();
   });
 
   it('shows correct answer text for answer index 3 (D)', () => {
@@ -88,8 +85,7 @@ describe('QuestionReviewTable', () => {
         onEdit={vi.fn()}
       />
     );
-    expect(screen.getByText('Satellite radio')).toBeInTheDocument();
-    expect(screen.getByText('D.')).toBeInTheDocument();
+    expect(screen.getByText('D. Satellite radio')).toBeInTheDocument();
   });
 
   it('shows explanation text', () => {
@@ -148,7 +144,8 @@ describe('QuestionReviewTable', () => {
       makeQuestion({ id: 'uuid-3', display_name: 'T1A03' }),
     ];
     render(<QuestionReviewTable questions={questions} onEdit={vi.fn()} />);
-    expect(screen.getAllByRole('button')).toHaveLength(3);
+    // Scoped by name: the grid also renders column-menu buttons of its own.
+    expect(screen.getAllByRole('button', { name: /^Edit / })).toHaveLength(3);
   });
 
   it('shows fallback for out-of-bounds correct_answer', () => {
@@ -158,26 +155,26 @@ describe('QuestionReviewTable', () => {
         onEdit={vi.fn()}
       />
     );
-    expect(screen.getByText('?.')).toBeInTheDocument();
-    expect(screen.getByText('(missing)')).toBeInTheDocument();
+    expect(screen.getByText('?. (missing)')).toBeInTheDocument();
   });
 
-  it('applies highlight class to the matching row', () => {
+  it('selects the matching row for a deep link', () => {
     const questions = [
       makeQuestion({ id: 'uuid-1', display_name: 'T1A01' }),
       makeQuestion({ id: 'uuid-2', display_name: 'T1A02' }),
     ];
-    const { container } = render(
+    render(
       <QuestionReviewTable
         questions={questions}
         onEdit={vi.fn()}
         highlightQuestionId="T1A01"
       />
     );
-    // getAllByRole('row') includes the header row.
+    // A deep-linked question is the selected row, so the grid exposes it as
+    // aria-selected rather than a background colour.
     const rows = screen.getAllByRole('row').slice(1);
-    expect(rows[0]).toHaveAttribute('aria-current', 'true');
-    expect(rows[1]).not.toHaveAttribute('aria-current');
+    expect(rows[0]).toHaveAttribute('aria-selected', 'true');
+    expect(rows[1]).toHaveAttribute('aria-selected', 'false');
   });
 
   it('applies no highlight when highlightQuestionId is not set', () => {

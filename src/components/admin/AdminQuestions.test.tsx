@@ -222,10 +222,10 @@ describe('AdminQuestions', () => {
       renderComponent();
 
       await waitFor(() => {
-        // T1A01 correct_answer=0 → "A. A radio hobby"
-        expect(screen.getByText('A radio hobby')).toBeInTheDocument();
-        // T1A02 correct_answer=1 → "B. Some VHF/UHF"
-        expect(screen.getByText('Some VHF/UHF')).toBeInTheDocument();
+        // The grid derives the answer cell in one valueGetter so that sorting
+        // and filtering operate on the text shown.
+        expect(screen.getByText('A. A radio hobby')).toBeInTheDocument();
+        expect(screen.getByText('B. Some VHF/UHF')).toBeInTheDocument();
       });
     });
 
@@ -561,8 +561,9 @@ describe('AdminQuestions', () => {
       renderComponent({ testType: 'technician', highlightQuestionId: 'T1A01' });
 
       await waitFor(() => {
+        // A deep link selects the row, so the grid exposes aria-selected.
         const highlighted = screen.getAllByRole('row').filter(
-          (row) => row.getAttribute('aria-current') === 'true'
+          (row) => row.getAttribute('aria-selected') === 'true'
         );
         expect(highlighted).toHaveLength(1);
         expect(highlighted[0]).toHaveTextContent('T1A01');
