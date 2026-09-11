@@ -9,10 +9,11 @@ import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useQuizSession } from "@/hooks/useQuizSession";
 import { QuestionListView } from "@/components/QuestionListView";
 import { useArrlChaptersWithCounts } from "@/hooks/useArrlChapters";
-import { SkipForward, RotateCcw, Loader2, ChevronRight, CheckCircle, ArrowLeft, ChevronLeft, Book } from "lucide-react";
+import { RotateCcw, ChevronRight, CheckCircle, ArrowLeft, Book } from "lucide-react";
 import { motion } from "framer-motion";
 import { TestType } from "@/types/navigation";
 import { PageContainer } from "@/components/ui/page-container";
+import { QuizShell, QuizShellPending, QuizShellError, QuizNavControls } from "@/components/QuizShell";
 import type { ArrlChapterWithCount, LicenseType } from "@/types/chapters";
 
 interface ChapterPracticeProps {
@@ -111,27 +112,9 @@ export function ChapterPractice({
 
   const isLoading = questionsLoading || chaptersLoading;
 
-  if (isLoading) {
-    return (
-      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading chapters...</p>
-        </div>
-      </PageContainer>
-    );
-  }
+  if (isLoading) return <QuizShellPending message="Loading chapters..." />;
 
-  if (questionsError || !allQuestions) {
-    return (
-      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-destructive mb-4">Failed to load questions</p>
-          <Button onClick={onBack}>Go Back</Button>
-        </div>
-      </PageContainer>
-    );
-  }
+  if (questionsError || !allQuestions) return <QuizShellError onBack={onBack} />;
 
   // Show chapter selection list
   if (chapterView === 'list' || !selectedChapter) {
@@ -234,83 +217,82 @@ export function ChapterPractice({
   }
 
   // Show practice view
-  if (!question) {
-    return (
-      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </PageContainer>
-    );
-  }
+  if (!question) return <QuizShellPending />;
 
   const isViewingHistory = session.isViewingHistory;
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
   const progress = Math.round(session.askedIds.length / currentQuestions.length * 100);
 
   return (
-    <PageContainer width="standard" mobileNavPadding>
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={handleBackToQuestions} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Question List
-          </Button>
-          <div className="flex items-center gap-2">
-            <KeyboardShortcutsHelp />
-            <div className="flex items-center gap-2 text-primary">
-              <Book className="w-4 h-4" />
-              <span className="font-mono font-bold">Ch. {selectedChapter?.chapterNumber}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Progress & Stats Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-card border border-border rounded-lg p-4"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-6">
-              <div className="text-center">
-                <p className="text-2xl font-mono font-bold text-success">{stats.correct}</p>
-                <p className="text-xs text-muted-foreground">Correct</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-mono font-bold text-destructive">{stats.total - stats.correct}</p>
-                <p className="text-xs text-muted-foreground">Incorrect</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-mono font-bold text-primary">{percentage}%</p>
-                <p className="text-xs text-muted-foreground">Score</p>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={session.reset} className="gap-2">
-              <RotateCcw className="w-4 h-4" />
-              Reset
+    <QuizShell
+      header={
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <Button variant="ghost" onClick={handleBackToQuestions} className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Question List
             </Button>
-          </div>
-
-          {/* Chapter progress bar */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                className="h-full bg-primary rounded-full"
-              />
+            <div className="flex items-center gap-2">
+              <KeyboardShortcutsHelp />
+              <div className="flex items-center gap-2 text-primary">
+                <Book className="w-4 h-4" />
+                <span className="font-mono font-bold">Ch. {selectedChapter?.chapterNumber}</span>
+              </div>
             </div>
-            <span className="text-xs text-muted-foreground font-mono">
-              {session.askedIds.length}/{currentQuestions.length}
-            </span>
-            {session.askedIds.length === currentQuestions.length && (
-              <CheckCircle className="w-4 h-4 text-success" />
-            )}
           </div>
-        </motion.div>
-      </div>
 
-      {/* Question */}
+          {/* Progress & Stats Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card border border-border rounded-lg p-4"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <p className="text-2xl font-mono font-bold text-success">{stats.correct}</p>
+                  <p className="text-xs text-muted-foreground">Correct</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-mono font-bold text-destructive">{stats.total - stats.correct}</p>
+                  <p className="text-xs text-muted-foreground">Incorrect</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-mono font-bold text-primary">{percentage}%</p>
+                  <p className="text-xs text-muted-foreground">Score</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" onClick={session.reset} className="gap-2">
+                <RotateCcw className="w-4 h-4" />
+                Reset
+              </Button>
+            </div>
+
+            {/* Chapter progress bar */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  className="h-full bg-primary rounded-full"
+                />
+              </div>
+              <span className="text-xs text-muted-foreground font-mono">
+                {session.askedIds.length}/{currentQuestions.length}
+              </span>
+              {session.askedIds.length === currentQuestions.length && (
+                <CheckCircle className="w-4 h-4 text-success" />
+              )}
+            </div>
+          </motion.div>
+        </div>
+      }
+      actions={<QuizNavControls session={session} />}
+      footer={
+        session.history.length > 1 &&
+        `Question ${session.historyIndex + 1} of ${session.history.length}`
+      }
+    >
       <QuestionCard
         question={question}
         selectedAnswer={selectedAnswer}
@@ -319,38 +301,6 @@ export function ChapterPractice({
         enableGlossaryHighlight
         onTopicClick={navigateToTopic}
       />
-
-      {/* Actions */}
-      <div className="mt-8 flex justify-center gap-4">
-        {canGoBack && (
-          <Button variant="outline" onClick={session.previous} className="gap-2">
-            <ChevronLeft className="w-4 h-4" />
-            Previous
-          </Button>
-        )}
-        {!showResult ? (
-          <Button variant="outline" onClick={session.skip} className="gap-2">
-            <SkipForward className="w-4 h-4" />
-            Skip Question
-          </Button>
-        ) : (
-          <Button onClick={session.next} variant="default" size="lg" className="gap-2">
-            {isViewingHistory ? "Next" : "Next Question"}
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
-
-      {/* History indicator */}
-      {session.history.length > 1 && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center text-muted-foreground text-sm mt-4"
-        >
-          Question {session.historyIndex + 1} of {session.history.length}
-        </motion.p>
-      )}
-    </PageContainer>
+    </QuizShell>
   );
 }

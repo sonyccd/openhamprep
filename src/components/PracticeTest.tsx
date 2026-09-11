@@ -17,6 +17,7 @@ import { TestType, testConfig, examDistribution } from "@/types/navigation";
 import { selectExamQuestions } from "@/lib/examQuestions";
 import { trackPracticeTestStarted } from "@/lib/amplitude";
 import { PageContainer } from "@/components/ui/page-container";
+import { QuizShell, QuizShellPending, QuizShellError } from "@/components/QuizShell";
 import { supabase } from "@/integrations/supabase/client";
 interface PracticeTestProps {
   onBack: () => void;
@@ -159,22 +160,12 @@ export function PracticeTest({
 
   if (isLoading) {
     return (
-      <PageContainer width="narrow" mobileNavPadding className="flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading questions...</p>
-        </div>
-      </PageContainer>
+      <QuizShellPending message="Loading questions..." width="narrow" />
     );
   }
   if (error || !allQuestions || allQuestions.length === 0) {
     return (
-      <PageContainer width="narrow" mobileNavPadding className="flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-destructive mb-4">Failed to load questions</p>
-          <Button onClick={onBack}>Go Back</Button>
-        </div>
-      </PageContainer>
+      <QuizShellError onBack={onBack} width="narrow" />
     );
   }
 
@@ -350,75 +341,75 @@ export function PracticeTest({
   }
 
   return (
-    <PageContainer width="standard" mobileNavPadding>
-      {/* Header */}
-      <div className="mb-12">
-        {/* Top row: Keyboard help */}
-        <div className="flex items-center justify-end mb-8">
-          <KeyboardShortcutsHelp />
-        </div>
-
-        {/* Progress - Minimal bar with count */}
-        <div className="space-y-3">
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              className="h-full bg-primary rounded-full transition-all duration-300"
-            />
+    <QuizShell
+      header={
+        <div className="mb-12">
+          {/* Top row: Keyboard help */}
+          <div className="flex items-center justify-end mb-8">
+            <KeyboardShortcutsHelp />
           </div>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Progress</span>
-            <span className="font-mono">{answeredCount} / {questions.length}</span>
+
+          {/* Progress - Minimal bar with count */}
+          <div className="space-y-3">
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                className="h-full bg-primary rounded-full transition-all duration-300"
+              />
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Progress</span>
+              <span className="font-mono">{answeredCount} / {questions.length}</span>
+            </div>
           </div>
         </div>
-      </div>
+      }
+      actions={
+        <div className="mt-10">
+          <div className="flex items-center justify-between gap-4">
+            <Button variant="outline" onClick={handlePrevious} disabled={currentIndex === 0} className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Previous
+            </Button>
 
-      {/* Question */}
+            {/* Question Navigator */}
+            <div className="hidden md:flex flex-wrap justify-center gap-1 max-w-md" role="navigation" aria-label="Question navigator">
+              {questions.map((q, idx) => (
+                <button
+                  key={q.id}
+                  onClick={() => setCurrentIndex(idx)}
+                  aria-label={`Question ${idx + 1}${answers[q.id] ? ', answered' : ', unanswered'}${idx === currentIndex ? ', current' : ''}`}
+                  aria-current={idx === currentIndex ? 'step' : undefined}
+                  className={`w-8 h-8 rounded text-xs font-mono transition-colors ${idx === currentIndex ? "bg-primary text-primary-foreground" : answers[q.id] ? "bg-secondary text-secondary-foreground" : "bg-muted text-muted-foreground hover:bg-secondary"}`}
+                >
+                  {idx + 1}
+                </button>
+              ))}
+            </div>
+
+            {currentIndex === questions.length - 1 ? <Button onClick={handleFinish} className="gap-2" variant={answeredCount === questions.length ? "default" : "secondary"}>
+                <CheckCircle className="w-4 h-4" />
+                Finish Test
+              </Button> : <Button onClick={handleNext} className="gap-2">
+                Next
+                <ArrowRight className="w-4 h-4" />
+              </Button>}
+          </div>
+
+          {/* Unanswered Warning */}
+          {currentIndex === questions.length - 1 && answeredCount < questions.length && <motion.p initial={{
+          opacity: 0
+        }} animate={{
+          opacity: 1
+        }} className="text-center text-muted-foreground text-sm mt-4">
+              You have {questions.length - answeredCount} unanswered question(s).
+              You can still submit, but unanswered questions will be marked incorrect.
+            </motion.p>}
+        </div>
+      }
+    >
       <QuestionCard question={currentQuestion} selectedAnswer={answers[currentQuestion.id] || null} onSelectAnswer={handleSelectAnswer} showResult={false} />
-
-      {/* Navigation */}
-      <div className="mt-10">
-        <div className="flex items-center justify-between gap-4">
-          <Button variant="outline" onClick={handlePrevious} disabled={currentIndex === 0} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Previous
-          </Button>
-
-          {/* Question Navigator */}
-          <div className="hidden md:flex flex-wrap justify-center gap-1 max-w-md" role="navigation" aria-label="Question navigator">
-            {questions.map((q, idx) => (
-              <button
-                key={q.id}
-                onClick={() => setCurrentIndex(idx)}
-                aria-label={`Question ${idx + 1}${answers[q.id] ? ', answered' : ', unanswered'}${idx === currentIndex ? ', current' : ''}`}
-                aria-current={idx === currentIndex ? 'step' : undefined}
-                className={`w-8 h-8 rounded text-xs font-mono transition-colors ${idx === currentIndex ? "bg-primary text-primary-foreground" : answers[q.id] ? "bg-secondary text-secondary-foreground" : "bg-muted text-muted-foreground hover:bg-secondary"}`}
-              >
-                {idx + 1}
-              </button>
-            ))}
-          </div>
-
-          {currentIndex === questions.length - 1 ? <Button onClick={handleFinish} className="gap-2" variant={answeredCount === questions.length ? "default" : "secondary"}>
-              <CheckCircle className="w-4 h-4" />
-              Finish Test
-            </Button> : <Button onClick={handleNext} className="gap-2">
-              Next
-              <ArrowRight className="w-4 h-4" />
-            </Button>}
-        </div>
-
-        {/* Unanswered Warning */}
-        {currentIndex === questions.length - 1 && answeredCount < questions.length && <motion.p initial={{
-        opacity: 0
-      }} animate={{
-        opacity: 1
-      }} className="text-center text-muted-foreground text-sm mt-4">
-            You have {questions.length - answeredCount} unanswered question(s).
-            You can still submit, but unanswered questions will be marked incorrect.
-          </motion.p>}
-      </div>
-    </PageContainer>
+    </QuizShell>
   );
 }

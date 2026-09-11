@@ -9,12 +9,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
-import { AlertTriangle, Loader2, CheckCircle, ArrowLeft, ChevronLeft, ChevronRight, Dices, Flame } from "lucide-react";
+import { AlertTriangle, CheckCircle, ArrowLeft, ChevronLeft, ChevronRight, Dices, Flame } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { TestType } from "@/types/navigation";
 import { PageContainer } from "@/components/ui/page-container";
+import { QuizShell, QuizShellPending } from "@/components/QuizShell";
 
 // Number of correct answers in a row needed to clear a weak question
 const STREAK_TO_CLEAR = 3;
@@ -222,12 +223,7 @@ export function WeakQuestionsReview({
 
   if (isLoading) {
     return (
-      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading questions...</p>
-        </div>
-      </PageContainer>
+      <QuizShellPending message="Loading questions..." />
     );
   }
   // Empty state - no weak questions or all cleared
@@ -262,125 +258,127 @@ export function WeakQuestionsReview({
     const hasMoreQuestions = activeWeakQuestions.length > 0;
 
     return (
-      <PageContainer width="standard" mobileNavPadding>
-        <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={handleBackToList} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Weak Questions
-          </Button>
-          <div className="flex items-center gap-2">
-            <KeyboardShortcutsHelp />
-            {isJustCleared ? (
-              <div className="flex items-center gap-2 text-success">
-                <CheckCircle className="w-5 h-5" />
-                <span className="font-mono font-semibold">Cleared!</span>
+      <QuizShell
+        header={
+            <div className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <Button variant="ghost" onClick={handleBackToList} className="gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                Back to Weak Questions
+              </Button>
+              <div className="flex items-center gap-2">
+                <KeyboardShortcutsHelp />
+                {isJustCleared ? (
+                  <div className="flex items-center gap-2 text-success">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="font-mono font-semibold">Cleared!</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle className="w-5 h-5" />
+                    <span className="font-mono font-semibold">Weak Area</span>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="flex items-center gap-2 text-destructive">
-                <AlertTriangle className="w-5 h-5" />
-                <span className="font-mono font-semibold">Weak Area</span>
-              </div>
+            </div>
+
+            {/* Cleared banner */}
+            {isJustCleared && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-success/10 border border-success/30 rounded-lg p-4 mb-4"
+              >
+                <div className="flex items-center gap-2 text-success">
+                  <CheckCircle className="w-5 h-5" />
+                  <span className="font-medium">Question cleared from weak areas!</span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Take your time to review the explanation. Click Next to continue.
+                </p>
+              </motion.div>
             )}
+
+            {/* Streak Progress - only shown when streak mode is enabled and not just cleared */}
+            {streakModeEnabled && !isJustCleared && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-card border border-border rounded-lg p-4 mb-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Flame className="w-4 h-4 text-warning" />
+                    <span className="text-sm text-muted-foreground">Streak to clear ({STREAK_TO_CLEAR} correct in a row)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {Array.from({ length: STREAK_TO_CLEAR }, (_, i) => (
+                      <div
+                        key={i}
+                        className={`w-3 h-3 rounded-full transition-colors ${
+                          i < currentStreak ? 'bg-success' : 'bg-muted'
+                        }`}
+                      />
+                    ))}
+                    <span className="text-sm font-mono text-primary ml-2">{currentStreak}/{STREAK_TO_CLEAR}</span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
           </div>
-        </div>
-
-        {/* Cleared banner */}
-        {isJustCleared && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-success/10 border border-success/30 rounded-lg p-4 mb-4"
-          >
-            <div className="flex items-center gap-2 text-success">
-              <CheckCircle className="w-5 h-5" />
-              <span className="font-medium">Question cleared from weak areas!</span>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Take your time to review the explanation. Click Next to continue.
-            </p>
-          </motion.div>
-        )}
-
-        {/* Streak Progress - only shown when streak mode is enabled and not just cleared */}
-        {streakModeEnabled && !isJustCleared && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-card border border-border rounded-lg p-4 mb-4"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Flame className="w-4 h-4 text-warning" />
-                <span className="text-sm text-muted-foreground">Streak to clear ({STREAK_TO_CLEAR} correct in a row)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {Array.from({ length: STREAK_TO_CLEAR }, (_, i) => (
-                  <div
-                    key={i}
-                    className={`w-3 h-3 rounded-full transition-colors ${
-                      i < currentStreak ? 'bg-success' : 'bg-muted'
-                    }`}
-                  />
-                ))}
-                <span className="text-sm font-mono text-primary ml-2">{currentStreak}/{STREAK_TO_CLEAR}</span>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-      </div>
-
-      <QuestionCard question={currentQuestion} selectedAnswer={selectedAnswer} onSelectAnswer={handleSelectAnswer} showResult={showResult} enableGlossaryHighlight onTopicClick={navigateToTopic} />
-
-      {/* Navigation Actions */}
-      <div className="mt-8 flex justify-center gap-4">
-        <Button variant="outline" onClick={handlePrevQuestion} disabled={!canGoPrev || isJustCleared} className="gap-2">
-          <ChevronLeft className="w-4 h-4" />
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          onClick={handleRandomize}
-          disabled={activeWeakQuestions.length <= 1 || isJustCleared}
-          className="gap-2"
-          title="Random question"
-          aria-label="Jump to random question"
-        >
-          <Dices className="w-4 h-4" />
-        </Button>
-        {showResult && !isJustCleared && (
-          <Button onClick={handleTryAgain} variant="outline">
-            Try Again
-          </Button>
-        )}
-        <Button
-          variant={showResult ? "default" : "outline"}
-          onClick={handleNextQuestion}
-          disabled={!isJustCleared && !canGoNext}
-          className="gap-2"
-        >
-          {isJustCleared && !hasMoreQuestions ? 'Done' : 'Next'}
-          <ChevronRight className="w-4 h-4" />
-        </Button>
-      </div>
-
-      {/* Question counter */}
-      {(activeWeakQuestions.length > 1 || isJustCleared) && (
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center text-muted-foreground text-sm mt-4">
-          {isJustCleared ? (
-            activeWeakQuestions.length > 0
-              ? `${activeWeakQuestions.length} remaining`
-              : 'All questions cleared!'
-          ) : (
-            `Question ${(currentIndex || 0) + 1} of ${activeWeakQuestions.length}`
-          )}
-          {clearedQuestions.size > 0 && (
-            <span className="text-success ml-2">({clearedQuestions.size} cleared)</span>
-          )}
-        </motion.p>
-      )}
-      </PageContainer>
+        }
+        actions={
+          <div className="mt-8 flex justify-center gap-4">
+            <Button variant="outline" onClick={handlePrevQuestion} disabled={!canGoPrev || isJustCleared} className="gap-2">
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleRandomize}
+              disabled={activeWeakQuestions.length <= 1 || isJustCleared}
+              className="gap-2"
+              title="Random question"
+              aria-label="Jump to random question"
+            >
+              <Dices className="w-4 h-4" />
+            </Button>
+            {showResult && !isJustCleared && (
+              <Button onClick={handleTryAgain} variant="outline">
+                Try Again
+              </Button>
+            )}
+            <Button
+              variant={showResult ? "default" : "outline"}
+              onClick={handleNextQuestion}
+              disabled={!isJustCleared && !canGoNext}
+              className="gap-2"
+            >
+              {isJustCleared && !hasMoreQuestions ? 'Done' : 'Next'}
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        }
+        footer={
+          (activeWeakQuestions.length > 1 || isJustCleared) && (
+            <>
+                {isJustCleared ? (
+                  activeWeakQuestions.length > 0
+                    ? `${activeWeakQuestions.length} remaining`
+                    : 'All questions cleared!'
+                ) : (
+                  `Question ${(currentIndex || 0) + 1} of ${activeWeakQuestions.length}`
+                )}
+                {clearedQuestions.size > 0 && (
+                  <span className="text-success ml-2">({clearedQuestions.size} cleared)</span>
+                )}
+            </>
+          )
+        }
+      >
+        <QuestionCard question={currentQuestion} selectedAnswer={selectedAnswer} onSelectAnswer={handleSelectAnswer} showResult={showResult} enableGlossaryHighlight onTopicClick={navigateToTopic} />
+      </QuizShell>
     );
   }
 

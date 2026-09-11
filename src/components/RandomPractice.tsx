@@ -11,12 +11,12 @@ import { useQuizSession } from "@/hooks/useQuizSession";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from '@/services/queryKeys';
-import { Zap, SkipForward, RotateCcw, Loader2, Flame, Trophy, Award, ChevronLeft } from "lucide-react";
+import { Zap, RotateCcw, Flame, Trophy, Award } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TestType } from "@/types/navigation";
-import { PageContainer } from "@/components/ui/page-container";
+import { QuizShell, QuizShellPending, QuizShellError, QuizNavControls } from "@/components/QuizShell";
 
 interface RandomPracticeProps {
   onBack: () => void;
@@ -183,123 +183,82 @@ export function RandomPractice({
 
   useKeyboardShortcuts(shortcuts, { enabled: !isLoading && !!question });
 
-  if (isLoading) {
-    return (
-      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading questions...</p>
-        </div>
-      </PageContainer>
-    );
-  }
+  if (isLoading) return <QuizShellPending message="Loading questions..." />;
   if (error || !allQuestions || allQuestions.length === 0) {
-    return (
-      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-destructive mb-4">Failed to load questions</p>
-          <Button onClick={onBack}>Go Back</Button>
-        </div>
-      </PageContainer>
-    );
+    return <QuizShellError onBack={onBack} />;
   }
-  if (!question) {
-    return (
-      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </PageContainer>
-    );
-  }
+  if (!question) return <QuizShellPending />;
 
   return (
-    <PageContainer width="standard" mobileNavPadding>
-      {/* Header - Refined Minimal */}
-      <div className="mb-12">
-        <div className="flex items-center justify-between">
-          {/* Inline Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 text-sm font-mono"
-          >
-            <span className="text-success font-medium">{stats.correct}</span>
-            <span className="text-muted-foreground/40">/</span>
-            <span className="text-destructive font-medium">{stats.total - stats.correct}</span>
-
-            {/* Streak - only visible when active */}
-            <AnimatePresence>
-              {streak > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  className="ml-3 flex items-center gap-1.5 text-primary relative"
-                >
-                  {showStreakCelebration && (
-                    <motion.div
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: [1, 2, 1], opacity: [1, 0.5, 0] }}
-                      transition={{ duration: 1 }}
-                      className="absolute inset-0 flex items-center justify-center"
-                    >
-                      <Trophy className="w-6 h-6 text-primary" />
-                    </motion.div>
-                  )}
-                  <Flame className={cn("w-4 h-4", streak >= 5 && "animate-pulse")} />
-                  <span className="font-semibold">{streak}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-
-          {/* Right side actions */}
-          <div className="flex items-center gap-2">
-            <KeyboardShortcutsHelp />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleReset}
-              className="text-muted-foreground hover:text-foreground"
+    <QuizShell
+      header={
+        <div className="mb-12">
+          <div className="flex items-center justify-between">
+            {/* Inline Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 text-sm font-mono"
             >
-              <RotateCcw className="w-4 h-4" />
-              <span className="sr-only">Reset</span>
-            </Button>
+              <span className="text-success font-medium">{stats.correct}</span>
+              <span className="text-muted-foreground/40">/</span>
+              <span className="text-destructive font-medium">{stats.total - stats.correct}</span>
+
+              {/* Streak - only visible when active */}
+              <AnimatePresence>
+                {streak > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="ml-3 flex items-center gap-1.5 text-primary relative"
+                  >
+                    {showStreakCelebration && (
+                      <motion.div
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: [1, 2, 1], opacity: [1, 0.5, 0] }}
+                        transition={{ duration: 1 }}
+                        className="absolute inset-0 flex items-center justify-center"
+                      >
+                        <Trophy className="w-6 h-6 text-primary" />
+                      </motion.div>
+                    )}
+                    <Flame className={cn("w-4 h-4", streak >= 5 && "animate-pulse")} />
+                    <span className="font-semibold">{streak}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Right side actions */}
+            <div className="flex items-center gap-2">
+              <KeyboardShortcutsHelp />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span className="sr-only">Reset</span>
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Question */}
+      }
+      actions={
+        <QuizNavControls
+          session={session}
+          nextIcon={<Zap className="w-4 h-4" />}
+          className="mt-10 flex justify-center gap-4"
+        />
+      }
+      footer={
+        session.history.length > 1 &&
+        `Question ${session.historyIndex + 1} of ${session.history.length}`
+      }
+    >
       <QuestionCard question={question} selectedAnswer={selectedAnswer} onSelectAnswer={session.selectAnswer} showResult={showResult} enableGlossaryHighlight onTopicClick={navigateToTopic} />
-
-      {/* Actions */}
-      <div className="mt-10 flex justify-center gap-4">
-        {canGoBack && (
-          <Button variant="outline" onClick={session.previous} className="gap-2">
-            <ChevronLeft className="w-4 h-4" />
-            Previous
-          </Button>
-        )}
-        {!showResult ? (
-          <Button variant="outline" onClick={session.skip} className="gap-2">
-            <SkipForward className="w-4 h-4" />
-            Skip Question
-          </Button>
-        ) : (
-          <Button onClick={session.next} variant="default" size="lg" className="gap-2">
-            {isViewingHistory ? "Next" : "Next Question"}
-            <Zap className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
-
-      {/* History indicator */}
-      {session.history.length > 1 && <motion.p initial={{
-      opacity: 0
-    }} animate={{
-      opacity: 1
-    }} className="text-center text-muted-foreground text-sm mt-4">
-          Question {session.historyIndex + 1} of {session.history.length}
-        </motion.p>}
-    </PageContainer>
+    </QuizShell>
   );
 }
