@@ -1,19 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { collectAppErrors } from "./support/consoleErrors";
 
 // Guest-accessible routes only. Nothing here needs Supabase auth, so these run
 // against a plain `npm run dev` with no local database.
 
-const collectErrors = (page: import("@playwright/test").Page) => {
-  const errors: string[] = [];
-  page.on("console", (msg) => {
-    if (msg.type() === "error") errors.push(msg.text());
-  });
-  page.on("pageerror", (err) => errors.push(err.message));
-  return errors;
-};
-
 test("/ sends guests to the sign-in page", async ({ page }) => {
-  const errors = collectErrors(page);
+  const errors = collectAppErrors(page);
 
   await page.goto("/");
 
@@ -26,7 +18,7 @@ test("/ sends guests to the sign-in page", async ({ page }) => {
 });
 
 test("/dashboard renders for a guest", async ({ page }) => {
-  const errors = collectErrors(page);
+  const errors = collectAppErrors(page);
 
   await page.goto("/dashboard");
 

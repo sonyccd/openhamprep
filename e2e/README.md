@@ -36,6 +36,21 @@ npm run e2e
 The dev server is always pointed at local Supabase (see `webServer.env` in
 `playwright.config.ts`), so a run never touches a hosted project.
 
+**Stop any dev server you already have running first.** Playwright starts its
+own on port 8080 and will refuse to run if the port is taken:
+
+```
+Error: http://localhost:8080 is already used, make sure that nothing is
+running on the port/url ...
+```
+
+That refusal is deliberate. `webServer.env` only applies to a server Playwright
+starts itself, so reusing one left over from `npm run dev:hosted` would run the
+whole suite against the **hosted** project while still seeding local Supabase —
+a confusing half-broken state instead of a clean failure. The config also passes
+`--strictPort` so Vite fails immediately rather than quietly binding 8081 and
+leaving Playwright polling 8080 until it times out.
+
 ## How Admin auth works
 
 `auth.setup.ts` runs before the admin projects and:
@@ -66,4 +81,9 @@ runtime, so run them locally before merging an Admin change.
 - Prefer role- and label-based locators, matching the semantic queries the unit
   tests were converted to in #257.
 - Assert no console errors on any page you navigate to; that has already caught
-  real problems.
+  real problems. Use `collectAppErrors` from `support/consoleErrors.ts` rather
+  than wiring up listeners by hand — it filters Sentry/Amplitude/Pendo/Vercel
+  noise (those SDKs initialise on every page load and fail in an offline
+  browser) while still failing on anything from our own code. The filter is
+  host-specific on purpose; matching bare `net::ERR_` would have swallowed
+  genuine asset failures too.

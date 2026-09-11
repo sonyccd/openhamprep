@@ -1,9 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
-import { LOCAL_ANON_KEY, LOCAL_SUPABASE_URL } from "./e2e/support/localSupabase";
+import {
+  ADMIN_STATE_PATH,
+  LOCAL_ANON_KEY,
+  LOCAL_SUPABASE_URL,
+} from "./e2e/support/localSupabase";
 
 const PORT = 8080;
 const BASE_URL = process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`;
-const ADMIN_STATE = "e2e/.auth/admin.json";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -39,28 +42,34 @@ export default defineConfig({
       name: "admin-light",
       testMatch: /admin.*\.e2e\.ts/,
       dependencies: ["setup"],
-      use: { ...devices["Desktop Chrome"], colorScheme: "light", storageState: ADMIN_STATE },
+      use: { ...devices["Desktop Chrome"], colorScheme: "light", storageState: ADMIN_STATE_PATH },
     },
     {
       name: "admin-dark",
       testMatch: /admin.*\.e2e\.ts/,
       dependencies: ["setup"],
-      use: { ...devices["Desktop Chrome"], colorScheme: "dark", storageState: ADMIN_STATE },
+      use: { ...devices["Desktop Chrome"], colorScheme: "dark", storageState: ADMIN_STATE_PATH },
     },
     {
       name: "admin-mobile",
       testMatch: /admin.*\.e2e\.ts/,
       dependencies: ["setup"],
-      use: { ...devices["Pixel 7"], storageState: ADMIN_STATE },
+      use: { ...devices["Pixel 7"], storageState: ADMIN_STATE_PATH },
     },
   ],
 
   // Always point the app at local Supabase: e2e needs the seeded question pool
   // and an admin it can create, neither of which should touch a hosted project.
   webServer: {
-    command: "npm run dev",
+    // --strictPort so a busy 8080 fails immediately. Without it Vite quietly
+    // binds the next free port and Playwright polls 8080 until it times out.
+    command: "npm run dev -- --strictPort",
     url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
+    // Never reuse: webServer.env is only applied to a server Playwright starts
+    // itself. Reusing one left over from `npm run dev:hosted` would run the
+    // whole suite against the hosted project while still seeding local
+    // Supabase - a confusing half-broken state rather than a clean failure.
+    reuseExistingServer: false,
     timeout: 120_000,
     env: {
       NEXT_PUBLIC_SUPABASE_URL: LOCAL_SUPABASE_URL,

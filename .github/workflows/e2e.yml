@@ -23,7 +23,20 @@ jobs:
 
       - run: npm ci
 
-      - run: npx playwright install --with-deps chromium
+      - name: Resolve Playwright version for the cache key
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        id: pw-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ms-playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install Chromium
+        # Browsers are cached by version; --with-deps still runs so the system
+        # libraries Chromium needs are present on a cache hit too.
+        run: npx playwright install --with-deps chromium
 
       - name: Run guest-route e2e in light, dark and mobile
         run: npx playwright test --project=chromium-light --project=chromium-dark --project=mobile

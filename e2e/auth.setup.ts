@@ -2,11 +2,10 @@ import { test as setup, expect } from "@playwright/test";
 import {
   ADMIN_EMAIL,
   ADMIN_PASSWORD,
+  ADMIN_STATE_PATH,
   assertSupabaseReachable,
   ensureAdminUser,
 } from "./support/localSupabase";
-
-export const ADMIN_STATE = "e2e/.auth/admin.json";
 
 // Signs in through the real form rather than injecting a session, so the saved
 // storageState is whatever the app itself persists.
@@ -20,5 +19,5 @@ setup("authenticate as admin", async ({ page }) => {
   await page.getByRole("button", { name: /^sign in$/i }).click();
 
   await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 });
-  await page.context().storageState({ path: ADMIN_STATE });
+  await page.context().storageState({ path: ADMIN_STATE_PATH });
 });

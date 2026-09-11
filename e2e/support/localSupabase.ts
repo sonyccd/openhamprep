@@ -9,6 +9,9 @@ export const LOCAL_ANON_KEY =
 export const LOCAL_SERVICE_ROLE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
 
+/** Where auth.setup.ts saves the signed-in admin state; read by the config too. */
+export const ADMIN_STATE_PATH = "e2e/.auth/admin.json";
+
 export const ADMIN_EMAIL = "e2e-admin@example.com";
 export const ADMIN_PASSWORD = "e2e-password-123";
 

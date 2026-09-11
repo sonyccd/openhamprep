@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { collectAppErrors } from "./support/consoleErrors";
 
 // Baseline for the B1 pilot (#258): these assert what the Admin questions
 // screen must still do once it is rebuilt on MUI DataGrid, so the same file
@@ -32,11 +33,7 @@ test("the edit dialog opens for a question", async ({ page }) => {
 });
 
 test("no console errors while browsing and filtering", async ({ page }) => {
-  const errors: string[] = [];
-  page.on("console", (msg) => {
-    if (msg.type() === "error") errors.push(msg.text());
-  });
-  page.on("pageerror", (err) => errors.push(err.message));
+  const errors = collectAppErrors(page);
 
   await page.getByPlaceholder(/search/i).first().fill("T1");
   await expect(page.getByText("T1A01").first()).toBeVisible({ timeout: 20_000 });
