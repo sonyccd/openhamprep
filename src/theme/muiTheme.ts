@@ -42,8 +42,37 @@ export const muiTheme = createTheme({
   },
   typography: {
     fontFamily: "'DM Sans', 'Space Grotesk', sans-serif",
+    // Material shouts its buttons: createTypography.js defaults
+    // button.textTransform to 'uppercase', and Button.js spreads
+    // theme.typography.button. Nothing else in this app is uppercase, so an MUI
+    // button sitting beside a shadcn one reads as a different product — visible
+    // today in the Admin questions toolbar, where "ADD QUESTION" sits next to
+    // "Export" and "Bulk Import". This is the typography slot, not a
+    // styleOverride, so it stays inside the constraint at the top of this file.
+    button: { textTransform: "none" },
   },
   shape: {
     borderRadius: 12, // --radius: 0.75rem
   },
 });
+
+// Divergences we are choosing to live with, so they don't get "fixed" later.
+//
+// Two places MUI still looks like Material rather than like this app, neither
+// reachable from a palette token or a component prop:
+//
+//   1. DataGrid header text renders at text.primary; the shadcn table header
+//      uses text-muted-foreground (ui/table.tsx, TableHead).
+//   2. DataGrid draws vertical separators between column headers. shadcn tables
+//      have none. disableColumnResize would hide them, but that trades away
+//      column resizing on tables with long text columns — a worse deal than the
+//      line itself.
+//
+// Both were reviewed against the B1 pilot screenshots and accepted. Closing
+// them needs components.MuiDataGrid.styleOverrides, and the judgement was that
+// a permanent override surface costs more than the mismatch: overrides are how
+// this migration turns into a second design system maintained on a new vendor,
+// which is the thing §5 of the strategy doc exists to prevent.
+//
+// If a future change makes the gap genuinely painful rather than merely
+// visible, reopen it as a decision — don't quietly add the override.

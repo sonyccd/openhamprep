@@ -89,7 +89,6 @@ export function QuestionReviewTable({
         getRowId={(row) => row.id}
         rowSelectionModel={{ type: "include", ids: new Set(selection) }}
         disableRowSelectionOnClick
-        density="compact"
         initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
         pageSizeOptions={[25, 50, 100]}
         sx={{ border: 0 }}

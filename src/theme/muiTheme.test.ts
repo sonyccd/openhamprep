@@ -79,4 +79,21 @@ describe("muiTheme", () => {
     const radiusRem = parseFloat(token(":root", "radius"));
     expect(muiTheme.shape.borderRadius).toBe(radiusRem * 16);
   });
+
+  it("declares no component styleOverrides", () => {
+    // Gate 2. Brand fidelity is expressed through palette, typography and
+    // shape above, plus props at the call site — never by restyling Material's
+    // internals. The B1 review accepted two visible divergences rather than
+    // open this surface; see the note at the bottom of muiTheme.ts.
+    //
+    // The failure mode this guards is gradual: one override to fix a header
+    // colour, then one per component, until the theme is a second design system
+    // maintained on a new vendor. Nothing about adding the first one looks
+    // wrong at the time, which is why it is asserted rather than left to review.
+    const overriding = Object.entries(muiTheme.components ?? {})
+      .filter(([, config]) => config && "styleOverrides" in config)
+      .map(([name]) => name);
+
+    expect(overriding).toEqual([]);
+  });
 });
