@@ -26,6 +26,24 @@ const PUBLICLY_READABLE = new Set([
   "syllabus",
 ]);
 
+// Storage is a separate grant surface with its own schema, so the public-schema
+// checks below say nothing about it. Figure uploads and question images break in
+// exactly the same invisible way if these go missing.
+//
+// Caveat on how well this one is tested: storage.objects is owned by
+// supabase_storage_admin, and postgres can neither revoke its grants (the
+// statement reports REVOKE and changes nothing) nor SET ROLE to it. So unlike
+// the public-schema checks, a real storage grant loss could not be simulated
+// locally to confirm this catches it. The detection logic itself was verified by
+// temporarily requiring a privilege known to be absent, which failed as
+// expected. Treat this as a guard that should work rather than one proven
+// against the real failure.
+const REQUIRED_STORAGE_GRANTS = {
+  anon: { objects: ["SELECT"], buckets: ["SELECT"] },
+  authenticated: { objects: ["SELECT", "INSERT", "UPDATE", "DELETE"], buckets: ["SELECT"] },
+  service_role: { objects: ["SELECT", "INSERT", "UPDATE", "DELETE"], buckets: ["SELECT"] },
+};
+
 const REQUIRED_GRANTS = {
   anon: ["SELECT"],
   authenticated: ["SELECT", "INSERT", "UPDATE", "DELETE"],
@@ -135,6 +153,37 @@ for (const [role, required] of Object.entries(REQUIRED_GRANTS)) {
   }
 }
 
+// 4. Storage grants. Same failure mode as (3), different schema: question
+//    figures and topic content would 403 while every storage policy still reads
+//    correctly.
+const storageGrants = query(
+  container,
+  `select grantee, table_name, privilege_type from information_schema.role_table_grants
+    where table_schema = 'storage'
+      and table_name in ('objects','buckets')
+      and grantee in ('anon','authenticated','service_role');`,
+);
+
+const storageHeld = new Map();
+for (const [grantee, table, privilege] of storageGrants) {
+  const key = `${grantee}|${table}`;
+  if (!storageHeld.has(key)) storageHeld.set(key, new Set());
+  storageHeld.get(key).add(privilege);
+}
+
+for (const [role, perTable] of Object.entries(REQUIRED_STORAGE_GRANTS)) {
+  for (const [table, required] of Object.entries(perTable)) {
+    const have = storageHeld.get(`${role}|${table}`) ?? new Set();
+    const missing = required.filter((p) => !have.has(p));
+    if (missing.length > 0) {
+      failures.push(
+        `${role} is missing ${missing.join("/")} on storage.${table}. ` +
+          `Figure uploads and question images will fail with permission denied.`,
+      );
+    }
+  }
+}
+
 if (failures.length > 0) {
   console.error(`\nDatabase invariant check failed (${failures.length}):\n`);
   for (const f of failures) console.error(`  ✗ ${f}`);
@@ -144,5 +193,5 @@ if (failures.length > 0) {
 
 console.log(
   `Database invariants OK — ${tables.length} tables, all with RLS, ` +
-    `${PUBLICLY_READABLE.size} intentionally public, grants intact.`,
+    `${PUBLICLY_READABLE.size} intentionally public, public and storage grants intact.`,
 );
