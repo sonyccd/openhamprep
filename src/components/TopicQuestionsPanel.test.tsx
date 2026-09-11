@@ -71,8 +71,7 @@ describe('TopicQuestionsPanel', () => {
       mockIsLoading = true;
       const { container } = renderComponent();
 
-      // Check for skeleton elements
-      expect(container.querySelectorAll('[class*="animate-pulse"]').length).toBeGreaterThan(0);
+      expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
     });
   });
 
@@ -167,20 +166,10 @@ describe('TopicQuestionsPanel', () => {
     it('should have collapsible trigger on desktop', () => {
       const { container } = renderComponent();
 
-      // Look for chevron icons indicating collapsibility
-      const chevrons = container.querySelectorAll('svg[class*="chevron-up"], svg[class*="chevron-down"]');
-      expect(chevrons.length).toBeGreaterThan(0);
-    });
-  });
-
-  describe('Mobile View', () => {
-    it('should render mobile card view', () => {
-      const { container } = renderComponent();
-
-      // The mobile view should have a Card component
-      // Both desktop and mobile views are rendered (hidden via CSS)
-      const helpCircleIcons = container.querySelectorAll('svg[class*="circle-help"]');
-      expect(helpCircleIcons.length).toBeGreaterThan(0);
+      // A collapsible trigger reports its state through aria-expanded.
+      expect(
+        screen.getAllByRole('button').filter((b) => b.hasAttribute('aria-expanded')).length
+      ).toBeGreaterThan(0);
     });
   });
 });

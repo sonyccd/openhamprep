@@ -211,7 +211,7 @@ describe('AdminAlertRules', () => {
 
       renderComponent();
 
-      expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: /loading alert rules/i })).toBeInTheDocument();
     });
   });
 
@@ -316,31 +316,25 @@ describe('AdminAlertRules', () => {
 
   describe('Edit Rule', () => {
     it('should render edit buttons for each rule', () => {
-      const { container } = renderComponent();
+      renderComponent();
 
-      // Each rule card should have an edit button with pencil icon
-      const pencilIcons = container.querySelectorAll('[class*="lucide-pencil"]');
-      expect(pencilIcons.length).toBe(3); // 3 rules
+      expect(screen.getAllByRole('button', { name: /^Edit / })).toHaveLength(3);
     });
   });
 
   describe('Delete Rule', () => {
     it('should render delete buttons for each rule', () => {
-      const { container } = renderComponent();
+      renderComponent();
 
-      // Each rule card should have a delete button with trash icon
-      const trashIcons = container.querySelectorAll('[class*="lucide-trash"]');
-      expect(trashIcons.length).toBe(3); // 3 rules
+      expect(screen.getAllByRole('button', { name: /^Delete / })).toHaveLength(3);
     });
   });
 
-  describe('Disabled Rule Styling', () => {
-    it('should apply disabled styling to disabled rules', () => {
+  describe('Disabled Rules', () => {
+    it('should show a disabled rule as switched off', () => {
       renderComponent();
 
-      // Find the Timeout Detection card (which is disabled)
-      const timeoutRule = screen.getByText('Timeout Detection').closest('div[class*="rounded-lg"]');
-      expect(timeoutRule).toHaveClass('opacity-75');
+      expect(screen.getByRole('switch', { name: 'Enable Timeout Detection' })).not.toBeChecked();
     });
   });
 });

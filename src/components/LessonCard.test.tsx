@@ -51,8 +51,8 @@ describe('LessonCard', () => {
 
     it('should show placeholder when no thumbnail', () => {
       render(<LessonCard lesson={mockLesson} completion={mockCompletion} onClick={mockOnClick} />);
-      // The Route icon is rendered as placeholder
-      expect(document.querySelector('.lucide-route')).toBeInTheDocument();
+      // No thumbnail <img> is rendered; the placeholder stands in for it.
+      expect(screen.queryByRole('img')).not.toBeInTheDocument();
     });
 
     it('should show thumbnail image when provided', () => {
@@ -75,15 +75,15 @@ describe('LessonCard', () => {
       expect(screen.getByText('Completed')).toBeInTheDocument();
     });
 
-    it('should have success ring styling when completed', () => {
+    it('should announce completion when complete', () => {
       const fullCompletion = { total: 5, completed: 5, percentage: 100 };
-      const { container } = render(<LessonCard lesson={mockLesson} completion={fullCompletion} onClick={mockOnClick} />);
-      expect(container.querySelector('.ring-success\\/50')).toBeInTheDocument();
+      render(<LessonCard lesson={mockLesson} completion={fullCompletion} onClick={mockOnClick} />);
+      expect(screen.getByLabelText(/\(completed\)$/)).toBeInTheDocument();
     });
 
-    it('should not have success ring styling when not completed', () => {
-      const { container } = render(<LessonCard lesson={mockLesson} completion={mockCompletion} onClick={mockOnClick} />);
-      expect(container.querySelector('.ring-success\\/50')).not.toBeInTheDocument();
+    it('should not announce completion when incomplete', () => {
+      render(<LessonCard lesson={mockLesson} completion={mockCompletion} onClick={mockOnClick} />);
+      expect(screen.queryByLabelText(/\(completed\)$/)).not.toBeInTheDocument();
     });
   });
 
@@ -116,11 +116,6 @@ describe('LessonCard', () => {
       render(<LessonCard lesson={mockLesson} completion={mockCompletion} onClick={mockOnClick} />);
       fireEvent.click(screen.getByText('Getting Started with Ham Radio'));
       expect(mockOnClick).toHaveBeenCalledTimes(1);
-    });
-
-    it('should have cursor-pointer class for clickability', () => {
-      const { container } = render(<LessonCard lesson={mockLesson} completion={mockCompletion} onClick={mockOnClick} />);
-      expect(container.querySelector('.cursor-pointer')).toBeInTheDocument();
     });
   });
 });

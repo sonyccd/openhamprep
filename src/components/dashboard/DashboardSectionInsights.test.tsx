@@ -249,19 +249,4 @@ describe('DashboardSectionInsights', () => {
     expect(screen.getByText('T1')).toBeInTheDocument();
   });
 
-  it('applies warning color scheme', () => {
-    const { container } = render(
-      <DashboardSectionInsights
-        subelementMetrics={{
-          T1: createMetric({ risk_score: 0.5 }),
-        }}
-        testType="technician"
-        onPracticeSection={vi.fn()}
-      />
-    );
-
-    // Check for warning styling on button
-    const button = container.querySelector('.border-warning\\/30');
-    expect(button).toBeInTheDocument();
-  });
 });

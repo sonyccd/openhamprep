@@ -167,7 +167,7 @@ describe('LessonDetailPage', () => {
       mockLessonLoading = true;
       const { container } = renderComponent();
 
-      const skeletons = container.querySelectorAll('[class*="animate-pulse"]');
+      const skeletons = screen.getAllByTestId('skeleton');
       expect(skeletons.length).toBeGreaterThan(0);
     });
 
@@ -175,8 +175,8 @@ describe('LessonDetailPage', () => {
       mockLessonLoading = true;
       const { container } = renderComponent();
 
-      // Should have skeleton for title, description, progress, and topic items
-      const skeletons = container.querySelectorAll('.rounded-full');
+      // Title, description, progress and topic items each get a skeleton.
+      const skeletons = screen.getAllByTestId('skeleton');
       expect(skeletons.length).toBeGreaterThan(0);
     });
   });

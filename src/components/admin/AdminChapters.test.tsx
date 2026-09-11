@@ -330,10 +330,7 @@ describe('AdminChapters', () => {
       renderAdminChapters();
 
       // Click the edit button for the first chapter
-      const editButtons = screen.getAllByRole('button', { name: '' }).filter(
-        (btn) => btn.querySelector('svg.lucide-pencil')
-      );
-      await user.click(editButtons[0]);
+      await user.click(screen.getByRole('button', { name: /^Edit Welcome to Amateur Radio$/ }));
 
       expect(screen.getByText(/Edit Chapter 1:/)).toBeInTheDocument();
     });
@@ -342,10 +339,7 @@ describe('AdminChapters', () => {
       const user = userEvent.setup();
       renderAdminChapters();
 
-      const editButtons = screen.getAllByRole('button', { name: '' }).filter(
-        (btn) => btn.querySelector('svg.lucide-pencil')
-      );
-      await user.click(editButtons[0]);
+      await user.click(screen.getByRole('button', { name: /^Edit Welcome to Amateur Radio$/ }));
 
       expect(screen.getByDisplayValue('1')).toBeInTheDocument();
       expect(screen.getByDisplayValue('Welcome to Amateur Radio')).toBeInTheDocument();
@@ -356,10 +350,7 @@ describe('AdminChapters', () => {
       const user = userEvent.setup();
       renderAdminChapters();
 
-      const editButtons = screen.getAllByRole('button', { name: '' }).filter(
-        (btn) => btn.querySelector('svg.lucide-pencil')
-      );
-      await user.click(editButtons[0]);
+      await user.click(screen.getByRole('button', { name: /^Edit Welcome to Amateur Radio$/ }));
 
       const titleInput = screen.getByDisplayValue('Welcome to Amateur Radio');
       await user.clear(titleInput);
@@ -380,10 +371,7 @@ describe('AdminChapters', () => {
       const user = userEvent.setup();
       renderAdminChapters();
 
-      const editButtons = screen.getAllByRole('button', { name: '' }).filter(
-        (btn) => btn.querySelector('svg.lucide-pencil')
-      );
-      await user.click(editButtons[0]);
+      await user.click(screen.getByRole('button', { name: /^Edit Welcome to Amateur Radio$/ }));
 
       expect(screen.getByRole('tab', { name: /details/i })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /questions/i })).toBeInTheDocument();
@@ -393,10 +381,7 @@ describe('AdminChapters', () => {
       const user = userEvent.setup();
       renderAdminChapters();
 
-      const editButtons = screen.getAllByRole('button', { name: '' }).filter(
-        (btn) => btn.querySelector('svg.lucide-pencil')
-      );
-      await user.click(editButtons[0]);
+      await user.click(screen.getByRole('button', { name: /^Edit Welcome to Amateur Radio$/ }));
 
       // The Questions tab should show the question count (15 for chapter-1)
       const questionsTab = screen.getByRole('tab', { name: /questions/i });
@@ -407,10 +392,7 @@ describe('AdminChapters', () => {
       const user = userEvent.setup();
       renderAdminChapters();
 
-      const editButtons = screen.getAllByRole('button', { name: '' }).filter(
-        (btn) => btn.querySelector('svg.lucide-pencil')
-      );
-      await user.click(editButtons[0]);
+      await user.click(screen.getByRole('button', { name: /^Edit Welcome to Amateur Radio$/ }));
 
       const detailsTab = screen.getByRole('tab', { name: /details/i });
       expect(detailsTab).toHaveAttribute('data-state', 'active');
@@ -420,10 +402,7 @@ describe('AdminChapters', () => {
       const user = userEvent.setup();
       renderAdminChapters();
 
-      const editButtons = screen.getAllByRole('button', { name: '' }).filter(
-        (btn) => btn.querySelector('svg.lucide-pencil')
-      );
-      await user.click(editButtons[0]);
+      await user.click(screen.getByRole('button', { name: /^Edit Welcome to Amateur Radio$/ }));
 
       expect(screen.getByText(/Edit Chapter 1: Welcome to Amateur Radio/)).toBeInTheDocument();
     });
@@ -435,10 +414,7 @@ describe('AdminChapters', () => {
       renderAdminChapters();
 
       // Open edit dialog first
-      const editButtons = screen.getAllByRole('button', { name: '' }).filter(
-        (btn) => btn.querySelector('svg.lucide-pencil')
-      );
-      await user.click(editButtons[0]);
+      await user.click(screen.getByRole('button', { name: /^Edit Welcome to Amateur Radio$/ }));
 
       // Click delete button
       await user.click(screen.getByRole('button', { name: /delete/i }));
@@ -452,10 +428,7 @@ describe('AdminChapters', () => {
       renderAdminChapters();
 
       // Open edit dialog first
-      const editButtons = screen.getAllByRole('button', { name: '' }).filter(
-        (btn) => btn.querySelector('svg.lucide-pencil')
-      );
-      await user.click(editButtons[0]);
+      await user.click(screen.getByRole('button', { name: /^Edit Welcome to Amateur Radio$/ }));
 
       // Click delete button
       await user.click(screen.getByRole('button', { name: /delete/i }));
@@ -479,8 +452,7 @@ describe('AdminChapters', () => {
 
       renderAdminChapters();
 
-      // The loader should be visible (we can check for the spinner's presence)
-      expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: /loading chapters/i })).toBeInTheDocument();
     });
   });
 

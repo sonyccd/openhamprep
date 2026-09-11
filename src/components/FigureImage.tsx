@@ -49,7 +49,10 @@ export function FigureImage({ figureUrl, questionId }: FigureImageProps) {
           aria-label={`View figure for question ${questionId} in full size`}
         >
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+            <div
+              className="absolute inset-0 flex items-center justify-center bg-muted/50"
+              data-testid="figure-loading"
+            >
               <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           )}

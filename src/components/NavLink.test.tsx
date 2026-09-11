@@ -3,6 +3,10 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { NavLink } from './NavLink';
 
+// Exempt from the semantic-query conversion in #257, like the ui/ primitives:
+// NavLink exists purely to merge className / activeClassName / pendingClassName
+// onto a router link, so asserting the resulting classes IS its contract. There
+// is no behaviour underneath to assert instead.
 describe('NavLink', () => {
   const renderNavLink = (to: string, currentPath: string, props?: Partial<React.ComponentProps<typeof NavLink>>) => {
     return render(

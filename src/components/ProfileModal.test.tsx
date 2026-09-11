@@ -192,10 +192,7 @@ describe('ProfileModal', () => {
       await user.click(accountMenuItem!);
       expect(screen.getByText('Display Name')).toBeInTheDocument();
 
-      // Find and click back button (has rotate-180 chevron)
-      const backButtons = screen.getAllByRole('button');
-      const backButton = backButtons.find(btn => btn.querySelector('.rotate-180'));
-      await user.click(backButton!);
+      await user.click(screen.getByRole('button', { name: 'Back' }));
 
       // Should be back on main view
       expect(screen.getByText('Settings')).toBeInTheDocument();

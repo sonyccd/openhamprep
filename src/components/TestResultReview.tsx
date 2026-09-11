@@ -60,7 +60,7 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
   if (resultLoading || attemptsLoading || !allQuestions) {
     return (
       <PageContainer width="narrow" className="flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" role="status" aria-label="Loading results" />
       </PageContainer>
     );
   }

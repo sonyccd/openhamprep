@@ -47,8 +47,7 @@ describe('TopicCard', () => {
 
     it('should show placeholder when no thumbnail', () => {
       render(<TopicCard topic={mockTopic} onClick={mockOnClick} />);
-      // The FileText icon is rendered as placeholder
-      expect(document.querySelector('.lucide-file-text')).toBeInTheDocument();
+      expect(screen.queryByRole('img')).not.toBeInTheDocument();
     });
 
     it('should show thumbnail image when provided', () => {
@@ -70,9 +69,9 @@ describe('TopicCard', () => {
       expect(screen.getByText('Completed')).toBeInTheDocument();
     });
 
-    it('should have success ring styling when completed', () => {
-      const { container } = render(<TopicCard topic={mockTopic} isCompleted={true} onClick={mockOnClick} />);
-      expect(container.querySelector('.ring-success\\/50')).toBeInTheDocument();
+    it('should announce completion when completed', () => {
+      render(<TopicCard topic={mockTopic} isCompleted={true} onClick={mockOnClick} />);
+      expect(screen.getByLabelText(/\(completed\)$/)).toBeInTheDocument();
     });
   });
 
@@ -150,11 +149,6 @@ describe('TopicCard', () => {
       render(<TopicCard topic={mockTopic} onClick={mockOnClick} />);
       fireEvent.click(screen.getByText('Amateur Radio Basics'));
       expect(mockOnClick).toHaveBeenCalledTimes(1);
-    });
-
-    it('should have cursor-pointer class for clickability', () => {
-      const { container } = render(<TopicCard topic={mockTopic} onClick={mockOnClick} />);
-      expect(container.querySelector('.cursor-pointer')).toBeInTheDocument();
     });
   });
 });

@@ -195,12 +195,9 @@ describe('TopicResourceManager', () => {
 
   describe('Edit Resource', () => {
     it('should open edit dialog when edit button is clicked', async () => {
-      const { container } = renderComponent();
+      renderComponent();
 
-      // Find edit buttons by looking for SVGs with pencil-related classes
-      const editButtons = container.querySelectorAll('svg[class*="pencil"]');
-      expect(editButtons.length).toBeGreaterThan(0);
-      fireEvent.click(editButtons[0].closest('button')!);
+      fireEvent.click(screen.getByRole('button', { name: 'Edit Introduction Video' }));
 
       await waitFor(() => {
         expect(screen.getByText('Edit Resource')).toBeInTheDocument();
@@ -210,12 +207,9 @@ describe('TopicResourceManager', () => {
 
   describe('Delete Resource', () => {
     it('should open confirmation dialog when delete button is clicked', async () => {
-      const { container } = renderComponent();
+      renderComponent();
 
-      // Find delete buttons by looking for SVGs with trash-related classes
-      const deleteButtons = container.querySelectorAll('svg[class*="trash"]');
-      expect(deleteButtons.length).toBeGreaterThan(0);
-      fireEvent.click(deleteButtons[0].closest('button')!);
+      fireEvent.click(screen.getByRole('button', { name: 'Delete Introduction Video' }));
 
       await waitFor(() => {
         expect(screen.getByText('Delete Resource')).toBeInTheDocument();
@@ -224,11 +218,9 @@ describe('TopicResourceManager', () => {
     });
 
     it('should close confirmation when Cancel is clicked', async () => {
-      const { container } = renderComponent();
+      renderComponent();
 
-      const deleteButtons = container.querySelectorAll('svg[class*="trash"]');
-      expect(deleteButtons.length).toBeGreaterThan(0);
-      fireEvent.click(deleteButtons[0].closest('button')!);
+      fireEvent.click(screen.getByRole('button', { name: 'Delete Introduction Video' }));
 
       await waitFor(() => {
         expect(screen.getByText('Delete Resource')).toBeInTheDocument();
@@ -241,18 +233,6 @@ describe('TopicResourceManager', () => {
       await waitFor(() => {
         expect(screen.queryByText('Are you sure you want to delete this resource?')).not.toBeInTheDocument();
       });
-    });
-  });
-
-  describe('Resource Type Icons', () => {
-    it('should show video icon for video resources', () => {
-      const { container } = renderComponent([mockResources[0]]);
-      expect(container.querySelector('svg[class*="video"]')).toBeInTheDocument();
-    });
-
-    it('should show file icon for PDF resources', () => {
-      const { container } = renderComponent([mockResources[1]]);
-      expect(container.querySelector('svg[class*="file"]')).toBeInTheDocument();
     });
   });
 

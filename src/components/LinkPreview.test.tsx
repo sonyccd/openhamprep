@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { LinkPreview } from './LinkPreview';
 import type { LinkData } from '@/hooks/useQuestions';
 
@@ -34,32 +34,6 @@ describe('LinkPreview', () => {
     });
   });
 
-  describe('Type Colors', () => {
-    it('applies destructive styling for video type', () => {
-      const link = createLink({ type: 'video' });
-      render(<LinkPreview link={link} />);
-
-      const badge = screen.getByText('Video').closest('span');
-      expect(badge).toHaveClass('text-destructive', 'bg-destructive/10');
-    });
-
-    it('applies info styling for article type', () => {
-      const link = createLink({ type: 'article' });
-      render(<LinkPreview link={link} />);
-
-      const badge = screen.getByText('Article').closest('span');
-      expect(badge).toHaveClass('text-info', 'bg-info/10');
-    });
-
-    it('applies muted styling for website type', () => {
-      const link = createLink({ type: 'website' });
-      render(<LinkPreview link={link} />);
-
-      const badge = screen.getByText('Website').closest('span');
-      expect(badge).toHaveClass('text-muted-foreground', 'bg-secondary');
-    });
-  });
-
   describe('Link Content', () => {
     it('displays link title', () => {
       const link = createLink({ title: 'My Awesome Article' });
@@ -83,11 +57,13 @@ describe('LinkPreview', () => {
     });
 
     it('does not render description when not provided', () => {
-      const link = createLink({ description: undefined });
-      render(<LinkPreview link={link} />);
+      const description = 'This is a great resource for learning.';
+      render(<LinkPreview link={createLink({ description })} />);
+      expect(screen.getByText(description)).toBeInTheDocument();
 
-      const descriptionParagraphs = document.querySelectorAll('p.text-sm.text-muted-foreground');
-      expect(descriptionParagraphs.length).toBe(0);
+      cleanup();
+      render(<LinkPreview link={createLink({ description: undefined })} />);
+      expect(screen.queryByText(description)).not.toBeInTheDocument();
     });
 
     it('displays site name when provided', () => {
@@ -98,12 +74,12 @@ describe('LinkPreview', () => {
     });
 
     it('does not render site name when not provided', () => {
-      const link = createLink({ siteName: undefined });
-      const { container } = render(<LinkPreview link={link} />);
+      render(<LinkPreview link={createLink({ siteName: 'Example Site' })} />);
+      expect(screen.getByText('Example Site')).toBeInTheDocument();
 
-      // Find spans with text-xs text-muted-foreground truncate class
-      const siteNameSpans = container.querySelectorAll('span.text-xs.text-muted-foreground.truncate');
-      expect(siteNameSpans.length).toBe(0);
+      cleanup();
+      render(<LinkPreview link={createLink({ siteName: undefined })} />);
+      expect(screen.queryByText('Example Site')).not.toBeInTheDocument();
     });
   });
 
@@ -119,10 +95,9 @@ describe('LinkPreview', () => {
 
     it('does not render image container when image is not provided', () => {
       const link = createLink({ image: undefined });
-      const { container } = render(<LinkPreview link={link} />);
+      render(<LinkPreview link={link} />);
 
-      const img = container.querySelector('img');
-      expect(img).not.toBeInTheDocument();
+      expect(screen.queryByRole('img')).not.toBeInTheDocument();
     });
 
     it('hides image on error', () => {
@@ -164,32 +139,6 @@ describe('LinkPreview', () => {
       render(<LinkPreview link={link} />);
 
       expect(screen.getByRole('link')).toHaveAttribute('rel', 'noopener noreferrer');
-    });
-  });
-
-  describe('Styling', () => {
-    it('has card-like styling', () => {
-      const link = createLink();
-      render(<LinkPreview link={link} />);
-
-      const anchor = screen.getByRole('link');
-      expect(anchor).toHaveClass('rounded-lg', 'border', 'border-border');
-    });
-
-    it('has hover effects', () => {
-      const link = createLink();
-      render(<LinkPreview link={link} />);
-
-      const anchor = screen.getByRole('link');
-      expect(anchor).toHaveClass('hover:bg-secondary/50', 'hover:border-primary/30');
-    });
-
-    it('has group class for nested hover effects', () => {
-      const link = createLink();
-      render(<LinkPreview link={link} />);
-
-      const anchor = screen.getByRole('link');
-      expect(anchor).toHaveClass('group');
     });
   });
 });

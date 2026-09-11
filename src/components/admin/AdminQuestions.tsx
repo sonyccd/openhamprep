@@ -329,7 +329,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
         </CardHeader>
         <CardContent className="flex-1 min-h-0 overflow-hidden p-0">
           {isLoading ? (
-            <div className="flex justify-center py-8">
+            <div className="flex justify-center py-8" role="status" aria-label="Loading questions">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : filteredQuestions.length === 0 ? (

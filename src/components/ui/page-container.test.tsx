@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { PageContainer } from './page-container';
 
+// Exempt from the semantic-query conversion in #257. This primitive's only job
+// is mapping a maxWidth prop onto a width class, so the class assertion is the
+// test — there is no behavioural alternative. The file retires with the
+// primitive itself when shadcn is removed in #266.
 describe('PageContainer', () => {
   it('renders children correctly', () => {
     render(

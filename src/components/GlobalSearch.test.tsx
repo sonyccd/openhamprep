@@ -705,7 +705,6 @@ describe('GlobalSearch', () => {
       // Find the result item containing the icon
       const resultItem = screen.getByText('T5A01').closest('[cmdk-item]');
       expect(resultItem).toBeInTheDocument();
-      expect(resultItem?.querySelector('svg')).toBeInTheDocument();
     });
   });
 });

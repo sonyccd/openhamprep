@@ -210,7 +210,7 @@ describe('TopicQuiz', () => {
       const optionButton = screen.getByText('Answer A').closest('button');
       await user.click(optionButton!);
 
-      expect(optionButton).toHaveClass('border-primary');
+      expect(optionButton).toHaveAttribute('aria-pressed', 'true');
     });
 
     it('has aria-labels on navigation buttons', async () => {

@@ -33,24 +33,18 @@ describe('TopicContent', () => {
     });
 
     it('should render bold text', () => {
-      const { container } = render(<TopicContent content="This is **bold** text." />);
-      const strong = container.querySelector('strong');
-      expect(strong).toBeInTheDocument();
-      expect(strong).toHaveTextContent('bold');
+      render(<TopicContent content="This is **bold** text." />);
+      expect(screen.getByRole('strong')).toHaveTextContent('bold');
     });
 
     it('should render italic text', () => {
-      const { container } = render(<TopicContent content="This is *italic* text." />);
-      const em = container.querySelector('em');
-      expect(em).toBeInTheDocument();
-      expect(em).toHaveTextContent('italic');
+      render(<TopicContent content="This is *italic* text." />);
+      expect(screen.getByRole('emphasis')).toHaveTextContent('italic');
     });
 
     it('should render inline code', () => {
-      const { container } = render(<TopicContent content="Use `console.log()` for debugging." />);
-      const code = container.querySelector('code');
-      expect(code).toBeInTheDocument();
-      expect(code).toHaveTextContent('console.log()');
+      render(<TopicContent content="Use `console.log()` for debugging." />);
+      expect(screen.getByRole('code')).toHaveTextContent('console.log()');
     });
   });
 
@@ -59,26 +53,24 @@ describe('TopicContent', () => {
       const content = `- Item 1
 - Item 2
 - Item 3`;
-      const { container } = render(<TopicContent content={content} />);
-      expect(container.querySelector('ul')).toBeInTheDocument();
-      const listItems = container.querySelectorAll('li');
-      expect(listItems.length).toBe(3);
-      expect(container.textContent).toContain('Item 1');
-      expect(container.textContent).toContain('Item 2');
-      expect(container.textContent).toContain('Item 3');
+      render(<TopicContent content={content} />);
+      expect(screen.getByRole('list').tagName).toBe('UL');
+      expect(screen.getAllByRole('listitem')).toHaveLength(3);
+      expect(screen.getByText('Item 1')).toBeInTheDocument();
+      expect(screen.getByText('Item 2')).toBeInTheDocument();
+      expect(screen.getByText('Item 3')).toBeInTheDocument();
     });
 
     it('should render ordered lists', () => {
       const content = `1. First
 2. Second
 3. Third`;
-      const { container } = render(<TopicContent content={content} />);
-      expect(container.querySelector('ol')).toBeInTheDocument();
-      const listItems = container.querySelectorAll('li');
-      expect(listItems.length).toBe(3);
-      expect(container.textContent).toContain('First');
-      expect(container.textContent).toContain('Second');
-      expect(container.textContent).toContain('Third');
+      render(<TopicContent content={content} />);
+      expect(screen.getByRole('list').tagName).toBe('OL');
+      expect(screen.getAllByRole('listitem')).toHaveLength(3);
+      expect(screen.getByText('First')).toBeInTheDocument();
+      expect(screen.getByText('Second')).toBeInTheDocument();
+      expect(screen.getByText('Third')).toBeInTheDocument();
     });
   });
 
@@ -95,9 +87,7 @@ describe('TopicContent', () => {
   describe('Blockquotes', () => {
     it('should render blockquotes', () => {
       render(<TopicContent content="> This is a quote" />);
-      const blockquote = document.querySelector('blockquote');
-      expect(blockquote).toBeInTheDocument();
-      expect(blockquote).toHaveTextContent('This is a quote');
+      expect(screen.getByRole('blockquote')).toHaveTextContent('This is a quote');
     });
   });
 
@@ -106,9 +96,8 @@ describe('TopicContent', () => {
       const content = `\`\`\`
 const x = 1;
 \`\`\``;
-      const { container } = render(<TopicContent content={content} />);
-      expect(container.querySelector('pre')).toBeInTheDocument();
-      expect(container.textContent).toContain('const x = 1;');
+      render(<TopicContent content={content} />);
+      expect(screen.getByRole('code')).toHaveTextContent('const x = 1;');
     });
   });
 
@@ -122,8 +111,8 @@ const x = 1;
 
   describe('Horizontal Rules', () => {
     it('should render horizontal rules', () => {
-      const { container } = render(<TopicContent content="---" />);
-      expect(container.querySelector('hr')).toBeInTheDocument();
+      render(<TopicContent content="---" />);
+      expect(screen.getByRole('separator')).toBeInTheDocument();
     });
   });
 
@@ -168,8 +157,8 @@ Visit [our site](https://example.com) for more info.`;
       expect(screen.getByRole('heading', { level: 1, name: 'Main Title' })).toBeInTheDocument();
       expect(screen.getByRole('heading', { level: 2, name: 'Features' })).toBeInTheDocument();
       expect(screen.getByRole('heading', { level: 3, name: 'Code Example' })).toBeInTheDocument();
-      expect(container.querySelector('strong')).toHaveTextContent('bold');
-      expect(container.querySelector('em')).toHaveTextContent('italic');
+      expect(screen.getByRole('strong')).toHaveTextContent('bold');
+      expect(screen.getByRole('emphasis')).toHaveTextContent('italic');
       expect(screen.getByText('Feature one')).toBeInTheDocument();
       expect(container).toHaveTextContent('const example = true;');
       expect(screen.getByText('Important note here')).toBeInTheDocument();

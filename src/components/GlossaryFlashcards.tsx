@@ -458,6 +458,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Previous term"
             onClick={handlePrevious}
             disabled={currentIndex === 0}
             className="rounded-full w-10 h-10 text-muted-foreground hover:text-foreground"
@@ -485,6 +486,7 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Next term"
             onClick={handleNext}
             disabled={currentIndex === orderedTerms.length - 1}
             className="rounded-full w-10 h-10 text-muted-foreground hover:text-foreground"

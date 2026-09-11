@@ -432,10 +432,15 @@ export function WeakQuestionsReview({
                   </div>
                   {/* Streak indicator - only shown when streak mode is enabled */}
                   {streakModeEnabled && (
-                    <div className="flex items-center gap-1">
+                    <div
+                      className="flex items-center gap-1"
+                      role="img"
+                      aria-label={`${questionStreak} of ${STREAK_TO_CLEAR} correct in a row`}
+                    >
                       {Array.from({ length: STREAK_TO_CLEAR }, (_, i) => (
                         <div
                           key={i}
+                          aria-hidden="true"
                           className={`w-2 h-2 rounded-full ${
                             i < questionStreak ? 'bg-success' : 'bg-muted'
                           }`}

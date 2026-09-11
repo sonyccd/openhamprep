@@ -37,6 +37,7 @@ export function DashboardProgress({
             variant="ghost"
             size="icon"
             className="h-7 w-7"
+            aria-label="Edit weekly goals"
             onClick={onOpenGoalsModal}
           >
             <Settings2 className="w-4 h-4" />

@@ -268,7 +268,7 @@ export function BookmarkedQuestions({
                       {question.question}
                     </p>
                   </button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => removeBookmark.mutate(question.id)}>
+                  <Button variant="ghost" size="icon" aria-label={`Remove bookmark for ${question.id}`} className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => removeBookmark.mutate(question.id)}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>

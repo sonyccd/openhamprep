@@ -276,7 +276,7 @@ export function AdminTopics() {
         </CardHeader>
         <CardContent className="flex-1 min-h-0 overflow-hidden">
           {isLoading ? (
-            <div className="flex justify-center py-8">
+            <div className="flex justify-center py-8" role="status" aria-label="Loading topics">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : (
@@ -320,6 +320,7 @@ export function AdminTopics() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label={`Edit ${topic.title}`}
                     className="text-muted-foreground hover:text-primary"
                     onClick={() => setSelectedTopic(topic)}
                   >

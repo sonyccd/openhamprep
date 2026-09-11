@@ -216,7 +216,7 @@ export function TopicQuestionManager({ topicId }: TopicQuestionManagerProps) {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-8">
+        <div className="flex items-center justify-center py-8" role="status" aria-label="Loading questions">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
       ) : (

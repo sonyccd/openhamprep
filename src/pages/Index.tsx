@@ -26,7 +26,7 @@ const Index = () => {
 
   // Show loading while determining auth state and redirecting
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label="Loading">
       <Loader2 className="w-8 h-8 animate-spin text-primary" />
     </div>
   );

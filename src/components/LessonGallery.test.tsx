@@ -127,11 +127,6 @@ describe('LessonGallery', () => {
       renderComponent();
       expect(screen.getByPlaceholderText('Search lessons...')).toBeInTheDocument();
     });
-
-    it('should render Route icon in header', () => {
-      renderComponent();
-      expect(document.querySelector('.lucide-route')).toBeInTheDocument();
-    });
   });
 
   describe('Loading State', () => {
@@ -139,8 +134,7 @@ describe('LessonGallery', () => {
       mockIsLoading = true;
       const { container } = renderComponent();
 
-      // Check for skeleton elements
-      const skeletons = container.querySelectorAll('[class*="animate-pulse"]');
+      const skeletons = screen.getAllByTestId('skeleton');
       expect(skeletons.length).toBeGreaterThan(0);
     });
 

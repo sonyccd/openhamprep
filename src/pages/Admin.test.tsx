@@ -111,7 +111,7 @@ describe('Admin', () => {
 
       renderAdmin();
 
-      const spinner = document.querySelector('.animate-spin');
+      const spinner = screen.queryByRole('status', { name: /loading admin/i });
       expect(spinner).toBeInTheDocument();
     });
 
@@ -123,7 +123,7 @@ describe('Admin', () => {
 
       renderAdmin();
 
-      const spinner = document.querySelector('.animate-spin');
+      const spinner = screen.queryByRole('status', { name: /loading admin/i });
       expect(spinner).toBeInTheDocument();
     });
   });

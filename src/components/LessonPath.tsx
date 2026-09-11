@@ -70,6 +70,7 @@ export function LessonPath({
             <button
               onClick={() => !isLocked && onTopicClick(topic.slug)}
               disabled={isLocked}
+              aria-current={isCurrent ? "step" : undefined}
               className={cn(
                 "relative z-10 flex items-start gap-4 w-full text-left py-4 pr-4 transition-all group",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-lg",
@@ -213,6 +214,10 @@ export function LessonPath({
                   <ChevronRight className="w-5 h-5" />
                 </motion.div>
               </div>
+
+              {/* Appends to the button's content-derived name rather than
+                  overriding it, so the title, description and badges survive. */}
+              {completed && <span className="sr-only">(completed)</span>}
             </button>
 
             {/* Spacer between items */}

@@ -177,8 +177,7 @@ describe('FigureImage', () => {
         />
       );
 
-      // Loading spinner should be present (has animate-spin class)
-      const spinner = document.querySelector('.animate-spin');
+      const spinner = screen.queryByTestId('figure-loading');
       expect(spinner).toBeInTheDocument();
     });
 
@@ -194,7 +193,7 @@ describe('FigureImage', () => {
       fireEvent.load(img);
 
       await waitFor(() => {
-        const spinner = document.querySelector('.animate-spin');
+        const spinner = screen.queryByTestId('figure-loading');
         expect(spinner).not.toBeInTheDocument();
       });
     });
@@ -264,20 +263,6 @@ describe('FigureImage', () => {
 
       const img = screen.getByAltText('Figure for question E9B05');
       expect(img).toHaveAttribute('loading', 'lazy');
-    });
-
-    it('should have max-height constraints for responsive design', () => {
-      render(
-        <FigureImage
-          figureUrl="https://storage.example.com/figures/E9B05.png"
-          questionId="E9B05"
-        />
-      );
-
-      const img = screen.getByAltText('Figure for question E9B05');
-      // Check that the image has the responsive max-height classes
-      expect(img.className).toContain('max-h-[200px]');
-      expect(img.className).toContain('md:max-h-[300px]');
     });
   });
 

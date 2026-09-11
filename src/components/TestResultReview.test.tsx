@@ -88,8 +88,7 @@ describe('TestResultReview', () => {
 
       render(<TestResultReview {...defaultProps} />, { wrapper: createWrapper() });
 
-      const spinner = document.querySelector('.animate-spin');
-      expect(spinner).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: /loading results/i })).toBeInTheDocument();
     });
   });
 
@@ -184,15 +183,6 @@ describe('TestResultReview', () => {
       });
     });
 
-    it('displays completion date and time', async () => {
-      render(<TestResultReview {...defaultProps} />, { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        // Date format depends on locale, just check something is rendered
-        const dateElement = document.querySelector('.text-muted-foreground');
-        expect(dateElement).toBeInTheDocument();
-      });
-    });
   });
 
   describe('Review Section', () => {
@@ -224,17 +214,6 @@ describe('TestResultReview', () => {
       });
     });
 
-    it('shows X mark for incorrect answers', async () => {
-      render(<TestResultReview {...defaultProps} />, { wrapper: createWrapper() });
-
-      await waitFor(() => {
-        // T1A03: selected C (index 2) but correct is C, so it's correct
-        // Actually all 3 are correct based on our mock data
-        // Let's check that both marks can appear
-        const marks = document.querySelectorAll('.text-destructive, .text-success');
-        expect(marks.length).toBeGreaterThan(0);
-      });
-    });
   });
 
   describe('Individual Question Review', () => {
@@ -242,9 +221,7 @@ describe('TestResultReview', () => {
       render(<TestResultReview {...defaultProps} />, { wrapper: createWrapper() });
 
       await waitFor(() => {
-        // Questions should be clickable buttons
-        const questionButtons = document.querySelectorAll('button');
-        expect(questionButtons.length).toBeGreaterThan(0);
+        expect(screen.getAllByRole('button').length).toBeGreaterThan(0);
       });
     });
 

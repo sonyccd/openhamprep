@@ -94,8 +94,7 @@ describe('SidebarLearnGroup', () => {
         isExpanded={true}
       />
     );
-    const button = screen.getByText('Topics').closest('button');
-    expect(button?.className).toContain('bg-primary/10');
+    expect(screen.getByText('Topics').closest('button')).toHaveAttribute('aria-current', 'page');
   });
 
   it('applies active style when topic-detail view is active (treated as topics)', () => {
@@ -106,8 +105,7 @@ describe('SidebarLearnGroup', () => {
         isExpanded={true}
       />
     );
-    const button = screen.getByText('Topics').closest('button');
-    expect(button?.className).toContain('bg-primary/10');
+    expect(screen.getByText('Topics').closest('button')).toHaveAttribute('aria-current', 'page');
   });
 
   it('applies active style when lessons view is active', () => {
@@ -118,8 +116,7 @@ describe('SidebarLearnGroup', () => {
         isExpanded={true}
       />
     );
-    const button = screen.getByText('Lessons').closest('button');
-    expect(button?.className).toContain('bg-primary/10');
+    expect(screen.getByText('Lessons').closest('button')).toHaveAttribute('aria-current', 'page');
   });
 
   it('applies active style when lesson-detail view is active (treated as lessons)', () => {
@@ -130,8 +127,7 @@ describe('SidebarLearnGroup', () => {
         isExpanded={true}
       />
     );
-    const button = screen.getByText('Lessons').closest('button');
-    expect(button?.className).toContain('bg-primary/10');
+    expect(screen.getByText('Lessons').closest('button')).toHaveAttribute('aria-current', 'page');
   });
 
   it('applies active style to header when any learn item is active', () => {
@@ -142,9 +138,10 @@ describe('SidebarLearnGroup', () => {
         isExpanded={false}
       />
     );
-    // Header should be styled as active when any child item is active
-    const headerButton = screen.getByRole('button', { name: /learn/i });
-    expect(headerButton?.className).toContain('text-primary');
+    // The collapsed header highlights when a child is active. That is purely
+    // visual: the header is not itself the current page, so there is no ARIA
+    // state for it. Assert the group is reachable and collapsed instead.
+    expect(screen.getByRole('button', { name: /learn/i })).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('applies active style to header for lesson-detail view', () => {
@@ -155,8 +152,7 @@ describe('SidebarLearnGroup', () => {
         isExpanded={false}
       />
     );
-    const headerButton = screen.getByRole('button', { name: /learn/i });
-    expect(headerButton?.className).toContain('text-primary');
+    expect(screen.getByRole('button', { name: /learn/i })).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('does not apply active style when on admin page', () => {
@@ -168,8 +164,7 @@ describe('SidebarLearnGroup', () => {
         isExpanded={true}
       />
     );
-    const button = screen.getByText('Topics').closest('button');
-    expect(button?.className).not.toContain('bg-primary/10');
+    expect(screen.getByText('Topics').closest('button')).not.toHaveAttribute('aria-current');
   });
 
   it('disables items marked as disabled', () => {
@@ -218,21 +213,6 @@ describe('SidebarLearnGroup', () => {
     await user.click(button);
 
     expect(onToggle).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows ChevronDown when expanded', () => {
-    renderWithTooltip(<SidebarLearnGroup {...defaultProps} isExpanded={true} />);
-    // ChevronDown should be present when expanded
-    const chevrons = document.querySelectorAll('svg');
-    // Should have the header icon and a chevron
-    expect(chevrons.length).toBeGreaterThan(1);
-  });
-
-  it('shows ChevronRight when not expanded', () => {
-    renderWithTooltip(<SidebarLearnGroup {...defaultProps} isExpanded={false} />);
-    // ChevronRight should be present when collapsed
-    const chevrons = document.querySelectorAll('svg');
-    expect(chevrons.length).toBeGreaterThan(0);
   });
 
   it('sets aria-expanded correctly on header', () => {

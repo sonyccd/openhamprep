@@ -136,7 +136,7 @@ describe('AppLayout', () => {
         { wrapper: createWrapper() }
       );
 
-      const spinner = container.querySelector('.animate-spin');
+      const spinner = screen.queryByRole('status', { name: /loading/i });
       expect(spinner).toBeInTheDocument();
     });
   });

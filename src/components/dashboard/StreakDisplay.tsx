@@ -32,7 +32,7 @@ export function StreakDisplay({ className, variant = 'full', onAction }: StreakD
 
   if (isLoading) {
     return (
-      <div className={cn('animate-pulse', className)}>
+      <div className={cn('animate-pulse', className)} role="status" aria-label="Loading streak">
         <div className="h-8 w-20 bg-muted rounded-lg" />
       </div>
     );
@@ -128,6 +128,12 @@ export function StreakDisplay({ className, variant = 'full', onAction }: StreakD
         {/* Best streak badge */}
         {longestStreak > 0 && (
           <div
+            role="img"
+            aria-label={
+              isNewRecord
+                ? `New record: ${longestStreak} day best streak`
+                : `Best streak: ${longestStreak} days`
+            }
             className={cn(
               'flex items-center gap-1 px-2 py-1 rounded-full text-xs',
               isNewRecord

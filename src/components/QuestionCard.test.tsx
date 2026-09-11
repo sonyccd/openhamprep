@@ -147,10 +147,7 @@ describe('QuestionCard', () => {
     it('highlights selected answer', () => {
       renderQuestionCard({ selectedAnswer: 'B' });
       
-      // The button containing option B should have selection styling
-      const buttons = screen.getAllByRole('button');
-      const optionBButton = buttons.find(btn => btn.textContent?.includes('To make money'));
-      expect(optionBButton).toHaveClass('border-primary');
+      expect(screen.getByRole('button', { name: /To make money/ })).toHaveAttribute('aria-pressed', 'true');
     });
   });
 

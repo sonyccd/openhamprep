@@ -202,7 +202,7 @@ describe('AdminTopics', () => {
 
       renderComponent();
 
-      expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: /loading topics/i })).toBeInTheDocument();
     });
   });
 
@@ -312,30 +312,26 @@ describe('AdminTopics', () => {
 
   describe('Edit Topic', () => {
     it('should show TopicEditor when edit button is clicked', async () => {
-      const { container } = renderComponent();
+      renderComponent();
 
       await waitFor(() => {
         expect(screen.getByText('Amateur Radio Basics')).toBeInTheDocument();
       });
 
-      // Find edit buttons via SVG class
-      const editButtons = container.querySelectorAll('svg.lucide-pencil');
-      expect(editButtons.length).toBeGreaterThan(0);
-      fireEvent.click(editButtons[0].closest('button')!);
+      fireEvent.click(screen.getByRole('button', { name: 'Edit Amateur Radio Basics' }));
 
       expect(screen.getByTestId('topic-editor')).toBeInTheDocument();
       expect(screen.getByText('Editing: Amateur Radio Basics')).toBeInTheDocument();
     });
 
     it('should return to list when back is clicked in editor', async () => {
-      const { container } = renderComponent();
+      renderComponent();
 
       await waitFor(() => {
         expect(screen.getByText('Amateur Radio Basics')).toBeInTheDocument();
       });
 
-      const editButtons = container.querySelectorAll('svg.lucide-pencil');
-      fireEvent.click(editButtons[0].closest('button')!);
+      fireEvent.click(screen.getByRole('button', { name: 'Edit Amateur Radio Basics' }));
 
       expect(screen.getByTestId('topic-editor')).toBeInTheDocument();
 

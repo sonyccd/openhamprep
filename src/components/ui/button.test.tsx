@@ -3,6 +3,10 @@ import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button } from './button';
 
+// Exempt from the semantic-query conversion in #257. Applying the right class
+// per variant and size IS this primitive's contract — drop the class assertion
+// and there is no behaviour left to test. The file retires with the primitive
+// itself when shadcn is removed in #266.
 describe('Button', () => {
   it('renders correctly with default props', () => {
     const { getByRole } = render(<Button>Click me</Button>);

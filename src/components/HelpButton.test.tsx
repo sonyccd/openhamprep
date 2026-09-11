@@ -47,18 +47,6 @@ describe('HelpButton', () => {
       vi.mocked(useIsMobile).mockReturnValue(true);
     });
 
-    it('renders a top-right icon button matching the hamburger style', () => {
-      renderHelpButton();
-
-      const button = getHelpButton();
-      // Top-right placement aligned with the hamburger's top-safe-top row
-      expect(button).toHaveClass('fixed', 'right-4', 'top-safe-top');
-      // Outline / card styling to mirror the hamburger button
-      expect(button).toHaveClass('bg-card', 'border-border', 'shadow-lg');
-      // Not the desktop floating circle
-      expect(button).not.toHaveClass('rounded-full');
-    });
-
     it('opens the dialog when the mobile button is clicked', async () => {
       const user = userEvent.setup();
       renderHelpButton();
@@ -511,9 +499,10 @@ describe('HelpButton', () => {
       await user.click(screen.getByRole('tab', { name: /shortcuts/i }));
 
       await waitFor(() => {
-        // Check that A, B, C, D keys are displayed
-        const kbdElements = document.querySelectorAll('kbd');
-        expect(kbdElements.length).toBeGreaterThan(0);
+        // The answer keys are listed as shortcuts.
+        for (const key of ['A', 'B', 'C', 'D']) {
+          expect(screen.getByText(key, { selector: 'kbd' })).toBeInTheDocument();
+        }
       });
     });
   });

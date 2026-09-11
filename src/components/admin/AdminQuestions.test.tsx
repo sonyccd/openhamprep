@@ -196,8 +196,7 @@ describe('AdminQuestions', () => {
 
       renderComponent();
 
-      const loader = document.querySelector('.animate-spin');
-      expect(loader).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: /loading questions/i })).toBeInTheDocument();
     });
   });
 
@@ -355,11 +354,7 @@ describe('AdminQuestions', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      // Find the pencil icon buttons
-      const pencilIcons = document.querySelectorAll('.lucide-pencil');
-      const editButton = pencilIcons[0]?.closest('button');
-      expect(editButton).toBeTruthy();
-      fireEvent.click(editButton!);
+      fireEvent.click(screen.getByRole('button', { name: 'Edit T1A01' }));
 
       await waitFor(() => {
         expect(screen.getByText('Edit Question: T1A01')).toBeInTheDocument();
@@ -373,9 +368,7 @@ describe('AdminQuestions', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const pencilIcons = document.querySelectorAll('.lucide-pencil');
-      const editButton = pencilIcons[0]?.closest('button');
-      fireEvent.click(editButton!);
+      fireEvent.click(screen.getByRole('button', { name: 'Edit T1A01' }));
 
       await waitFor(() => {
         expect(screen.getByText('Linked Topics')).toBeInTheDocument();
@@ -390,9 +383,7 @@ describe('AdminQuestions', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const pencilIcons = document.querySelectorAll('.lucide-pencil');
-      const editButton = pencilIcons[0]?.closest('button');
-      fireEvent.click(editButton!);
+      fireEvent.click(screen.getByRole('button', { name: 'Edit T1A01' }));
 
       await waitFor(() => {
         expect(screen.getByText('Radio Basics')).toBeInTheDocument();
@@ -406,10 +397,7 @@ describe('AdminQuestions', () => {
         expect(screen.getByText('T1A02')).toBeInTheDocument();
       });
 
-      // Click the second edit button (for T1A02)
-      const pencilIcons = document.querySelectorAll('.lucide-pencil');
-      const editButton = pencilIcons[1]?.closest('button');
-      fireEvent.click(editButton!);
+      fireEvent.click(screen.getByRole('button', { name: 'Edit T1A02' }));
 
       await waitFor(() => {
         expect(screen.getByText('No topics linked')).toBeInTheDocument();
@@ -423,9 +411,7 @@ describe('AdminQuestions', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const pencilIcons = document.querySelectorAll('.lucide-pencil');
-      const editButton = pencilIcons[0]?.closest('button');
-      fireEvent.click(editButton!);
+      fireEvent.click(screen.getByRole('button', { name: 'Edit T1A01' }));
 
       await waitFor(() => {
         expect(screen.getByText('Edit Question: T1A01')).toBeInTheDocument();
@@ -575,11 +561,11 @@ describe('AdminQuestions', () => {
       renderComponent({ testType: 'technician', highlightQuestionId: 'T1A01' });
 
       await waitFor(() => {
-        const rows = document.querySelectorAll('tbody tr');
-        const highlightedRow = Array.from(rows).find((r) =>
-          r.className.includes('bg-amber-500/10')
+        const highlighted = screen.getAllByRole('row').filter(
+          (row) => row.getAttribute('aria-current') === 'true'
         );
-        expect(highlightedRow).toBeInTheDocument();
+        expect(highlighted).toHaveLength(1);
+        expect(highlighted[0]).toHaveTextContent('T1A01');
       });
     });
 

@@ -142,7 +142,7 @@ describe('Auth', () => {
       renderAuth();
 
       // When loading, a spinner is shown instead of the full page
-      const spinner = document.querySelector('.animate-spin');
+      const spinner = screen.queryByRole('status', { name: /loading/i });
       expect(spinner).toBeInTheDocument();
     });
   });

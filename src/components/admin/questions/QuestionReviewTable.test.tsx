@@ -174,16 +174,18 @@ describe('QuestionReviewTable', () => {
         highlightQuestionId="T1A01"
       />
     );
-    const rows = container.querySelectorAll('tbody tr');
-    expect(rows[0].className).toContain('bg-amber-500/10');
-    expect(rows[1].className).not.toContain('bg-amber-500/10');
+    // getAllByRole('row') includes the header row.
+    const rows = screen.getAllByRole('row').slice(1);
+    expect(rows[0]).toHaveAttribute('aria-current', 'true');
+    expect(rows[1]).not.toHaveAttribute('aria-current');
   });
 
   it('applies no highlight when highlightQuestionId is not set', () => {
     const { container } = render(
       <QuestionReviewTable questions={[makeQuestion()]} onEdit={vi.fn()} />
     );
-    const rows = container.querySelectorAll('tbody tr');
-    expect(rows[0].className).not.toContain('bg-amber-500/10');
+    // getAllByRole('row') includes the header row.
+    const rows = screen.getAllByRole('row').slice(1);
+    expect(rows[0]).not.toHaveAttribute('aria-current');
   });
 });

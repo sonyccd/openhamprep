@@ -61,18 +61,6 @@ describe('FigureLightbox', () => {
       fireEvent.keyDown(document, { key: 'Escape' });
       expect(onClose).toHaveBeenCalledTimes(1);
     });
-
-    it('should call onClose when clicking outside the content (overlay)', () => {
-      const onClose = vi.fn();
-      render(<FigureLightbox {...defaultProps} onClose={onClose} />);
-
-      // Click on the overlay (the dialog overlay element)
-      const overlay = document.querySelector('[data-state="open"]');
-      if (overlay) {
-        fireEvent.click(overlay);
-      }
-      // Note: Radix handles this internally, the onClose will be called via onOpenChange
-    });
   });
 
   describe('Accessibility', () => {
@@ -90,28 +78,6 @@ describe('FigureLightbox', () => {
     it('should have dialog role', () => {
       render(<FigureLightbox {...defaultProps} />);
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-    });
-  });
-
-  describe('Styling', () => {
-    it('should have overlay background', () => {
-      render(<FigureLightbox {...defaultProps} />);
-      // The overlay uses semantic bg-background/95 class
-      const overlay = document.querySelector('[class*="bg-background"]');
-      expect(overlay).toBeInTheDocument();
-    });
-
-    it('should have max dimensions for viewport constraints', () => {
-      render(<FigureLightbox {...defaultProps} />);
-      const img = screen.getByAltText('Figure for question E9B05');
-      expect(img.className).toContain('max-w-[90vw]');
-      expect(img.className).toContain('max-h-[85vh]');
-    });
-
-    it('should have rounded corners on image', () => {
-      render(<FigureLightbox {...defaultProps} />);
-      const img = screen.getByAltText('Figure for question E9B05');
-      expect(img.className).toContain('rounded-lg');
     });
   });
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ChapterQuestionManager } from './ChapterQuestionManager';
@@ -144,9 +144,7 @@ describe('ChapterQuestionManager', () => {
 
       renderComponent();
 
-      // Should show loading spinner
-      const loader = document.querySelector('.animate-spin');
-      expect(loader).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: /loading questions/i })).toBeInTheDocument();
     });
 
     it('should display linked questions count badge', async () => {
@@ -594,12 +592,7 @@ describe('ChapterQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      // Find the linked question row (it's a div with the bg-primary/5 class)
-      const linkedQuestionText = screen.getByText('What is amateur radio?');
-      // Navigate up to find the row container that has the checkbox
-      const linkedRow = linkedQuestionText.closest('.bg-primary\\/5');
-      const checkbox = linkedRow?.querySelector('[role="checkbox"]');
-      expect(checkbox).toHaveAttribute('data-state', 'checked');
+      expect(screen.getByRole('checkbox', { name: 'T1A01 is linked' })).toBeChecked();
     });
 
     it('should show unchecked checkbox for unlinked questions', async () => {
@@ -610,9 +603,8 @@ describe('ChapterQuestionManager', () => {
       });
 
       // Find an unlinked question row and check its checkbox
-      const unlinkedQuestionRow = screen.getByText('What is the purpose of the FCC rules?').closest('button');
-      const checkbox = unlinkedQuestionRow?.querySelector('[role="checkbox"]');
-      expect(checkbox).toHaveAttribute('data-state', 'unchecked');
+      const unlinkedQuestionRow = screen.getByText('What is the purpose of the FCC rules?').closest('button')!;
+      expect(within(unlinkedQuestionRow).getByRole('checkbox')).not.toBeChecked();
     });
   });
 

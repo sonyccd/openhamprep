@@ -61,8 +61,7 @@ describe('Calculator', () => {
 
       await user.click(screen.getByRole('button', { name: /open calculator/i }));
 
-      // Should show display with "0" (using querySelector to avoid ambiguity with button)
-      const display = document.querySelector('.font-mono.text-xl');
+      const display = screen.getByLabelText('Calculator display');
       expect(display?.textContent).toBe('0');
     });
 
@@ -95,8 +94,7 @@ describe('Calculator', () => {
       await user.click(screen.getByRole('button', { name: /open calculator/i }));
       await user.click(screen.getByRole('button', { name: '5' }));
 
-      // Check the display element specifically
-      const display = document.querySelector('.font-mono.text-xl');
+      const display = screen.getByLabelText('Calculator display');
       expect(display?.textContent).toBe('5');
     });
 
@@ -109,7 +107,7 @@ describe('Calculator', () => {
       await user.click(screen.getByRole('button', { name: '2' }));
       await user.click(screen.getByRole('button', { name: '3' }));
 
-      const display = document.querySelector('.font-mono.text-xl');
+      const display = screen.getByLabelText('Calculator display');
       expect(display?.textContent).toBe('123');
     });
 
@@ -122,7 +120,7 @@ describe('Calculator', () => {
       await user.click(screen.getByRole('button', { name: /decimal point/i }));
       await user.click(screen.getByRole('button', { name: '5' }));
 
-      const display = document.querySelector('.font-mono.text-xl');
+      const display = screen.getByLabelText('Calculator display');
       expect(display?.textContent).toBe('1.5');
     });
 
@@ -136,7 +134,7 @@ describe('Calculator', () => {
       await user.click(screen.getByRole('button', { name: /decimal point/i }));
       await user.click(screen.getByRole('button', { name: '5' }));
 
-      const display = document.querySelector('.font-mono.text-xl');
+      const display = screen.getByLabelText('Calculator display');
       expect(display?.textContent).toBe('1.5');
     });
   });
@@ -171,7 +169,7 @@ describe('Calculator', () => {
       await user.click(screen.getByRole('button', { name: /clear/i }));
 
       // The display shows 0 after clear
-      const display = document.querySelector('.font-mono.text-xl');
+      const display = screen.getByLabelText('Calculator display');
       expect(display?.textContent).toBe('0');
     });
   });
@@ -220,7 +218,9 @@ describe('Calculator', () => {
         </TooltipProvider>
       );
 
-      // The wrapper div should have the custom class
+      // Kept as a class assertion on purpose: this checks that a caller-supplied
+      // className is forwarded, which is part of the component's API rather than
+      // its internal styling, and survives a restyle.
       const wrapper = screen.getByRole('button').parentElement;
       expect(wrapper).toHaveClass('custom-class');
     });
