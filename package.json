@@ -113,10 +113,7 @@
   },
   "overrides": {
     "@mui/material": {
-      "react-is": "^18.3.1",
-      "prop-types": {
-        "react-is": "^16.13.1"
-      }
+      "react-is": "^18.3.1"
     },
     "@mui/utils": {
       "react-is": "^18.3.1"
