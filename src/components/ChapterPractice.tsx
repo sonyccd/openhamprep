@@ -1,28 +1,20 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
-import { useQuestions, Question } from "@/hooks/useQuestions";
+import { useQuestions } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
-import { useQuestionTimer } from "@/hooks/useQuestionTimer";
+import { useQuizSession } from "@/hooks/useQuizSession";
 import { QuestionListView } from "@/components/QuestionListView";
 import { useArrlChaptersWithCounts } from "@/hooks/useArrlChapters";
-import { SkipForward, RotateCcw, Loader2, ChevronRight, CheckCircle, ArrowLeft, ChevronLeft, Book } from "lucide-react";
+import { RotateCcw, ChevronRight, CheckCircle, ArrowLeft, Book } from "lucide-react";
 import { motion } from "framer-motion";
 import { TestType } from "@/types/navigation";
 import { PageContainer } from "@/components/ui/page-container";
+import { QuizShell, QuizShellPending, QuizShellError, QuizNavControls } from "@/components/QuizShell";
 import type { ArrlChapterWithCount, LicenseType } from "@/types/chapters";
-
-interface HistoryEntry {
-  question: Question;
-  selectedAnswer: 'A' | 'B' | 'C' | 'D' | null;
-  showResult: boolean;
-}
-
-// Limit question history to prevent unbounded memory growth
-const MAX_HISTORY_SIZE = 50;
 
 interface ChapterPracticeProps {
   onBack: () => void;
@@ -60,34 +52,6 @@ export function ChapterPractice({
 
   const [selectedChapter, setSelectedChapter] = useState<ArrlChapterWithCount | null>(null);
   const [chapterView, setChapterView] = useState<ChapterView>('list');
-  const [stats, setStats] = useState({
-    correct: 0,
-    total: 0
-  });
-  const [askedIds, setAskedIds] = useState<string[]>([]);
-
-  // Session history for back navigation
-  const [questionHistory, setQuestionHistory] = useState<HistoryEntry[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-
-  // Current question from history
-  const currentEntry = historyIndex >= 0 ? questionHistory[historyIndex] : null;
-  const question = currentEntry?.question || null;
-  const selectedAnswer = currentEntry?.selectedAnswer || null;
-  const showResult = currentEntry?.showResult || false;
-
-  // Timer for tracking time spent on current question
-  const { getElapsedMs } = useQuestionTimer(question?.id);
-
-  // Reset state when test type changes
-  useEffect(() => {
-    setSelectedChapter(null);
-    setChapterView('list');
-    setQuestionHistory([]);
-    setHistoryIndex(-1);
-    setStats({ correct: 0, total: 0 });
-    setAskedIds([]);
-  }, [testType]);
 
   // Get questions for selected chapter
   const currentQuestions = useMemo(() => {
@@ -95,213 +59,62 @@ export function ChapterPractice({
     return allQuestions.filter(q => q.arrlChapterId === selectedChapter.id);
   }, [selectedChapter, allQuestions]);
 
-  const getRandomQuestion = useCallback((excludeIds: string[] = []): { question: Question; shouldResetAskedIds: boolean } | null => {
-    if (currentQuestions.length === 0) return null;
-    const available = currentQuestions.filter(q => !excludeIds.includes(q.id));
-    if (available.length === 0) {
-      // All questions have been asked, wrap around
-      return {
-        question: currentQuestions[Math.floor(Math.random() * currentQuestions.length)],
-        shouldResetAskedIds: true
-      };
-    }
-    return {
-      question: available[Math.floor(Math.random() * available.length)],
-      shouldResetAskedIds: false
-    };
-  }, [currentQuestions]);
+  const session = useQuizSession({
+    questions: currentQuestions,
+    // Picking a different chapter — including via the test-type reset below,
+    // which clears the selection — abandons the session and its score.
+    resetKey: selectedChapter?.id ?? null,
+    onAttempt: (question, answer, _isCorrect, timeElapsedMs) =>
+      saveRandomAttempt(question, answer, 'chapter_practice', timeElapsedMs),
+  });
 
-  // Update current entry in history
-  const updateCurrentEntry = (updates: Partial<HistoryEntry>) => {
-    setQuestionHistory(prev => {
-      const newHistory = [...prev];
-      if (historyIndex >= 0 && historyIndex < newHistory.length) {
-        newHistory[historyIndex] = { ...newHistory[historyIndex], ...updates };
-      }
-      return newHistory;
-    });
-  };
+  const { question, selectedAnswer, showResult, stats, canGoBack } = session;
 
-  // Add entry to history with size limit to prevent unbounded memory growth
-  const addToHistory = (entry: HistoryEntry) => {
-    setQuestionHistory(prev => {
-      const newHistory = [...prev, entry];
-      // Trim oldest entries if exceeding limit
-      if (newHistory.length > MAX_HISTORY_SIZE) {
-        const trimmed = newHistory.slice(newHistory.length - MAX_HISTORY_SIZE);
-        // Adjust historyIndex to account for removed entries
-        setHistoryIndex(idx => Math.max(0, idx - (newHistory.length - MAX_HISTORY_SIZE)));
-        return trimmed;
-      }
-      return newHistory;
-    });
-    setHistoryIndex(prev => Math.min(prev + 1, MAX_HISTORY_SIZE - 1));
-  };
+  // Reset state when test type changes
+  useEffect(() => {
+    setSelectedChapter(null);
+    setChapterView('list');
+  }, [testType]);
 
   const handleSelectChapter = (chapter: ArrlChapterWithCount) => {
     setSelectedChapter(chapter);
     setChapterView('questions');
-    setQuestionHistory([]);
-    setHistoryIndex(-1);
-    setStats({
-      correct: 0,
-      total: 0
-    });
-    setAskedIds([]);
   };
 
   const handleStartPractice = (startIndex?: number) => {
     setChapterView('practice');
-
-    if (startIndex !== undefined && currentQuestions[startIndex]) {
-      // Start from a specific question
-      setQuestionHistory([{ question: currentQuestions[startIndex], selectedAnswer: null, showResult: false }]);
-      setHistoryIndex(0);
-      setAskedIds([currentQuestions[startIndex].id]);
-    } else {
-      // Random start
-      const result = getRandomQuestion();
-      if (result) {
-        setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
-        setHistoryIndex(0);
-        setAskedIds([result.question.id]);
-      }
-    }
+    session.start(startIndex);
   };
 
   const handleBackToQuestions = () => {
     setChapterView('questions');
-    setQuestionHistory([]);
-    setHistoryIndex(-1);
+    // The chapter is unchanged, so resetKey does not fire — drop the session here.
+    session.clear();
   };
 
   const handleBackToList = () => {
     setSelectedChapter(null);
     setChapterView('list');
-    setQuestionHistory([]);
-    setHistoryIndex(-1);
-    setStats({
-      correct: 0,
-      total: 0
-    });
-    setAskedIds([]);
-  };
-
-  // Current question from history
-  const canGoBack = historyIndex > 0;
-
-  const handleSelectAnswer = async (answer: 'A' | 'B' | 'C' | 'D') => {
-    if (showResult || !question) return;
-
-    // Capture elapsed time before any state updates
-    const timeElapsedMs = getElapsedMs();
-
-    updateCurrentEntry({ selectedAnswer: answer, showResult: true });
-
-    const isCorrect = answer === question.correctAnswer;
-    setStats(prev => ({
-      correct: prev.correct + (isCorrect ? 1 : 0),
-      total: prev.total + 1
-    }));
-    await saveRandomAttempt(question, answer, 'chapter_practice', timeElapsedMs);
-  };
-
-  const handleNextQuestion = () => {
-    if (!question) return;
-    // If we're not at the end of history, just move forward
-    if (historyIndex < questionHistory.length - 1) {
-      setHistoryIndex(historyIndex + 1);
-      return;
-    }
-
-    // Otherwise, get a new question
-    const newAskedIds = [...askedIds, question.id];
-    const result = getRandomQuestion(newAskedIds);
-    if (result) {
-      // If we've gone through all questions, reset the asked IDs to start fresh
-      if (result.shouldResetAskedIds) {
-        setAskedIds([result.question.id]);
-        setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
-        setHistoryIndex(0);
-      } else {
-        setAskedIds(newAskedIds);
-        addToHistory({ question: result.question, selectedAnswer: null, showResult: false });
-      }
-    }
-  };
-
-  const handleSkip = () => {
-    if (!question) return;
-    const newAskedIds = [...askedIds, question.id];
-    const result = getRandomQuestion(newAskedIds);
-    if (result) {
-      // If we've gone through all questions, reset the asked IDs to start fresh
-      if (result.shouldResetAskedIds) {
-        setAskedIds([result.question.id]);
-        setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
-        setHistoryIndex(0);
-      } else {
-        setAskedIds(newAskedIds);
-        addToHistory({ question: result.question, selectedAnswer: null, showResult: false });
-      }
-    }
-  };
-
-  const handlePreviousQuestion = () => {
-    if (historyIndex > 0) {
-      setHistoryIndex(historyIndex - 1);
-    }
-  };
-
-  const handleReset = () => {
-    setAskedIds([]);
-    const result = getRandomQuestion();
-    if (result) {
-      setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
-      setHistoryIndex(0);
-    }
-    setStats({
-      correct: 0,
-      total: 0
-    });
   };
 
   // Keyboard shortcuts
   const shortcuts: KeyboardShortcut[] = [
-    { key: 'a', description: 'Select A', action: () => handleSelectAnswer('A'), disabled: showResult || !question },
-    { key: 'b', description: 'Select B', action: () => handleSelectAnswer('B'), disabled: showResult || !question },
-    { key: 'c', description: 'Select C', action: () => handleSelectAnswer('C'), disabled: showResult || !question },
-    { key: 'd', description: 'Select D', action: () => handleSelectAnswer('D'), disabled: showResult || !question },
-    { key: 'ArrowRight', description: 'Next', action: handleNextQuestion, disabled: !showResult },
-    { key: 'ArrowLeft', description: 'Previous', action: handlePreviousQuestion, disabled: !canGoBack },
-    { key: 's', description: 'Skip', action: handleSkip, disabled: showResult || !question },
+    { key: 'a', description: 'Select A', action: () => session.selectAnswer('A'), disabled: showResult || !question },
+    { key: 'b', description: 'Select B', action: () => session.selectAnswer('B'), disabled: showResult || !question },
+    { key: 'c', description: 'Select C', action: () => session.selectAnswer('C'), disabled: showResult || !question },
+    { key: 'd', description: 'Select D', action: () => session.selectAnswer('D'), disabled: showResult || !question },
+    { key: 'ArrowRight', description: 'Next', action: session.next, disabled: !showResult },
+    { key: 'ArrowLeft', description: 'Previous', action: session.previous, disabled: !canGoBack },
+    { key: 's', description: 'Skip', action: session.skip, disabled: showResult || !question },
   ];
 
   useKeyboardShortcuts(shortcuts, { enabled: chapterView === 'practice' });
 
   const isLoading = questionsLoading || chaptersLoading;
 
-  if (isLoading) {
-    return (
-      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading chapters...</p>
-        </div>
-      </PageContainer>
-    );
-  }
+  if (isLoading) return <QuizShellPending message="Loading chapters..." />;
 
-  if (questionsError || !allQuestions) {
-    return (
-      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-destructive mb-4">Failed to load questions</p>
-          <Button onClick={onBack}>Go Back</Button>
-        </div>
-      </PageContainer>
-    );
-  }
+  if (questionsError || !allQuestions) return <QuizShellError onBack={onBack} />;
 
   // Show chapter selection list
   if (chapterView === 'list' || !selectedChapter) {
@@ -404,123 +217,90 @@ export function ChapterPractice({
   }
 
   // Show practice view
-  if (!question) {
-    return (
-      <PageContainer width="standard" mobileNavPadding className="flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </PageContainer>
-    );
-  }
+  if (!question) return <QuizShellPending />;
 
-  const isViewingHistory = historyIndex < questionHistory.length - 1;
+  const isViewingHistory = session.isViewingHistory;
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
-  const progress = Math.round(askedIds.length / currentQuestions.length * 100);
+  const progress = Math.round(session.askedIds.length / currentQuestions.length * 100);
 
   return (
-    <PageContainer width="standard" mobileNavPadding>
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={handleBackToQuestions} className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Question List
-          </Button>
-          <div className="flex items-center gap-2">
-            <KeyboardShortcutsHelp />
-            <div className="flex items-center gap-2 text-primary">
-              <Book className="w-4 h-4" />
-              <span className="font-mono font-bold">Ch. {selectedChapter?.chapterNumber}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Progress & Stats Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-card border border-border rounded-lg p-4"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-6">
-              <div className="text-center">
-                <p className="text-2xl font-mono font-bold text-success">{stats.correct}</p>
-                <p className="text-xs text-muted-foreground">Correct</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-mono font-bold text-destructive">{stats.total - stats.correct}</p>
-                <p className="text-xs text-muted-foreground">Incorrect</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-mono font-bold text-primary">{percentage}%</p>
-                <p className="text-xs text-muted-foreground">Score</p>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
-              <RotateCcw className="w-4 h-4" />
-              Reset
+    <QuizShell
+      header={
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <Button variant="ghost" onClick={handleBackToQuestions} className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Question List
             </Button>
-          </div>
-
-          {/* Chapter progress bar */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                className="h-full bg-primary rounded-full"
-              />
+            <div className="flex items-center gap-2">
+              <KeyboardShortcutsHelp />
+              <div className="flex items-center gap-2 text-primary">
+                <Book className="w-4 h-4" />
+                <span className="font-mono font-bold">Ch. {selectedChapter?.chapterNumber}</span>
+              </div>
             </div>
-            <span className="text-xs text-muted-foreground font-mono">
-              {askedIds.length}/{currentQuestions.length}
-            </span>
-            {askedIds.length === currentQuestions.length && (
-              <CheckCircle className="w-4 h-4 text-success" />
-            )}
           </div>
-        </motion.div>
-      </div>
 
-      {/* Question */}
+          {/* Progress & Stats Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card border border-border rounded-lg p-4"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <p className="text-2xl font-mono font-bold text-success">{stats.correct}</p>
+                  <p className="text-xs text-muted-foreground">Correct</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-mono font-bold text-destructive">{stats.total - stats.correct}</p>
+                  <p className="text-xs text-muted-foreground">Incorrect</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-mono font-bold text-primary">{percentage}%</p>
+                  <p className="text-xs text-muted-foreground">Score</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" onClick={session.reset} className="gap-2">
+                <RotateCcw className="w-4 h-4" />
+                Reset
+              </Button>
+            </div>
+
+            {/* Chapter progress bar */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  className="h-full bg-primary rounded-full"
+                />
+              </div>
+              <span className="text-xs text-muted-foreground font-mono">
+                {session.askedIds.length}/{currentQuestions.length}
+              </span>
+              {session.askedIds.length === currentQuestions.length && (
+                <CheckCircle className="w-4 h-4 text-success" />
+              )}
+            </div>
+          </motion.div>
+        </div>
+      }
+      actions={<QuizNavControls session={session} />}
+      footer={
+        session.history.length > 1 &&
+        `Question ${session.historyIndex + 1} of ${session.history.length}`
+      }
+    >
       <QuestionCard
         question={question}
         selectedAnswer={selectedAnswer}
-        onSelectAnswer={handleSelectAnswer}
+        onSelectAnswer={session.selectAnswer}
         showResult={showResult}
         enableGlossaryHighlight
         onTopicClick={navigateToTopic}
       />
-
-      {/* Actions */}
-      <div className="mt-8 flex justify-center gap-4">
-        {canGoBack && (
-          <Button variant="outline" onClick={handlePreviousQuestion} className="gap-2">
-            <ChevronLeft className="w-4 h-4" />
-            Previous
-          </Button>
-        )}
-        {!showResult ? (
-          <Button variant="outline" onClick={handleSkip} className="gap-2">
-            <SkipForward className="w-4 h-4" />
-            Skip Question
-          </Button>
-        ) : (
-          <Button onClick={handleNextQuestion} variant="default" size="lg" className="gap-2">
-            {isViewingHistory ? "Next" : "Next Question"}
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
-
-      {/* History indicator */}
-      {questionHistory.length > 1 && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center text-muted-foreground text-sm mt-4"
-        >
-          Question {historyIndex + 1} of {questionHistory.length}
-        </motion.p>
-      )}
-    </PageContainer>
+    </QuizShell>
   );
 }
