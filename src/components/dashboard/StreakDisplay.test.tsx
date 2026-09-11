@@ -212,6 +212,44 @@ describe('StreakDisplay', () => {
     });
   });
 
+  describe('Best Streak Badge', () => {
+    // isNewRecord (currentStreak > 0 && currentStreak === longestStreak) used to
+    // be covered only by a success-colour assertion. The badge is a trophy icon
+    // and a bare number, which told assistive tech nothing, so the state is now
+    // in its accessible name and the branch is asserted through that.
+    it('announces a new record when the current streak matches the best', () => {
+      mockUseDailyStreak.mockReturnValue({
+        currentStreak: 7,
+        longestStreak: 7,
+        todayQualifies: true,
+        questionsToday: STREAK_QUESTIONS_THRESHOLD,
+        questionsNeeded: 0,
+        streakAtRisk: false,
+        isLoading: false,
+        error: null,
+      });
+
+      render(<StreakDisplay />);
+      expect(screen.getByLabelText('New record: 7 day best streak')).toBeInTheDocument();
+    });
+
+    it('announces the best streak when the current one is shorter', () => {
+      mockUseDailyStreak.mockReturnValue({
+        currentStreak: 3,
+        longestStreak: 9,
+        todayQualifies: true,
+        questionsToday: STREAK_QUESTIONS_THRESHOLD,
+        questionsNeeded: 0,
+        streakAtRisk: false,
+        isLoading: false,
+        error: null,
+      });
+
+      render(<StreakDisplay />);
+      expect(screen.getByLabelText('Best streak: 9 days')).toBeInTheDocument();
+    });
+  });
+
   describe('Singular vs Plural', () => {
     it('shows "day" for streak of 1', () => {
       mockUseDailyStreak.mockReturnValue({

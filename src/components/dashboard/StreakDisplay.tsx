@@ -128,6 +128,11 @@ export function StreakDisplay({ className, variant = 'full', onAction }: StreakD
         {/* Best streak badge */}
         {longestStreak > 0 && (
           <div
+            aria-label={
+              isNewRecord
+                ? `New record: ${longestStreak} day best streak`
+                : `Best streak: ${longestStreak} days`
+            }
             className={cn(
               'flex items-center gap-1 px-2 py-1 rounded-full text-xs',
               isNewRecord

@@ -90,9 +90,7 @@ export function Glossary() {
   if (isLoading) {
     return (
       <PageContainer width="wide" className="flex items-center justify-center">
-        <div role="status" aria-label="Loading glossary">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" role="status" aria-label="Loading glossary" />
       </PageContainer>
     );
   }
