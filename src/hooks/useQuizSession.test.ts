@@ -234,6 +234,49 @@ describe("useQuizSession", () => {
     });
   });
 
+  describe("coverage tracking", () => {
+    it("counts each question served exactly once", () => {
+      const questions = pool(3);
+      const { result } = renderHook(() => useQuizSession({ questions }));
+      act(() => result.current.start(0));
+      act(() => result.current.next());
+
+      // Drives the "seen N of M" readout, so a duplicated id reports more
+      // coverage than the session actually has.
+      expect(result.current.askedIds).toEqual(["id-1", "id-2"]);
+    });
+
+    it("never reports more questions seen than the pool holds", () => {
+      const questions = pool(3);
+      const { result } = renderHook(() => useQuizSession({ questions }));
+      act(() => result.current.start(0));
+
+      // Walk forward, step back, then draw again — the path that used to
+      // re-serve a question and push the count past the pool size.
+      act(() => result.current.skip());
+      act(() => result.current.skip());
+      act(() => result.current.previous());
+      act(() => result.current.previous());
+      act(() => result.current.skip());
+
+      expect(result.current.askedIds.length).toBeLessThanOrEqual(questions.length);
+      expect(new Set(result.current.askedIds).size).toBe(result.current.askedIds.length);
+    });
+
+    it("reaches exactly the pool size once every question has been served", () => {
+      const questions = pool(3);
+      const { result } = renderHook(() => useQuizSession({ questions }));
+      act(() => result.current.start(0));
+      act(() => result.current.next());
+      act(() => result.current.next());
+
+      // The chapter and subelement modes test askedIds.length against the pool
+      // size to show an "all seen" tick, so it has to land on equality rather
+      // than step over it.
+      expect(result.current.askedIds.length).toBe(questions.length);
+    });
+  });
+
   it("caps history so a long session cannot grow without bound", () => {
     // The regression this guards: ChapterPractice trimmed the stack at 50,
     // RandomPractice and SubelementPractice never did, so a long drill held
@@ -268,7 +311,7 @@ describe("useQuizSession", () => {
       expect(result.current.canGoBack).toBe(false);
     });
 
-    it("drops the session on clear", async () => {
+    it("keeps the score and coverage when leaving the question view", async () => {
       const questions = pool(3);
       const { result } = renderHook(() => useQuizSession({ questions }));
       act(() => result.current.start(0));
@@ -276,11 +319,15 @@ describe("useQuizSession", () => {
         await result.current.selectAnswer("A");
       });
 
-      act(() => result.current.clear());
+      // Chapter and subelement practice step out to their question list and
+      // back. That is leaving the current question, not abandoning the run —
+      // the score has to survive the trip.
+      act(() => result.current.clearHistory());
 
       expect(result.current.question).toBeNull();
       expect(result.current.history).toEqual([]);
-      expect(result.current.stats).toEqual({ correct: 0, total: 0 });
+      expect(result.current.stats).toEqual({ correct: 1, total: 1 });
+      expect(result.current.askedIds).toEqual(["id-1"]);
     });
 
     it("abandons the session when the selection changes", async () => {

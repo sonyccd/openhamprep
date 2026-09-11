@@ -312,6 +312,49 @@ describe('SubelementPractice Stats', () => {
       expect(statsContainer).toBeInTheDocument();
     });
   });
+
+  it('keeps the score when stepping out to the question list and resuming', async () => {
+    // Deterministic draw: Math.random() === 0 always takes the first available
+    // question, so the answer below is the correct one for a known question.
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const queryClient = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <SubelementPractice onBack={vi.fn()} testType="technician" />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+
+    const t1Button = screen.getByText("Commission's Rules").closest('button');
+    if (t1Button) fireEvent.click(t1Button);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /practice all questions/i })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: /practice all questions/i }));
+
+    // Answer T1A01 correctly, taking the score to 1 correct.
+    await waitFor(() => expect(screen.getByText('A1')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('A1').closest('button')!);
+    await waitFor(() =>
+      expect(screen.getByText('1', { selector: '.text-success' })).toBeInTheDocument()
+    );
+
+    // Out to the question list and straight back in.
+    fireEvent.click(screen.getByRole('button', { name: /question list/i }));
+    await waitFor(() => expect(screen.getByTestId('question-list-view')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /practice all questions/i }));
+
+    // Glancing at the list is not abandoning the run, so the score stands.
+    // This regressed when the back handler dropped the whole session instead of
+    // just the question history.
+    await waitFor(() =>
+      expect(screen.getByText('1', { selector: '.text-success' })).toBeInTheDocument()
+    );
+
+    random.mockRestore();
+  });
 });
 
 describe('SubelementPractice Question Wraparound', () => {

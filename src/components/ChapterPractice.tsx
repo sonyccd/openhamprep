@@ -88,8 +88,9 @@ export function ChapterPractice({
 
   const handleBackToQuestions = () => {
     setChapterView('questions');
-    // The chapter is unchanged, so resetKey does not fire — drop the session here.
-    session.clear();
+    // Leaves the question, not the run: resetKey does not fire here because the
+    // chapter is unchanged, and the score carries over to when practice resumes.
+    session.clearHistory();
   };
 
   const handleBackToList = () => {
@@ -219,7 +220,6 @@ export function ChapterPractice({
   // Show practice view
   if (!question) return <QuizShellPending />;
 
-  const isViewingHistory = session.isViewingHistory;
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
   const progress = Math.round(session.askedIds.length / currentQuestions.length * 100);
 
