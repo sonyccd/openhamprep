@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+# Checkout is all this needs; the run posts nothing back to the PR.
+permissions:
+  contents: read
+
 jobs:
   # Guest routes only. The admin projects need local Supabase for auth and seed
   # data, which is not worth standing up per-PR — run those locally with
