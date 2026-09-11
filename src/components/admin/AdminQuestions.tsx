@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CircularProgress from '@mui/material/CircularProgress';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
 import { BulkImportQuestions } from './BulkImportQuestions';
 import { BulkExport, escapeCSVField } from './BulkExport';
 import { useExplanationFeedbackStats } from '@/hooks/useExplanationFeedback';
@@ -251,13 +255,13 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
         onRetrySync={editingQuestion ? () => retrySync(editingQuestion) : undefined}
       />
 
-      <Card className="flex-1 flex flex-col min-h-0">
-        <CardHeader className="shrink-0">
-          <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
+      <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <Box sx={{ flexShrink: 0, p: 2, pb: 0 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+            <Typography variant="h6" component="h2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {testType.charAt(0).toUpperCase() + testType.slice(1)} Questions (
               {questions.length})
-            </span>
+            </Typography>
             <div className="flex items-center gap-2">
               <BulkExport
                 data={questions}
@@ -318,7 +322,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
                 onAdd={handleAddQuestion}
               />
             </div>
-          </CardTitle>
+          </Stack>
           <QuestionFiltersBar
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
@@ -326,16 +330,16 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
             onNegativeFeedbackChange={setShowNegativeFeedbackOnly}
             filteredCount={filteredQuestions.length}
           />
-        </CardHeader>
-        <CardContent className="flex-1 min-h-0 overflow-hidden p-0">
+        </Box>
+        <CardContent sx={{ flex: 1, minHeight: 0, overflow: 'hidden', p: 0 }}>
           {isLoading ? (
-            <div className="flex justify-center py-8" role="status" aria-label="Loading questions">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            </div>
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress size={24} role="status" aria-label="Loading questions" />
+            </Box>
           ) : filteredQuestions.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
+            <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
               {searchTerm ? 'No matching questions found' : 'No questions found'}
-            </p>
+            </Typography>
           ) : (
             <QuestionReviewTable
               questions={filteredQuestions}

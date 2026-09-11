@@ -450,7 +450,11 @@ describe('AdminQuestions', () => {
       fireEvent.click(screen.getByText('Add Question'));
 
       await waitFor(() => {
-        expect(screen.getByText('Question ID (FCC assigned, e.g., T1A01)')).toBeInTheDocument();
+        // getByLabelText, not getByText: MUI's outlined TextField renders the
+        // label twice, once visibly and once as the fieldset legend.
+        expect(
+          screen.getByLabelText('Question ID (FCC assigned, e.g., T1A01)')
+        ).toBeInTheDocument();
         expect(screen.getByText(/official FCC question ID/)).toBeInTheDocument();
       });
     });

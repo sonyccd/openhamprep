@@ -1,24 +1,17 @@
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Separator } from '@/components/ui/separator';
-import { Plus, Loader2, Link as LinkIcon, Image } from 'lucide-react';
-import { FigureUpload } from '../FigureUpload';
+import { Plus, Loader2, Link as LinkIcon, Image } from "lucide-react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import Divider from "@mui/material/Divider";
+import MenuItem from "@mui/material/MenuItem";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { FigureUpload } from "../FigureUpload";
+
+const OPTION_LETTERS = ["A", "B", "C", "D"] as const;
 
 interface QuestionAddDialogProps {
   isOpen: boolean;
@@ -58,128 +51,119 @@ export function QuestionAddDialog({
   onAdd,
 }: QuestionAddDialogProps) {
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Question
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Add New Question</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div>
-            <Label>Question ID (FCC assigned, e.g., T1A01)</Label>
-            <Input
+    <>
+      {/* MUI has no DialogTrigger: the trigger is an ordinary button that flips
+          the same state the dialog already reads. */}
+      <Button variant="contained" startIcon={<Plus className="w-4 h-4" />} onClick={() => onOpenChange(true)}>
+        Add Question
+      </Button>
+
+      <Dialog open={isOpen} onClose={() => onOpenChange(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Add New Question</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={3} sx={{ py: 1 }}>
+            <TextField
+              label="Question ID (FCC assigned, e.g., T1A01)"
               placeholder="e.g., T1A01"
               value={newId}
               onChange={(e) => onIdChange(e.target.value)}
+              helperText="This is the official FCC question ID and cannot be changed after creation."
+              fullWidth
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              This is the official FCC question ID and cannot be changed after creation.
-            </p>
-          </div>
 
-          <div>
-            <Label>Question Text</Label>
-            <Textarea
+            <TextField
+              label="Question Text"
               placeholder="Enter the question..."
               value={newQuestion}
               onChange={(e) => onQuestionChange(e.target.value)}
+              multiline
               rows={3}
+              fullWidth
             />
-          </div>
 
-          <div className="space-y-3">
-            <Label>Options</Label>
-            {['A', 'B', 'C', 'D'].map((letter, index) => (
-              <div key={letter} className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-sm font-mono">
-                  {letter}
-                </span>
-                <Input
+            <Stack spacing={1.5}>
+              <Typography variant="subtitle2">Options</Typography>
+              {OPTION_LETTERS.map((letter, index) => (
+                <TextField
+                  key={letter}
+                  label={`Option ${letter}`}
                   placeholder={`Option ${letter}`}
                   value={newOptions[index]}
                   onChange={(e) => onOptionChange(index, e.target.value)}
+                  fullWidth
                 />
-              </div>
-            ))}
-          </div>
+              ))}
+            </Stack>
 
-          <div>
-            <Label>Correct Answer</Label>
-            <Select value={newCorrectAnswer} onValueChange={onCorrectAnswerChange}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">A</SelectItem>
-                <SelectItem value="1">B</SelectItem>
-                <SelectItem value="2">C</SelectItem>
-                <SelectItem value="3">D</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <TextField
+              select
+              label="Correct Answer"
+              value={newCorrectAnswer}
+              onChange={(e) => onCorrectAnswerChange(e.target.value)}
+              fullWidth
+            >
+              {OPTION_LETTERS.map((letter, index) => (
+                <MenuItem key={letter} value={String(index)}>
+                  {letter}
+                </MenuItem>
+              ))}
+            </TextField>
 
-          {/* Explanation Section */}
-          <div>
-            <Label>Explanation (shown after answering)</Label>
-            <Textarea
+            <TextField
+              label="Explanation (shown after answering)"
               placeholder="Explain why this is the correct answer..."
               value={newExplanation}
               onChange={(e) => onExplanationChange(e.target.value)}
+              helperText="This explanation will be shown to users after they answer the question."
+              multiline
               rows={3}
-              className="mt-1"
+              fullWidth
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              This explanation will be shown to users after they answer the question.
-            </p>
-          </div>
 
-          <Separator />
+            <Divider />
 
-          {/* Figure Section */}
-          <div className="space-y-3">
-            <Label className="flex items-center gap-2">
-              <Image className="w-4 h-4" />
-              Question Figure (Optional)
-            </Label>
-            <FigureUpload
-              questionId={newId || 'new-question'}
-              currentFigureUrl={newFigureUrl}
-              onUpload={(url) => onFigureUrlChange(url)}
-              onRemove={() => onFigureUrlChange(null)}
-            />
-          </div>
+            <Stack spacing={1.5}>
+              <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Image className="w-4 h-4" aria-hidden="true" />
+                Question Figure (Optional)
+              </Typography>
+              <FigureUpload
+                questionId={newId || "new-question"}
+                currentFigureUrl={newFigureUrl}
+                onUpload={(url) => onFigureUrlChange(url)}
+                onRemove={() => onFigureUrlChange(null)}
+              />
+            </Stack>
 
-          <Separator />
+            <Divider />
 
-          {/* Learning Resources Info */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <LinkIcon className="w-4 h-4" />
-              Learning Resources
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              Links are automatically extracted from the explanation. Use markdown syntax:{' '}
-              <code className="px-1 py-0.5 rounded bg-muted text-xs">
-                [Link Text](https://...)
-              </code>
-            </p>
-          </div>
+            <Stack spacing={1}>
+              <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <LinkIcon className="w-4 h-4" aria-hidden="true" />
+                Learning Resources
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Links are automatically extracted from the explanation. Use markdown syntax:{" "}
+                <Box component="code" sx={{ px: 0.5, py: 0.25, borderRadius: 1, bgcolor: "action.hover", fontSize: "0.75rem" }}>
+                  [Link Text](https://...)
+                </Box>
+              </Typography>
+            </Stack>
 
-          <Button onClick={onAdd} disabled={isPending} className="w-full">
-            {isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Plus className="w-4 h-4 mr-2" />
-            )}
-            Add Question
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+            <Button
+              variant="contained"
+              onClick={onAdd}
+              disabled={isPending}
+              fullWidth
+              startIcon={
+                isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />
+              }
+            >
+              Add Question
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
