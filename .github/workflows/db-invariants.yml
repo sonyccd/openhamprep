@@ -1,0 +1,42 @@
+name: Database invariants
+
+on:
+  pull_request:
+    paths:
+      - "supabase/**"
+      - "scripts/check-database-invariants.mjs"
+      - ".github/workflows/db-invariants.yml"
+  push:
+    branches: [main]
+
+# Only needs the checkout; it reports nothing back to the PR.
+permissions:
+  contents: read
+
+jobs:
+  # Guards the two things RLS silently depends on: that it is actually enabled,
+  # and that the roles the app connects as can still reach the tables. A missing
+  # grant is checked before RLS and 403s every signed-in request (#277).
+  invariants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Start local Supabase
+        run: npx supabase start
+
+      - name: Check database invariants
+        run: npm run db:check
+
+      - name: Stop local Supabase
+        if: always()
+        run: npx supabase stop
