@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
@@ -6,7 +6,7 @@ import { useProgress } from "@/hooks/useProgress";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
-import { useQuestionTimer } from "@/hooks/useQuestionTimer";
+import { useQuizSession } from "@/hooks/useQuizSession";
 import { QuestionListView } from "@/components/QuestionListView";
 import { SkipForward, RotateCcw, Loader2, ChevronRight, CheckCircle, ArrowLeft, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
@@ -14,12 +14,6 @@ import { cn } from "@/lib/utils";
 import { getSubelementName } from "@/lib/subelementNames";
 import { TestType } from "@/types/navigation";
 import { PageContainer } from "@/components/ui/page-container";
-
-interface HistoryEntry {
-  question: Question;
-  selectedAnswer: 'A' | 'B' | 'C' | 'D' | null;
-  showResult: boolean;
-}
 
 interface SubelementPracticeProps {
   onBack: () => void;
@@ -65,33 +59,13 @@ export function SubelementPractice({
 
   const [selectedSubelement, setSelectedSubelement] = useState<string | null>(null);
   const [topicView, setTopicView] = useState<TopicView>('list');
-  const [stats, setStats] = useState({
-    correct: 0,
-    total: 0
-  });
-  const [askedIds, setAskedIds] = useState<string[]>([]);
 
-  // Session history for back navigation
-  const [questionHistory, setQuestionHistory] = useState<HistoryEntry[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
 
-  // Current question from history
-  const currentEntry = historyIndex >= 0 ? questionHistory[historyIndex] : null;
-  const question = currentEntry?.question || null;
-  const selectedAnswer = currentEntry?.selectedAnswer || null;
-  const showResult = currentEntry?.showResult || false;
-
-  // Timer for tracking time spent on current question
-  const { getElapsedMs } = useQuestionTimer(question?.id);
 
   // Reset state when test type changes
   useEffect(() => {
     setSelectedSubelement(null);
     setTopicView('list');
-    setQuestionHistory([]);
-    setHistoryIndex(-1);
-    setStats({ correct: 0, total: 0 });
-    setAskedIds([]);
   }, [testType]);
 
   // Consume pre-selected subelement from navigation context
@@ -121,172 +95,47 @@ export function SubelementPractice({
     return selectedSubelement ? questionsBySubelement[selectedSubelement] || [] : [];
   }, [selectedSubelement, questionsBySubelement]);
 
-  const getRandomQuestion = useCallback((excludeIds: string[] = []): { question: Question; shouldResetAskedIds: boolean } | null => {
-    if (currentQuestions.length === 0) return null;
-    const available = currentQuestions.filter(q => !excludeIds.includes(q.id));
-    if (available.length === 0) {
-      // All questions have been asked, wrap around
-      return {
-        question: currentQuestions[Math.floor(Math.random() * currentQuestions.length)],
-        shouldResetAskedIds: true
-      };
-    }
-    return {
-      question: available[Math.floor(Math.random() * available.length)],
-      shouldResetAskedIds: false
-    };
-  }, [currentQuestions]);
+  const session = useQuizSession({
+    questions: currentQuestions,
+    // Picking a different subelement — including via the test-type reset above,
+    // which clears the selection — abandons the session and its score.
+    resetKey: selectedSubelement,
+    onAttempt: (question, answer, _isCorrect, timeElapsedMs) =>
+      saveRandomAttempt(question, answer, 'subelement_practice', timeElapsedMs),
+  });
 
-  // Update current entry in history
-  const updateCurrentEntry = (updates: Partial<HistoryEntry>) => {
-    setQuestionHistory(prev => {
-      const newHistory = [...prev];
-      if (historyIndex >= 0 && historyIndex < newHistory.length) {
-        newHistory[historyIndex] = { ...newHistory[historyIndex], ...updates };
-      }
-      return newHistory;
-    });
-  };
+  const { question, selectedAnswer, showResult, stats, canGoBack } = session;
 
   const handleSelectSubelement = (sub: string) => {
     setSelectedSubelement(sub);
     setTopicView('questions');
-    setQuestionHistory([]);
-    setHistoryIndex(-1);
-    setStats({
-      correct: 0,
-      total: 0
-    });
-    setAskedIds([]);
   };
 
   const handleStartPractice = (startIndex?: number) => {
     setTopicView('practice');
-
-    if (startIndex !== undefined && currentQuestions[startIndex]) {
-      // Start from a specific question
-      setQuestionHistory([{ question: currentQuestions[startIndex], selectedAnswer: null, showResult: false }]);
-      setHistoryIndex(0);
-      setAskedIds([currentQuestions[startIndex].id]);
-    } else {
-      // Random start
-      const result = getRandomQuestion();
-      if (result) {
-        setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
-        setHistoryIndex(0);
-        setAskedIds([result.question.id]);
-      }
-    }
+    session.start(startIndex);
   };
 
   const handleBackToQuestions = () => {
     setTopicView('questions');
-    setQuestionHistory([]);
-    setHistoryIndex(-1);
+    // The subelement is unchanged, so resetKey does not fire — drop it here.
+    session.clear();
   };
 
   const handleBackToList = () => {
     setSelectedSubelement(null);
     setTopicView('list');
-    setQuestionHistory([]);
-    setHistoryIndex(-1);
-    setStats({
-      correct: 0,
-      total: 0
-    });
-    setAskedIds([]);
-  };
-
-  // Current question from history
-  const canGoBack = historyIndex > 0;
-
-  const handleSelectAnswer = async (answer: 'A' | 'B' | 'C' | 'D') => {
-    if (showResult || !question) return;
-
-    // Capture elapsed time before any state updates
-    const timeElapsedMs = getElapsedMs();
-
-    updateCurrentEntry({ selectedAnswer: answer, showResult: true });
-
-    const isCorrect = answer === question.correctAnswer;
-    setStats(prev => ({
-      correct: prev.correct + (isCorrect ? 1 : 0),
-      total: prev.total + 1
-    }));
-    await saveRandomAttempt(question, answer, 'subelement_practice', timeElapsedMs);
-  };
-
-  const handleNextQuestion = () => {
-    if (!question) return;
-    // If we're not at the end of history, just move forward
-    if (historyIndex < questionHistory.length - 1) {
-      setHistoryIndex(historyIndex + 1);
-      return;
-    }
-
-    // Otherwise, get a new question
-    const newAskedIds = [...askedIds, question.id];
-    const result = getRandomQuestion(newAskedIds);
-    if (result) {
-      // If we've gone through all questions, reset the asked IDs to start fresh
-      if (result.shouldResetAskedIds) {
-        setAskedIds([result.question.id]);
-        setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
-        setHistoryIndex(0);
-      } else {
-        setAskedIds(newAskedIds);
-        setQuestionHistory(prev => [...prev, { question: result.question, selectedAnswer: null, showResult: false }]);
-        setHistoryIndex(prev => prev + 1);
-      }
-    }
-  };
-
-  const handleSkip = () => {
-    if (!question) return;
-    const newAskedIds = [...askedIds, question.id];
-    const result = getRandomQuestion(newAskedIds);
-    if (result) {
-      // If we've gone through all questions, reset the asked IDs to start fresh
-      if (result.shouldResetAskedIds) {
-        setAskedIds([result.question.id]);
-        setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
-        setHistoryIndex(0);
-      } else {
-        setAskedIds(newAskedIds);
-        setQuestionHistory(prev => [...prev, { question: result.question, selectedAnswer: null, showResult: false }]);
-        setHistoryIndex(prev => prev + 1);
-      }
-    }
-  };
-
-  const handlePreviousQuestion = () => {
-    if (historyIndex > 0) {
-      setHistoryIndex(historyIndex - 1);
-    }
-  };
-
-  const handleReset = () => {
-    setAskedIds([]);
-    const result = getRandomQuestion();
-    if (result) {
-      setQuestionHistory([{ question: result.question, selectedAnswer: null, showResult: false }]);
-      setHistoryIndex(0);
-    }
-    setStats({
-      correct: 0,
-      total: 0
-    });
   };
 
   // Keyboard shortcuts - must be called unconditionally before any returns
   const shortcuts: KeyboardShortcut[] = [
-    { key: 'a', description: 'Select A', action: () => handleSelectAnswer('A'), disabled: showResult || !question },
-    { key: 'b', description: 'Select B', action: () => handleSelectAnswer('B'), disabled: showResult || !question },
-    { key: 'c', description: 'Select C', action: () => handleSelectAnswer('C'), disabled: showResult || !question },
-    { key: 'd', description: 'Select D', action: () => handleSelectAnswer('D'), disabled: showResult || !question },
-    { key: 'ArrowRight', description: 'Next', action: handleNextQuestion, disabled: !showResult },
-    { key: 'ArrowLeft', description: 'Previous', action: handlePreviousQuestion, disabled: !canGoBack },
-    { key: 's', description: 'Skip', action: handleSkip, disabled: showResult || !question },
+    { key: 'a', description: 'Select A', action: () => session.selectAnswer('A'), disabled: showResult || !question },
+    { key: 'b', description: 'Select B', action: () => session.selectAnswer('B'), disabled: showResult || !question },
+    { key: 'c', description: 'Select C', action: () => session.selectAnswer('C'), disabled: showResult || !question },
+    { key: 'd', description: 'Select D', action: () => session.selectAnswer('D'), disabled: showResult || !question },
+    { key: 'ArrowRight', description: 'Next', action: session.next, disabled: !showResult },
+    { key: 'ArrowLeft', description: 'Previous', action: session.previous, disabled: !canGoBack },
+    { key: 's', description: 'Skip', action: session.skip, disabled: showResult || !question },
   ];
 
   useKeyboardShortcuts(shortcuts, { enabled: topicView === 'practice' });
@@ -390,9 +239,9 @@ export function SubelementPractice({
     );
   }
 
-  const isViewingHistory = historyIndex < questionHistory.length - 1;
+  const isViewingHistory = session.isViewingHistory;
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
-  const progress = Math.round(askedIds.length / currentQuestions.length * 100);
+  const progress = Math.round(session.askedIds.length / currentQuestions.length * 100);
 
   return (
     <PageContainer width="standard" mobileNavPadding>
@@ -439,16 +288,16 @@ export function SubelementPractice({
               <span className="text-primary font-medium">{percentage}%</span>
               <span className="text-muted-foreground/30 mx-1">|</span>
               <span className="text-muted-foreground">
-                {askedIds.length}/{currentQuestions.length}
+                {session.askedIds.length}/{currentQuestions.length}
               </span>
-              {askedIds.length === currentQuestions.length && (
+              {session.askedIds.length === currentQuestions.length && (
                 <CheckCircle className="w-3.5 h-3.5 text-success" />
               )}
             </div>
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleReset}
+              onClick={session.reset}
               className="text-muted-foreground hover:text-foreground"
             >
               <RotateCcw className="w-4 h-4" />
@@ -459,23 +308,23 @@ export function SubelementPractice({
       </div>
 
       {/* Question */}
-      <QuestionCard question={question} selectedAnswer={selectedAnswer} onSelectAnswer={handleSelectAnswer} showResult={showResult} enableGlossaryHighlight onTopicClick={navigateToTopic} />
+      <QuestionCard question={question} selectedAnswer={selectedAnswer} onSelectAnswer={session.selectAnswer} showResult={showResult} enableGlossaryHighlight onTopicClick={navigateToTopic} />
 
       {/* Actions */}
       <div className="mt-10 flex justify-center gap-4">
         {canGoBack && (
-          <Button variant="outline" onClick={handlePreviousQuestion} className="gap-2">
+          <Button variant="outline" onClick={session.previous} className="gap-2">
             <ChevronLeft className="w-4 h-4" />
             Previous
           </Button>
         )}
         {!showResult ? (
-          <Button variant="outline" onClick={handleSkip} className="gap-2">
+          <Button variant="outline" onClick={session.skip} className="gap-2">
             <SkipForward className="w-4 h-4" />
             Skip Question
           </Button>
         ) : (
-          <Button onClick={handleNextQuestion} variant="default" size="lg" className="gap-2">
+          <Button onClick={session.next} variant="default" size="lg" className="gap-2">
             {isViewingHistory ? "Next" : "Next Question"}
             <ChevronRight className="w-4 h-4" />
           </Button>
@@ -483,13 +332,13 @@ export function SubelementPractice({
       </div>
 
       {/* History indicator */}
-      {questionHistory.length > 1 && (
+      {session.history.length > 1 && (
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="text-center text-muted-foreground text-sm mt-4"
         >
-          Question {historyIndex + 1} of {questionHistory.length}
+          Question {session.historyIndex + 1} of {session.history.length}
         </motion.p>
       )}
     </PageContainer>
