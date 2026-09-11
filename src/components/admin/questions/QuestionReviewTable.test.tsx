@@ -33,6 +33,18 @@ describe('QuestionReviewTable', () => {
     expect(screen.getByText('Explanation')).toBeInTheDocument();
   });
 
+  // rowHeader: true is a real GridColDef property in v9 (gridColDef.d.ts:51),
+  // not a silently-ignored key. This pins the behaviour it buys: the ID cell is
+  // exposed as the row's header, so assistive tech names each row instead of
+  // reading a bare list of cells.
+  it('exposes the ID cell as the row header', () => {
+    render(<QuestionReviewTable questions={[makeQuestion()]} onEdit={vi.fn()} />);
+
+    const rowHeaders = screen.getAllByRole('rowheader');
+    expect(rowHeaders).toHaveLength(1);
+    expect(rowHeaders[0]).toHaveTextContent('T1A01');
+  });
+
   it('renders a row for each question', () => {
     const questions = [
       makeQuestion({ id: 'uuid-1', display_name: 'T1A01' }),

@@ -257,7 +257,11 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
 
       <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <Box sx={{ flexShrink: 0, p: 2, pb: 0 }}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+          >
             <Typography variant="h6" component="h2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {testType.charAt(0).toUpperCase() + testType.slice(1)} Questions (
               {questions.length})

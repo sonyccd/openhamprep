@@ -42,7 +42,7 @@ export function QuestionFiltersBar({
         }}
       />
 
-      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
         <FormControlLabel
           control={
             <Checkbox

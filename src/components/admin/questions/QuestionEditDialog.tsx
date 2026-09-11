@@ -195,9 +195,8 @@ export function QuestionEditDialog({
                   <Stack
                     key={index}
                     direction="row"
-                    alignItems="center"
                     spacing={1}
-                    sx={{ p: 1, borderRadius: 1, border: 1, borderColor: "divider" }}
+                    sx={{ alignItems: "center", p: 1, borderRadius: 1, border: 1, borderColor: "divider" }}
                   >
                     <Chip
                       label={link.type}
@@ -255,7 +254,7 @@ export function QuestionEditDialog({
               </Typography>
             ) : null}
             {question?.forum_url && onRetrySync && (
-              <Stack direction="row" alignItems="center" spacing={1} sx={{ pt: 0.5 }}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center", pt: 0.5 }}>
                 <Typography variant="caption" color="text.secondary">
                   Sync:{" "}
                   <Box
@@ -296,7 +295,7 @@ export function QuestionEditDialog({
                 manage topic-question links.
               </Typography>
               {linkedTopicNames.length > 0 ? (
-                <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 1 }}>
+                <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1, mt: 1 }}>
                   {linkedTopicNames.map((name, index) => (
                     <Chip
                       key={index}
