@@ -40,11 +40,46 @@ Object.defineProperty(window, 'matchMedia', {
 // Mock ResizeObserver
 // Must be a real class (not an arrow-function mock) so `new ResizeObserver()`
 // works - consumers like cmdk/Radix construct it directly.
+//
+// It also reports a non-zero size. jsdom gives every element a 0x0 box, and
+// MUI X DataGrid measures its viewport through ResizeObserver before deciding
+// how many rows to virtualise - at 0x0 it renders none, so every DataGrid test
+// would see an empty table.
+//
+// IMPORTANT, because this is global and it changed behaviour: observe() used to
+// be an inert vi.fn(). It now *synchronously invokes the callback* with a fixed
+// 1024x768 rect, for every observer in every test file - not just DataGrid's.
+// Any component that reacts to a resize will therefore see one fire during
+// mount where previously nothing happened. Nothing in the suite asserts on that
+// today, but if you are chasing a mysterious extra render or a state update on
+// mount in an unrelated component, this mock is a plausible culprit.
+const MOCK_VIEWPORT = { width: 1024, height: 768 };
+
 global.ResizeObserver = class ResizeObserverMock {
-  observe = vi.fn();
+  constructor(private readonly callback: ResizeObserverCallback) {}
+
+  observe = (target: Element) => {
+    const contentRect = {
+      ...MOCK_VIEWPORT,
+      top: 0,
+      left: 0,
+      bottom: MOCK_VIEWPORT.height,
+      right: MOCK_VIEWPORT.width,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    } as DOMRectReadOnly;
+
+    this.callback(
+      [{ target, contentRect } as ResizeObserverEntry],
+      this as unknown as ResizeObserver,
+    );
+  };
+
   unobserve = vi.fn();
   disconnect = vi.fn();
-};
+} as unknown as typeof ResizeObserver;
+
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserverMock {

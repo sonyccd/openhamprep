@@ -222,10 +222,10 @@ describe('AdminQuestions', () => {
       renderComponent();
 
       await waitFor(() => {
-        // T1A01 correct_answer=0 → "A. A radio hobby"
-        expect(screen.getByText('A radio hobby')).toBeInTheDocument();
-        // T1A02 correct_answer=1 → "B. Some VHF/UHF"
-        expect(screen.getByText('Some VHF/UHF')).toBeInTheDocument();
+        // The grid derives the answer cell in one valueGetter so that sorting
+        // and filtering operate on the text shown.
+        expect(screen.getByText('A. A radio hobby')).toBeInTheDocument();
+        expect(screen.getByText('B. Some VHF/UHF')).toBeInTheDocument();
       });
     });
 
@@ -450,7 +450,11 @@ describe('AdminQuestions', () => {
       fireEvent.click(screen.getByText('Add Question'));
 
       await waitFor(() => {
-        expect(screen.getByText('Question ID (FCC assigned, e.g., T1A01)')).toBeInTheDocument();
+        // getByLabelText, not getByText: MUI's outlined TextField renders the
+        // label twice, once visibly and once as the fieldset legend.
+        expect(
+          screen.getByLabelText('Question ID (FCC assigned, e.g., T1A01)')
+        ).toBeInTheDocument();
         expect(screen.getByText(/official FCC question ID/)).toBeInTheDocument();
       });
     });
@@ -561,8 +565,9 @@ describe('AdminQuestions', () => {
       renderComponent({ testType: 'technician', highlightQuestionId: 'T1A01' });
 
       await waitFor(() => {
+        // A deep link selects the row, so the grid exposes aria-selected.
         const highlighted = screen.getAllByRole('row').filter(
-          (row) => row.getAttribute('aria-current') === 'true'
+          (row) => row.getAttribute('aria-selected') === 'true'
         );
         expect(highlighted).toHaveLength(1);
         expect(highlighted[0]).toHaveTextContent('T1A01');

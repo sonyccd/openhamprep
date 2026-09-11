@@ -1,33 +1,3 @@
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import {
   Loader2,
   Trash2,
@@ -37,13 +7,34 @@ import {
   BookOpen,
   Book,
   RefreshCw,
-} from 'lucide-react';
-import { FigureUpload } from '../FigureUpload';
-import { EditHistoryViewer } from '../EditHistoryViewer';
-import { getSafeUrl } from '@/lib/utils';
-import { LINK_TYPE_CONFIG, type LinkType } from '@/lib/resourceTypes';
-import type { Question } from './types';
-import type { ArrlChapter } from '@/types/chapters';
+} from "lucide-react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import Divider from "@mui/material/Divider";
+import Link from "@mui/material/Link";
+import MenuItem from "@mui/material/MenuItem";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { FigureUpload } from "../FigureUpload";
+import { EditHistoryViewer } from "../EditHistoryViewer";
+import { getSafeUrl } from "@/lib/utils";
+import { LINK_TYPE_CONFIG, type LinkType } from "@/lib/resourceTypes";
+import type { Question } from "./types";
+import type { ArrlChapter } from "@/types/chapters";
+
+const OPTION_LETTERS = ["A", "B", "C", "D"] as const;
+
+const SYNC_COLOR = {
+  error: "error.main",
+  synced: "success.main",
+} as const;
 
 interface QuestionEditDialogProps {
   question: Question | null;
@@ -105,327 +96,311 @@ export function QuestionEditDialog({
   onRetrySync,
 }: QuestionEditDialogProps) {
   const safeForumUrl = getSafeUrl(editForumUrl);
+  const syncStatus = question?.discourse_sync_status;
 
   return (
-    <Dialog open={!!question} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            Edit Question: {question?.display_name}
-            {highlightQuestionId === question?.display_name && (
-              <Badge variant="secondary" className="bg-amber-500/20 text-amber-500">
-                From Stats
-              </Badge>
-            )}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div>
-            <Label>Question Text</Label>
-            <Textarea
-              placeholder="Enter the question..."
-              value={editQuestion}
-              onChange={(e) => onQuestionChange(e.target.value)}
-              rows={3}
-            />
-          </div>
+    <Dialog open={!!question} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        Edit Question: {question?.display_name}
+        {highlightQuestionId === question?.display_name && (
+          <Chip label="From Stats" size="small" color="warning" variant="outlined" />
+        )}
+      </DialogTitle>
 
-          <div className="space-y-3">
-            <Label>Options</Label>
-            {['A', 'B', 'C', 'D'].map((letter, index) => (
-              <div key={letter} className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-sm font-mono">
-                  {letter}
-                </span>
-                <Input
-                  placeholder={`Option ${letter}`}
-                  value={editOptions[index]}
-                  onChange={(e) => onOptionChange(index, e.target.value)}
-                />
-              </div>
+      <DialogContent dividers>
+        <Stack spacing={3} sx={{ py: 1 }}>
+          <TextField
+            label="Question Text"
+            placeholder="Enter the question..."
+            value={editQuestion}
+            onChange={(e) => onQuestionChange(e.target.value)}
+            multiline
+            rows={3}
+            fullWidth
+          />
+
+          <Stack spacing={1.5}>
+            <Typography variant="subtitle2">Options</Typography>
+            {OPTION_LETTERS.map((letter, index) => (
+              <TextField
+                key={letter}
+                label={`Option ${letter}`}
+                placeholder={`Option ${letter}`}
+                value={editOptions[index]}
+                onChange={(e) => onOptionChange(index, e.target.value)}
+                fullWidth
+              />
             ))}
-          </div>
+          </Stack>
 
-          <div>
-            <Label>Correct Answer</Label>
-            <Select value={editCorrectAnswer} onValueChange={onCorrectAnswerChange}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">A</SelectItem>
-                <SelectItem value="1">B</SelectItem>
-                <SelectItem value="2">C</SelectItem>
-                <SelectItem value="3">D</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <TextField
+            select
+            label="Correct Answer"
+            value={editCorrectAnswer}
+            onChange={(e) => onCorrectAnswerChange(e.target.value)}
+            fullWidth
+          >
+            {OPTION_LETTERS.map((letter, index) => (
+              <MenuItem key={letter} value={String(index)}>
+                {letter}
+              </MenuItem>
+            ))}
+          </TextField>
 
-          {/* Explanation Section */}
-          <div>
-            <Label>Explanation (shown after answering)</Label>
-            <Textarea
-              placeholder="Explain why this is the correct answer..."
-              value={editExplanation}
-              onChange={(e) => onExplanationChange(e.target.value)}
-              rows={4}
-              className="mt-1"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              This explanation will be shown to users after they answer the question.
-            </p>
-          </div>
+          <TextField
+            label="Explanation (shown after answering)"
+            placeholder="Explain why this is the correct answer..."
+            value={editExplanation}
+            onChange={(e) => onExplanationChange(e.target.value)}
+            helperText="This explanation will be shown to users after they answer the question."
+            multiline
+            rows={4}
+            fullWidth
+          />
 
-          <Separator />
+          <Divider />
 
-          {/* Figure Section */}
-          <div className="space-y-3">
-            <Label className="flex items-center gap-2">
-              <Image className="w-4 h-4" />
+          <Stack spacing={1.5}>
+            <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Image className="w-4 h-4" aria-hidden="true" />
               Question Figure (Optional)
-            </Label>
+            </Typography>
             <FigureUpload
-              questionId={question?.id || ''}
+              questionId={question?.id || ""}
               currentFigureUrl={editFigureUrl}
               onUpload={(url) => onFigureUrlChange(url)}
               onRemove={() => onFigureUrlChange(null)}
             />
-          </div>
+          </Stack>
 
-          <Separator />
+          <Divider />
 
-          {/* Learning Resources Info */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <LinkIcon className="w-4 h-4" />
+          <Stack spacing={1}>
+            <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <LinkIcon className="w-4 h-4" aria-hidden="true" />
               Learning Resources
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              Links are automatically extracted from the explanation. Use markdown syntax:{' '}
-              <code className="px-1 py-0.5 rounded bg-muted text-xs">
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Links are automatically extracted from the explanation. Use markdown syntax:{" "}
+              <Box
+                component="code"
+                sx={{ px: 0.5, py: 0.25, borderRadius: 1, bgcolor: "action.hover", fontSize: "0.75rem" }}
+              >
                 [Link Text](https://...)
-              </code>
-            </p>
+              </Box>
+            </Typography>
             {question?.links && question.links.length > 0 && (
-              <div className="space-y-2 mt-2">
+              <Stack spacing={1} sx={{ mt: 1 }}>
                 {question.links.map((link, index) => (
-                  <div
+                  <Stack
                     key={index}
-                    className="flex items-center gap-2 p-2 rounded bg-secondary/30 border border-border"
+                    direction="row"
+                    spacing={1}
+                    sx={{ alignItems: "center", p: 1, borderRadius: 1, border: 1, borderColor: "divider" }}
                   >
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded shrink-0 ${
-                        LINK_TYPE_CONFIG[link.type as LinkType]?.bgClass ?? 'bg-secondary'
-                      } ${
-                        LINK_TYPE_CONFIG[link.type as LinkType]?.colorClass ??
-                        'text-muted-foreground'
+                    <Chip
+                      label={link.type}
+                      size="small"
+                      className={`${LINK_TYPE_CONFIG[link.type as LinkType]?.bgClass ?? ""} ${
+                        LINK_TYPE_CONFIG[link.type as LinkType]?.colorClass ?? ""
                       }`}
-                    >
-                      {link.type}
-                    </span>
-                    <a
+                    />
+                    <Link
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-foreground hover:text-primary truncate flex items-center gap-1"
+                      variant="body2"
+                      sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}
                     >
-                      {link.title || link.url}
-                      <ExternalLink className="w-3 h-3 shrink-0" />
-                    </a>
-                  </div>
+                      <Box component="span" sx={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {link.title || link.url}
+                      </Box>
+                      <ExternalLink className="w-3 h-3 shrink-0" aria-hidden="true" />
+                    </Link>
+                  </Stack>
                 ))}
-              </div>
+              </Stack>
             )}
-          </div>
+          </Stack>
 
-          <Separator />
+          <Divider />
 
-          {/* Forum URL Section */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <ExternalLink className="w-4 h-4" />
+          <Stack spacing={1}>
+            <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <ExternalLink className="w-4 h-4" aria-hidden="true" />
               Discourse Forum Topic (Optional)
-            </Label>
-            <Input
+            </Typography>
+            <TextField
               placeholder="https://forum.openhamprep.com/t/topic-slug/123"
-              value={editForumUrl || ''}
+              value={editForumUrl || ""}
               onChange={(e) => onForumUrlChange(e.target.value || null)}
+              helperText="Link to the Discourse forum topic for this question. When set, explanations will sync bidirectionally."
+              error={!!editForumUrl && !safeForumUrl}
+              fullWidth
             />
-            <p className="text-xs text-muted-foreground">
-              Link to the Discourse forum topic for this question. When set, explanations
-              will sync bidirectionally.
-            </p>
             {safeForumUrl ? (
-              <a
+              <Link
                 href={safeForumUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-primary hover:underline flex items-center gap-1"
+                variant="caption"
+                sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
               >
-                Open in Forum <ExternalLink className="w-3 h-3" />
-              </a>
+                Open in Forum <ExternalLink className="w-3 h-3" aria-hidden="true" />
+              </Link>
             ) : editForumUrl ? (
-              <p className="text-xs text-destructive">
+              <Typography variant="caption" color="error">
                 Invalid URL format. Please enter a valid http:// or https:// URL.
-              </p>
+              </Typography>
             ) : null}
             {question?.forum_url && onRetrySync && (
-              <div className="flex items-center gap-2 pt-1">
-                <span className="text-xs text-muted-foreground">
-                  Sync:{' '}
-                  <span
-                    className={
-                      question.discourse_sync_status === 'error'
-                        ? 'text-destructive'
-                        : question.discourse_sync_status === 'synced'
-                          ? 'text-success'
-                          : 'text-muted-foreground'
-                    }
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center", pt: 0.5 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Sync:{" "}
+                  <Box
+                    component="span"
+                    sx={{ color: SYNC_COLOR[syncStatus as keyof typeof SYNC_COLOR] ?? "text.secondary" }}
                   >
-                    {question.discourse_sync_status ?? 'unknown'}
-                  </span>
+                    {syncStatus ?? "unknown"}
+                  </Box>
                   {question.discourse_sync_error && (
-                    <span className="text-destructive ml-1">
+                    <Box component="span" sx={{ color: "error.main", ml: 0.5 }}>
                       — {question.discourse_sync_error}
-                    </span>
+                    </Box>
                   )}
-                </span>
+                </Typography>
                 <Button
                   type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-6 text-xs px-2"
+                  variant="outlined"
+                  size="small"
                   onClick={onRetrySync}
+                  startIcon={<RefreshCw className="w-3 h-3" />}
                 >
-                  <RefreshCw className="w-3 h-3 mr-1" />
                   Retry
                 </Button>
-              </div>
+              </Stack>
             )}
-          </div>
+          </Stack>
 
-          <Separator />
+          <Divider />
 
-          {/* Linked Topics (Read-only) */}
           {question && (
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4" />
+            <Stack spacing={1}>
+              <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <BookOpen className="w-4 h-4" aria-hidden="true" />
                 Linked Topics
-              </Label>
-              <p className="text-sm text-muted-foreground">
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
                 Topics are linked from the Topics admin section. Go to Admin &gt; Topics to
                 manage topic-question links.
-              </p>
+              </Typography>
               {linkedTopicNames.length > 0 ? (
-                <div className="flex flex-wrap gap-2 mt-2">
+                <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1, mt: 1 }}>
                   {linkedTopicNames.map((name, index) => (
-                    <Badge key={index} variant="secondary" className="bg-primary/10">
-                      <BookOpen className="w-3 h-3 mr-1" />
-                      {name}
-                    </Badge>
+                    <Chip
+                      key={index}
+                      size="small"
+                      icon={<BookOpen className="w-3 h-3" aria-hidden="true" />}
+                      label={name}
+                    />
                   ))}
-                </div>
+                </Stack>
               ) : (
-                <p className="text-sm text-muted-foreground italic">No topics linked</p>
+                <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                  No topics linked
+                </Typography>
               )}
-            </div>
+            </Stack>
           )}
 
-          <Separator />
+          <Divider />
 
-          {/* ARRL Textbook Reference */}
-          <div className="space-y-4">
-            <Label className="flex items-center gap-2">
-              <Book className="w-4 h-4" />
+          <Stack spacing={2}>
+            <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Book className="w-4 h-4" aria-hidden="true" />
               ARRL Textbook Reference
-            </Label>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm text-muted-foreground">Chapter</Label>
-                <Select
-                  value={editChapterId || 'none'}
-                  onValueChange={(value) => onChapterIdChange(value === 'none' ? null : value)}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select chapter..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No chapter</SelectItem>
-                    {chapters.map((chapter) => (
-                      <SelectItem key={chapter.id} value={chapter.id}>
-                        Ch. {chapter.chapterNumber}: {chapter.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-sm text-muted-foreground">Page Reference</Label>
-                <Input
-                  placeholder="e.g., 45 or 45-48"
-                  value={editPageReference || ''}
-                  onChange={(e) => onPageReferenceChange(e.target.value || null)}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
+            </Typography>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <TextField
+                select
+                label="Chapter"
+                value={editChapterId || "none"}
+                onChange={(e) =>
+                  onChapterIdChange(e.target.value === "none" ? null : e.target.value)
+                }
+                fullWidth
+              >
+                <MenuItem value="none">No chapter</MenuItem>
+                {chapters.map((chapter) => (
+                  <MenuItem key={chapter.id} value={chapter.id}>
+                    Ch. {chapter.chapterNumber}: {chapter.title}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                label="Page Reference"
+                placeholder="e.g., 45 or 45-48"
+                value={editPageReference || ""}
+                onChange={(e) => onPageReferenceChange(e.target.value || null)}
+                fullWidth
+              />
+            </Box>
+            <Typography variant="caption" color="text.secondary">
               Reference to the ARRL textbook for users who want to study from the book.
-            </p>
-          </div>
+            </Typography>
+          </Stack>
 
-          <Separator />
+          <Divider />
 
-          <EditHistoryViewer
-            history={question?.edit_history || []}
-            entityType="question"
-          />
-
-          <div className="flex justify-between gap-2">
-            <AlertDialog open={isDeleteDialogOpen} onOpenChange={onDeleteDialogOpenChange}>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Question
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Question</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete question "{question?.display_name}"?
-                    This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={onDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button onClick={onUpdate} disabled={isUpdatePending}>
-                {isUpdatePending ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : null}
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        </div>
+          <EditHistoryViewer history={question?.edit_history || []} entityType="question" />
+        </Stack>
       </DialogContent>
+
+      <DialogActions sx={{ justifyContent: "space-between", px: 3, py: 2 }}>
+        <Button
+          color="error"
+          onClick={() => onDeleteDialogOpenChange(true)}
+          startIcon={<Trash2 className="w-4 h-4" />}
+        >
+          Delete Question
+        </Button>
+        <Stack direction="row" spacing={1}>
+          <Button variant="outlined" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={onUpdate}
+            disabled={isUpdatePending}
+            startIcon={isUpdatePending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+          >
+            Save Changes
+          </Button>
+        </Stack>
+      </DialogActions>
+
+      {/* MUI has no AlertDialog; a small Dialog with role="alertdialog" is the
+          equivalent, and keeps the confirm step a genuine focus trap. */}
+      <Dialog
+        open={isDeleteDialogOpen}
+        onClose={() => onDeleteDialogOpenChange(false)}
+        aria-labelledby="delete-question-title"
+        role="alertdialog"
+      >
+        <DialogTitle id="delete-question-title">Delete Question</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete question "{question?.display_name}"? This action
+            cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => onDeleteDialogOpenChange(false)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={onDelete}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }

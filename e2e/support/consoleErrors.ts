@@ -29,7 +29,10 @@ export const collectAppErrors = (page: Page): string[] => {
   const errors: string[] = [];
 
   page.on("console", (msg) => {
-    if (msg.type() !== "error") return;
+    // React dev warnings arrive as console.error with "%s" placeholders, so the
+    // useful detail is in the args, not msg.text(). Reading only the text is
+    // how an "alignItems leaking onto a div" warning survived a green run.
+    if (msg.type() !== "error" && msg.type() !== "warning") return;
     const text = msg.text();
     if (!isNoise(text)) errors.push(text);
   });
