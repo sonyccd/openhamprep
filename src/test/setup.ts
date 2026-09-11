@@ -40,11 +40,38 @@ Object.defineProperty(window, 'matchMedia', {
 // Mock ResizeObserver
 // Must be a real class (not an arrow-function mock) so `new ResizeObserver()`
 // works - consumers like cmdk/Radix construct it directly.
+//
+// It also reports a non-zero size. jsdom gives every element a 0x0 box, and
+// MUI X DataGrid measures its viewport through ResizeObserver before deciding
+// how many rows to virtualise - at 0x0 it renders none, so every DataGrid test
+// would see an empty table.
+const MOCK_VIEWPORT = { width: 1024, height: 768 };
+
 global.ResizeObserver = class ResizeObserverMock {
-  observe = vi.fn();
+  constructor(private readonly callback: ResizeObserverCallback) {}
+
+  observe = (target: Element) => {
+    const contentRect = {
+      ...MOCK_VIEWPORT,
+      top: 0,
+      left: 0,
+      bottom: MOCK_VIEWPORT.height,
+      right: MOCK_VIEWPORT.width,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    } as DOMRectReadOnly;
+
+    this.callback(
+      [{ target, contentRect } as ResizeObserverEntry],
+      this as unknown as ResizeObserver,
+    );
+  };
+
   unobserve = vi.fn();
   disconnect = vi.fn();
-};
+} as unknown as typeof ResizeObserver;
+
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserverMock {
