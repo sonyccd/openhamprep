@@ -54,3 +54,7 @@ coverage/
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Playwright
+e2e/.artifacts/
+playwright-report/
