@@ -1,0 +1,36 @@
+name: E2E
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  # Guest routes only. The admin projects need local Supabase for auth and seed
+  # data, which is not worth standing up per-PR — run those locally with
+  # `npm run e2e` before merging an Admin change.
+  guest-routes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: Run guest-route e2e in light, dark and mobile
+        run: npx playwright test --project=chromium-light --project=chromium-dark --project=mobile
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

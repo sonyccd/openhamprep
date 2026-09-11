@@ -58,3 +58,4 @@ coverage/
 # Playwright
 e2e/.artifacts/
 playwright-report/
+e2e/.auth/
