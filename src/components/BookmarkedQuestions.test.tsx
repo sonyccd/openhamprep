@@ -275,7 +275,7 @@ describe('BookmarkedQuestions', () => {
       });
       
       // Click on correct answer
-      const buttons = screen.getAllByRole('button');
+      const buttons = screen.getAllByRole('radio');
       const optionA = buttons.find(btn => btn.textContent?.includes('Emergency'));
       if (optionA) {
         fireEvent.click(optionA);
@@ -500,7 +500,7 @@ describe('BookmarkedQuestions', () => {
       });
 
       // Answer the question
-      const buttons = screen.getAllByRole('button');
+      const buttons = screen.getAllByRole('radio');
       const optionA = buttons.find(btn => btn.textContent?.includes('Emergency'));
       if (optionA) {
         fireEvent.click(optionA);

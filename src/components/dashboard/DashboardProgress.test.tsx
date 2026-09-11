@@ -32,7 +32,7 @@ describe('DashboardProgress', () => {
     expect(screen.getByText('1/2')).toBeInTheDocument();
   });
 
-  it('shows success color when questions goal is reached', () => {
+  it('shows the questions count when the goal is reached', () => {
     render(
       <DashboardProgress
         {...defaultProps}
@@ -43,7 +43,7 @@ describe('DashboardProgress', () => {
     expect(screen.getByText('50/50')).toBeInTheDocument();
   });
 
-  it('shows success color when tests goal is reached', () => {
+  it('shows the tests count when the goal is reached', () => {
     render(
       <DashboardProgress
         {...defaultProps}

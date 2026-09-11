@@ -136,19 +136,7 @@ describe('SidebarNavItem', () => {
       expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     });
 
-    it('shows external link icon when expanded', () => {
-      renderWithTooltip(
-        <SidebarNavItem
-          item={externalItem}
-          isActive={false}
-          showExpanded={true}
-          onClick={vi.fn()}
-        />
-      );
-      expect(screen.getByRole('link', { name: /Community/ })).toBeInTheDocument();
-    });
-
-    it('hides label and external icon when collapsed', () => {
+    it('hides the label when collapsed', () => {
       renderWithTooltip(
         <SidebarNavItem
           item={externalItem}

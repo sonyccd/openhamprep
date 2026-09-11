@@ -152,7 +152,7 @@ describe('AdminAlerts', () => {
     it('should display pending count in metric cards', () => {
       renderComponent();
 
-      expect(screen.getByLabelText('1 pending')).toHaveTextContent('1');
+      expect(screen.getByTestId('pending-count')).toHaveTextContent('1');
     });
 
     it('should render filter tabs', () => {

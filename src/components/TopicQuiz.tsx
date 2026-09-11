@@ -187,12 +187,13 @@ export function TopicQuiz({
             />
 
             {/* Options */}
-            <div className="space-y-3">
+            <div className="space-y-3" role="radiogroup" aria-label="Answer options">
               {options.map((option) => (
                 <button
                   key={option}
+                  role="radio"
                   onClick={() => handleSelectAnswer(option)}
-                  aria-pressed={selectedAnswer === option}
+                  aria-checked={selectedAnswer === option}
                   className={cn(
                     "w-full text-left p-4 rounded-xl border transition-all duration-200",
                     "flex items-start gap-3",

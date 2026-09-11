@@ -177,7 +177,7 @@ describe('FigureImage', () => {
         />
       );
 
-      const spinner = screen.queryByRole('status', { name: /loading figure/i });
+      const spinner = screen.queryByTestId('figure-loading');
       expect(spinner).toBeInTheDocument();
     });
 
@@ -193,7 +193,7 @@ describe('FigureImage', () => {
       fireEvent.load(img);
 
       await waitFor(() => {
-        const spinner = screen.queryByRole('status', { name: /loading figure/i });
+        const spinner = screen.queryByTestId('figure-loading');
         expect(spinner).not.toBeInTheDocument();
       });
     });

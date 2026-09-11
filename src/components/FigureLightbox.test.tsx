@@ -61,14 +61,6 @@ describe('FigureLightbox', () => {
       fireEvent.keyDown(document, { key: 'Escape' });
       expect(onClose).toHaveBeenCalledTimes(1);
     });
-
-    it('should call onClose when clicking outside the content (overlay)', () => {
-      const onClose = vi.fn();
-      render(<FigureLightbox {...defaultProps} onClose={onClose} />);
-
-      fireEvent.click(screen.getByRole('dialog'));
-      // Note: Radix handles this internally, the onClose will be called via onOpenChange
-    });
   });
 
   describe('Accessibility', () => {

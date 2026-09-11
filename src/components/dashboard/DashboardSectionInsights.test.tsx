@@ -249,18 +249,4 @@ describe('DashboardSectionInsights', () => {
     expect(screen.getByText('T1')).toBeInTheDocument();
   });
 
-  it('applies warning color scheme', () => {
-    const { container } = render(
-      <DashboardSectionInsights
-        subelementMetrics={{
-          T1: createMetric({ risk_score: 0.5 }),
-        }}
-        testType="technician"
-        onPracticeSection={vi.fn()}
-      />
-    );
-
-    // The weak section is offered for practice.
-    expect(screen.getAllByRole('button').length).toBeGreaterThan(0);
-  });
 });

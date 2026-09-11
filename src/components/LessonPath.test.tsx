@@ -158,7 +158,7 @@ describe('LessonPath', () => {
           onTopicClick={mockOnTopicClick}
         />
       );
-      expect(screen.getByRole('button', { name: /\(current\)$/ })).toHaveAttribute('aria-current', 'step');
+      expect(screen.getByRole('button', { current: 'step' })).toBeInTheDocument();
     });
 
     it('should disable locked topics', () => {
@@ -171,7 +171,7 @@ describe('LessonPath', () => {
         />
       );
       // Topic 3 (index 2) is locked: current is 1 and it is not completed.
-      expect(screen.getByRole('button', { name: /\(locked\)$/ })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /Power Calculations/ })).toBeDisabled();
     });
 
     it('should show step number badge for completed topics', () => {

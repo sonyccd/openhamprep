@@ -252,6 +252,7 @@ function LinkedQuestionRow({
     >
       <Checkbox
         checked={true}
+        disabled
         aria-label={`${question.display_name} is linked`}
         className="mt-0.5 pointer-events-none"
       />

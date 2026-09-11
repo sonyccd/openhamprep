@@ -95,6 +95,10 @@ describe('ThemeToggle', () => {
     });
   });
 
+  // These two keep their class assertions deliberately: sr-only is what makes
+  // the label reach screen readers while staying invisible, so it is an
+  // accessibility contract rather than styling. Dropping it would make the text
+  // render on screen.
   describe('Screen Reader Support', () => {
     it('has sr-only text for light theme', () => {
       mockUseTheme.mockReturnValue({
@@ -104,7 +108,7 @@ describe('ThemeToggle', () => {
 
       renderWithTooltip();
 
-      expect(screen.getByText('Switch to dark theme')).toBeInTheDocument();
+      expect(screen.getByText('Switch to dark theme')).toHaveClass('sr-only');
     });
 
     it('has sr-only text for dark theme', () => {
@@ -115,7 +119,7 @@ describe('ThemeToggle', () => {
 
       renderWithTooltip();
 
-      expect(screen.getByText('Switch to light theme')).toBeInTheDocument();
+      expect(screen.getByText('Switch to light theme')).toHaveClass('sr-only');
     });
   });
 });

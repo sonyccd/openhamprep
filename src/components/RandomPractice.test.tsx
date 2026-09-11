@@ -173,13 +173,13 @@ describe('RandomPractice', () => {
       renderRandomPractice();
       
       await waitFor(() => {
-        const buttons = screen.getAllByRole('button');
+        const buttons = screen.getAllByRole('radio');
         const optionA = buttons.find(btn => btn.textContent === 'AEmergency' || btn.textContent === 'AAnswer 1');
         expect(optionA).toBeDefined();
       });
       
       // Click on an answer option
-      const buttons = screen.getAllByRole('button');
+      const buttons = screen.getAllByRole('radio');
       const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
       if (optionA) {
         fireEvent.click(optionA);
@@ -199,7 +199,7 @@ describe('RandomPractice', () => {
         expect(screen.getByRole('button', { name: /skip/i })).toBeInTheDocument();
       });
       
-      const buttons = screen.getAllByRole('button');
+      const buttons = screen.getAllByRole('radio');
       const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
       if (optionA) {
         fireEvent.click(optionA);
@@ -216,13 +216,13 @@ describe('RandomPractice', () => {
       renderRandomPractice();
       
       await waitFor(() => {
-        const buttons = screen.getAllByRole('button');
+        const buttons = screen.getAllByRole('radio');
         const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
         expect(optionA).toBeDefined();
       });
       
       // Answer first question
-      const buttons = screen.getAllByRole('button');
+      const buttons = screen.getAllByRole('radio');
       const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
       if (optionA) fireEvent.click(optionA);
       
@@ -314,13 +314,13 @@ describe('RandomPractice', () => {
 
       // Wait for first question to load
       await waitFor(() => {
-        const buttons = screen.getAllByRole('button');
+        const buttons = screen.getAllByRole('radio');
         const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
         expect(optionA).toBeDefined();
       });
 
       // Answer first question
-      const buttons1 = screen.getAllByRole('button');
+      const buttons1 = screen.getAllByRole('radio');
       const optionA1 = buttons1.find(btn => btn.textContent?.startsWith('A'));
       if (optionA1) fireEvent.click(optionA1);
 
@@ -336,7 +336,7 @@ describe('RandomPractice', () => {
       });
 
       // Answer second question
-      const buttons2 = screen.getAllByRole('button');
+      const buttons2 = screen.getAllByRole('radio');
       const optionA2 = buttons2.find(btn => btn.textContent?.startsWith('A'));
       if (optionA2) fireEvent.click(optionA2);
 
@@ -365,12 +365,12 @@ describe('RandomPractice', () => {
       // Answer one question so stats.total > 0
       await waitFor(() => {
         const optionA = screen
-          .getAllByRole('button')
+          .getAllByRole('radio')
           .find((btn) => btn.textContent?.startsWith('A'));
         expect(optionA).toBeDefined();
       });
       const optionA = screen
-        .getAllByRole('button')
+        .getAllByRole('radio')
         .find((btn) => btn.textContent?.startsWith('A'));
       fireEvent.click(optionA!);
 

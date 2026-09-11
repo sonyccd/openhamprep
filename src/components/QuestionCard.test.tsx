@@ -147,7 +147,7 @@ describe('QuestionCard', () => {
     it('highlights selected answer', () => {
       renderQuestionCard({ selectedAnswer: 'B' });
       
-      expect(screen.getByRole('button', { name: /To make money/ })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('radio', { name: /To make money/ })).toBeChecked();
     });
   });
 
@@ -178,7 +178,7 @@ describe('QuestionCard', () => {
     it('disables option buttons when showResult is true', () => {
       renderQuestionCard({ selectedAnswer: 'A', showResult: true });
 
-      const buttons = screen.getAllByRole('button');
+      const buttons = screen.getAllByRole('radio');
       // Filter for option buttons by checking if they contain the answer text
       const optionButtons = buttons.filter(btn =>
         btn.textContent?.includes('To provide emergency communications') ||

@@ -388,7 +388,7 @@ export function AdminAlerts() {
           </CardHeader>
           <CardContent>
             <div
-              aria-label={`${pendingCount} pending`}
+              data-testid="pending-count"
               className={`text-2xl font-bold ${pendingCount > 0 ? 'text-amber-500' : 'text-foreground'}`}
             >
               {pendingCount}
