@@ -196,6 +196,22 @@ describe('Glossary', () => {
       expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     });
 
+    // Material's default Card variant is "elevation": a box-shadow and no
+    // border declaration at all. Setting borderColor on it is inert, so the
+    // resting border and the hover accent both silently did nothing until
+    // variant="outlined" was added. Asserting the computed style rather than
+    // the MuiPaper-outlined class, per A2c — the border is the outcome that
+    // matters, the variant is just how it is reached.
+    it('gives each term card a visible border', async () => {
+      render(<Glossary />, { wrapper: createWrapper() });
+
+      const link = await screen.findByRole('link', { name: /Search "Amateur Radio" on DuckDuckGo/ });
+      const card = link.parentElement!;
+
+      expect(getComputedStyle(card).borderStyle).toBe('solid');
+      expect(getComputedStyle(card).borderWidth).toBe('1px');
+    });
+
     it('displays term definitions', async () => {
       render(<Glossary />, { wrapper: createWrapper() });
 

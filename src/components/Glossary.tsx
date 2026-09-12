@@ -179,6 +179,14 @@ export function Glossary() {
                     {groupedTerms[letter].map((term) => (
                       <Card
                         key={term.id}
+                        // variant="outlined" is what makes the borderColor
+                        // below mean anything. Material's default variant is
+                        // "elevation", which declares a box-shadow and no
+                        // border at all (Paper.js), so border-color alone had
+                        // nothing to colour — the resting border and the hover
+                        // accent both silently did nothing. The shadcn Card
+                        // this replaced always carried Tailwind's `border`.
+                        variant="outlined"
                         ref={(el: HTMLDivElement | null) => {
                           if (el) {
                             termRefs.current.set(term.id, el);
