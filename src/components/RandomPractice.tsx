@@ -119,7 +119,7 @@ export function RandomPractice({
     },
   });
 
-  const { question, selectedAnswer, showResult, stats, canGoBack, isViewingHistory } = session;
+  const { question, selectedAnswer, showResult, stats, canGoBack } = session;
 
   // The session resets itself when testType changes; the streak is this
   // component's own state, so it has to be cleared alongside it.

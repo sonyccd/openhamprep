@@ -94,9 +94,11 @@ export interface UseQuizSession {
   history: QuizHistoryEntry[];
   historyIndex: number;
   /**
-   * Every question served this pass, including the current one. Drives the
-   * "seen 7 of 40" coverage readout in the chapter and subelement modes; resets
-   * on wrap-around, so it counts progress through the current pass.
+   * Each question served this pass, once, including the current one. Drives the
+   * "seen 7 of 40" coverage readout in the chapter and subelement modes, and
+   * those modes compare its length against the pool size to show an "all seen"
+   * tick — so it must reach that size exactly, never overshoot it. Resets on
+   * wrap-around, counting progress through the current pass.
    */
   askedIds: string[];
   canGoBack: boolean;
@@ -110,8 +112,21 @@ export interface UseQuizSession {
   start: (startIndex?: number) => void;
   /** Restart from an empty asked-set with the score zeroed. */
   reset: () => void;
-  /** Drop the session entirely — for leaving a quiz back to a picker. */
-  clear: () => void;
+  /**
+   * Leave the current question without ending the run: drops the history stack
+   * and leaves the score and the asked-set alone.
+   *
+   * This is the chapter and subelement modes stepping out to their question
+   * list and back. Zeroing the score there would mean a glance at the list
+   * silently threw away the session's progress.
+   *
+   * The score is what actually survives the round trip. The asked-set survives
+   * *this* transition but not the resume that follows it: both modes resume
+   * through start(), which rebuilds the asked-set as a single entry, so
+   * coverage restarts either way. That was true before the engine was extracted
+   * too — don't read this as coverage persisting across the list.
+   */
+  clearHistory: () => void;
 }
 
 /**
@@ -204,13 +219,17 @@ export function useQuizSession({
    * for React to call twice.
    */
   const draw = useCallback(() => {
-    const currentEntry = session.history[session.index];
-    if (!currentEntry) return;
+    if (!session.history[session.index]) return;
 
-    const askedIds = [...session.askedIds, currentEntry.question.id];
-    const result = pickQuestion(questions, askedIds);
+    // Exclude what has already been served — which includes the current
+    // question, put there by start() or by the draw that produced it — then
+    // record the question this draw actually serves. Appending the *current*
+    // id instead would re-add an id already present, so askedIds grew past the
+    // pool size and the "seen N of M" readout could exceed 100%.
+    const result = pickQuestion(questions, session.askedIds);
     if (!result) return;
 
+    const askedIds = [...session.askedIds, result.question.id];
     const entry = newEntry(result.question);
 
     // A completed pass starts over from a clean stack, matching what the three
@@ -251,9 +270,8 @@ export function useQuizSession({
     setStats({ correct: 0, total: 0 });
   }, [questions]);
 
-  const clear = useCallback(() => {
-    setSession(EMPTY_SESSION);
-    setStats({ correct: 0, total: 0 });
+  const clearHistory = useCallback(() => {
+    setSession((prev) => ({ ...prev, history: [], index: -1 }));
   }, []);
 
   return {
@@ -272,6 +290,6 @@ export function useQuizSession({
     previous,
     start,
     reset,
-    clear,
+    clearHistory,
   };
 }

@@ -699,6 +699,45 @@ describe('ChapterPractice Navigation', () => {
       expect(screen.getByTestId('question-list-view')).toBeInTheDocument();
     });
   });
+
+  it('keeps the score when stepping out to the question list and resuming', async () => {
+    // Deterministic draw: Math.random() === 0 always takes the first available
+    // question, so the answer below is the correct one for a known question.
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const queryClient = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ChapterPractice onBack={vi.fn()} testType="technician" />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+
+    const chapterButton = screen.getByText('Licensing Regulations').closest('button');
+    if (chapterButton) fireEvent.click(chapterButton);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /practice all questions/i })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: /practice all questions/i }));
+
+    // Answer T1A01 correctly, taking the score to 1 of 1.
+    await waitFor(() => expect(screen.getByText('A1')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('A1').closest('button')!);
+    await waitFor(() => expect(screen.getByText('100%')).toBeInTheDocument());
+
+    // Out to the question list and straight back in.
+    fireEvent.click(screen.getByRole('button', { name: /question list/i }));
+    await waitFor(() => expect(screen.getByTestId('question-list-view')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /practice all questions/i }));
+
+    // Glancing at the list is not abandoning the run, so the score stands.
+    // This regressed when the back handler dropped the whole session instead of
+    // just the question history.
+    await waitFor(() => expect(screen.getByText('100%')).toBeInTheDocument());
+
+    random.mockRestore();
+  });
 });
 
 describe('ChapterPractice License Types', () => {
