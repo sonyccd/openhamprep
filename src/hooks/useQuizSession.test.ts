@@ -311,7 +311,7 @@ describe("useQuizSession", () => {
       expect(result.current.canGoBack).toBe(false);
     });
 
-    it("keeps the score and coverage when leaving the question view", async () => {
+    it("keeps the score when leaving the question view", async () => {
       const questions = pool(3);
       const { result } = renderHook(() => useQuizSession({ questions }));
       act(() => result.current.start(0));
@@ -327,6 +327,10 @@ describe("useQuizSession", () => {
       expect(result.current.question).toBeNull();
       expect(result.current.history).toEqual([]);
       expect(result.current.stats).toEqual({ correct: 1, total: 1 });
+      // The asked-set survives this transition, but the resume that follows
+      // goes through start(), which rebuilds it — so this asserts the
+      // transition's contract, not that coverage persists across the round
+      // trip. It does not.
       expect(result.current.askedIds).toEqual(["id-1"]);
     });
 

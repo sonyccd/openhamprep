@@ -114,11 +114,17 @@ export interface UseQuizSession {
   reset: () => void;
   /**
    * Leave the current question without ending the run: drops the history stack
-   * but keeps the score and the asked-set.
+   * and leaves the score and the asked-set alone.
    *
    * This is the chapter and subelement modes stepping out to their question
    * list and back. Zeroing the score there would mean a glance at the list
    * silently threw away the session's progress.
+   *
+   * The score is what actually survives the round trip. The asked-set survives
+   * *this* transition but not the resume that follows it: both modes resume
+   * through start(), which rebuilds the asked-set as a single entry, so
+   * coverage restarts either way. That was true before the engine was extracted
+   * too — don't read this as coverage persisting across the list.
    */
   clearHistory: () => void;
 }
