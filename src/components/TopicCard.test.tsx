@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TopicCard } from './TopicCard';
 import { Topic } from '@/hooks/useTopics';
@@ -156,14 +156,37 @@ describe('TopicCard', () => {
     // Same reasoning as LessonCard: the old div-as-button carried an untested
     // Enter/Space handler, and the identical pattern in HamRadioToolCard never
     // fired (#272). CardActionArea is a real button, so this is native.
-    it('is reachable by keyboard and activates on Enter', async () => {
+    // CardActionArea renders a real <button>, whose content model allows only
+    // phrasing content — a heading or a <p> in there is invalid HTML, and a
+    // heading also confuses assistive tech that navigates by heading. Nothing
+    // is lost by dropping them: ARIA gives button presentational children, so
+    // they were never exposed as a heading inside the old role="button" div
+    // either, and the name comes from the button's aria-label.
+    it('puts no heading or paragraph inside the button', () => {
+      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />, { wrapper: muiWrapper });
+
+      const button = screen.getByRole('button', { name: /Amateur Radio Basics/ });
+
+      expect(within(button).queryByRole('heading')).not.toBeInTheDocument();
+      expect(button.querySelector('p')).toBeNull();
+    });
+
+    it('is reachable by keyboard', async () => {
       const user = userEvent.setup();
       render(<TopicCard topic={mockTopic} onClick={mockOnClick} />, { wrapper: muiWrapper });
 
       await user.tab();
-      expect(screen.getByRole('button', { name: /Amateur Radio Basics/ })).toHaveFocus();
 
-      await user.keyboard('{Enter}');
+      expect(screen.getByRole('button', { name: /Amateur Radio Basics/ })).toHaveFocus();
+    });
+
+    it.each(['{Enter}', ' '])('activates on %s', async (key) => {
+      const user = userEvent.setup();
+      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />, { wrapper: muiWrapper });
+
+      await user.tab();
+      await user.keyboard(key);
+
       expect(mockOnClick).toHaveBeenCalledTimes(1);
     });
   });

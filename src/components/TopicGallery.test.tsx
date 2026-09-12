@@ -88,8 +88,8 @@ describe('TopicGallery', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <TopicGallery testType={testType} />
-      </QueryClientProvider>
-    ,
+      </QueryClientProvider>,
+      // The ported component reads palette tokens, so it needs the real theme.
       { wrapper: muiWrapper }
     );
   };

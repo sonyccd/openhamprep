@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LessonCard } from './LessonCard';
 import { Lesson } from '@/types/lessons';
@@ -124,6 +124,21 @@ describe('LessonCard', () => {
     // Enter/Space handler, and nothing tested that handler — the identical
     // pattern in HamRadioToolCard turned out never to fire (#272). It is a real
     // button now, so these assert the contract rather than the implementation.
+    // CardActionArea renders a real <button>, whose content model allows only
+    // phrasing content — a heading or a <p> in there is invalid HTML, and a
+    // heading also confuses assistive tech that navigates by heading. Nothing
+    // is lost by dropping them: ARIA gives button presentational children, so
+    // they were never exposed as a heading inside the old role="button" div
+    // either, and the name comes from the button's aria-label.
+    it('puts no heading or paragraph inside the button', () => {
+      render(<LessonCard lesson={mockLesson} completion={mockCompletion} onClick={mockOnClick} />, { wrapper: muiWrapper });
+
+      const button = screen.getByRole('button', { name: /Getting Started with Ham Radio/ });
+
+      expect(within(button).queryByRole('heading')).not.toBeInTheDocument();
+      expect(button.querySelector('p')).toBeNull();
+    });
+
     it('is reachable by keyboard', async () => {
       const user = userEvent.setup();
       render(<LessonCard lesson={mockLesson} completion={mockCompletion} onClick={mockOnClick} />, { wrapper: muiWrapper });

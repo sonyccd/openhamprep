@@ -7,6 +7,7 @@ import Dashboard from './Dashboard';
 
 // Import the supabase mock
 import '@/test/mocks/supabase';
+import { muiWrapper } from '@/test/utils';
 
 // Mock react-router-dom hooks
 const mockNavigate = vi.fn();
@@ -178,7 +179,13 @@ const renderDashboard = (initialView = 'dashboard') => {
           <Dashboard />
         </TooltipProvider>
       </MemoryRouter>
-    </QueryClientProvider>
+    </QueryClientProvider>,
+    // Dashboard can route to the lesson and topic galleries, which are ported
+    // and read custom palette keys. No test exercises those views yet, so this
+    // changes nothing today — it is here so the first test that does fails on
+    // its own assertion rather than on an unrelated "Cannot read properties of
+    // undefined (reading 'palette')".
+    { wrapper: muiWrapper }
   );
 };
 

@@ -57,6 +57,17 @@ export function LessonCard({ lesson, completion, onClick }: LessonCardProps) {
         sx={{
           "&:hover .LessonCard-thumb": { transform: "scale(1.05)" },
           "&:hover .LessonCard-title": { color: "primary.main" },
+          // Material's focus-visible is a translucent tint over the surface,
+          // which all but disappears over the thumbnail. The card previously
+          // had focus-visible:ring-2 ring-offset-2, so keyboard users got a
+          // distinct ring; this restores that.
+          "&.Mui-focusVisible": {
+            outline: "2px solid",
+            outlineColor: "primary.main",
+            outlineOffset: 2,
+          },
+          // The tint would otherwise sit on top of the restored ring.
+          "& .MuiCardActionArea-focusHighlight": { opacity: 0 },
         }}
       >
         <Box sx={{ position: "relative", aspectRatio: "16 / 9", bgcolor: "muted", overflow: "hidden" }}>
@@ -126,14 +137,26 @@ export function LessonCard({ lesson, completion, onClick }: LessonCardProps) {
         <CardContent sx={{ p: 2, width: "100%" }}>
           <Typography
             variant="subtitle1"
-            component="h3"
+            // span, not h3. CardActionArea renders a real <button>, and a
+            // button may contain only phrasing content — a heading there is
+            // invalid HTML. Nothing is lost: ARIA gives button presentational
+            // children, so the h3 inside the old role="button" div was never
+            // exposed as a heading either, and the accessible name comes from
+            // the aria-label on the button regardless.
+            component="span"
             className="LessonCard-title"
-            sx={{ fontWeight: 600, mb: 1, transition: "color 200ms", ...clamp2 }}
+            sx={{ display: "block", fontWeight: 600, mb: 1, transition: "color 200ms", ...clamp2 }}
           >
             {lesson.title}
           </Typography>
           {lesson.description && (
-            <Typography variant="body2" sx={{ color: "text.secondary", ...clamp2 }}>
+            <Typography
+              variant="body2"
+              // body2 maps to <p>, which is flow content — same problem as the
+              // heading above.
+              component="span"
+              sx={{ display: "block", color: "text.secondary", ...clamp2 }}
+            >
               {lesson.description}
             </Typography>
           )}
