@@ -5,13 +5,10 @@ import { HamRadioToolsGallery } from './HamRadioToolsGallery';
 import { HamRadioTool, HamRadioToolCategory } from '@/hooks/useHamRadioTools';
 
 // Mock framer-motion to avoid animation issues in tests
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => (
-      <div {...props}>{children}</div>
-    ),
-  },
-}));
+vi.mock('framer-motion', async () => {
+  const { framerMotionMock } = await import('@/test/mocks/framerMotion');
+  return framerMotionMock();
+});
 
 // Mock the hooks
 const mockCategories: HamRadioToolCategory[] = [
@@ -64,6 +61,7 @@ vi.mock('@/hooks/useHamRadioTools', () => ({
 }));
 
 import { useHamRadioTools, useHamRadioToolCategories } from '@/hooks/useHamRadioTools';
+import { muiWrapper } from '@/test/utils';
 
 describe('HamRadioToolsGallery', () => {
   beforeEach(() => {
@@ -81,28 +79,28 @@ describe('HamRadioToolsGallery', () => {
 
   describe('Rendering', () => {
     it('should render the page title', () => {
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
       expect(screen.getByText('Tools')).toBeInTheDocument();
     });
 
     it('should render tool count', () => {
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
       expect(screen.getByText('2 of 2 tools')).toBeInTheDocument();
     });
 
     it('should render search input', () => {
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
       expect(screen.getByPlaceholderText('Search tools...')).toBeInTheDocument();
     });
 
     it('should render category filter', () => {
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
       expect(screen.getByText('Category:')).toBeInTheDocument();
       expect(screen.getByText('All categories')).toBeInTheDocument();
     });
 
     it('should render all tools', () => {
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
       expect(screen.getByText('WSJT-X')).toBeInTheDocument();
       expect(screen.getByText('Log4OM')).toBeInTheDocument();
     });
@@ -116,7 +114,7 @@ describe('HamRadioToolsGallery', () => {
         error: null,
       } as ReturnType<typeof useHamRadioTools>);
 
-      const { container } = render(<HamRadioToolsGallery />);
+      const { container } = render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
 
       // Should show skeleton elements
       const skeletons = screen.getAllByTestId('skeleton');
@@ -132,7 +130,7 @@ describe('HamRadioToolsGallery', () => {
         error: new Error('Failed to fetch'),
       } as ReturnType<typeof useHamRadioTools>);
 
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
 
       expect(screen.getByText('Failed to load tools. Please try again.')).toBeInTheDocument();
     });
@@ -146,7 +144,7 @@ describe('HamRadioToolsGallery', () => {
         error: null,
       } as ReturnType<typeof useHamRadioTools>);
 
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
 
       expect(screen.getByText('No tools available')).toBeInTheDocument();
       expect(screen.getByText("Tools will appear here once they're published.")).toBeInTheDocument();
@@ -154,7 +152,7 @@ describe('HamRadioToolsGallery', () => {
 
     it('should show filtered empty state when search returns no results', async () => {
       const user = userEvent.setup();
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
 
       const searchInput = screen.getByPlaceholderText('Search tools...');
       await user.type(searchInput, 'xyznonexistent');
@@ -165,7 +163,7 @@ describe('HamRadioToolsGallery', () => {
 
     it('should show clear filters button when filtered empty state', async () => {
       const user = userEvent.setup();
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
 
       const searchInput = screen.getByPlaceholderText('Search tools...');
       await user.type(searchInput, 'xyznonexistent');
@@ -177,7 +175,7 @@ describe('HamRadioToolsGallery', () => {
   describe('Search Functionality', () => {
     it('should filter tools by search query', async () => {
       const user = userEvent.setup();
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
 
       const searchInput = screen.getByPlaceholderText('Search tools...');
       await user.type(searchInput, 'WSJT');
@@ -188,7 +186,7 @@ describe('HamRadioToolsGallery', () => {
 
     it('should filter tools by description', async () => {
       const user = userEvent.setup();
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
 
       const searchInput = screen.getByPlaceholderText('Search tools...');
       await user.type(searchInput, 'logging');
@@ -199,7 +197,7 @@ describe('HamRadioToolsGallery', () => {
 
     it('should filter tools by category name', async () => {
       const user = userEvent.setup();
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
 
       const searchInput = screen.getByPlaceholderText('Search tools...');
       await user.type(searchInput, 'Digital');
@@ -210,7 +208,7 @@ describe('HamRadioToolsGallery', () => {
 
     it('should be case insensitive', async () => {
       const user = userEvent.setup();
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
 
       const searchInput = screen.getByPlaceholderText('Search tools...');
       await user.type(searchInput, 'wsjt');
@@ -220,7 +218,7 @@ describe('HamRadioToolsGallery', () => {
 
     it('should update tool count when filtering', async () => {
       const user = userEvent.setup();
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
 
       expect(screen.getByText('2 of 2 tools')).toBeInTheDocument();
 
@@ -233,7 +231,7 @@ describe('HamRadioToolsGallery', () => {
 
   describe('Category Filter', () => {
     it('should render category dropdown with all categories', () => {
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
 
       // Category filter should be present
       expect(screen.getByText('Category:')).toBeInTheDocument();
@@ -244,7 +242,7 @@ describe('HamRadioToolsGallery', () => {
     });
 
     it('should display all tools by default (no category filter)', () => {
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
 
       // Both tools should be visible when no category is selected
       expect(screen.getByText('WSJT-X')).toBeInTheDocument();
@@ -259,7 +257,7 @@ describe('HamRadioToolsGallery', () => {
   describe('Clear Filters', () => {
     it('should clear search and category when clear filters is clicked', async () => {
       const user = userEvent.setup();
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
 
       // Apply search filter
       const searchInput = screen.getByPlaceholderText('Search tools...');
@@ -282,7 +280,7 @@ describe('HamRadioToolsGallery', () => {
         isLoading: false,
       } as ReturnType<typeof useHamRadioToolCategories>);
 
-      render(<HamRadioToolsGallery />);
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
 
       expect(screen.queryByText('Category:')).not.toBeInTheDocument();
     });

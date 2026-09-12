@@ -1,13 +1,19 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Search, BookText, Loader2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Search, BookText } from "lucide-react";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CircularProgress from "@mui/material/CircularProgress";
+import InputAdornment from "@mui/material/InputAdornment";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageContainer } from "@/components/ui/page-container";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
-import { motion } from "framer-motion";
+import { MotionBox } from "@/components/ohp/MotionBox";
+import { tokenAlpha } from "@/theme/muiTheme";
 import { trackGlossarySearched } from "@/lib/amplitude";
 
 export function Glossary() {
@@ -90,7 +96,7 @@ export function Glossary() {
   if (isLoading) {
     return (
       <PageContainer width="wide" className="flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" role="status" aria-label="Loading glossary" />
+        <CircularProgress size={32} role="status" aria-label="Loading glossary" />
       </PageContainer>
     );
   }
@@ -98,95 +104,149 @@ export function Glossary() {
   return (
     <PageContainer width="wide" className="flex flex-col h-full">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-4"
-      >
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <BookText className="w-6 h-6 text-primary" />
+      <MotionBox initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} sx={{ mb: 2 }}>
+        <Typography
+          variant="h5"
+          component="h1"
+          sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}
+        >
+          <Box component={BookText} aria-hidden="true" sx={{ width: 24, height: 24, color: "primary.main" }} />
           Glossary
-        </h1>
-        <p className="text-muted-foreground text-base mt-1">
+        </Typography>
+        <Typography sx={{ color: "text.secondary", mt: 0.5 }}>
           {terms.length} terms • Search or browse ham radio terminology
-        </p>
-      </motion.div>
+        </Typography>
+      </MotionBox>
 
       {/* Search */}
-      <motion.div
+      <MotionBox
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="relative mb-6"
+        sx={{ mb: 3 }}
       >
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
+        <TextField
+          fullWidth
+          size="small"
           placeholder="Search terms or definitions..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Box component={Search} aria-hidden="true" sx={{ width: 16, height: 16, color: "text.secondary" }} />
+                </InputAdornment>
+              ),
+            },
+          }}
         />
-      </motion.div>
+      </MotionBox>
 
       {/* Terms List */}
-      <motion.div
+      <MotionBox
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="flex-1 -mx-2 px-2"
+        sx={{ flex: 1, mx: -1, px: 1, minHeight: 0 }}
       >
-        <ScrollArea className="h-full">
+        {/* Radix ScrollArea replaced by a plain scroll container; it was only
+            providing overflow, not custom scrollbar behaviour this app relied on. */}
+        <Box sx={{ height: "100%", overflowY: "auto" }}>
           {filteredTerms.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
+            <Box sx={{ textAlign: "center", py: 6, color: "text.secondary" }}>
               No terms found matching "{searchQuery}"
-            </div>
+            </Box>
           ) : (
-            <div className="space-y-6 pb-8">
+            <Stack spacing={3} sx={{ pb: 4 }}>
               {sortedKeys.map((letter) => (
-                <div key={letter}>
-                  <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 py-2">
-                    <span className="text-lg font-bold text-primary">{letter}</span>
-                  </div>
-                  <div className="space-y-2">
-                  {groupedTerms[letter].map(term => (
-                    <Card
-                      key={term.id}
-                      ref={(el) => {
-                        if (el) {
-                          termRefs.current.set(term.id, el);
-                        } else {
-                          termRefs.current.delete(term.id);
-                        }
-                      }}
-                      className={`bg-card/50 border-border/50 hover:border-primary/30 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                        highlightedTermId === term.id
-                          ? 'ring-2 ring-primary ring-offset-2 bg-primary/5'
-                          : ''
-                      }`}
-                      onClick={() => window.open(`https://duckduckgo.com/?q=${encodeURIComponent(term.term)}&kp=1`, '_blank', 'noopener,noreferrer')}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          window.open(`https://duckduckgo.com/?q=${encodeURIComponent(term.term)}&kp=1`, '_blank', 'noopener,noreferrer');
-                        }
-                      }}
-                      tabIndex={0}
-                      role="button"
-                      aria-label={`Search "${term.term}" on DuckDuckGo`}
-                    >
-                      <CardContent className="py-3 px-4">
-                        <h3 className="font-semibold text-foreground text-lg">{term.term}</h3>
-                        <p className="text-base text-muted-foreground mt-1">{term.definition}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  </div>
-                </div>
+                <Box key={letter}>
+                  <Box
+                    sx={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 10,
+                      py: 1,
+                      bgcolor: (theme) => tokenAlpha(theme.vars.palette.background.default, 95),
+                      backdropFilter: "blur(4px)",
+                    }}
+                  >
+                    <Typography component="span" sx={{ fontSize: "1.125rem", fontWeight: 700, color: "primary.main" }}>
+                      {letter}
+                    </Typography>
+                  </Box>
+                  <Stack spacing={1}>
+                    {groupedTerms[letter].map((term) => (
+                      <Card
+                        key={term.id}
+                        ref={(el: HTMLDivElement | null) => {
+                          if (el) {
+                            termRefs.current.set(term.id, el);
+                          } else {
+                            termRefs.current.delete(term.id);
+                          }
+                        }}
+                        sx={{
+                          bgcolor: (theme) => tokenAlpha(theme.vars.palette.background.paper, 50),
+                          borderColor: (theme) => tokenAlpha(theme.vars.palette.divider, 50),
+                          transition: "all 200ms",
+                          "&:hover": {
+                            borderColor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 30),
+                          },
+                          ...(highlightedTermId === term.id && {
+                            outline: "2px solid",
+                            outlineColor: "primary.main",
+                            outlineOffset: 2,
+                            bgcolor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 5),
+                          }),
+                        }}
+                      >
+                        {/*
+                          A real link, not a div with role="button". This opens a
+                          DuckDuckGo search in a new tab, which is navigation —
+                          so an anchor gets native Enter activation without a
+                          handler, plus middle-click, ctrl-click and the browser's
+                          own "open in new tab". The previous version was the
+                          third copy of the div-as-button pattern in this app;
+                          the copy in HamRadioToolCard never fired at all (#272).
+                        */}
+                        <Box
+                          component="a"
+                          href={`https://duckduckgo.com/?q=${encodeURIComponent(term.term)}&kp=1`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`Search "${term.term}" on DuckDuckGo`}
+                          sx={{
+                            display: "block",
+                            textDecoration: "none",
+                            color: "inherit",
+                            borderRadius: 2,
+                            "&:focus": { outline: "none" },
+                            "&:focus-visible": {
+                              outline: "2px solid",
+                              outlineColor: "primary.main",
+                              outlineOffset: 2,
+                            },
+                          }}
+                        >
+                          <CardContent sx={{ py: 1.5, px: 2 }}>
+                            <Typography component="h3" sx={{ fontWeight: 600, fontSize: "1.125rem" }}>
+                              {term.term}
+                            </Typography>
+                            <Typography sx={{ color: "text.secondary", mt: 0.5 }}>
+                              {term.definition}
+                            </Typography>
+                          </CardContent>
+                        </Box>
+                      </Card>
+                    ))}
+                  </Stack>
+                </Box>
               ))}
-            </div>
+            </Stack>
           )}
-        </ScrollArea>
-      </motion.div>
+        </Box>
+      </MotionBox>
     </PageContainer>
   );
 }
