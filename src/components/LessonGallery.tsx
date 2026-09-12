@@ -1,19 +1,32 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import Box from "@mui/material/Box";
+import InputAdornment from "@mui/material/InputAdornment";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useLessons } from "@/hooks/useLessons";
 import { useTopicProgress } from "@/hooks/useTopics";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { LessonCard } from "./LessonCard";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Route } from "lucide-react";
 import { TestType } from "@/types/navigation";
 import { PageContainer } from "@/components/ui/page-container";
 import { Lesson } from "@/types/lessons";
+import { MotionBox } from "@/components/ohp/MotionBox";
+import { tokenAlpha } from "@/theme/muiTheme";
 
 interface LessonGalleryProps {
   testType?: TestType;
 }
+
+// grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6. The breakpoint keys line up
+// with Tailwind's because muiTheme pins them to Tailwind's values.
+const cardGrid = {
+  display: "grid",
+  gap: 3,
+  gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
+} as const;
 
 export function LessonGallery({ testType }: LessonGalleryProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -50,99 +63,130 @@ export function LessonGallery({ testType }: LessonGalleryProps) {
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <p className="text-destructive">Failed to load lessons. Please try again.</p>
-      </div>
+      <Box sx={{ textAlign: "center", py: 6 }}>
+        <Typography sx={{ color: "error.main" }}>
+          Failed to load lessons. Please try again.
+        </Typography>
+      </Box>
     );
   }
 
   return (
-    <PageContainer width="wide" contentClassName="space-y-8">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
-      >
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Route className="w-6 h-6" />
-            Lessons
-          </h1>
-          {totalCount > 0 && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {completedLessonsCount} of {totalCount} completed
-            </p>
-          )}
-        </div>
+    <PageContainer width="wide">
+      {/* space-y-8 became Stack spacing, so no Tailwind class is passed down. */}
+      <Stack spacing={4}>
+        <MotionBox
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 2,
+            alignItems: { xs: "flex-start", sm: "center" },
+            justifyContent: "space-between",
+          }}
+        >
+          <Box>
+            <Typography
+              variant="h5"
+              component="h1"
+              sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}
+            >
+              <Box component={Route} aria-hidden="true" sx={{ width: 24, height: 24 }} />
+              Lessons
+            </Typography>
+            {totalCount > 0 && (
+              <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+                {completedLessonsCount} of {totalCount} completed
+              </Typography>
+            )}
+          </Box>
 
-        {/* Search */}
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
+          <TextField
+            size="small"
             placeholder="Search lessons..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            sx={{ width: { xs: "100%", sm: 288 } }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    {/* Was an absolutely positioned icon with pl-10 on the input. */}
+                    <Box
+                      component={Search}
+                      aria-hidden="true"
+                      sx={{ width: 16, height: 16, color: "text.secondary" }}
+                    />
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
-        </div>
-      </motion.div>
+        </MotionBox>
 
-      {/* Loading state */}
-      {isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="space-y-3">
-              <Skeleton className="aspect-video w-full rounded-lg" />
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-2 w-full rounded-full" />
-            </div>
-          ))}
-        </div>
-      )}
+        {isLoading && (
+          <Box sx={cardGrid}>
+            {[...Array(6)].map((_, i) => (
+              <Stack key={i} spacing={1.5}>
+                {/*
+                  data-testid is carried over from the shadcn Skeleton, which had
+                  it built in. A skeleton is a visual placeholder with no role to
+                  query, so the testid is the only handle a test has.
+                */}
+                <Skeleton data-testid="skeleton" variant="rectangular" sx={{ aspectRatio: "16 / 9", borderRadius: 2 }} />
+                <Skeleton data-testid="skeleton" variant="rectangular" sx={{ height: 24, width: "75%" }} />
+                <Skeleton data-testid="skeleton" variant="rectangular" sx={{ height: 16, width: "100%" }} />
+                <Skeleton data-testid="skeleton" variant="rectangular" sx={{ height: 8, borderRadius: 999 }} />
+              </Stack>
+            ))}
+          </Box>
+        )}
 
-      {/* Lessons grid */}
-      {!isLoading && filteredLessons && filteredLessons.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredLessons.map((lesson, index) => (
-            <motion.div
-              key={lesson.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <LessonCard
-                lesson={lesson}
-                completion={getLessonCompletion(lesson)}
-                onClick={() => navigateToLesson(lesson.slug)}
-              />
-            </motion.div>
-          ))}
-        </div>
-      )}
+        {!isLoading && filteredLessons && filteredLessons.length > 0 && (
+          <Box sx={cardGrid}>
+            {filteredLessons.map((lesson, index) => (
+              <MotionBox
+                key={lesson.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <LessonCard
+                  lesson={lesson}
+                  completion={getLessonCompletion(lesson)}
+                  onClick={() => navigateToLesson(lesson.slug)}
+                />
+              </MotionBox>
+            ))}
+          </Box>
+        )}
 
-      {/* Empty state */}
-      {!isLoading && filteredLessons && filteredLessons.length === 0 && (
-        <div className="text-center py-12 bg-muted/30 rounded-lg">
-          <Route className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          {searchQuery ? (
-            <>
-              <h3 className="text-lg font-medium text-foreground mb-2">No lessons found</h3>
-              <p className="text-muted-foreground">
-                No lessons match "{searchQuery}". Try a different search term.
-              </p>
-            </>
-          ) : (
-            <>
-              <h3 className="text-lg font-medium text-foreground mb-2">No lessons available</h3>
-              <p className="text-muted-foreground">
-                Lessons will appear here once they're published.
-              </p>
-            </>
-          )}
-        </div>
-      )}
+        {!isLoading && filteredLessons && filteredLessons.length === 0 && (
+          <Box
+            sx={{
+              textAlign: "center",
+              py: 6,
+              borderRadius: 2,
+              bgcolor: (theme) => tokenAlpha(theme.vars.palette.muted, 30),
+            }}
+          >
+            <Box
+              component={Route}
+              aria-hidden="true"
+              sx={{ width: 48, height: 48, mx: "auto", mb: 2, color: "text.secondary" }}
+            />
+            <Typography variant="h6" component="h3" sx={{ fontWeight: 500, mb: 1 }}>
+              {searchQuery ? "No lessons found" : "No lessons available"}
+            </Typography>
+            <Typography sx={{ color: "text.secondary" }}>
+              {searchQuery
+                ? `No lessons match "${searchQuery}". Try a different search term.`
+                : "Lessons will appear here once they're published."}
+            </Typography>
+          </Box>
+        )}
+      </Stack>
     </PageContainer>
   );
 }

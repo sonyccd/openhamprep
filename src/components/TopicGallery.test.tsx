@@ -3,13 +3,13 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TopicGallery } from './TopicGallery';
 import { Topic } from '@/hooks/useTopics';
+import { muiWrapper } from '@/test/utils';
 
 // Mock framer-motion to avoid animation issues in tests
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
-  },
-}));
+vi.mock('framer-motion', async () => {
+  const { framerMotionMock } = await import('@/test/mocks/framerMotion');
+  return framerMotionMock();
+});
 
 // Mock useAppNavigation
 const mockNavigateToTopic = vi.fn();
@@ -88,7 +88,9 @@ describe('TopicGallery', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <TopicGallery testType={testType} />
-      </QueryClientProvider>
+      </QueryClientProvider>,
+      // The ported component reads palette tokens, so it needs the real theme.
+      { wrapper: muiWrapper }
     );
   };
 

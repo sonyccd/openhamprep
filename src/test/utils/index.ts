@@ -4,6 +4,7 @@ export {
   createRouterWrapper,
   createMemoryRouterWrapper,
   createCompleteWrapper,
+  muiWrapper,
 } from './testWrappers';
 
 export {

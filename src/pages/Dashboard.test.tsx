@@ -7,6 +7,7 @@ import Dashboard from './Dashboard';
 
 // Import the supabase mock
 import '@/test/mocks/supabase';
+import { muiWrapper } from '@/test/utils';
 
 // Mock react-router-dom hooks
 const mockNavigate = vi.fn();
@@ -58,16 +59,10 @@ vi.mock('@/hooks/useAppNavigation', () => ({
 }));
 
 // Mock framer-motion
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
-    p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement> & { children?: React.ReactNode }) => <p {...props}>{children}</p>,
-    button: ({ children, onClick, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
-      <button onClick={onClick} {...props}>{children}</button>
-    ),
-  },
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async () => {
+  const { framerMotionMock } = await import('@/test/mocks/framerMotion');
+  return framerMotionMock();
+});
 
 // Mock components that render in different views
 vi.mock('@/components/PracticeTest', () => ({
@@ -184,7 +179,13 @@ const renderDashboard = (initialView = 'dashboard') => {
           <Dashboard />
         </TooltipProvider>
       </MemoryRouter>
-    </QueryClientProvider>
+    </QueryClientProvider>,
+    // Dashboard can route to the lesson and topic galleries, which are ported
+    // and read custom palette keys. No test exercises those views yet, so this
+    // changes nothing today — it is here so the first test that does fails on
+    // its own assertion rather than on an unrelated "Cannot read properties of
+    // undefined (reading 'palette')".
+    { wrapper: muiWrapper }
   );
 };
 

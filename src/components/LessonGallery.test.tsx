@@ -3,13 +3,15 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LessonGallery } from './LessonGallery';
 import { Lesson } from '@/types/lessons';
+import { muiWrapper } from '@/test/utils';
 
 // Mock framer-motion to avoid animation issues in tests
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
-  },
-}));
+vi.mock('framer-motion', async () => {
+  // Imported inside the factory: vi.mock is hoisted above the import list, so a
+  // top-level binding is not initialised yet when the factory runs.
+  const { framerMotionMock } = await import('@/test/mocks/framerMotion');
+  return framerMotionMock();
+});
 
 // Mock useAppNavigation
 const mockNavigateToLesson = vi.fn();
@@ -93,7 +95,9 @@ describe('LessonGallery', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <LessonGallery testType={testType} />
-      </QueryClientProvider>
+      </QueryClientProvider>,
+      // The ported component reads palette tokens, so it needs the real theme.
+      { wrapper: muiWrapper }
     );
   };
 

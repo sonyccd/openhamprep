@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { TopicCard } from './TopicCard';
 import { Topic } from '@/hooks/useTopics';
+import { muiWrapper } from '@/test/utils';
 
 // Sample topic data
 const mockTopic: Topic = {
@@ -30,29 +32,29 @@ describe('TopicCard', () => {
 
   describe('Rendering', () => {
     it('should render topic title', () => {
-      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />);
+      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />, { wrapper: muiWrapper });
       expect(screen.getByText('Amateur Radio Basics')).toBeInTheDocument();
     });
 
     it('should render topic description', () => {
-      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />);
+      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />, { wrapper: muiWrapper });
       expect(screen.getByText('Introduction to amateur radio')).toBeInTheDocument();
     });
 
     it('should not render description if not provided', () => {
       const topicWithoutDescription = { ...mockTopic, description: null };
-      render(<TopicCard topic={topicWithoutDescription} onClick={mockOnClick} />);
+      render(<TopicCard topic={topicWithoutDescription} onClick={mockOnClick} />, { wrapper: muiWrapper });
       expect(screen.queryByText('Introduction to amateur radio')).not.toBeInTheDocument();
     });
 
     it('should show placeholder when no thumbnail', () => {
-      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />);
+      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />, { wrapper: muiWrapper });
       expect(screen.queryByRole('img')).not.toBeInTheDocument();
     });
 
     it('should show thumbnail image when provided', () => {
       const topicWithThumbnail = { ...mockTopic, thumbnail_url: 'https://example.com/thumb.jpg' };
-      render(<TopicCard topic={topicWithThumbnail} onClick={mockOnClick} />);
+      render(<TopicCard topic={topicWithThumbnail} onClick={mockOnClick} />, { wrapper: muiWrapper });
       const img = screen.getByAltText('Amateur Radio Basics');
       expect(img).toHaveAttribute('src', 'https://example.com/thumb.jpg');
     });
@@ -60,17 +62,17 @@ describe('TopicCard', () => {
 
   describe('Completion State', () => {
     it('should not show completed badge by default', () => {
-      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />);
+      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />, { wrapper: muiWrapper });
       expect(screen.queryByText('Completed')).not.toBeInTheDocument();
     });
 
     it('should show completed badge when isCompleted is true', () => {
-      render(<TopicCard topic={mockTopic} isCompleted={true} onClick={mockOnClick} />);
+      render(<TopicCard topic={mockTopic} isCompleted={true} onClick={mockOnClick} />, { wrapper: muiWrapper });
       expect(screen.getByText('Completed')).toBeInTheDocument();
     });
 
     it('should announce completion when completed', () => {
-      render(<TopicCard topic={mockTopic} isCompleted={true} onClick={mockOnClick} />);
+      render(<TopicCard topic={mockTopic} isCompleted={true} onClick={mockOnClick} />, { wrapper: muiWrapper });
       expect(screen.getByLabelText(/\(completed\)$/)).toBeInTheDocument();
     });
   });
@@ -84,7 +86,7 @@ describe('TopicCard', () => {
           { id: 'sub-2', subelement: 'T1B', topic_id: 'topic-123' },
         ],
       };
-      render(<TopicCard topic={topicWithSubelements} onClick={mockOnClick} />);
+      render(<TopicCard topic={topicWithSubelements} onClick={mockOnClick} />, { wrapper: muiWrapper });
       expect(screen.getByText('T1A')).toBeInTheDocument();
       expect(screen.getByText('T1B')).toBeInTheDocument();
     });
@@ -100,7 +102,7 @@ describe('TopicCard', () => {
           { id: 'sub-5', subelement: 'T1E', topic_id: 'topic-123' },
         ],
       };
-      render(<TopicCard topic={topicWithManySubelements} onClick={mockOnClick} />);
+      render(<TopicCard topic={topicWithManySubelements} onClick={mockOnClick} />, { wrapper: muiWrapper });
       expect(screen.getByText('T1A')).toBeInTheDocument();
       expect(screen.getByText('T1B')).toBeInTheDocument();
       expect(screen.getByText('T1C')).toBeInTheDocument();
@@ -109,7 +111,7 @@ describe('TopicCard', () => {
     });
 
     it('should not show subelements section when empty', () => {
-      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />);
+      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />, { wrapper: muiWrapper });
       expect(screen.queryByText('T1A')).not.toBeInTheDocument();
     });
   });
@@ -123,7 +125,7 @@ describe('TopicCard', () => {
           { id: 'r2', topic_id: 'topic-123', resource_type: 'article', title: 'Article 1', url: null, storage_path: null, description: null, display_order: 2, created_at: '' },
         ],
       };
-      render(<TopicCard topic={topicWithResources} onClick={mockOnClick} />);
+      render(<TopicCard topic={topicWithResources} onClick={mockOnClick} />, { wrapper: muiWrapper });
       expect(screen.getByText('2 resources')).toBeInTheDocument();
     });
 
@@ -134,20 +136,57 @@ describe('TopicCard', () => {
           { id: 'r1', topic_id: 'topic-123', resource_type: 'video', title: 'Video 1', url: null, storage_path: null, description: null, display_order: 1, created_at: '' },
         ],
       };
-      render(<TopicCard topic={topicWithOneResource} onClick={mockOnClick} />);
+      render(<TopicCard topic={topicWithOneResource} onClick={mockOnClick} />, { wrapper: muiWrapper });
       expect(screen.getByText('1 resource')).toBeInTheDocument();
     });
 
     it('should not show resource count when no resources', () => {
-      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />);
+      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />, { wrapper: muiWrapper });
       expect(screen.queryByText(/resource/)).not.toBeInTheDocument();
     });
   });
 
   describe('Interactions', () => {
     it('should call onClick when card is clicked', () => {
-      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />);
+      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />, { wrapper: muiWrapper });
       fireEvent.click(screen.getByText('Amateur Radio Basics'));
+      expect(mockOnClick).toHaveBeenCalledTimes(1);
+    });
+
+    // Same reasoning as LessonCard: the old div-as-button carried an untested
+    // Enter/Space handler, and the identical pattern in HamRadioToolCard never
+    // fired (#272). CardActionArea is a real button, so this is native.
+    // CardActionArea renders a real <button>, whose content model allows only
+    // phrasing content — a heading or a <p> in there is invalid HTML, and a
+    // heading also confuses assistive tech that navigates by heading. Nothing
+    // is lost by dropping them: ARIA gives button presentational children, so
+    // they were never exposed as a heading inside the old role="button" div
+    // either, and the name comes from the button's aria-label.
+    it('puts no heading or paragraph inside the button', () => {
+      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />, { wrapper: muiWrapper });
+
+      const button = screen.getByRole('button', { name: /Amateur Radio Basics/ });
+
+      expect(within(button).queryByRole('heading')).not.toBeInTheDocument();
+      expect(button.querySelector('p')).toBeNull();
+    });
+
+    it('is reachable by keyboard', async () => {
+      const user = userEvent.setup();
+      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />, { wrapper: muiWrapper });
+
+      await user.tab();
+
+      expect(screen.getByRole('button', { name: /Amateur Radio Basics/ })).toHaveFocus();
+    });
+
+    it.each(['{Enter}', ' '])('activates on %s', async (key) => {
+      const user = userEvent.setup();
+      render(<TopicCard topic={mockTopic} onClick={mockOnClick} />, { wrapper: muiWrapper });
+
+      await user.tab();
+      await user.keyboard(key);
+
       expect(mockOnClick).toHaveBeenCalledTimes(1);
     });
   });
