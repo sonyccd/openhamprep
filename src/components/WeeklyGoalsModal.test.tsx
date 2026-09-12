@@ -54,9 +54,13 @@ describe('WeeklyGoalsModal', () => {
     });
 
     it('renders dialog description', () => {
-      render(<WeeklyGoalsModal {...defaultProps} />);
+      render(<WeeklyGoalsModal {...defaultProps} />, { wrapper: muiWrapper });
 
-      expect(screen.getByText('Set your weekly targets to stay on track with your studies.')).toBeInTheDocument();
+      // The accessible description, not merely the presence of the text — see
+      // the equivalent test in LicenseSelectModal.
+      expect(screen.getByRole('dialog')).toHaveAccessibleDescription(
+        'Set your weekly targets to stay on track with your studies.'
+      );
     });
 
     it('renders questions per week label', () => {

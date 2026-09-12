@@ -117,10 +117,17 @@ export function WeeklyGoalsModal({
   };
 
   return (
-    <Dialog open={open} onClose={() => onOpenChange(false)} maxWidth="sm" fullWidth>
+    /* aria-describedby wired by hand — see LicenseSelectModal. */
+    <Dialog
+      open={open}
+      onClose={() => onOpenChange(false)}
+      maxWidth="sm"
+      fullWidth
+      aria-describedby="weekly-goals-description"
+    >
       <DialogTitle>Weekly Study Goals</DialogTitle>
       <DialogContent>
-        <DialogContentText>
+        <DialogContentText id="weekly-goals-description">
           Set your weekly targets to stay on track with your studies.
         </DialogContentText>
 

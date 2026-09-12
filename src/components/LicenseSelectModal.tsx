@@ -63,10 +63,23 @@ export function LicenseSelectModal({
   };
 
   return (
-    <Dialog open={open} onClose={() => handleOpenChange(false)} maxWidth="sm" fullWidth>
+    /*
+      aria-describedby has to be wired by hand. Radix's DialogDescription
+      wrapped DialogPrimitive.Description, which registered itself with
+      DialogPrimitive.Content — MUI's DialogContentText is styled text and
+      registers nothing, so without this pair the dialog announces its title
+      and loses its description entirely.
+    */
+    <Dialog
+      open={open}
+      onClose={() => handleOpenChange(false)}
+      maxWidth="sm"
+      fullWidth
+      aria-describedby="license-select-description"
+    >
       <DialogTitle>Select License Class</DialogTitle>
       <DialogContent>
-        <DialogContentText>
+        <DialogContentText id="license-select-description">
           Choose which amateur radio license exam you want to study for.
         </DialogContentText>
 
@@ -101,7 +114,29 @@ export function LicenseSelectModal({
                 key={test.id}
                 value={test.id}
                 disabled={!test.available}
-                control={<Radio sx={{ alignSelf: "flex-start" }} />}
+                /*
+                  Both point at rendered elements rather than carrying text.
+                  The whole FormControlLabel label is the accessible name by
+                  default, so the prose and the stats row were read out as part
+                  of it — a far longer name per option than the hand-written
+                  aria-label this replaced. aria-labelledby narrows the name to
+                  the title row (licence plus status chips) and
+                  aria-describedby moves the rest to the description.
+
+                  Deliberately ids, not strings: a hand-written aria-label is
+                  what drifted from the visible text before.
+                */
+                control={
+                  <Radio
+                    sx={{ alignSelf: "flex-start" }}
+                    slotProps={{
+                      input: {
+                        "aria-labelledby": `${test.id}-title`,
+                        "aria-describedby": `${test.id}-detail`,
+                      },
+                    }}
+                  />
+                }
                 sx={{
                   alignItems: "flex-start",
                   m: 0,
@@ -137,7 +172,7 @@ export function LicenseSelectModal({
                     </Box>
 
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box id={`${test.id}-title`} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <Typography component="span" sx={{ fontWeight: 600 }}>
                           {test.name}
                         </Typography>
@@ -152,22 +187,24 @@ export function LicenseSelectModal({
                           <Chip size="small" label="Coming Soon" sx={{ bgcolor: "muted" }} />
                         )}
                       </Box>
-                      <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-                        {licenseDescriptions[test.id]}
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 2,
-                          mt: 1,
-                          fontSize: "0.75rem",
-                          color: "text.secondary",
-                        }}
-                      >
-                        <span>{config.questionCount} questions</span>
-                        <span>{config.passingScore} to pass</span>
-                        <span>74% passing</span>
+                      <Box id={`${test.id}-detail`}>
+                        <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+                          {licenseDescriptions[test.id]}
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 2,
+                            mt: 1,
+                            fontSize: "0.75rem",
+                            color: "text.secondary",
+                          }}
+                        >
+                          <span>{config.questionCount} questions</span>
+                          <span>{config.passingScore} to pass</span>
+                          <span>74% passing</span>
+                        </Box>
                       </Box>
                     </Box>
                   </Box>

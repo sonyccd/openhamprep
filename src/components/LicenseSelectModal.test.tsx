@@ -111,20 +111,25 @@ describe('LicenseSelectModal', () => {
       expect(screen.getByRole('radio', { name: /General/ })).toBeChecked();
     });
 
-    it('skips unavailable options when arrowing', async () => {
-      const user = userEvent.setup();
+    // Dropped a test named "skips unavailable options when arrowing". Every
+    // entry in testTypes is available: true today, so it always took its own
+    // else branch and asserted nothing — the same vacuous shape this migration
+    // has deleted three of already. Skipping disabled radios is native browser
+    // behaviour rather than logic in this component, and there is no data to
+    // exercise it without mocking the whole navigation module, so it is not
+    // worth the scaffolding.
+    it('keeps the option name short and puts the detail in the description', () => {
       render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />, { wrapper: muiWrapper });
 
-      const unavailable = screen.getAllByRole('radio').filter((r) => (r as HTMLInputElement).disabled);
+      const technician = screen.getByRole('radio', { name: /Technician/ });
 
-      // Native radios are skipped by arrow navigation when disabled; if every
-      // license is available this is vacuous, so it only asserts when one is not.
-      if (unavailable.length > 0) {
-        await user.keyboard('{ArrowDown}');
-        expect(unavailable.every((r) => !(r as HTMLInputElement).checked)).toBe(true);
-      } else {
-        expect(unavailable).toHaveLength(0);
-      }
+      // The whole FormControlLabel label is the accessible name, so without
+      // aria-describedby the prose and the stats row got read out as part of
+      // it. The numbers belong in the description.
+      expect(technician).toHaveAccessibleName(/^Technician/);
+      expect(technician).not.toHaveAccessibleName(/74% passing/);
+      expect(technician).toHaveAccessibleDescription(/Entry-level license/);
+      expect(technician).toHaveAccessibleDescription(/74% passing/);
     });
   });
 
@@ -284,7 +289,13 @@ describe('LicenseSelectModal', () => {
     it('has accessible dialog description', () => {
       render(<LicenseSelectModal {...defaultProps} />, { wrapper: muiWrapper });
 
-      expect(screen.getByText('Choose which amateur radio license exam you want to study for.')).toBeInTheDocument();
+      // Asserting the accessible description, not just that the text is on the
+      // page. getByText passes whether or not the dialog is actually described
+      // by it — Radix wired that automatically and MUI does not, so this test
+      // was previously green while the description was unreachable.
+      expect(screen.getByRole('dialog')).toHaveAccessibleDescription(
+        'Choose which amateur radio license exam you want to study for.'
+      );
     });
 
     it('license cards are selectable radio buttons', () => {
