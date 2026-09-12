@@ -10,7 +10,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { PageContainer } from "@/components/ui/page-container";
+import { PageContainer } from "@/components/ohp/PageContainer";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { MotionBox } from "@/components/ohp/MotionBox";
 import { tokenAlpha } from "@/theme/muiTheme";

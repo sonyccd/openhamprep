@@ -3,7 +3,7 @@ import { Question } from "@/hooks/useQuestions";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PageContainer } from "@/components/ui/page-container";
+import { PageContainer } from "@/components/ohp/PageContainer";
 import { cn } from "@/lib/utils";
 
 interface QuestionListViewProps {

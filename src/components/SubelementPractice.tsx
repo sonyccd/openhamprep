@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getSubelementName } from "@/lib/subelementNames";
 import { TestType } from "@/types/navigation";
-import { PageContainer } from "@/components/ui/page-container";
+import { PageContainer } from "@/components/ohp/PageContainer";
 import { QuizShell, QuizShellPending, QuizShellError, QuizNavControls } from "@/components/QuizShell";
 
 interface SubelementPracticeProps {

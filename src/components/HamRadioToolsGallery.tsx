@@ -12,7 +12,7 @@ import Typography from "@mui/material/Typography";
 import { useHamRadioTools, useHamRadioToolCategories } from "@/hooks/useHamRadioTools";
 import { HamRadioToolCard } from "./HamRadioToolCard";
 import { Search, Wrench } from "lucide-react";
-import { PageContainer } from "@/components/ui/page-container";
+import { PageContainer } from "@/components/ohp/PageContainer";
 import { MotionBox } from "@/components/ohp/MotionBox";
 import { tokenAlpha } from "@/theme/muiTheme";
 

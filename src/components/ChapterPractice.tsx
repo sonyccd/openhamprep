@@ -12,7 +12,7 @@ import { useArrlChaptersWithCounts } from "@/hooks/useArrlChapters";
 import { RotateCcw, ChevronRight, CheckCircle, ArrowLeft, Book } from "lucide-react";
 import { motion } from "framer-motion";
 import { TestType } from "@/types/navigation";
-import { PageContainer } from "@/components/ui/page-container";
+import { PageContainer } from "@/components/ohp/PageContainer";
 import { QuizShell, QuizShellPending, QuizShellError, QuizNavControls } from "@/components/QuizShell";
 import type { ArrlChapterWithCount, LicenseType } from "@/types/chapters";
 

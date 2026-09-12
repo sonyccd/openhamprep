@@ -13,7 +13,7 @@ import { filterByTestType } from '@/lib/testTypeUtils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Loader2, AlertTriangle, Zap, Brain, Target, X } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
-import { PageContainer } from '@/components/ui/page-container';
+import { PageContainer } from '@/components/ohp/PageContainer';
 import {
   DashboardHero,
   DashboardNextSteps,

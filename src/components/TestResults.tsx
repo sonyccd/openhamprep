@@ -9,7 +9,7 @@ import { ArrowLeft, ArrowRight, RotateCcw, Home, Trophy, XCircle } from "lucide-
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { TestType, testConfig } from "@/types/navigation";
-import { PageContainer } from "@/components/ui/page-container";
+import { PageContainer } from "@/components/ohp/PageContainer";
 
 interface TestResultsProps {
   questions: Question[];

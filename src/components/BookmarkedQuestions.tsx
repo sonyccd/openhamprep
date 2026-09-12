@@ -10,7 +10,7 @@ import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { Bookmark, Loader2, Trash2, MessageSquare, ArrowLeft, ChevronLeft, ChevronRight, Dices } from "lucide-react";
 import { motion } from "framer-motion";
 import { TestType } from "@/types/navigation";
-import { PageContainer } from "@/components/ui/page-container";
+import { PageContainer } from "@/components/ohp/PageContainer";
 import { filterByTestType } from "@/lib/testTypeUtils";
 
 
