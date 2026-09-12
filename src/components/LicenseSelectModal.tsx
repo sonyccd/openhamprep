@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { Radio, Zap, Award, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Radio as RadioIcon, Zap, Award } from "lucide-react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
+import Typography from "@mui/material/Typography";
+import { tokenAlpha } from "@/theme/muiTheme";
 import { TestType, testTypes, testConfig } from "@/types/navigation";
 
 interface LicenseSelectModalProps {
@@ -20,7 +23,7 @@ interface LicenseSelectModalProps {
 }
 
 const licenseIcons: Record<TestType, React.ElementType> = {
-  technician: Radio,
+  technician: RadioIcon,
   general: Zap,
   extra: Award,
 };
@@ -60,16 +63,33 @@ export function LicenseSelectModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Select License Class</DialogTitle>
-          <DialogDescription>
-            Choose which amateur radio license exam you want to study for.
-          </DialogDescription>
-        </DialogHeader>
+    <Dialog open={open} onClose={() => handleOpenChange(false)} maxWidth="sm" fullWidth>
+      <DialogTitle>Select License Class</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          Choose which amateur radio license exam you want to study for.
+        </DialogContentText>
 
-        <div className="grid gap-3 py-4" role="radiogroup" aria-label="License class options">
+        {/*
+          A real RadioGroup of native <input type="radio">, which is what #274
+          asked for. The previous version declared role="radiogroup" with
+          role="radio" on three <button>s and implemented none of the APG
+          keyboard contract: three tab stops instead of one, and arrow keys that
+          did nothing. Announcing the role while ignoring its contract is worse
+          than not using it.
+
+          Nothing here re-implements that contract — the platform provides it.
+          Radio renders type="radio" (Radio.js:195), so the browser gives arrow
+          key selection, a single tab stop landing on the checked option, and
+          grouping by name. Disabled options are skipped by arrow keys too.
+        */}
+        <RadioGroup
+          aria-label="License class options"
+          name="license-class"
+          value={pendingSelection}
+          onChange={(event) => setPendingSelection(event.target.value as TestType)}
+          sx={{ gap: 1.5, py: 2 }}
+        >
           {testTypes.map((test) => {
             const Icon = licenseIcons[test.id];
             const config = testConfig[test.id];
@@ -77,90 +97,99 @@ export function LicenseSelectModal({
             const isCurrent = selectedTest === test.id;
 
             return (
-              <button
+              <FormControlLabel
                 key={test.id}
-                role="radio"
-                onClick={() => test.available && setPendingSelection(test.id)}
+                value={test.id}
                 disabled={!test.available}
-                aria-label={`${test.name} license: ${licenseDescriptions[test.id]}${isCurrent ? ' (currently selected)' : ''}${!test.available ? ' (coming soon)' : ''}`}
-                aria-checked={isSelected}
-                className={cn(
-                  "relative flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left",
-                  isSelected
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-muted-foreground/50 hover:bg-secondary/50",
-                  !test.available && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                {/* Icon */}
-                <div
-                  className={cn(
-                    "flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center",
-                    isSelected
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground"
-                  )}
-                >
-                  <Icon className="w-6 h-6" />
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3
-                      className={cn(
-                        "font-semibold",
-                        isSelected ? "text-foreground" : "text-foreground"
-                      )}
+                control={<Radio sx={{ alignSelf: "flex-start" }} />}
+                sx={{
+                  alignItems: "flex-start",
+                  m: 0,
+                  p: 2,
+                  gap: 1,
+                  borderRadius: 2,
+                  border: "2px solid",
+                  borderColor: isSelected ? "primary.main" : "divider",
+                  bgcolor: (theme) =>
+                    isSelected ? tokenAlpha(theme.vars.palette.primary.main, 5) : "transparent",
+                  transition: "all 200ms",
+                  "&:hover": {
+                    borderColor: isSelected ? "primary.main" : "text.secondary",
+                  },
+                  "&.Mui-disabled": { opacity: 0.5 },
+                }}
+                label={
+                  <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, flex: 1 }}>
+                    <Box
+                      sx={{
+                        flexShrink: 0,
+                        width: 48,
+                        height: 48,
+                        borderRadius: 2,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: isSelected ? "primary.main" : "secondary.main",
+                        color: isSelected ? "primary.contrastText" : "text.secondary",
+                      }}
                     >
-                      {test.name}
-                    </h3>
-                    {isCurrent && (
-                      <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                        Current
-                      </span>
-                    )}
-                    {!test.available && (
-                      <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                        Coming Soon
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {licenseDescriptions[test.id]}
-                  </p>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                    <span>{config.questionCount} questions</span>
-                    <span>{config.passingScore} to pass</span>
-                    <span>74% passing</span>
-                  </div>
-                </div>
+                      <Box component={Icon} aria-hidden="true" sx={{ width: 24, height: 24 }} />
+                    </Box>
 
-                {/* Selection indicator */}
-                {isSelected && (
-                  <div className="absolute top-4 right-4">
-                    <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                      <ChevronRight className="w-3 h-3 text-primary-foreground" />
-                    </div>
-                  </div>
-                )}
-              </button>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography component="span" sx={{ fontWeight: 600 }}>
+                          {test.name}
+                        </Typography>
+                        {/*
+                          These were a hand-written aria-label before, listing
+                          "(currently selected)" and "(coming soon)" alongside
+                          the visible chips. The label content is the accessible
+                          name now, so the two cannot drift apart.
+                        */}
+                        {isCurrent && <Chip size="small" label="Current" sx={{ bgcolor: "muted" }} />}
+                        {!test.available && (
+                          <Chip size="small" label="Coming Soon" sx={{ bgcolor: "muted" }} />
+                        )}
+                      </Box>
+                      <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+                        {licenseDescriptions[test.id]}
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          mt: 1,
+                          fontSize: "0.75rem",
+                          color: "text.secondary",
+                        }}
+                      >
+                        <span>{config.questionCount} questions</span>
+                        <span>{config.passingScore} to pass</span>
+                        <span>74% passing</span>
+                      </Box>
+                    </Box>
+                  </Box>
+                }
+              />
             );
           })}
-        </div>
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={handleCancel}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={pendingSelection === selectedTest}
-          >
-            {pendingSelection === selectedTest ? "No Change" : "Change License"}
-          </Button>
-        </DialogFooter>
+        </RadioGroup>
       </DialogContent>
+
+      <DialogActions sx={{ gap: 1 }}>
+        <Button variant="outlined" onClick={handleCancel}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleConfirm}
+          disabled={pendingSelection === selectedTest}
+        >
+          {pendingSelection === selectedTest ? "No Change" : "Change License"}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

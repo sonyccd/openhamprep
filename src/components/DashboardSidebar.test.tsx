@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { DashboardSidebar } from './DashboardSidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { muiWrapper } from '@/test/utils';
 
 // Mock hooks
 vi.mock('@/hooks/useAdmin', () => ({
@@ -35,7 +36,8 @@ function createWrapper() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <TooltipProvider>
-          {children}
+          {/* LicenseSelectModal reads palette tokens, so it needs the real theme. */}
+          {muiWrapper({ children })}
         </TooltipProvider>
       </BrowserRouter>
     </QueryClientProvider>
@@ -170,9 +172,9 @@ describe('DashboardSidebar', () => {
         expect(screen.getByText('Select License Class')).toBeInTheDocument();
       });
 
-      // Select General
-      const generalCard = screen.getByText(/Expanded HF privileges/).closest('button');
-      await user.click(generalCard!);
+      // Select General. The options are native radios now, so this is a role
+      // query rather than walking up to the enclosing button.
+      await user.click(screen.getByRole('radio', { name: /General/ }));
 
       // Confirm change
       await user.click(screen.getByRole('button', { name: /change license/i }));

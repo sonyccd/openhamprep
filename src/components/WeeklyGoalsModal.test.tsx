@@ -28,6 +28,7 @@ vi.mock('@/services/types', () => ({
 }));
 
 import { toast } from 'sonner';
+import { muiWrapper } from '@/test/utils';
 
 describe('WeeklyGoalsModal', () => {
   const defaultProps = {
@@ -68,6 +69,17 @@ describe('WeeklyGoalsModal', () => {
       render(<WeeklyGoalsModal {...defaultProps} />);
 
       expect(screen.getByText('Practice tests per week')).toBeInTheDocument();
+    });
+
+    // Both sliders had no accessible name before the port: the Radix version
+    // used a <Label> with no htmlFor that wrapped nothing, so a screen reader
+    // announced "slider, 50" with no indication of what it set. Probed the old
+    // component to confirm before changing it — both came back "(none)".
+    it('names both goal sliders', () => {
+      render(<WeeklyGoalsModal {...defaultProps} />, { wrapper: muiWrapper });
+
+      expect(screen.getByRole('slider', { name: /Questions per week/ })).toBeInTheDocument();
+      expect(screen.getByRole('slider', { name: /Practice tests per week/ })).toBeInTheDocument();
     });
 
     it('renders Save Goals button', () => {
