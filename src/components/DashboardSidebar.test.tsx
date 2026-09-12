@@ -497,4 +497,44 @@ describe('DashboardSidebar', () => {
       expect(screen.getByRole('button', { name: /expand sidebar/i })).toBeInTheDocument();
     });
   });
+
+  // SidebarNavContent used to be declared inside DashboardSidebar's render
+  // body, which makes it a new component type every render — React then
+  // remounts the whole subtree instead of updating it. DashboardSidebar
+  // re-renders on six pieces of its own state (both nav groups, the mobile
+  // drawer, and three dialogs), so expanding one group rebuilt every node in
+  // the navigation.
+  //
+  // Measured before the fix by capturing a node, toggling a group and
+  // comparing identity: sameNode=false.
+  describe('Nav tree stability', () => {
+    it('keeps the same nav DOM nodes when a group is expanded', async () => {
+      const user = userEvent.setup();
+      render(<DashboardSidebar {...defaultProps} />, { wrapper: createWrapper() });
+
+      const before = screen.getByRole('button', { name: /Dashboard/ });
+
+      // Toggling Study re-renders DashboardSidebar.
+      await user.click(screen.getByRole('button', { name: /Study/i }));
+
+      // An unrelated nav item must be the very same element, not a rebuilt one.
+      expect(screen.getByRole('button', { name: /Dashboard/ })).toBe(before);
+    });
+
+    // A second state variable, to show it is the render itself and not
+    // something specific to the Study toggle. Deliberately not a dialog: MUI
+    // marks the rest of the page aria-hidden while a modal is open, so a role
+    // query cannot see the sidebar at all then — correct modal behaviour, but
+    // it makes the assertion impossible rather than false.
+    it('keeps the same nav DOM nodes when the other group is expanded', async () => {
+      const user = userEvent.setup();
+      render(<DashboardSidebar {...defaultProps} />, { wrapper: createWrapper() });
+
+      const before = screen.getByRole('button', { name: /Dashboard/ });
+
+      await user.click(screen.getByRole('button', { name: /Learn/i }));
+
+      expect(screen.getByRole('button', { name: /Dashboard/ })).toBe(before);
+    });
+  });
 });

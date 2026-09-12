@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useState } from 'react';
 import type { View } from '@/types/navigation';
+import { SidebarNavContent } from '@/components/sidebar/SidebarNavContent';
 import { LicenseSelectModal } from '@/components/LicenseSelectModal';
 import {
   SidebarHeader,
@@ -145,139 +146,29 @@ export function DashboardSidebar({
     }
   };
 
-  const NavContent = ({ isMobile = false }: { isMobile?: boolean }) => {
-    const showExpanded = isMobile || !isCollapsed;
-
-    return (
-      <>
-        <SidebarHeader
-          isCollapsed={isCollapsed}
-          isMobile={isMobile}
-          onToggleCollapse={onToggleCollapse}
-        />
-
-        <SidebarLicenseSelector
-          selectedTest={selectedTest}
-          isCollapsed={isCollapsed}
-          isMobile={isMobile}
-          onOpenModal={() => setLicenseModalOpen(true)}
-        />
-
-        {/* Search Button */}
-        {onSearch && (
-          <div className="px-2 pt-2">
-            {showExpanded ? (
-              <Button
-                variant="outline"
-                className="w-full justify-start text-muted-foreground hover:text-foreground"
-                onClick={() => {
-                  onSearch();
-                  setMobileOpen(false);
-                }}
-              >
-                <Search className="mr-2 h-4 w-4" />
-                Search...
-                <kbd className="ml-auto bg-muted px-1.5 py-0.5 rounded text-xs font-mono">
-                  {getModifierKey()}K
-                </kbd>
-              </Button>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="w-full text-muted-foreground hover:text-foreground"
-                    onClick={onSearch}
-                    aria-label="Search"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p>Search ({getModifierKey()}K)</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        )}
-
-        {/* Navigation */}
-        <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-          {/* Top nav items: Dashboard, Practice Test */}
-          {topNavItems.map((item) => (
-            <SidebarNavItem
-              key={item.id}
-              item={item}
-              isActive={!isOnAdminPage && currentView === item.id}
-              showExpanded={showExpanded}
-              onClick={() => handleNavClick(item.id, item.disabled)}
-            />
-          ))}
-
-          {/* Learn Group - Collapsible (Topics & Lessons) */}
-          <SidebarLearnGroup
-            group={learnGroup}
-            currentView={currentView}
-            isOnAdminPage={isOnAdminPage}
-            isExpanded={learnExpanded}
-            showExpanded={showExpanded}
-            onToggle={() => {
-              // If sidebar is collapsed, expand it and show learn submenu
-              if (isCollapsed && onToggleCollapse) {
-                onToggleCollapse();
-                setLearnExpanded(true);
-              } else {
-                // Otherwise just toggle the learn submenu
-                setLearnExpanded(!learnExpanded);
-              }
-            }}
-            onNavClick={handleNavClick}
-          />
-
-          {/* Study Group - Collapsible */}
-          <SidebarStudyGroup
-            group={studyGroup}
-            currentView={currentView}
-            isOnAdminPage={isOnAdminPage}
-            isExpanded={studyExpanded}
-            showExpanded={showExpanded}
-            onToggle={() => {
-              // If sidebar is collapsed, expand it and show study submenu
-              if (isCollapsed && onToggleCollapse) {
-                onToggleCollapse();
-                setStudyExpanded(true);
-              } else {
-                // Otherwise just toggle the study submenu
-                setStudyExpanded(!studyExpanded);
-              }
-            }}
-            onNavClick={handleNavClick}
-          />
-
-          {/* Bottom nav items: Glossary, Find Test Site */}
-          {bottomNavItems.map((item) => (
-            <SidebarNavItem
-              key={item.id}
-              item={item}
-              isActive={!isOnAdminPage && currentView === item.id}
-              showExpanded={showExpanded}
-              onClick={() => handleNavClick(item.id, item.disabled)}
-            />
-          ))}
-        </nav>
-
-        <SidebarFooter
-          userInfo={userInfo}
-          isAdmin={isAdmin}
-          isOnAdminPage={isOnAdminPage}
-          isCollapsed={isCollapsed}
-          isMobile={isMobile}
-          onProfileClick={() => setProfileModalOpen(true)}
-          onAdminClick={() => navigate('/admin')}
-        />
-      </>
-    );
+  // One bundle so the desktop rail and the mobile drawer cannot drift apart.
+  const navContentProps = {
+    isCollapsed,
+    onToggleCollapse,
+    currentView,
+    isOnAdminPage,
+    topNavItems,
+    bottomNavItems,
+    learnGroup,
+    studyGroup,
+    learnExpanded,
+    setLearnExpanded,
+    studyExpanded,
+    setStudyExpanded,
+    onNavClick: handleNavClick,
+    selectedTest,
+    onOpenLicenseModal: () => setLicenseModalOpen(true),
+    onSearch,
+    onCloseMobile: () => setMobileOpen(false),
+    userInfo,
+    isAdmin,
+    onProfileClick: () => setProfileModalOpen(true),
+    onAdminClick: () => navigate('/admin'),
   };
 
   return (
@@ -351,7 +242,7 @@ export function DashboardSidebar({
           </Tooltip>
           <SheetContent side="left" className="w-64 p-0 bg-card border-border">
             <div className="flex flex-col h-full">
-              <NavContent isMobile />
+              <SidebarNavContent {...navContentProps} isMobile />
             </div>
           </SheetContent>
         </Sheet>
@@ -364,7 +255,7 @@ export function DashboardSidebar({
           isCollapsed ? 'w-16' : 'w-64'
         )}
       >
-        <NavContent />
+        <SidebarNavContent {...navContentProps} />
       </div>
     </>
   );
