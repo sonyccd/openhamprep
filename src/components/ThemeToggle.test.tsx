@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeToggle } from './ThemeToggle';
-import { TooltipProvider } from '@/components/ui/tooltip';
 
 // Mock next-themes
 const mockSetTheme = vi.fn();
@@ -13,67 +12,109 @@ vi.mock('next-themes', () => ({
 }));
 
 describe('ThemeToggle', () => {
-  const renderWithTooltip = () => {
-    return render(
-      <TooltipProvider>
-        <ThemeToggle />
-      </TooltipProvider>
-    );
-  };
+  // MUI's Tooltip needs no provider, unlike the Radix one this replaced.
+  const renderToggle = () => render(<ThemeToggle />);
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseTheme.mockReturnValue({
       theme: 'light',
+      resolvedTheme: 'light',
       setTheme: mockSetTheme,
     });
   });
 
   describe('Rendering', () => {
     it('renders a button', () => {
-      renderWithTooltip();
+      renderToggle();
 
       expect(screen.getByRole('button')).toBeInTheDocument();
     });
 
-    it('has correct aria-label for light theme', () => {
-      mockUseTheme.mockReturnValue({
-        theme: 'light',
-        setTheme: mockSetTheme,
-      });
+    it('names itself for the theme it switches to, from light', () => {
+      renderToggle();
 
-      renderWithTooltip();
-
-      expect(screen.getByRole('button')).toHaveAttribute(
-        'aria-label',
-        'Switch to dark theme'
-      );
+      expect(screen.getByRole('button')).toHaveAccessibleName('Switch to dark theme');
     });
 
-    it('has correct aria-label for dark theme', () => {
+    it('names itself for the theme it switches to, from dark', () => {
       mockUseTheme.mockReturnValue({
         theme: 'dark',
+        resolvedTheme: 'dark',
         setTheme: mockSetTheme,
       });
 
-      renderWithTooltip();
+      renderToggle();
 
-      expect(screen.getByRole('button')).toHaveAttribute(
-        'aria-label',
-        'Switch to light theme'
-      );
+      expect(screen.getByRole('button')).toHaveAccessibleName('Switch to light theme');
+    });
+
+    it('reads as light before next-themes has resolved', () => {
+      // resolvedTheme is undefined until mount. The pre-mount markup rendered
+      // the sun, so light is the reading that matches it.
+      mockUseTheme.mockReturnValue({
+        theme: undefined,
+        resolvedTheme: undefined,
+        setTheme: mockSetTheme,
+      });
+
+      renderToggle();
+
+      expect(screen.getByRole('button')).toHaveAccessibleName('Switch to dark theme');
+    });
+  });
+
+  // "system" is the default (App.tsx sets defaultTheme="system"), so this is
+  // the state most users are actually in — and next-themes reports theme
+  // "system" with resolvedTheme carrying the real light/dark. Reading `theme`
+  // alone makes the button describe the wrong direction on a dark-mode OS.
+  describe('System theme', () => {
+    it('offers to switch to light when system resolves dark', () => {
+      mockUseTheme.mockReturnValue({
+        theme: 'system',
+        resolvedTheme: 'dark',
+        setTheme: mockSetTheme,
+      });
+
+      renderToggle();
+
+      expect(screen.getByRole('button')).toHaveAccessibleName('Switch to light theme');
+    });
+
+    it('offers to switch to dark when system resolves light', () => {
+      mockUseTheme.mockReturnValue({
+        theme: 'system',
+        resolvedTheme: 'light',
+        setTheme: mockSetTheme,
+      });
+
+      renderToggle();
+
+      expect(screen.getByRole('button')).toHaveAccessibleName('Switch to dark theme');
+    });
+
+    it('actually leaves dark mode when system resolves dark', async () => {
+      const user = userEvent.setup();
+      mockUseTheme.mockReturnValue({
+        theme: 'system',
+        resolvedTheme: 'dark',
+        setTheme: mockSetTheme,
+      });
+
+      renderToggle();
+      await user.click(screen.getByRole('button'));
+
+      // Reading `theme` sent "dark" here, which is what the page already
+      // rendered — the click did nothing the user could see.
+      expect(mockSetTheme).toHaveBeenCalledWith('light');
     });
   });
 
   describe('Theme Switching', () => {
     it('switches from light to dark when clicked in light mode', async () => {
       const user = userEvent.setup();
-      mockUseTheme.mockReturnValue({
-        theme: 'light',
-        setTheme: mockSetTheme,
-      });
 
-      renderWithTooltip();
+      renderToggle();
 
       await user.click(screen.getByRole('button'));
 
@@ -84,10 +125,11 @@ describe('ThemeToggle', () => {
       const user = userEvent.setup();
       mockUseTheme.mockReturnValue({
         theme: 'dark',
+        resolvedTheme: 'dark',
         setTheme: mockSetTheme,
       });
 
-      renderWithTooltip();
+      renderToggle();
 
       await user.click(screen.getByRole('button'));
 
@@ -95,31 +137,17 @@ describe('ThemeToggle', () => {
     });
   });
 
-  // These two keep their class assertions deliberately: sr-only is what makes
-  // the label reach screen readers while staying invisible, so it is an
-  // accessibility contract rather than styling. Dropping it would make the text
-  // render on screen.
-  describe('Screen Reader Support', () => {
-    it('has sr-only text for light theme', () => {
-      mockUseTheme.mockReturnValue({
-        theme: 'light',
-        setTheme: mockSetTheme,
-      });
+  // The previous version carried both an aria-label and an sr-only span of the
+  // same text. aria-label wins for the accessible name, so the span was neither
+  // visible nor announced — it is gone, and these assert the property that
+  // actually mattered: the button has a name, and the icons do not contribute
+  // to it.
+  describe('Accessible name', () => {
+    it('takes its whole name from the label, not the icons', () => {
+      renderToggle();
 
-      renderWithTooltip();
-
-      expect(screen.getByText('Switch to dark theme')).toHaveClass('sr-only');
-    });
-
-    it('has sr-only text for dark theme', () => {
-      mockUseTheme.mockReturnValue({
-        theme: 'dark',
-        setTheme: mockSetTheme,
-      });
-
-      renderWithTooltip();
-
-      expect(screen.getByText('Switch to light theme')).toHaveClass('sr-only');
+      expect(screen.getByRole('button')).toHaveAccessibleName('Switch to dark theme');
+      expect(screen.queryByRole('img')).not.toBeInTheDocument();
     });
   });
 });
