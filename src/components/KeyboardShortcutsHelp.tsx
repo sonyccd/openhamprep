@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Keyboard, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Keyboard } from 'lucide-react';
+import Box from '@mui/material/Box';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import IconButton from '@mui/material/IconButton';
+import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
 interface ShortcutItem {
   keys: string[];
@@ -48,19 +47,36 @@ const shortcutGroups: ShortcutGroup[] = [
   },
 ];
 
+// The <kbd> chrome, shared by the list and the footer hint.
+const kbd = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minWidth: 24,
+  height: 24,
+  px: 1,
+  fontFamily: 'monospace',
+  fontSize: '0.75rem',
+  fontWeight: 500,
+  bgcolor: 'muted',
+  border: '1px solid',
+  borderColor: 'divider',
+  borderRadius: 1,
+} as const;
+
 interface KeyboardShortcutsHelpProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
 }
 
-export function KeyboardShortcutsHelp({ 
-  open: controlledOpen, 
+export function KeyboardShortcutsHelp({
+  open: controlledOpen,
   onOpenChange,
-  showTrigger = true 
+  showTrigger = true
 }: KeyboardShortcutsHelpProps) {
   const [internalOpen, setInternalOpen] = useState(false);
-  
+
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? onOpenChange! : setInternalOpen;
@@ -83,71 +99,100 @@ export function KeyboardShortcutsHelp({
   }, [open, setOpen]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
+      {/*
+        MUI has no DialogTrigger — the dialog is opened by whatever owns `open`.
+        So the trigger is a plain button rather than the
+        Tooltip > DialogTrigger > Button nesting this replaces.
+      */}
       {showTrigger && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                aria-label="Keyboard shortcuts"
-              >
-                <Keyboard className="w-4 h-4" aria-hidden="true" />
-              </Button>
-            </DialogTrigger>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Keyboard shortcuts (?)</p>
-          </TooltipContent>
+        <Tooltip title="Keyboard shortcuts (?)">
+          <IconButton
+            onClick={() => setOpen(true)}
+            aria-label="Keyboard shortcuts"
+            sx={{ width: 32, height: 32, color: 'text.secondary' }}
+          >
+            <Box component={Keyboard} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+          </IconButton>
         </Tooltip>
       )}
-      <DialogContent className="sm:max-w-md z-[100]" aria-describedby="shortcuts-description">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Keyboard className="w-5 h-5" aria-hidden="true" />
-            Keyboard Shortcuts
-          </DialogTitle>
-          <DialogDescription id="shortcuts-description">
+
+      {/*
+        onClose fires for both the backdrop and Escape, which is what
+        Radix's onOpenChange(false) covered. The z-[100] the old
+        DialogContent carried is gone: MUI puts modals at zIndex 1300 by
+        default, well clear of anything this app stacks.
+      */}
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        aria-describedby="shortcuts-description"
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box component={Keyboard} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+          Keyboard Shortcuts
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="shortcuts-description">
             Use these keyboard shortcuts to navigate and answer questions faster.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-6 py-4">
-          {shortcutGroups.map((group) => (
-            <div key={group.title}>
-              <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                {group.title}
-              </h3>
-              <div className="space-y-2">
-                {group.shortcuts.map((shortcut, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between py-1.5"
-                  >
-                    <span className="text-sm text-foreground">
-                      {shortcut.description}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      {shortcut.keys.map((key, keyIndex) => (
-                        <kbd
-                          key={keyIndex}
-                          className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 text-xs font-mono font-medium bg-muted border border-border rounded"
-                        >
-                          {key}
-                        </kbd>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="text-center text-xs text-muted-foreground border-t border-border pt-4">
-          Press <kbd className="px-1.5 py-0.5 text-xs bg-muted border border-border rounded">?</kbd> anytime to show this help
-        </div>
-      </DialogContent>
-    </Dialog>
+          </DialogContentText>
+
+          <Stack spacing={3} sx={{ py: 2 }}>
+            {shortcutGroups.map((group) => (
+              <Box key={group.title}>
+                <Typography
+                  variant="subtitle2"
+                  component="h3"
+                  sx={{ fontWeight: 500, color: 'text.secondary', mb: 1.5 }}
+                >
+                  {group.title}
+                </Typography>
+                <Stack spacing={1}>
+                  {group.shortcuts.map((shortcut, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        py: 0.75,
+                      }}
+                    >
+                      <Typography variant="body2">{shortcut.description}</Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        {shortcut.keys.map((key, keyIndex) => (
+                          <Box component="kbd" key={keyIndex} sx={kbd}>
+                            {key}
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
+            ))}
+          </Stack>
+
+          <Box
+            sx={{
+              textAlign: 'center',
+              pt: 2,
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              color: 'text.secondary',
+              fontSize: '0.75rem',
+            }}
+          >
+            Press{' '}
+            <Box component="kbd" sx={{ ...kbd, minWidth: 'auto', height: 'auto', py: 0.25 }}>
+              ?
+            </Box>{' '}
+            anytime to show this help
+          </Box>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

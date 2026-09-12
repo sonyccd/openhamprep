@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LicenseSelectModal } from './LicenseSelectModal';
+import { muiWrapper } from '@/test/utils';
 
 describe('LicenseSelectModal', () => {
   const defaultProps = {
@@ -17,20 +18,20 @@ describe('LicenseSelectModal', () => {
 
   describe('Rendering', () => {
     it('renders the modal when open', () => {
-      render(<LicenseSelectModal {...defaultProps} />);
+      render(<LicenseSelectModal {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByText('Select License Class')).toBeInTheDocument();
       expect(screen.getByText('Choose which amateur radio license exam you want to study for.')).toBeInTheDocument();
     });
 
     it('does not render when closed', () => {
-      render(<LicenseSelectModal {...defaultProps} open={false} />);
+      render(<LicenseSelectModal {...defaultProps} open={false} />, { wrapper: muiWrapper });
 
       expect(screen.queryByText('Select License Class')).not.toBeInTheDocument();
     });
 
     it('displays all three license options', () => {
-      render(<LicenseSelectModal {...defaultProps} />);
+      render(<LicenseSelectModal {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByText('Technician')).toBeInTheDocument();
       expect(screen.getByText('General')).toBeInTheDocument();
@@ -38,7 +39,7 @@ describe('LicenseSelectModal', () => {
     });
 
     it('displays descriptions for each license', () => {
-      render(<LicenseSelectModal {...defaultProps} />);
+      render(<LicenseSelectModal {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByText(/Entry-level license for new operators/)).toBeInTheDocument();
       expect(screen.getByText(/Expanded HF privileges/)).toBeInTheDocument();
@@ -46,7 +47,7 @@ describe('LicenseSelectModal', () => {
     });
 
     it('displays question counts and passing scores', () => {
-      render(<LicenseSelectModal {...defaultProps} />);
+      render(<LicenseSelectModal {...defaultProps} />, { wrapper: muiWrapper });
 
       // Technician and General: 35 questions, 26 to pass
       expect(screen.getAllByText('35 questions').length).toBe(2);
@@ -58,25 +59,92 @@ describe('LicenseSelectModal', () => {
     });
 
     it('shows "Current" badge on the currently selected license', () => {
-      render(<LicenseSelectModal {...defaultProps} selectedTest="general" />);
+      render(<LicenseSelectModal {...defaultProps} selectedTest="general" />, { wrapper: muiWrapper });
 
-      const generalCard = screen.getByText('General').closest('[role="radio"]');
-      expect(generalCard).toContainElement(screen.getByText('Current'));
+      // With a native radio the input and its label are siblings, not
+      // parent and child, so DOM containment no longer describes this. The
+      // thing that actually matters is that the status is announced: the
+      // chip sits inside the label, so it reaches the accessible name.
+      expect(screen.getByRole('radio', { name: /General/ })).toHaveAccessibleName(/Current/);
+    });
+  });
+
+  // #274: the previous version declared role="radiogroup" with role="radio"
+  // on three <button>s and implemented none of the APG keyboard contract —
+  // three tab stops instead of one, arrow keys that did nothing. These assert
+  // the contract rather than the markup, and they pass because the options are
+  // native <input type="radio"> now, not because anything here re-implements
+  // it.
+  describe('Radiogroup keyboard contract (#274)', () => {
+    it('exposes the options as a single radiogroup', () => {
+      render(<LicenseSelectModal {...defaultProps} />, { wrapper: muiWrapper });
+
+      expect(screen.getByRole('radiogroup', { name: 'License class options' })).toBeInTheDocument();
+      expect(screen.getAllByRole('radio')).toHaveLength(3);
+    });
+
+    it('takes one tab stop, landing on the checked option', async () => {
+      const user = userEvent.setup();
+      render(<LicenseSelectModal {...defaultProps} selectedTest="general" />, { wrapper: muiWrapper });
+
+      // Tab through until focus reaches a radio, then confirm the next Tab
+      // leaves the group rather than visiting the other two options.
+      const radios = screen.getAllByRole('radio');
+      const general = screen.getByRole('radio', { name: /General/ });
+
+      general.focus();
+      expect(general).toHaveFocus();
+
+      await user.tab();
+
+      expect(radios.some((r) => r === document.activeElement)).toBe(false);
+    });
+
+    it('moves the selection with arrow keys', async () => {
+      const user = userEvent.setup();
+      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />, { wrapper: muiWrapper });
+
+      screen.getByRole('radio', { name: /Technician/ }).focus();
+      await user.keyboard('{ArrowDown}');
+
+      // The whole point of #274: this did nothing before.
+      expect(screen.getByRole('radio', { name: /General/ })).toBeChecked();
+    });
+
+    // Dropped a test named "skips unavailable options when arrowing". Every
+    // entry in testTypes is available: true today, so it always took its own
+    // else branch and asserted nothing — the same vacuous shape this migration
+    // has deleted three of already. Skipping disabled radios is native browser
+    // behaviour rather than logic in this component, and there is no data to
+    // exercise it without mocking the whole navigation module, so it is not
+    // worth the scaffolding.
+    it('keeps the option name short and puts the detail in the description', () => {
+      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />, { wrapper: muiWrapper });
+
+      const technician = screen.getByRole('radio', { name: /Technician/ });
+
+      // The whole FormControlLabel label is the accessible name, so without
+      // aria-describedby the prose and the stats row got read out as part of
+      // it. The numbers belong in the description.
+      expect(technician).toHaveAccessibleName(/^Technician/);
+      expect(technician).not.toHaveAccessibleName(/74% passing/);
+      expect(technician).toHaveAccessibleDescription(/Entry-level license/);
+      expect(technician).toHaveAccessibleDescription(/74% passing/);
     });
   });
 
   describe('Selection Behavior', () => {
     it('highlights the currently selected license card', () => {
-      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />);
+      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />, { wrapper: muiWrapper });
 
       expect(screen.getByRole('radio', { name: /Technician/ })).toBeChecked();
     });
 
     it('allows selecting a different license', async () => {
       const user = userEvent.setup();
-      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />);
+      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />, { wrapper: muiWrapper });
 
-      const generalCard = screen.getByText('General').closest('[role="radio"]');
+      const generalCard = screen.getByRole('radio', { name: /General/ });
       await user.click(generalCard!);
 
       expect(generalCard).toBeChecked();
@@ -84,10 +152,10 @@ describe('LicenseSelectModal', () => {
 
     it('updates pending selection when clicking a card', async () => {
       const user = userEvent.setup();
-      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />);
+      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />, { wrapper: muiWrapper });
 
       // Click on Extra
-      const extraCard = screen.getByText('Amateur Extra').closest('[role="radio"]');
+      const extraCard = screen.getByRole('radio', { name: /Amateur Extra/ });
       await user.click(extraCard!);
 
       // Change button should be enabled since selection differs
@@ -97,7 +165,7 @@ describe('LicenseSelectModal', () => {
 
   describe('Confirm/Cancel Buttons', () => {
     it('shows "No Change" when same license is selected', () => {
-      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />);
+      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />, { wrapper: muiWrapper });
 
       expect(screen.getByRole('button', { name: /no change/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /no change/i })).toBeDisabled();
@@ -105,10 +173,10 @@ describe('LicenseSelectModal', () => {
 
     it('shows "Change License" when different license is selected', async () => {
       const user = userEvent.setup();
-      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />);
+      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />, { wrapper: muiWrapper });
 
       // Select General
-      const generalCard = screen.getByText('General').closest('[role="radio"]');
+      const generalCard = screen.getByRole('radio', { name: /General/ });
       await user.click(generalCard!);
 
       expect(screen.getByRole('button', { name: /change license/i })).toBeInTheDocument();
@@ -118,10 +186,10 @@ describe('LicenseSelectModal', () => {
     it('calls onTestChange when Change License is clicked', async () => {
       const user = userEvent.setup();
       const onTestChange = vi.fn();
-      render(<LicenseSelectModal {...defaultProps} onTestChange={onTestChange} selectedTest="technician" />);
+      render(<LicenseSelectModal {...defaultProps} onTestChange={onTestChange} selectedTest="technician" />, { wrapper: muiWrapper });
 
       // Select General
-      const generalCard = screen.getByText('General').closest('[role="radio"]');
+      const generalCard = screen.getByRole('radio', { name: /General/ });
       await user.click(generalCard!);
 
       // Click Change License
@@ -133,10 +201,10 @@ describe('LicenseSelectModal', () => {
     it('calls onOpenChange(false) when Change License is clicked', async () => {
       const user = userEvent.setup();
       const onOpenChange = vi.fn();
-      render(<LicenseSelectModal {...defaultProps} onOpenChange={onOpenChange} selectedTest="technician" />);
+      render(<LicenseSelectModal {...defaultProps} onOpenChange={onOpenChange} selectedTest="technician" />, { wrapper: muiWrapper });
 
       // Select General
-      const generalCard = screen.getByText('General').closest('[role="radio"]');
+      const generalCard = screen.getByRole('radio', { name: /General/ });
       await user.click(generalCard!);
 
       // Click Change License
@@ -148,10 +216,10 @@ describe('LicenseSelectModal', () => {
     it('does not call onTestChange when Cancel is clicked', async () => {
       const user = userEvent.setup();
       const onTestChange = vi.fn();
-      render(<LicenseSelectModal {...defaultProps} onTestChange={onTestChange} selectedTest="technician" />);
+      render(<LicenseSelectModal {...defaultProps} onTestChange={onTestChange} selectedTest="technician" />, { wrapper: muiWrapper });
 
       // Select General
-      const generalCard = screen.getByText('General').closest('[role="radio"]');
+      const generalCard = screen.getByRole('radio', { name: /General/ });
       await user.click(generalCard!);
 
       // Click Cancel
@@ -163,7 +231,7 @@ describe('LicenseSelectModal', () => {
     it('calls onOpenChange(false) when Cancel is clicked', async () => {
       const user = userEvent.setup();
       const onOpenChange = vi.fn();
-      render(<LicenseSelectModal {...defaultProps} onOpenChange={onOpenChange} />);
+      render(<LicenseSelectModal {...defaultProps} onOpenChange={onOpenChange} />, { wrapper: muiWrapper });
 
       await user.click(screen.getByRole('button', { name: /cancel/i }));
 
@@ -175,10 +243,10 @@ describe('LicenseSelectModal', () => {
     it('resets pending selection when Cancel is clicked and modal reopens', async () => {
       const user = userEvent.setup();
       const onOpenChange = vi.fn();
-      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" onOpenChange={onOpenChange} />);
+      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" onOpenChange={onOpenChange} />, { wrapper: muiWrapper });
 
       // Select General
-      const generalCard = screen.getByText('General').closest('[role="radio"]');
+      const generalCard = screen.getByRole('radio', { name: /General/ });
       await user.click(generalCard!);
 
       expect(generalCard).toBeChecked();
@@ -192,19 +260,19 @@ describe('LicenseSelectModal', () => {
 
     it('preserves current selection in pending state when modal opens', () => {
       // When modal opens with technician selected, technician should be pending selection
-      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />);
+      render(<LicenseSelectModal {...defaultProps} selectedTest="technician" />, { wrapper: muiWrapper });
 
       expect(screen.getByRole('radio', { name: /Technician/ })).toBeChecked();
     });
 
     it('starts with correct pending selection for general', () => {
-      render(<LicenseSelectModal {...defaultProps} selectedTest="general" />);
+      render(<LicenseSelectModal {...defaultProps} selectedTest="general" />, { wrapper: muiWrapper });
 
       expect(screen.getByRole('radio', { name: /General/ })).toBeChecked();
     });
 
     it('starts with correct pending selection for extra', () => {
-      render(<LicenseSelectModal {...defaultProps} selectedTest="extra" />);
+      render(<LicenseSelectModal {...defaultProps} selectedTest="extra" />, { wrapper: muiWrapper });
 
       expect(screen.getByRole('radio', { name: /Amateur Extra/ })).toBeChecked();
     });
@@ -212,20 +280,26 @@ describe('LicenseSelectModal', () => {
 
   describe('Accessibility', () => {
     it('has accessible dialog title', () => {
-      render(<LicenseSelectModal {...defaultProps} />);
+      render(<LicenseSelectModal {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText('Select License Class')).toBeInTheDocument();
     });
 
     it('has accessible dialog description', () => {
-      render(<LicenseSelectModal {...defaultProps} />);
+      render(<LicenseSelectModal {...defaultProps} />, { wrapper: muiWrapper });
 
-      expect(screen.getByText('Choose which amateur radio license exam you want to study for.')).toBeInTheDocument();
+      // Asserting the accessible description, not just that the text is on the
+      // page. getByText passes whether or not the dialog is actually described
+      // by it — Radix wired that automatically and MUI does not, so this test
+      // was previously green while the description was unreachable.
+      expect(screen.getByRole('dialog')).toHaveAccessibleDescription(
+        'Choose which amateur radio license exam you want to study for.'
+      );
     });
 
     it('license cards are selectable radio buttons', () => {
-      render(<LicenseSelectModal {...defaultProps} />);
+      render(<LicenseSelectModal {...defaultProps} />, { wrapper: muiWrapper });
 
       // License cards are now role="radio" for proper a11y (single select)
       const radioButtons = screen.getAllByRole('radio');
@@ -241,10 +315,10 @@ describe('LicenseSelectModal', () => {
     it('allows selecting Extra license', async () => {
       const user = userEvent.setup();
       const onTestChange = vi.fn();
-      render(<LicenseSelectModal {...defaultProps} onTestChange={onTestChange} selectedTest="technician" />);
+      render(<LicenseSelectModal {...defaultProps} onTestChange={onTestChange} selectedTest="technician" />, { wrapper: muiWrapper });
 
       // Select Extra
-      const extraCard = screen.getByText('Amateur Extra').closest('[role="radio"]');
+      const extraCard = screen.getByRole('radio', { name: /Amateur Extra/ });
       await user.click(extraCard!);
 
       // Confirm
@@ -254,7 +328,7 @@ describe('LicenseSelectModal', () => {
     });
 
     it('displays correct info for Extra license', () => {
-      render(<LicenseSelectModal {...defaultProps} selectedTest="extra" />);
+      render(<LicenseSelectModal {...defaultProps} selectedTest="extra" />, { wrapper: muiWrapper });
 
       expect(screen.getByText('50 questions')).toBeInTheDocument();
       expect(screen.getByText('37 to pass')).toBeInTheDocument();
