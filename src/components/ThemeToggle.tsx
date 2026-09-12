@@ -31,7 +31,23 @@ export function ThemeToggle() {
       <IconButton
         onClick={() => setTheme(isDark ? "light" : "dark")}
         aria-label={label}
-        sx={{ width: 36, height: 36, color: "text.secondary" }}
+        sx={{
+          width: 36,
+          height: 36,
+          color: "text.secondary",
+          // Restores the hover this button had as a shadcn ghost button
+          // (hover:bg-muted hover:text-foreground). MUI's own IconButton hover
+          // is alpha(action.active, 0.04) — a faint overlay, and no text
+          // change at all — so without this the button stopped responding the
+          // way every other control in the app does.
+          //
+          // secondary.main rather than an exact --muted match: the palette has
+          // no slot for --muted (see #284), and secondary is the nearest
+          // mapped surface token, ~2% lightness away. Picking a literal here
+          // would duplicate a token, and reaching for hsl(var(--muted)) would
+          // tie this file to a stylesheet that C7 deletes.
+          "&:hover": { backgroundColor: "secondary.main", color: "text.primary" },
+        }}
       >
         <Box
           component={Sun}
