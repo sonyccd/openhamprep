@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { TestType } from "@/types/navigation";
-import { PageContainer } from "@/components/ui/page-container";
+import { PageContainer } from "@/components/ohp/PageContainer";
 import { QuizShell, QuizShellPending } from "@/components/QuizShell";
 
 // Number of correct answers in a row needed to clear a weak question

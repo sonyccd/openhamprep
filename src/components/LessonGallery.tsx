@@ -11,7 +11,7 @@ import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { LessonCard } from "./LessonCard";
 import { Search, Route } from "lucide-react";
 import { TestType } from "@/types/navigation";
-import { PageContainer } from "@/components/ui/page-container";
+import { PageContainer } from "@/components/ohp/PageContainer";
 import { Lesson } from "@/types/lessons";
 import { MotionBox } from "@/components/ohp/MotionBox";
 import { tokenAlpha } from "@/theme/muiTheme";

@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { PageContainer } from "@/components/ui/page-container";
+import { PageContainer } from "@/components/ohp/PageContainer";
 
 type FlashcardMode = 'term-to-definition' | 'definition-to-term';
 

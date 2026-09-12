@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { TestType, testConfig, examDistribution } from "@/types/navigation";
 import { selectExamQuestions } from "@/lib/examQuestions";
 import { trackPracticeTestStarted } from "@/lib/amplitude";
-import { PageContainer } from "@/components/ui/page-container";
+import { PageContainer } from "@/components/ohp/PageContainer";
 import { QuizShell, QuizShellPending, QuizShellError } from "@/components/QuizShell";
 import { supabase } from "@/integrations/supabase/client";
 interface PracticeTestProps {

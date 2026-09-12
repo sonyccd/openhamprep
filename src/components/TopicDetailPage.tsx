@@ -22,7 +22,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { trackTopicViewed, trackQuizStarted } from "@/lib/amplitude";
 import { motion } from "framer-motion";
-import { PageContainer } from "@/components/ui/page-container";
+import { PageContainer } from "@/components/ohp/PageContainer";
 import { cn } from "@/lib/utils";
 import { TOPIC_QUIZ_PASSING_THRESHOLD } from "@/types/navigation";
 

@@ -9,7 +9,7 @@ import { ArrowLeft, Route, CheckCircle2 } from "lucide-react";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { trackLessonViewed } from "@/lib/amplitude";
-import { PageContainer } from "@/components/ui/page-container";
+import { PageContainer } from "@/components/ohp/PageContainer";
 
 interface LessonDetailPageProps {
   slug: string;
