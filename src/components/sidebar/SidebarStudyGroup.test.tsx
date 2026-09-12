@@ -44,6 +44,39 @@ describe('SidebarStudyGroup', () => {
   // separate hidden text, which was Tailwind's sr-only class and is now MUI's
   // visuallyHidden. A silent loss there would take the count away from screen
   // reader users while looking identical on screen.
+  // MUI's ButtonBase centres its content (ButtonBase.js:53); the plain
+  // <button> elements it replaced did not. Omitting justifyContent therefore
+  // centred every row, and the sub-items showed it worst because they have no
+  // flex:1 child to absorb the free space and mask it.
+  //
+  // Caught by eye on a screenshot, not by any test — every role, name and text
+  // assertion passed throughout, which is the failure mode #288 flagged for
+  // this stage. So it is asserted on the computed style.
+  describe('row alignment', () => {
+    it('left-aligns the group header', () => {
+      renderWithTooltip(<SidebarStudyGroup {...defaultProps} />);
+
+      const header = screen.getByRole('button', { name: /Study/ });
+      expect(getComputedStyle(header).justifyContent).toBe('flex-start');
+    });
+
+    it('left-aligns each sub-item', () => {
+      renderWithTooltip(<SidebarStudyGroup {...defaultProps} />);
+
+      for (const label of ['Random Practice', 'By Subelement', 'Weak Areas']) {
+        const row = screen.getByRole('button', { name: new RegExp(label) });
+        expect(getComputedStyle(row).justifyContent).toBe('flex-start');
+      }
+    });
+
+    it('centres the collapsed rail button, where that is the point', () => {
+      renderWithTooltip(<SidebarStudyGroup {...defaultProps} showExpanded={false} />);
+
+      const button = screen.getByRole('button', { name: /Study menu/ });
+      expect(getComputedStyle(button).justifyContent).toBe('center');
+    });
+  });
+
   describe('badge announcements', () => {
     it('announces the total on the group header', () => {
       renderWithTooltip(<SidebarStudyGroup {...defaultProps} />);

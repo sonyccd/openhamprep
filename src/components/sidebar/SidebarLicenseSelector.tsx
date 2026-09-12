@@ -70,6 +70,7 @@ export const SidebarLicenseSelector = ({
               width: '100%',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'flex-start',
               gap: 1.5,
               p: 1.25,
               textAlign: 'left',

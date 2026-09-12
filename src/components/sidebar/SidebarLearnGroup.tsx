@@ -95,6 +95,7 @@ export const SidebarLearnGroup = ({
           width: '100%',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'flex-start',
           gap: 1.5,
           px: 1.5,
           py: 1.25,
@@ -147,6 +148,10 @@ export const SidebarLearnGroup = ({
                   width: '100%',
                   display: 'flex',
                   alignItems: 'center',
+                  // ButtonBase centres its content by default
+                  // (ButtonBase.js:53); the plain <button> this replaced did
+                  // not, so the row has to say so.
+                  justifyContent: 'flex-start',
                   gap: 1.5,
                   px: 1.5,
                   py: 1,

@@ -162,6 +162,7 @@ export const SidebarFooter = ({
                 width: '100%',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'flex-start',
                 gap: 1.5,
                 p: 1,
                 m: -1,
