@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { ReactNode } from 'react';
 import { Glossary } from './Glossary';
 import { AppNavigationProvider } from '@/hooks/useAppNavigation';
+import { muiWrapper } from '@/test/utils';
 
 // Mock Supabase
 const mockOrder = vi.fn();
@@ -37,7 +38,8 @@ function createWrapper() {
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <AppNavigationProvider>
-          {children}
+          {/* The ported component reads palette tokens, so it needs the real theme. */}
+          {muiWrapper({ children })}
         </AppNavigationProvider>
       </QueryClientProvider>
     </BrowserRouter>
@@ -173,6 +175,41 @@ describe('Glossary', () => {
         expect(screen.getByText('Antenna')).toBeInTheDocument();
         expect(screen.getByText('73')).toBeInTheDocument();
       });
+    });
+
+    // Each term used to be a div with role="button", tabIndex={0} and a
+    // hand-rolled Enter/Space handler calling window.open — the third copy of
+    // that pattern in this app, and the copy in HamRadioToolCard never fired at
+    // all (#272). Opening a search is navigation, so it is an anchor now:
+    // Enter works without a handler, and middle-click, ctrl-click and "open in
+    // new tab" start working too.
+    it('links each term to a search instead of scripting a click', async () => {
+      render(<Glossary />, { wrapper: createWrapper() });
+
+      const link = await screen.findByRole('link', { name: /Search "Amateur Radio" on DuckDuckGo/ });
+
+      expect(link).toHaveAttribute(
+        'href',
+        'https://duckduckgo.com/?q=Amateur%20Radio&kp=1'
+      );
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    });
+
+    // Material's default Card variant is "elevation": a box-shadow and no
+    // border declaration at all. Setting borderColor on it is inert, so the
+    // resting border and the hover accent both silently did nothing until
+    // variant="outlined" was added. Asserting the computed style rather than
+    // the MuiPaper-outlined class, per A2c — the border is the outcome that
+    // matters, the variant is just how it is reached.
+    it('gives each term card a visible border', async () => {
+      render(<Glossary />, { wrapper: createWrapper() });
+
+      const link = await screen.findByRole('link', { name: /Search "Amateur Radio" on DuckDuckGo/ });
+      const card = link.parentElement!;
+
+      expect(getComputedStyle(card).borderStyle).toBe('solid');
+      expect(getComputedStyle(card).borderWidth).toBe('1px');
     });
 
     it('displays term definitions', async () => {

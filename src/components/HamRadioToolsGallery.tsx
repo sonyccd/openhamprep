@@ -1,20 +1,28 @@
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import InputAdornment from "@mui/material/InputAdornment";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useHamRadioTools, useHamRadioToolCategories } from "@/hooks/useHamRadioTools";
 import { HamRadioToolCard } from "./HamRadioToolCard";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Wrench } from "lucide-react";
 import { PageContainer } from "@/components/ui/page-container";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { MotionBox } from "@/components/ohp/MotionBox";
+import { tokenAlpha } from "@/theme/muiTheme";
+
+// grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6, with the breakpoint keys
+// lining up with Tailwind's because muiTheme pins them to Tailwind's values.
+const cardGrid = {
+  display: "grid",
+  gap: 3,
+  gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
+} as const;
 
 export function HamRadioToolsGallery() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,122 +55,165 @@ export function HamRadioToolsGallery() {
   }, [tools, selectedCategory, searchQuery]);
 
   const isLoading = toolsLoading || categoriesLoading;
+  const isFiltered = Boolean(searchQuery || selectedCategory);
 
   if (toolsError) {
     return (
-      <div className="text-center py-12">
-        <p className="text-destructive">Failed to load tools. Please try again.</p>
-      </div>
+      <Box sx={{ textAlign: "center", py: 6 }}>
+        <Typography sx={{ color: "error.main" }}>Failed to load tools. Please try again.</Typography>
+      </Box>
     );
   }
 
   return (
-    <PageContainer width="wide" contentClassName="space-y-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
-      >
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Wrench className="w-6 h-6" />
-            Tools
-          </h1>
-          {tools && tools.length > 0 && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {filteredTools.length} of {tools.length} tools
-              {selectedCategory && ` in ${categories?.find(c => c.slug === selectedCategory)?.name}`}
-            </p>
-          )}
-        </div>
+    <PageContainer width="wide">
+      {/* space-y-6 became Stack spacing, so no Tailwind class is passed down. */}
+      <Stack spacing={3}>
+        <MotionBox
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 2,
+            alignItems: { xs: "flex-start", sm: "center" },
+            justifyContent: "space-between",
+          }}
+        >
+          <Box>
+            <Typography
+              variant="h5"
+              component="h1"
+              sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}
+            >
+              <Box component={Wrench} aria-hidden="true" sx={{ width: 24, height: 24 }} />
+              Tools
+            </Typography>
+            {tools && tools.length > 0 && (
+              <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+                {filteredTools.length} of {tools.length} tools
+                {selectedCategory &&
+                  ` in ${categories?.find((c) => c.slug === selectedCategory)?.name}`}
+              </Typography>
+            )}
+          </Box>
 
-        {/* Search */}
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
+          <TextField
+            size="small"
             placeholder="Search tools..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            sx={{ width: { xs: "100%", sm: 288 } }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Box
+                      component={Search}
+                      aria-hidden="true"
+                      sx={{ width: 16, height: 16, color: "text.secondary" }}
+                    />
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
-        </div>
-      </motion.div>
+        </MotionBox>
 
-      {/* Category filter dropdown */}
-      {categories && categories.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="flex items-center gap-2"
-        >
-          <Label htmlFor="category-filter" className="text-sm text-muted-foreground whitespace-nowrap">
-            Category:
-          </Label>
-          <Select
-            value={selectedCategory || "all"}
-            onValueChange={(value) => setSelectedCategory(value === "all" ? null : value)}
-          >
-            <SelectTrigger id="category-filter" className="w-[200px]">
-              <SelectValue placeholder="All categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All categories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.slug}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </motion.div>
-      )}
-
-      {/* Loading state */}
-      {isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="space-y-3">
-              <Skeleton className="aspect-video w-full rounded-lg" />
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Tools grid */}
-      {!isLoading && filteredTools && filteredTools.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTools.map((tool, index) => (
-            <motion.div
-              key={tool.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
+        {categories && categories.length > 0 && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/*
+              labelId, not htmlFor. MUI's Select renders its control as a
+              <div role="combobox">, and <label for> only associates with
+              labelable elements — so htmlFor left the control with no
+              accessible name at all, announcing just its current value. The
+              Radix version did not have this problem because its trigger was a
+              real <button>. labelId points Select at this label's id and it
+              emits aria-labelledby.
+            */}
+            <InputLabel
+              id="category-filter-label"
+              sx={{ fontSize: "0.875rem", color: "text.secondary", whiteSpace: "nowrap" }}
             >
-              <HamRadioToolCard tool={tool} />
-            </motion.div>
-          ))}
-        </div>
-      )}
+              Category:
+            </InputLabel>
+            <Select
+              labelId="category-filter-label"
+              size="small"
+              value={selectedCategory ?? "all"}
+              onChange={(e) => setSelectedCategory(e.target.value === "all" ? null : e.target.value)}
+              sx={{ width: 200 }}
+            >
+              <MenuItem value="all">All categories</MenuItem>
+              {categories.map((category) => (
+                <MenuItem key={category.id} value={category.slug}>
+                  {category.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
+        )}
 
-      {/* Empty state */}
-      {!isLoading && filteredTools && filteredTools.length === 0 && (
-        <div className="text-center py-12 bg-muted/30 rounded-lg">
-          <Wrench className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          {searchQuery || selectedCategory ? (
-            <>
-              <h3 className="text-lg font-medium text-foreground mb-2">No tools found</h3>
-              <p className="text-muted-foreground">
-                {searchQuery
+        {isLoading && (
+          <Box sx={cardGrid}>
+            {[...Array(6)].map((_, i) => (
+              <Stack key={i} spacing={1.5}>
+                {/* data-testid carried over from the shadcn Skeleton: a placeholder has no role to query. */}
+                <Skeleton
+                  data-testid="skeleton"
+                  variant="rectangular"
+                  sx={{ aspectRatio: "16 / 9", borderRadius: 2 }}
+                />
+                <Skeleton data-testid="skeleton" variant="rectangular" sx={{ height: 24, width: "75%" }} />
+                <Skeleton data-testid="skeleton" variant="rectangular" sx={{ height: 16, width: "100%" }} />
+              </Stack>
+            ))}
+          </Box>
+        )}
+
+        {!isLoading && filteredTools && filteredTools.length > 0 && (
+          <Box sx={cardGrid}>
+            {filteredTools.map((tool, index) => (
+              <MotionBox
+                key={tool.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <HamRadioToolCard tool={tool} />
+              </MotionBox>
+            ))}
+          </Box>
+        )}
+
+        {!isLoading && filteredTools && filteredTools.length === 0 && (
+          <Box
+            sx={{
+              textAlign: "center",
+              py: 6,
+              borderRadius: 2,
+              bgcolor: (theme) => tokenAlpha(theme.vars.palette.muted, 30),
+            }}
+          >
+            <Box
+              component={Wrench}
+              aria-hidden="true"
+              sx={{ width: 48, height: 48, mx: "auto", mb: 2, color: "text.secondary" }}
+            />
+            <Typography variant="h6" component="h3" sx={{ fontWeight: 500, mb: 1 }}>
+              {isFiltered ? "No tools found" : "No tools available"}
+            </Typography>
+            <Typography sx={{ color: "text.secondary" }}>
+              {isFiltered
+                ? searchQuery
                   ? `No tools match "${searchQuery}". Try a different search term.`
-                  : "No tools in this category yet."}
-              </p>
+                  : "No tools in this category yet."
+                : "Tools will appear here once they're published."}
+            </Typography>
+            {isFiltered && (
               <Button
-                variant="outline"
-                className="mt-4"
+                variant="outlined"
+                sx={{ mt: 2 }}
                 onClick={() => {
                   setSearchQuery("");
                   setSelectedCategory(null);
@@ -170,17 +221,10 @@ export function HamRadioToolsGallery() {
               >
                 Clear filters
               </Button>
-            </>
-          ) : (
-            <>
-              <h3 className="text-lg font-medium text-foreground mb-2">No tools available</h3>
-              <p className="text-muted-foreground">
-                Tools will appear here once they're published.
-              </p>
-            </>
-          )}
-        </div>
-      )}
+            )}
+          </Box>
+        )}
+      </Stack>
     </PageContainer>
   );
 }
