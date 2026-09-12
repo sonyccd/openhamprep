@@ -7,8 +7,8 @@ import { useFullProfile, useQuestionAttemptsWithNames } from '@/hooks/useDashboa
 import { queryKeys } from '@/services/queryKeys';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
 import { View, TestType, testTypes } from '@/types/navigation';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { Loader2 } from 'lucide-react';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
 import { HelpButton } from '@/components/HelpButton';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
@@ -24,7 +24,7 @@ interface AppLayoutProps {
   onSearch?: () => void;
 }
 
-export function AppLayout({ children, currentView, onViewChange, selectedTest, onTestChange, onSearch }: AppLayoutProps) {
+export const AppLayout = ({ children, currentView, onViewChange, selectedTest, onTestChange, onSearch }: AppLayoutProps) => {
   const { user, loading: authLoading, signOut } = useAuth();
   const { bookmarks } = useBookmarks();
   const navigate = useNavigate();
@@ -70,9 +70,19 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label="Loading">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
+      <Box
+        role="status"
+        aria-label="Loading"
+        sx={{
+          minHeight: '100vh',
+          bgcolor: 'background.default',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <CircularProgress size={32} />
+      </Box>
     );
   }
 
@@ -86,9 +96,22 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
   const isTestAvailable = currentTest?.available ?? false;
 
   return (
-    <TooltipProvider>
+    <>
       <SkipLink />
-      <div className="h-screen bg-background flex w-full overflow-hidden">
+      {/*
+        No TooltipProvider: MUI's Tooltip needs no context, unlike the Radix
+        one this replaced. The whole nav shell is on MUI now, so nothing below
+        here required it.
+      */}
+      <Box
+        sx={{
+          height: '100vh',
+          width: '100%',
+          bgcolor: 'background.default',
+          display: 'flex',
+          overflow: 'hidden',
+        }}
+      >
         <DashboardSidebar
           currentView={currentView}
           onViewChange={onViewChange}
@@ -105,11 +128,22 @@ export function AppLayout({ children, currentView, onViewChange, selectedTest, o
           onTestChange={onTestChange}
           onSearch={onSearch}
         />
-        <main id="main-content" className="flex-1 overflow-y-auto pt-safe-header md:pt-0 flex flex-col">
+        {/*
+          pt-safe-header stays a class: it is max(4rem, env(safe-area-inset-top)
+          + 3rem), and env() is a CSS environment variable the theme does not
+          model. It clears the fixed mobile hamburger; md:pt-0 drops it once the
+          desktop rail takes over.
+        */}
+        <Box
+          component="main"
+          id="main-content"
+          className="pt-safe-header md:pt-0"
+          sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}
+        >
           {children}
-        </main>
+        </Box>
         <HelpButton />
-      </div>
-    </TooltipProvider>
+      </Box>
+    </>
   );
-}
+};

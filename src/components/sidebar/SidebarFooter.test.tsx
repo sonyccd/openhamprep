@@ -3,14 +3,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { SidebarFooter } from './SidebarFooter';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { muiWrapper } from '@/test/utils';
 
 const renderWithTooltip = (component: React.ReactNode) => {
-  return render(
-    <MemoryRouter>
-      <TooltipProvider>{component}</TooltipProvider>
-    </MemoryRouter>
-  );
+  return render(<MemoryRouter>{component}</MemoryRouter>, { wrapper: muiWrapper });
 };
 
 describe('SidebarFooter', () => {
