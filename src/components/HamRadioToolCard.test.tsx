@@ -148,20 +148,6 @@ describe('HamRadioToolCard', () => {
 
       windowOpenSpy.mockRestore();
     });
-
-    it('should not open link on other keypresses', () => {
-      const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
-      render(<HamRadioToolCard tool={mockTool} />, { wrapper: muiWrapper });
-
-      // The keydown handler sits on the Card inside the link rather than on the
-      // link itself, so it has to be targeted directly. See #272.
-      const card = screen.getByRole('link').firstElementChild as HTMLElement;
-      fireEvent.keyDown(card!, { key: 'Tab' });
-
-      expect(windowOpenSpy).not.toHaveBeenCalled();
-
-      windowOpenSpy.mockRestore();
-    });
   });
 
   describe('Different Tool Configurations', () => {

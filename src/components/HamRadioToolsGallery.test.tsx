@@ -249,9 +249,29 @@ describe('HamRadioToolsGallery', () => {
       expect(screen.getByText('Log4OM')).toBeInTheDocument();
     });
 
-    // Note: Radix Select component tests for click interactions are skipped
-    // because happy-dom doesn't implement hasPointerCapture which Radix uses.
-    // Category filtering logic is tested through the component's internal state.
+    // The note that used to sit here said Select interaction tests were skipped
+    // because happy-dom lacks hasPointerCapture, which Radix used. The component
+    // is on MUI's Select now, so that reason is gone — these exercise the filter
+    // through the UI instead of asserting around it.
+    it('names the category control, not just its value', () => {
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
+
+      // MUI renders the control as <div role="combobox">, which <label for>
+      // cannot address — it needs labelId/aria-labelledby. Without it the
+      // control announces "All categories" and nothing about what it selects.
+      expect(screen.getByRole('combobox', { name: /Category/ })).toBeInTheDocument();
+    });
+
+    it('filters the grid when a category is chosen', async () => {
+      const user = userEvent.setup();
+      render(<HamRadioToolsGallery />, { wrapper: muiWrapper });
+
+      await user.click(screen.getByRole('combobox', { name: /Category/ }));
+      await user.click(screen.getByRole('option', { name: 'Digital Modes' }));
+
+      expect(screen.getByText('WSJT-X')).toBeInTheDocument();
+      expect(screen.queryByText('Log4OM')).not.toBeInTheDocument();
+    });
   });
 
   describe('Clear Filters', () => {

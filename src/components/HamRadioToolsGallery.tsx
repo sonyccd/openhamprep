@@ -123,18 +123,22 @@ export function HamRadioToolsGallery() {
         {categories && categories.length > 0 && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {/*
-              InputLabel with htmlFor rather than MUI's usual FormControl label,
-              which floats into the Select's notch. The original rendered a
-              separate label beside the control, and that is the layout here.
+              labelId, not htmlFor. MUI's Select renders its control as a
+              <div role="combobox">, and <label for> only associates with
+              labelable elements — so htmlFor left the control with no
+              accessible name at all, announcing just its current value. The
+              Radix version did not have this problem because its trigger was a
+              real <button>. labelId points Select at this label's id and it
+              emits aria-labelledby.
             */}
             <InputLabel
-              htmlFor="category-filter"
+              id="category-filter-label"
               sx={{ fontSize: "0.875rem", color: "text.secondary", whiteSpace: "nowrap" }}
             >
               Category:
             </InputLabel>
             <Select
-              id="category-filter"
+              labelId="category-filter-label"
               size="small"
               value={selectedCategory ?? "all"}
               onChange={(e) => setSelectedCategory(e.target.value === "all" ? null : e.target.value)}
