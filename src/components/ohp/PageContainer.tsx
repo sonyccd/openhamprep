@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
+import type { SxProps, Theme } from "@mui/material/styles";
 
 interface PageContainerProps {
   children: ReactNode;
@@ -13,7 +14,7 @@ interface PageContainerProps {
   /** Additional className for the outer container */
   className?: string;
   /** Additional sx for the outer container */
-  sx?: React.ComponentProps<typeof Box>["sx"];
+  sx?: SxProps<Theme>;
   /** Additional className for the inner content container */
   contentClassName?: string;
 }
@@ -49,7 +50,7 @@ const MAX_WIDTHS = {
  * deliberate for the duration of the migration; it ends at C7 when index.css
  * goes.
  */
-export function PageContainer({
+export const PageContainer = ({
   children,
   width = "standard",
   mobileNavPadding = false,
@@ -57,7 +58,7 @@ export function PageContainer({
   className,
   sx,
   contentClassName,
-}: PageContainerProps) {
+}: PageContainerProps) => {
   return (
     <Box
       // radio-wave-bg is a CSS class, not a MUI concept — see the note above.
@@ -90,4 +91,4 @@ export function PageContainer({
       </Container>
     </Box>
   );
-}
+};

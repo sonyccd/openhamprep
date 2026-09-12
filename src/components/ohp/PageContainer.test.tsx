@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import type { ComponentProps } from 'react';
 import { render, screen } from '@testing-library/react';
 import { PageContainer } from './PageContainer';
 import { muiWrapper } from '@/test/utils';
@@ -36,13 +37,17 @@ const cssFor = (el: Element) => {
     .map((s) => s.textContent ?? '')
     .join('\n');
   const classes = el.className.split(' ').filter((c) => c.startsWith('css-'));
+  // Matched as a whole selector rather than a substring: emotion's names are
+  // hashes, so `css-1a2b` is a substring of `css-1a2b3c` and a plain includes()
+  // could pull in an unrelated rule.
+  const selectors = classes.map((c) => new RegExp(`\\.${c}(?![\\w-])`));
   return sheets
     .split('}')
-    .filter((rule) => classes.some((c) => rule.includes(`.${c}`)))
+    .filter((rule) => selectors.some((re) => re.test(rule)))
     .join('}');
 };
 
-const renderContainer = (props: Partial<React.ComponentProps<typeof PageContainer>> = {}) =>
+const renderContainer = (props: Partial<ComponentProps<typeof PageContainer>> = {}) =>
   render(
     <PageContainer {...props}>
       <span data-testid="content">Page content</span>
