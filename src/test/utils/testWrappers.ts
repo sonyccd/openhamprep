@@ -1,6 +1,8 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { muiTheme } from '@/theme/muiTheme';
 
 /**
  * Creates a new QueryClient configured for testing.
@@ -96,6 +98,30 @@ export function createMemoryRouterWrapper(initialPath = '/') {
     );
 
   return { wrapper };
+}
+
+/**
+ * Wraps a component in the app's real MUI theme.
+ *
+ * Needed by any ported component that reads a palette token, and required
+ * rather than optional for the custom keys — `muted` and `accent` exist only in
+ * our theme (#284), so without a provider MUI falls back to its default palette
+ * where they are undefined, and a token read throws rather than degrading.
+ *
+ * Uses the real `muiTheme` instead of a stub on purpose: a test that renders
+ * against the actual palette fails if a token is removed from under it.
+ *
+ * Usage:
+ * ```tsx
+ * render(<LessonCard … />, { wrapper: muiWrapper });
+ * ```
+ */
+export function muiWrapper({ children }: { children: React.ReactNode }) {
+  return React.createElement(
+    MuiThemeProvider,
+    { theme: muiTheme, defaultMode: 'light', noSsr: true },
+    children
+  );
 }
 
 /**

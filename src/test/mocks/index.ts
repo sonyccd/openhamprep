@@ -9,3 +9,5 @@ export {
   mockUser,
   mockAdminUser,
 } from './hooks';
+
+export { framerMotionMock } from './framerMotion';

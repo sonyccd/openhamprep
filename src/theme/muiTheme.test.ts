@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { muiTheme } from "./muiTheme";
 import tailwindConfig from "../../tailwind.config";
+import { screens as tailwindScreens } from "tailwindcss/defaultTheme";
 
 // muiTheme.ts duplicates the HSL tokens from index.css because MUI needs
 // concrete values at theme-build time. Asserting literals here would just
@@ -43,6 +44,11 @@ const mappings = [
   ["text.primary", "foreground"],
   ["text.secondary", "muted-foreground"],
   ["divider", "border"],
+  // Tokens Material has no slot for, added to the palette rather than
+  // approximated at each call site (#284). Covered here for the same reason as
+  // the rest: so the theme cannot drift from index.css unnoticed.
+  ["muted", "muted"],
+  ["accent", "accent"],
 ] as const;
 
 const read = (obj: unknown, path: string) =>
@@ -75,9 +81,41 @@ describe("muiTheme", () => {
     expect(muiTheme.typography.fontFamily).toBe(expected);
   });
 
+  it("matches Tailwind's breakpoints", () => {
+    // Read from Tailwind rather than restated here, for the same reason the
+    // colours are read from index.css: a literal would only agree with
+    // muiTheme.ts's literal while both drifted from Tailwind.
+    //
+    // Material's own values are 40-176px away from these, so a ported component
+    // and an unported one would change layout at different widths.
+    const expected = Object.fromEntries(
+      Object.entries(tailwindScreens).map(([key, px]) => [key, parseInt(px as string, 10)]),
+    );
+
+    for (const key of ["sm", "md", "lg", "xl"] as const) {
+      expect(muiTheme.breakpoints.values[key]).toBe(expected[key]);
+    }
+    expect(muiTheme.breakpoints.values.xs).toBe(0);
+  });
+
   it("matches --radius", () => {
     const radiusRem = parseFloat(token(":root", "radius"));
     expect(muiTheme.shape.borderRadius).toBe(radiusRem * 16);
+  });
+
+  it("emits CSS variables for the custom palette keys in both schemes", () => {
+    // muted and accent are keys Material does not know about (#284), so it is
+    // worth proving they survive the cssVariables pipeline rather than assuming
+    // it. A key that resolves to var(--mui-palette-muted) while nothing ever
+    // declares that variable renders as no colour at all — the failure would be
+    // an invisible background, not an error.
+    const sheets = JSON.stringify(muiTheme.generateStyleSheets?.() ?? []);
+
+    for (const key of ["muted", "accent"]) {
+      const declarations = sheets.match(new RegExp(`"--mui-palette-${key}":"[^"]+"`, "g")) ?? [];
+      // One per colour scheme.
+      expect(declarations).toHaveLength(2);
+    }
   });
 
   it("declares no component styleOverrides", () => {
