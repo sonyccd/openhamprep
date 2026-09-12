@@ -1,8 +1,90 @@
 import { Type, Bold, ZoomIn } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Switch from "@mui/material/Switch";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Typography from "@mui/material/Typography";
 import { useAccessibility, FontFamily } from "@/hooks/useAccessibility";
+import { tokenAlpha } from "@/theme/muiTheme";
+
+const FONTS: { value: FontFamily; label: string }[] = [
+  { value: "default", label: "Default" },
+  { value: "dyslexic", label: "OpenDyslexic" },
+  { value: "arimo", label: "Arimo" },
+];
+
+const sectionHeading = {
+  display: "flex",
+  alignItems: "center",
+  gap: 1,
+  fontWeight: 500,
+  color: "text.secondary",
+} as const;
+
+/**
+ * One labelled toggle with an icon and an explanation.
+ *
+ * The switch is a *sibling* of the icon-and-text block, not nested inside it,
+ * so the row's justify-content: space-between has two children to separate and
+ * the switch sits at the trailing edge. Nesting it inside made space-between
+ * inert and pulled the switch in next to the label text.
+ *
+ * That means the association is htmlFor/id rather than FormControlLabel
+ * wrapping the control — which is what the original did too, and one of the
+ * few places in this area that was already labelled correctly.
+ */
+interface ToggleRowProps {
+  id: string;
+  icon: React.ElementType;
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}
+
+function ToggleRow({ id, icon: Icon, label, description, checked, onChange }: ToggleRowProps) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
+        <Box
+          sx={{
+            width: 36,
+            height: 36,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            color: "primary.main",
+            bgcolor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 10),
+          }}
+        >
+          <Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+        </Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            component="label"
+            htmlFor={id}
+            variant="body2"
+            sx={{ display: "block", fontWeight: 500, cursor: "pointer" }}
+          >
+            {label}
+          </Typography>
+          <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+            {description}
+          </Typography>
+        </Box>
+      </Box>
+      <Switch
+        id={id}
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        sx={{ flexShrink: 0 }}
+      />
+    </Box>
+  );
+}
 
 export function AccessibilitySettings() {
   const {
@@ -15,77 +97,52 @@ export function AccessibilitySettings() {
   } = useAccessibility();
 
   return (
-    <div className="space-y-6">
-      {/* Font Selection */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <Type className="w-4 h-4" />
+    <Stack spacing={3}>
+      <Stack spacing={1.5}>
+        <Typography id="font-choice-label" variant="body2" sx={sectionHeading}>
+          <Box component={Type} aria-hidden="true" sx={{ width: 16, height: 16 }} />
           Font
-        </div>
-        <ToggleGroup
-          type="single"
+        </Typography>
+        <ToggleButtonGroup
+          exclusive
+          aria-labelledby="font-choice-label"
           value={fontFamily}
-          onValueChange={(value) => value && setFontFamily(value as FontFamily)}
-          className="justify-start flex-wrap"
+          onChange={(_event, value) => value && setFontFamily(value as FontFamily)}
+          sx={{ justifyContent: "flex-start", flexWrap: "wrap" }}
         >
-          <ToggleGroupItem value="default" aria-label="Default font" className="text-xs">
-            Default
-          </ToggleGroupItem>
-          <ToggleGroupItem value="dyslexic" aria-label="OpenDyslexic font" className="text-xs">
-            OpenDyslexic
-          </ToggleGroupItem>
-          <ToggleGroupItem value="arimo" aria-label="Arimo font" className="text-xs">
-            Arimo
-          </ToggleGroupItem>
-        </ToggleGroup>
-        <p className="text-xs text-muted-foreground">
+          {FONTS.map(({ value, label }) => (
+            <ToggleButton
+              key={value}
+              value={value}
+              aria-label={`${label} font`}
+              sx={{ fontSize: "0.75rem" }}
+            >
+              {label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+        <Typography variant="caption" sx={{ color: "text.secondary" }}>
           OpenDyslexic is designed to help readers with dyslexia
-        </p>
-      </div>
+        </Typography>
+      </Stack>
 
-      {/* Bold All Text */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <Bold className="w-4 h-4 text-primary" />
-          </div>
-          <div className="space-y-0.5">
-            <Label htmlFor="bold-text" className="text-sm font-medium cursor-pointer">
-              Bold All Text
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              Make all text bold for better readability
-            </p>
-          </div>
-        </div>
-        <Switch
-          id="bold-text"
-          checked={boldText}
-          onCheckedChange={setBoldText}
-        />
-      </div>
+      <ToggleRow
+        id="bold-text"
+        icon={Bold}
+        label="Bold All Text"
+        description="Make all text bold for better readability"
+        checked={boldText}
+        onChange={setBoldText}
+      />
 
-      {/* Extra Large Text */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <ZoomIn className="w-4 h-4 text-primary" />
-          </div>
-          <div className="space-y-0.5">
-            <Label htmlFor="large-font" className="text-sm font-medium cursor-pointer">
-              Extra Large Text
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              Increase text size throughout the app
-            </p>
-          </div>
-        </div>
-        <Switch
-          id="large-font"
-          checked={largeFont}
-          onCheckedChange={setLargeFont}
-        />
-      </div>
-    </div>
+      <ToggleRow
+        id="large-font"
+        icon={ZoomIn}
+        label="Extra Large Text"
+        description="Increase text size throughout the app"
+        checked={largeFont}
+        onChange={setLargeFont}
+      />
+    </Stack>
   );
 }

@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { AppLayout } from './AppLayout';
+import { muiWrapper } from '@/test/utils';
 
 // Mock useNavigate
 const mockNavigate = vi.fn();
@@ -98,7 +99,8 @@ function createWrapper() {
   return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        {children}
+        {/* ProfileModal's views read palette tokens, so they need the theme. */}
+        {muiWrapper({ children })}
       </BrowserRouter>
     </QueryClientProvider>
   );
