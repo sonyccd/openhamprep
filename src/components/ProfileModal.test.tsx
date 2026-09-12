@@ -5,6 +5,7 @@ import { ProfileModal } from './ProfileModal';
 import { BrowserRouter } from 'react-router-dom';
 import { AccessibilityProvider } from '@/hooks/useAccessibility';
 import React from 'react';
+import { muiWrapper } from '@/test/utils';
 
 // Mock react-router-dom's useNavigate
 const mockNavigate = vi.fn();
@@ -67,7 +68,9 @@ const renderProfileModal = (props = {}) => {
       <AccessibilityProvider>
         <ProfileModal {...defaultProps} {...props} />
       </AccessibilityProvider>
-    </BrowserRouter>
+    </BrowserRouter>,
+    // The ported views read palette tokens, so they need the real theme.
+    { wrapper: muiWrapper }
   );
 };
 
@@ -85,8 +88,9 @@ const clickMenuItem = async (user: ReturnType<typeof userEvent.setup>, label: st
 
 // Helper to navigate to Delete Account confirmation (now inline in Account view)
 const navigateToDeleteConfirm = async (user: ReturnType<typeof userEvent.setup>) => {
-  // Navigate to Account view first
-  const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+  // Navigate to Account view first. MUI's ListItemButton renders a
+  // div[role="button"], so this is a role query rather than closest('button').
+  const accountMenuItem = screen.getByRole('button', { name: /Name, email, password/ });
   await user.click(accountMenuItem!);
   // Click Delete Account button to show the inline confirmation
   const deleteButton = screen.getByRole('button', { name: /^delete account$/i });
@@ -135,7 +139,7 @@ describe('ProfileModal', () => {
       renderProfileModal();
 
       // Find and click the Account menu item (has "Name, email, password" description)
-      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      const accountMenuItem = screen.getByRole('button', { name: /Name, email, password/ });
       await user.click(accountMenuItem!);
 
       expect(screen.getByText('Display Name')).toBeInTheDocument();
@@ -149,7 +153,7 @@ describe('ProfileModal', () => {
       renderProfileModal();
 
       // Find and click the Appearance menu item (has "Theme preferences" description)
-      const appearanceMenuItem = screen.getByText('Theme preferences').closest('button');
+      const appearanceMenuItem = screen.getByRole('button', { name: /Theme preferences/ });
       await user.click(appearanceMenuItem!);
 
       expect(screen.getByText('Theme')).toBeInTheDocument();
@@ -160,7 +164,7 @@ describe('ProfileModal', () => {
       renderProfileModal();
 
       // Find and click the Accessibility menu item
-      const accessibilityMenuItem = screen.getByText('Fonts, text size, contrast').closest('button');
+      const accessibilityMenuItem = screen.getByRole('button', { name: /Fonts, text size, contrast/ });
       await user.click(accessibilityMenuItem!);
 
       expect(screen.getByText('Customize the app for your needs')).toBeInTheDocument();
@@ -171,7 +175,7 @@ describe('ProfileModal', () => {
       renderProfileModal();
 
       // Navigate to Account view first
-      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      const accountMenuItem = screen.getByRole('button', { name: /Name, email, password/ });
       await user.click(accountMenuItem!);
 
       // Click Delete Account button to open the AlertDialog
@@ -188,7 +192,7 @@ describe('ProfileModal', () => {
       renderProfileModal();
 
       // Navigate to Account view
-      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      const accountMenuItem = screen.getByRole('button', { name: /Name, email, password/ });
       await user.click(accountMenuItem!);
       expect(screen.getByText('Display Name')).toBeInTheDocument();
 
@@ -206,11 +210,11 @@ describe('ProfileModal', () => {
       renderProfileModal();
 
       // Navigate to Account view
-      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      const accountMenuItem = screen.getByRole('button', { name: /Name, email, password/ });
       await user.click(accountMenuItem!);
 
       // Click on the display name field to edit (contains "Test User" and "Edit")
-      const displayNameSection = screen.getByText('Test User').closest('button');
+      const displayNameSection = screen.getByRole('button', { name: /Test User/ });
       await user.click(displayNameSection!);
 
       const input = screen.getByPlaceholderText('Enter your name');
@@ -218,16 +222,39 @@ describe('ProfileModal', () => {
       expect(input).toHaveValue('Test User');
     });
 
+    // The regression guard for the split. MenuItem, EditableField and the four
+    // views used to be declared inside ProfileModal's render body, which makes
+    // each a new component type every render — React then remounts the whole
+    // subtree instead of updating it. Probing the old component showed the
+    // damage: after typing, the captured input node still held the old value
+    // and focus had moved to a different DOM node holding the new one. It only
+    // looked like it worked because autoFocus re-fired on the replacement.
+    it('keeps the same input node while typing', async () => {
+      const user = userEvent.setup();
+      renderProfileModal();
+      await user.click(screen.getByRole('button', { name: /Name, email, password/ }));
+      await user.click(screen.getByRole('button', { name: /Test User/ }));
+
+      const input = screen.getByLabelText('Display Name');
+      await user.clear(input);
+      await user.type(input, 'Hello');
+
+      // Same node, holding the typed value, still focused.
+      expect(screen.getByLabelText('Display Name')).toBe(input);
+      expect(input).toHaveValue('Hello');
+      expect(input).toHaveFocus();
+    });
+
     it('allows cancelling edit', async () => {
       const user = userEvent.setup();
       renderProfileModal();
 
       // Navigate to Account view
-      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      const accountMenuItem = screen.getByRole('button', { name: /Name, email, password/ });
       await user.click(accountMenuItem!);
 
       // Click on the display name field to edit
-      const displayNameSection = screen.getByText('Test User').closest('button');
+      const displayNameSection = screen.getByRole('button', { name: /Test User/ });
       await user.click(displayNameSection!);
 
       await user.click(screen.getByRole('button', { name: /cancel/i }));
@@ -242,7 +269,7 @@ describe('ProfileModal', () => {
       renderProfileModal();
 
       // Navigate to Account view
-      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      const accountMenuItem = screen.getByRole('button', { name: /Name, email, password/ });
       await user.click(accountMenuItem!);
 
       const emailInput = screen.getByPlaceholderText('Enter new email');
@@ -254,7 +281,7 @@ describe('ProfileModal', () => {
       renderProfileModal();
 
       // Navigate to Account view
-      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      const accountMenuItem = screen.getByRole('button', { name: /Name, email, password/ });
       await user.click(accountMenuItem!);
 
       const changeButton = screen.getByRole('button', { name: /change email/i });
@@ -266,7 +293,7 @@ describe('ProfileModal', () => {
       renderProfileModal();
 
       // Navigate to Account view
-      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      const accountMenuItem = screen.getByRole('button', { name: /Name, email, password/ });
       await user.click(accountMenuItem!);
 
       const emailInput = screen.getByPlaceholderText('Enter new email');
@@ -283,7 +310,7 @@ describe('ProfileModal', () => {
       renderProfileModal();
 
       // Navigate to Account view
-      const accountMenuItem = screen.getByText('Name, email, password').closest('button');
+      const accountMenuItem = screen.getByRole('button', { name: /Name, email, password/ });
       await user.click(accountMenuItem!);
 
       const resetButton = screen.getByRole('button', { name: /send reset link/i });

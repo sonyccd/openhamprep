@@ -104,20 +104,18 @@ describe('delete_own_account Security Checks', () => {
 
 describe('ProfileModal Delete Account Integration', () => {
   it('uses supabase.rpc to call the secure function', async () => {
-    const profileModalPath = path.join(
-      __dirname,
-      '../components/ProfileModal.tsx'
-    );
-    const profileModalContent = fs.readFileSync(profileModalPath, 'utf-8');
+    // The deletion call moved out of ProfileModal.tsx into useProfileAccount
+    // when the modal was split, so this reads the hook. The assertion is
+    // unchanged: account deletion must go through the RPC, not the
+    // delete-user Edge Function, which has different security properties.
+    const hookPath = path.join(__dirname, '../hooks/useProfileAccount.ts');
+    const hookContent = fs.readFileSync(hookPath, 'utf-8');
 
-    // The ProfileModal MUST use supabase.rpc('delete_own_account')
-    // NOT supabase.functions.invoke (Edge Function) which has different security
-    // Check for both single and double quote styles
     expect(
-      profileModalContent.includes("supabase.rpc('delete_own_account')") ||
-      profileModalContent.includes('supabase.rpc("delete_own_account")')
+      hookContent.includes("supabase.rpc('delete_own_account')") ||
+      hookContent.includes('supabase.rpc("delete_own_account")')
     ).toBe(true);
-    expect(profileModalContent).not.toContain("supabase.functions.invoke('delete-user')");
-    expect(profileModalContent).not.toContain('supabase.functions.invoke("delete-user")');
+    expect(hookContent).not.toContain("supabase.functions.invoke('delete-user')");
+    expect(hookContent).not.toContain('supabase.functions.invoke("delete-user")');
   });
 });
