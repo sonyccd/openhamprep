@@ -1,9 +1,13 @@
 import { Shield, LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import ButtonBase from '@mui/material/ButtonBase';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import { tokenAlpha } from '@/theme/muiTheme';
 import type { UserInfo } from './types';
 
 interface SidebarFooterProps {
@@ -16,7 +20,13 @@ interface SidebarFooterProps {
   onAdminClick: () => void;
 }
 
-export function SidebarFooter({
+const truncate = {
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+} as const;
+
+export const SidebarFooter = ({
   userInfo,
   isAdmin,
   isOnAdminPage,
@@ -24,7 +34,7 @@ export function SidebarFooter({
   isMobile,
   onProfileClick,
   onAdminClick,
-}: SidebarFooterProps) {
+}: SidebarFooterProps) => {
   const showExpanded = isMobile || !isCollapsed;
 
   const getInitials = () => {
@@ -42,137 +52,165 @@ export function SidebarFooter({
     return 'U';
   };
 
+  const adminColours = isOnAdminPage
+    ? {
+        color: 'primary.main',
+        bgcolor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 10),
+      }
+    : { color: 'text.secondary', '&:hover': { color: 'primary.main' } };
+
+  const avatarSx = (size: number) => ({
+    width: size,
+    height: size,
+    fontSize: size >= 36 ? '0.875rem' : '0.75rem',
+    fontWeight: 500,
+    color: 'primary.main',
+    bgcolor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 10),
+  });
+
   return (
-    <div className="border-t border-border">
+    <Box sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
       {/* Admin Link */}
       {isAdmin && (
-        <div
-          className={cn(
-            'p-2 border-b border-border',
-            !isMobile && isCollapsed && 'flex justify-center'
-          )}
+        <Box
+          sx={{
+            p: 1,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            ...(!isMobile && isCollapsed && { display: 'flex', justifyContent: 'center' }),
+          }}
         >
           {!showExpanded ? (
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onAdminClick}
-                  aria-current={isOnAdminPage ? 'page' : undefined}
-                  className={cn(
-                    'w-full h-10',
-                    isOnAdminPage
-                      ? 'text-primary bg-primary/10'
-                      : 'text-muted-foreground hover:text-primary'
-                  )}
-                >
-                  <Shield className="w-5 h-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="bg-popover border-border">
-                <p>Admin Dashboard</p>
-              </TooltipContent>
+            <Tooltip title="Admin Dashboard" placement="right" enterDelay={0}>
+              <IconButton
+                onClick={onAdminClick}
+                aria-label="Admin Dashboard"
+                aria-current={isOnAdminPage ? 'page' : undefined}
+                sx={{ width: '100%', height: 40, borderRadius: 2, ...adminColours }}
+              >
+                <Box component={Shield} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+              </IconButton>
             </Tooltip>
           ) : (
             <Button
-              variant="ghost"
               onClick={onAdminClick}
               aria-current={isOnAdminPage ? 'page' : undefined}
-              className={cn(
-                'w-full justify-start gap-3',
-                isOnAdminPage
-                  ? 'text-primary bg-primary/10'
-                  : 'text-muted-foreground hover:text-primary'
-              )}
+              fullWidth
+              sx={{ justifyContent: 'flex-start', gap: 1.5, ...adminColours }}
+              startIcon={<Box component={Shield} sx={{ width: 20, height: 20 }} />}
             >
-              <Shield className="w-5 h-5" />
-              <span className="text-base font-medium">Admin</span>
+              Admin
             </Button>
           )}
-        </div>
+        </Box>
       )}
 
       {/* Guest: Sign in link */}
-      {!userInfo && (
-        !showExpanded ? (
-          <div className="p-2 flex justify-center">
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Link
-                  to="/auth?returnTo=/dashboard"
-                  className="flex items-center justify-center w-10 h-10 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                  aria-label="Sign in"
-                >
-                  <LogIn className="w-5 h-5" />
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="bg-popover border-border">
-                <p>Sign in</p>
-              </TooltipContent>
+      {!userInfo &&
+        (!showExpanded ? (
+          <Box sx={{ p: 1, display: 'flex', justifyContent: 'center' }}>
+            <Tooltip title="Sign in" placement="right" enterDelay={0}>
+              <Box
+                component={Link}
+                to="/auth?returnTo=/dashboard"
+                aria-label="Sign in"
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  color: 'text.secondary',
+                  '&:hover': { color: 'text.primary', bgcolor: 'secondary.main' },
+                }}
+              >
+                <Box component={LogIn} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+              </Box>
             </Tooltip>
-          </div>
+          </Box>
         ) : (
-          <div className="p-3">
-            <Link
+          <Box sx={{ p: 1.5 }}>
+            <Typography
+              component={Link}
               to="/auth?returnTo=/dashboard"
-              className="text-sm font-medium text-primary hover:underline"
+              variant="body2"
+              sx={{
+                fontWeight: 500,
+                color: 'primary.main',
+                textDecoration: 'none',
+                '&:hover': { textDecoration: 'underline' },
+              }}
             >
               Sign in →
-            </Link>
-          </div>
-        )
-      )}
+            </Typography>
+          </Box>
+        ))}
 
       {/* Authenticated: User Profile Section */}
       {userInfo && (
-        <div
-          className={cn(
-            'p-3',
-            !isMobile && isCollapsed && 'flex justify-center'
-          )}
+        <Box
+          sx={{
+            p: 1.5,
+            ...(!isMobile && isCollapsed && { display: 'flex', justifyContent: 'center' }),
+          }}
         >
           {showExpanded ? (
-            <button
+            <ButtonBase
               onClick={onProfileClick}
-              className="w-full flex items-center gap-3 p-2 -m-2 rounded-lg hover:bg-secondary transition-colors"
+              sx={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                gap: 1.5,
+                p: 1,
+                m: -1,
+                borderRadius: 2,
+                '&:hover': { bgcolor: 'secondary.main' },
+              }}
             >
-              <Avatar className="h-9 w-9 shrink-0">
-                <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                  {getInitials()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-sm font-medium text-foreground truncate">
+              <Avatar sx={{ ...avatarSx(36), flexShrink: 0 }}>{getInitials()}</Avatar>
+              <Box sx={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                <Typography variant="body2" sx={{ fontWeight: 500, ...truncate }}>
                   {userInfo.displayName || 'User'}
-                </p>
-                <p className="text-sm text-muted-foreground truncate">
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary', ...truncate }}>
                   {userInfo.email || ''}
-                </p>
-              </div>
-            </button>
+                </Typography>
+              </Box>
+            </ButtonBase>
           ) : (
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={onProfileClick}
-                  className="rounded-full hover:ring-2 hover:ring-primary/20 transition-all"
-                >
-                  <Avatar className="h-8 w-8 cursor-pointer">
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                      {getInitials()}
-                    </AvatarFallback>
-                  </Avatar>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="bg-popover border-border">
-                <p className="font-medium">{userInfo.displayName || 'User'}</p>
-                <p className="text-xs text-muted-foreground">{userInfo.email}</p>
-              </TooltipContent>
+            <Tooltip
+              placement="right"
+              enterDelay={0}
+              title={
+                <>
+                  <Box sx={{ fontWeight: 500 }}>{userInfo.displayName || 'User'}</Box>
+                  <Box sx={{ fontSize: '0.75rem' }}>{userInfo.email}</Box>
+                </>
+              }
+            >
+              <ButtonBase
+                onClick={onProfileClick}
+                // Collapsed there is no visible name, so the button spells one
+                // out rather than announcing only its initials.
+                aria-label={`Profile: ${userInfo.displayName || 'User'}`}
+                sx={{
+                  borderRadius: '50%',
+                  transition: 'box-shadow 200ms',
+                  '&:hover': {
+                    boxShadow: (theme) =>
+                      `0 0 0 2px ${tokenAlpha(theme.vars.palette.primary.main, 20)}`,
+                  },
+                }}
+              >
+                <Avatar sx={avatarSx(32)}>{getInitials()}</Avatar>
+              </ButtonBase>
             </Tooltip>
           )}
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   );
-}
+};

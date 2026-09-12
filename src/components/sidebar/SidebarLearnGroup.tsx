@@ -1,7 +1,11 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import type { NavGroup, NavItem } from './types';
+import Box from '@mui/material/Box';
+import ButtonBase from '@mui/material/ButtonBase';
+import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import { tokenAlpha } from '@/theme/muiTheme';
+import type { NavGroup } from './types';
 import type { View } from '@/types/navigation';
 
 interface SidebarLearnGroupProps {
@@ -14,7 +18,19 @@ interface SidebarLearnGroupProps {
   onNavClick: (view: View, disabled?: boolean) => void;
 }
 
-export function SidebarLearnGroup({
+const activeSx = {
+  color: 'primary.main',
+  bgcolor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 10),
+  border: '1px solid',
+  borderColor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 20),
+} as const;
+
+const idleSx = {
+  color: 'text.secondary',
+  '&:hover': { color: 'text.primary', bgcolor: 'secondary.main' },
+} as const;
+
+export const SidebarLearnGroup = ({
   group,
   currentView,
   isOnAdminPage,
@@ -22,104 +38,154 @@ export function SidebarLearnGroup({
   showExpanded,
   onToggle,
   onNavClick,
-}: SidebarLearnGroupProps) {
+}: SidebarLearnGroupProps) => {
   const LearnIcon = group.icon;
-  const isLearnItemActive = group.items.some(
-    (item) => !isOnAdminPage && (currentView === item.id ||
-      (item.id === 'topics' && currentView === 'topic-detail') ||
-      (item.id === 'lessons' && currentView === 'lesson-detail'))
-  );
+  const itemIsActive = (id: string) =>
+    !isOnAdminPage &&
+    (currentView === id ||
+      (id === 'topics' && currentView === 'topic-detail') ||
+      (id === 'lessons' && currentView === 'lesson-detail'));
+  const isLearnItemActive = group.items.some((item) => itemIsActive(item.id));
 
   if (!showExpanded) {
     // Collapsed: show Learn icon with tooltip listing items
     return (
-      <Tooltip delayDuration={0}>
-        <TooltipTrigger asChild>
-          <button
-            onClick={onToggle}
-            aria-label="Learn menu"
-            aria-expanded={isExpanded}
-            className={cn(
-              'w-full flex items-center justify-center px-2 py-2.5 rounded-lg transition-colors',
-              isLearnItemActive
-                ? 'bg-primary/10 text-primary border border-primary/20'
-                : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-            )}
-          >
-            <div className="relative shrink-0">
-              <LearnIcon className="w-5 h-5" aria-hidden="true" />
-            </div>
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="right" className="bg-popover border-border">
-          <p className="font-medium">Learn</p>
-          <p className="text-xs text-muted-foreground">
-            Lessons, Topics
-          </p>
-        </TooltipContent>
+      <Tooltip
+        placement="right"
+        enterDelay={0}
+        title={
+          <>
+            <Box sx={{ fontWeight: 500 }}>Learn</Box>
+            <Box sx={{ fontSize: '0.75rem' }}>Lessons, Topics</Box>
+          </>
+        }
+      >
+        <ButtonBase
+          onClick={onToggle}
+          aria-label="Learn menu"
+          aria-expanded={isExpanded}
+          sx={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            px: 1,
+            py: 1.25,
+            borderRadius: 2,
+            transition: 'color 200ms, background-color 200ms',
+            ...(isLearnItemActive ? activeSx : idleSx),
+          }}
+        >
+          <Box sx={{ position: 'relative', flexShrink: 0 }}>
+            <Box component={LearnIcon} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+          </Box>
+        </ButtonBase>
       </Tooltip>
     );
   }
 
   return (
-    <div className="space-y-1">
+    <Stack spacing={0.5}>
       {/* Learn header - clickable to expand/collapse */}
-      <button
+      <ButtonBase
         onClick={onToggle}
         aria-expanded={isExpanded}
         aria-controls="learn-group-items"
-        className={cn(
-          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
-          isLearnItemActive
-            ? 'text-primary'
-            : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-        )}
+        sx={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          gap: 1.5,
+          px: 1.5,
+          py: 1.25,
+          borderRadius: 2,
+          transition: 'color 200ms, background-color 200ms',
+          ...(isLearnItemActive ? { color: 'primary.main' } : idleSx),
+        }}
       >
-        <div className="relative shrink-0">
-          <LearnIcon className="w-5 h-5" aria-hidden="true" />
-        </div>
-        <span className="text-sm font-medium truncate flex-1 text-left">{group.label}</span>
-        {isExpanded ? (
-          <ChevronDown className="w-4 h-4" aria-hidden="true" />
-        ) : (
-          <ChevronRight className="w-4 h-4" aria-hidden="true" />
-        )}
-      </button>
+        <Box sx={{ position: 'relative', flexShrink: 0 }}>
+          <Box component={LearnIcon} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+        </Box>
+        <Typography
+          variant="body2"
+          component="span"
+          sx={{
+            fontWeight: 500,
+            flex: 1,
+            textAlign: 'left',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {group.label}
+        </Typography>
+        <Box
+          component={isExpanded ? ChevronDown : ChevronRight}
+          aria-hidden="true"
+          sx={{ width: 16, height: 16 }}
+        />
+      </ButtonBase>
 
       {/* Learn items - shown when expanded */}
       {isExpanded && (
-        <div id="learn-group-items" className="ml-4 pl-2 border-l border-border space-y-1">
+        <Stack
+          id="learn-group-items"
+          spacing={0.5}
+          sx={{ ml: 2, pl: 1, borderLeft: '1px solid', borderColor: 'divider' }}
+        >
           {group.items.map((item) => {
-            const isActive = !isOnAdminPage && (
-              currentView === item.id ||
-              (item.id === 'topics' && currentView === 'topic-detail') ||
-              (item.id === 'lessons' && currentView === 'lesson-detail')
-            );
+            const isActive = itemIsActive(item.id);
             const Icon = item.icon;
             return (
-              <button
+              <ButtonBase
                 key={item.id}
                 onClick={() => onNavClick(item.id, item.disabled)}
                 disabled={item.disabled}
                 aria-current={isActive ? 'page' : undefined}
-                className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm',
-                  isActive
-                    ? 'bg-primary/10 text-primary border border-primary/20'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary',
-                  item.disabled &&
-                    'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground'
-                )}
+                sx={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  // ButtonBase centres its content by default
+                  // (ButtonBase.js:53); the plain <button> this replaced did
+                  // not, so the row has to say so.
+                  justifyContent: 'flex-start',
+                  gap: 1.5,
+                  px: 1.5,
+                  py: 1,
+                  borderRadius: 2,
+                  fontSize: '0.875rem',
+                  transition: 'color 200ms, background-color 200ms',
+                  ...(isActive ? activeSx : idleSx),
+                  '&.Mui-disabled': {
+                    opacity: 0.5,
+                    color: 'text.secondary',
+                    bgcolor: 'transparent',
+                  },
+                }}
               >
-                <div className="relative shrink-0">
-                  <Icon className="w-4 h-4" aria-hidden="true" />
-                </div>
-                <span className="font-medium truncate">{item.label}</span>
-              </button>
+                <Box sx={{ position: 'relative', flexShrink: 0 }}>
+                  <Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                </Box>
+                <Typography
+                  variant="body2"
+                  component="span"
+                  sx={{
+                    fontWeight: 500,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {item.label}
+                </Typography>
+              </ButtonBase>
             );
           })}
-        </div>
+        </Stack>
       )}
-    </div>
+    </Stack>
   );
-}
+};

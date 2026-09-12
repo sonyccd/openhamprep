@@ -19,23 +19,19 @@ import {
   Users,
 } from 'lucide-react';
 import { getModifierKey } from '@/lib/searchUtils';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import Drawer from '@mui/material/Drawer';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import { ProfileModal } from '@/components/ProfileModal';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { useState } from 'react';
 import type { View } from '@/types/navigation';
 import { SidebarNavContent } from '@/components/sidebar/SidebarNavContent';
@@ -52,7 +48,7 @@ import {
   type DashboardSidebarProps,
 } from './sidebar';
 
-export function DashboardSidebar({
+export const DashboardSidebar = ({
   currentView,
   onViewChange,
   onSignOut,
@@ -67,7 +63,7 @@ export function DashboardSidebar({
   selectedTest,
   onTestChange,
   onSearch,
-}: DashboardSidebarProps) {
+}: DashboardSidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -174,27 +170,35 @@ export function DashboardSidebar({
   return (
     <>
       {/* Sign Out Confirmation Dialog */}
-      <AlertDialog open={signOutDialogOpen} onOpenChange={setSignOutDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Sign out?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to sign out of your account?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                onSignOut();
-                setMobileOpen(false);
-              }}
-            >
-              Sign Out
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <Dialog
+        open={signOutDialogOpen}
+        onClose={() => setSignOutDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        aria-describedby="sign-out-description"
+      >
+        <DialogTitle>Sign out?</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="sign-out-description">
+            Are you sure you want to sign out of your account?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ gap: 1 }}>
+          <Button variant="outlined" onClick={() => setSignOutDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              onSignOut();
+              setMobileOpen(false);
+              setSignOutDialogOpen(false);
+            }}
+          >
+            Sign Out
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Profile Modal */}
       {userId && userInfo && onProfileUpdate && (
@@ -220,43 +224,80 @@ export function DashboardSidebar({
         onTestChange={onTestChange}
       />
 
-      {/* Mobile Hamburger Button - uses safe-area-inset for iOS PWA notch/Dynamic Island */}
-      <div className="md:hidden fixed left-4 top-safe-top z-50">
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <SheetTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="bg-card border-border shadow-lg"
-                  aria-label="Open navigation menu"
-                >
-                  <Menu className="w-5 h-5" aria-hidden="true" />
-                </Button>
-              </SheetTrigger>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>Open menu</p>
-            </TooltipContent>
-          </Tooltip>
-          <SheetContent side="left" className="w-64 p-0 bg-card border-border">
-            <div className="flex flex-col h-full">
-              <SidebarNavContent {...navContentProps} isMobile />
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
+      {/*
+        Mobile hamburger. top-safe-top is a Tailwind utility built on
+        env(safe-area-inset-top) for the iOS PWA notch — kept as a class
+        because it resolves a CSS environment variable, which is not something
+        the theme models. Documented as a deliberate mix until C7.
+      */}
+      <Box
+        className="top-safe-top"
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          position: 'fixed',
+          left: 16,
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+        }}
+      >
+        <Tooltip title="Open menu" placement="right">
+          <IconButton
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open navigation menu"
+            sx={{
+              bgcolor: 'background.paper',
+              border: '1px solid',
+              borderColor: 'divider',
+              boxShadow: 3,
+              '&:hover': { bgcolor: 'background.paper' },
+            }}
+          >
+            <Box component={Menu} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+          </IconButton>
+        </Tooltip>
+      </Box>
 
-      {/* Desktop Sidebar */}
-      <div
-        className={cn(
-          'hidden md:flex flex-col h-screen bg-card border-r border-border transition-all duration-300',
-          isCollapsed ? 'w-16' : 'w-64'
-        )}
+      {/*
+        temporary is the variant that matches what the shadcn Sheet did — an
+        overlay with a backdrop and focus trapping. Deliberately not used for
+        the desktop rail: a permanent Drawer's paper is position: fixed and its
+        root is flex: 0 0 auto with no width, so in AppLayout's flex row it
+        would reserve nothing and overlay the content. The desktop rail is a
+        plain flex Box below, which also keeps the width transition native.
+      */}
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        sx={{ display: { xs: 'block', md: 'none' } }}
+        slotProps={{
+          paper: {
+            sx: { width: 256, bgcolor: 'background.paper', borderColor: 'divider' },
+          },
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <SidebarNavContent {...navContentProps} isMobile />
+        </Box>
+      </Drawer>
+
+      {/* Desktop rail */}
+      <Box
+        component="nav"
+        aria-label="Main navigation"
+        sx={{
+          display: { xs: 'none', md: 'flex' },
+          flexDirection: 'column',
+          height: '100vh',
+          bgcolor: 'background.paper',
+          borderRight: '1px solid',
+          borderColor: 'divider',
+          transition: 'width 300ms',
+          width: isCollapsed ? 64 : 256,
+          flexShrink: 0,
+        }}
       >
         <SidebarNavContent {...navContentProps} />
-      </div>
+      </Box>
     </>
   );
-}
+};

@@ -1,6 +1,9 @@
 import { Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import { getModifierKey } from '@/lib/searchUtils';
 import type { View } from '@/types/navigation';
 import type { TestType } from '@/types/navigation';
@@ -103,45 +106,66 @@ export const SidebarNavContent = ({
 
       {/* Search Button */}
       {onSearch && (
-        <div className="px-2 pt-2">
+        <Box sx={{ px: 1, pt: 1 }}>
           {showExpanded ? (
             <Button
-              variant="outline"
-              className="w-full justify-start text-muted-foreground hover:text-foreground"
+              variant="outlined"
+              fullWidth
               onClick={() => {
                 onSearch();
                 onCloseMobile();
               }}
+              sx={{
+                justifyContent: 'flex-start',
+                gap: 1,
+                color: 'text.secondary',
+                '&:hover': { color: 'text.primary' },
+              }}
+              startIcon={<Box component={Search} sx={{ width: 16, height: 16 }} />}
             >
-              <Search className="mr-2 h-4 w-4" />
               Search...
-              <kbd className="ml-auto bg-muted px-1.5 py-0.5 rounded text-xs font-mono">
+              <Box
+                component="kbd"
+                sx={{
+                  ml: 'auto',
+                  px: 0.75,
+                  py: 0.25,
+                  borderRadius: 1,
+                  bgcolor: 'muted',
+                  fontSize: '0.75rem',
+                  fontFamily: 'monospace',
+                }}
+              >
                 {getModifierKey()}K
-              </kbd>
+              </Box>
             </Button>
           ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="w-full text-muted-foreground hover:text-foreground"
-                  onClick={onSearch}
-                  aria-label="Search"
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>Search ({getModifierKey()}K)</p>
-              </TooltipContent>
+            <Tooltip title={`Search (${getModifierKey()}K)`} placement="right">
+              <IconButton
+                onClick={onSearch}
+                aria-label="Search"
+                sx={{
+                  width: '100%',
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  color: 'text.secondary',
+                  '&:hover': { color: 'text.primary' },
+                }}
+              >
+                <Box component={Search} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+              </IconButton>
             </Tooltip>
           )}
-        </div>
+        </Box>
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
+      <Stack
+        component="nav"
+        spacing={0.5}
+        sx={{ flex: 1, py: 2, px: 1, overflowY: 'auto' }}
+      >
         {/* Top nav items: Dashboard, Practice Test */}
         {topNavItems.map((item) => (
           <SidebarNavItem
@@ -203,7 +227,7 @@ export const SidebarNavContent = ({
             onClick={() => onNavClick(item.id, item.disabled)}
           />
         ))}
-      </nav>
+      </Stack>
 
       <SidebarFooter
         userInfo={userInfo}

@@ -1,7 +1,12 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import type { NavGroup, NavItem } from './types';
+import Box from '@mui/material/Box';
+import ButtonBase from '@mui/material/ButtonBase';
+import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import visuallyHidden from '@mui/utils/visuallyHidden';
+import { tokenAlpha } from '@/theme/muiTheme';
+import type { NavGroup } from './types';
 import type { View } from '@/types/navigation';
 
 interface SidebarStudyGroupProps {
@@ -14,7 +19,37 @@ interface SidebarStudyGroupProps {
   onNavClick: (view: View, disabled?: boolean) => void;
 }
 
-export function SidebarStudyGroup({
+const activeSx = {
+  color: 'primary.main',
+  bgcolor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 10),
+  border: '1px solid',
+  borderColor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 20),
+} as const;
+
+const idleSx = {
+  color: 'text.secondary',
+  '&:hover': { color: 'text.primary', bgcolor: 'secondary.main' },
+} as const;
+
+/** The count bubble over an icon. Decorative — the text equivalent is separate. */
+const badgeSx = (size: number) =>
+  ({
+    position: 'absolute',
+    top: size >= 16 ? -6 : -4,
+    right: size >= 16 ? -6 : -4,
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: size >= 16 ? '10px' : '9px',
+    fontWeight: 700,
+    bgcolor: 'primary.main',
+    color: 'primary.contrastText',
+  }) as const;
+
+export const SidebarStudyGroup = ({
   group,
   currentView,
   isOnAdminPage,
@@ -22,7 +57,7 @@ export function SidebarStudyGroup({
   showExpanded,
   onToggle,
   onNavClick,
-}: SidebarStudyGroupProps) {
+}: SidebarStudyGroupProps) => {
   const StudyIcon = group.icon;
   const totalBadge = group.items.reduce((sum, item) => sum + (item.badge || 0), 0);
   const isStudyItemActive = group.items.some(
@@ -32,110 +67,171 @@ export function SidebarStudyGroup({
   if (!showExpanded) {
     // Collapsed: show Study icon with tooltip listing items
     return (
-      <Tooltip delayDuration={0}>
-        <TooltipTrigger asChild>
-          <button
-            onClick={onToggle}
-            aria-label={`Study menu${totalBadge > 0 ? `, ${totalBadge} items need attention` : ''}`}
-            aria-expanded={isExpanded}
-            className={cn(
-              'w-full flex items-center justify-center px-2 py-2.5 rounded-lg transition-colors',
-              isStudyItemActive
-                ? 'bg-primary/10 text-primary border border-primary/20'
-                : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+      <Tooltip
+        placement="right"
+        enterDelay={0}
+        title={
+          <>
+            <Box sx={{ fontWeight: 500 }}>Study</Box>
+            <Box sx={{ fontSize: '0.75rem' }}>Random, Topics, Weak Areas, Bookmarks</Box>
+          </>
+        }
+      >
+        <ButtonBase
+          onClick={onToggle}
+          aria-label={`Study menu${totalBadge > 0 ? `, ${totalBadge} items need attention` : ''}`}
+          aria-expanded={isExpanded}
+          sx={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            px: 1,
+            py: 1.25,
+            borderRadius: 2,
+            transition: 'color 200ms, background-color 200ms',
+            ...(isStudyItemActive ? activeSx : idleSx),
+          }}
+        >
+          <Box sx={{ position: 'relative', flexShrink: 0 }}>
+            <Box component={StudyIcon} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+            {totalBadge > 0 && (
+              <Box component="span" aria-hidden="true" sx={badgeSx(16)}>
+                {totalBadge > 9 ? '9+' : totalBadge}
+              </Box>
             )}
-          >
-            <div className="relative shrink-0">
-              <StudyIcon className="w-5 h-5" aria-hidden="true" />
-              {totalBadge > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center" aria-hidden="true">
-                  {totalBadge > 9 ? '9+' : totalBadge}
-                </span>
-              )}
-            </div>
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="right" className="bg-popover border-border">
-          <p className="font-medium">Study</p>
-          <p className="text-xs text-muted-foreground">
-            Random, Topics, Weak Areas, Bookmarks
-          </p>
-        </TooltipContent>
+          </Box>
+        </ButtonBase>
       </Tooltip>
     );
   }
 
   return (
-    <div className="space-y-1">
+    <Stack spacing={0.5}>
       {/* Study header - clickable to expand/collapse */}
-      <button
+      <ButtonBase
         onClick={onToggle}
         aria-expanded={isExpanded}
         aria-controls="study-group-items"
-        className={cn(
-          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
-          isStudyItemActive
-            ? 'text-primary'
-            : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-        )}
+        sx={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          gap: 1.5,
+          px: 1.5,
+          py: 1.25,
+          borderRadius: 2,
+          transition: 'color 200ms, background-color 200ms',
+          ...(isStudyItemActive ? { color: 'primary.main' } : idleSx),
+        }}
       >
-        <div className="relative shrink-0">
-          <StudyIcon className="w-5 h-5" aria-hidden="true" />
+        <Box sx={{ position: 'relative', flexShrink: 0 }}>
+          <Box component={StudyIcon} aria-hidden="true" sx={{ width: 20, height: 20 }} />
           {totalBadge > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center" aria-hidden="true">
+            <Box component="span" aria-hidden="true" sx={badgeSx(16)}>
               {totalBadge > 9 ? '9+' : totalBadge}
-            </span>
+            </Box>
           )}
-        </div>
-        <span className="text-sm font-medium truncate flex-1 text-left">{group.label}</span>
-        {isExpanded ? (
-          <ChevronDown className="w-4 h-4" aria-hidden="true" />
-        ) : (
-          <ChevronRight className="w-4 h-4" aria-hidden="true" />
-        )}
+        </Box>
+        <Typography
+          variant="body2"
+          component="span"
+          sx={{
+            fontWeight: 500,
+            flex: 1,
+            textAlign: 'left',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {group.label}
+        </Typography>
+        <Box
+          component={isExpanded ? ChevronDown : ChevronRight}
+          aria-hidden="true"
+          sx={{ width: 16, height: 16 }}
+        />
         {totalBadge > 0 && (
-          <span className="sr-only">, {totalBadge} items need attention</span>
+          // The badge bubble is aria-hidden, so the count reaches assistive
+          // tech as text here instead. visuallyHidden replaces the sr-only
+          // class; A2c kept assertions on sr-only precisely because it is an
+          // accessibility contract rather than styling.
+          <Box component="span" sx={visuallyHidden}>
+            , {totalBadge} items need attention
+          </Box>
         )}
-      </button>
+      </ButtonBase>
 
       {/* Study items - shown when expanded */}
       {isExpanded && (
-        <div id="study-group-items" className="ml-4 pl-2 border-l border-border space-y-1">
+        <Stack
+          id="study-group-items"
+          spacing={0.5}
+          sx={{ ml: 2, pl: 1, borderLeft: '1px solid', borderColor: 'divider' }}
+        >
           {group.items.map((item) => {
             const isActive = !isOnAdminPage && currentView === item.id;
             const Icon = item.icon;
             return (
-              <button
+              <ButtonBase
                 key={item.id}
                 onClick={() => onNavClick(item.id, item.disabled)}
                 disabled={item.disabled}
                 aria-current={isActive ? 'page' : undefined}
-                className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm',
-                  isActive
-                    ? 'bg-primary/10 text-primary border border-primary/20'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary',
-                  item.disabled &&
-                    'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground'
-                )}
+                sx={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  // ButtonBase centres its content by default
+                  // (ButtonBase.js:53); the plain <button> this replaced did
+                  // not, so the row has to say so.
+                  justifyContent: 'flex-start',
+                  gap: 1.5,
+                  px: 1.5,
+                  py: 1,
+                  borderRadius: 2,
+                  fontSize: '0.875rem',
+                  transition: 'color 200ms, background-color 200ms',
+                  ...(isActive ? activeSx : idleSx),
+                  '&.Mui-disabled': {
+                    opacity: 0.5,
+                    color: 'text.secondary',
+                    bgcolor: 'transparent',
+                  },
+                }}
               >
-                <div className="relative shrink-0">
-                  <Icon className="w-4 h-4" aria-hidden="true" />
+                <Box sx={{ position: 'relative', flexShrink: 0 }}>
+                  <Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
                   {item.badge !== undefined && item.badge > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center" aria-hidden="true">
+                    <Box component="span" aria-hidden="true" sx={badgeSx(14)}>
                       {item.badge > 9 ? '9+' : item.badge}
-                    </span>
+                    </Box>
                   )}
-                </div>
-                <span className="font-medium truncate">{item.label}</span>
+                </Box>
+                <Typography
+                  variant="body2"
+                  component="span"
+                  sx={{
+                    fontWeight: 500,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {item.label}
+                </Typography>
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span className="sr-only">, {item.badgeAriaLabel || `${item.badge} items`}</span>
+                  <Box component="span" sx={visuallyHidden}>
+                    , {item.badgeAriaLabel || `${item.badge} items`}
+                  </Box>
                 )}
-              </button>
+              </ButtonBase>
             );
           })}
-        </div>
+        </Stack>
       )}
-    </div>
+    </Stack>
   );
-}
+};

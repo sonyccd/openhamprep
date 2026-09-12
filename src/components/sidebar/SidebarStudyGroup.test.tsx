@@ -2,12 +2,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SidebarStudyGroup } from './SidebarStudyGroup';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { muiWrapper } from '@/test/utils';
 import { GraduationCap, Zap, BookOpen, AlertTriangle, Bookmark } from 'lucide-react';
 import type { NavGroup } from './types';
 
 const renderWithTooltip = (component: React.ReactNode) => {
-  return render(<TooltipProvider>{component}</TooltipProvider>);
+  return render(component, { wrapper: muiWrapper });
 };
 
 const createStudyGroup = (overrides?: Partial<NavGroup>): NavGroup => ({
@@ -37,6 +37,93 @@ describe('SidebarStudyGroup', () => {
   it('renders group label when expanded', () => {
     renderWithTooltip(<SidebarStudyGroup {...defaultProps} />);
     expect(screen.getByText('Study')).toBeInTheDocument();
+  });
+
+  // Nothing covered this before, and the port swapped its mechanism: the
+  // count bubble is aria-hidden and the number reaches assistive tech as
+  // separate hidden text, which was Tailwind's sr-only class and is now MUI's
+  // visuallyHidden. A silent loss there would take the count away from screen
+  // reader users while looking identical on screen.
+  // MUI's ButtonBase centres its content (ButtonBase.js:53); the plain
+  // <button> elements it replaced did not. Omitting justifyContent therefore
+  // centred every row, and the sub-items showed it worst because they have no
+  // flex:1 child to absorb the free space and mask it.
+  //
+  // Caught by eye on a screenshot, not by any test — every role, name and text
+  // assertion passed throughout, which is the failure mode #288 flagged for
+  // this stage. So it is asserted on the computed style.
+  describe('row alignment', () => {
+    it('left-aligns the group header', () => {
+      renderWithTooltip(<SidebarStudyGroup {...defaultProps} />);
+
+      const header = screen.getByRole('button', { name: /Study/ });
+      expect(getComputedStyle(header).justifyContent).toBe('flex-start');
+    });
+
+    it('left-aligns each sub-item', () => {
+      renderWithTooltip(<SidebarStudyGroup {...defaultProps} />);
+
+      for (const label of ['Random Practice', 'By Subelement', 'Weak Areas']) {
+        const row = screen.getByRole('button', { name: new RegExp(label) });
+        expect(getComputedStyle(row).justifyContent).toBe('flex-start');
+      }
+    });
+
+    it('centres the collapsed rail button, where that is the point', () => {
+      renderWithTooltip(<SidebarStudyGroup {...defaultProps} showExpanded={false} />);
+
+      const button = screen.getByRole('button', { name: /Study menu/ });
+      expect(getComputedStyle(button).justifyContent).toBe('center');
+    });
+  });
+
+  describe('badge announcements', () => {
+    it('announces the total on the group header', () => {
+      renderWithTooltip(<SidebarStudyGroup {...defaultProps} />);
+
+      // 5 weak areas + 3 bookmarks.
+      expect(screen.getByRole('button', { name: /Study/ })).toHaveAccessibleName(
+        /8 items need attention/
+      );
+    });
+
+    it('announces each item count', () => {
+      renderWithTooltip(<SidebarStudyGroup {...defaultProps} />);
+
+      expect(screen.getByRole('button', { name: /Weak Areas/ })).toHaveAccessibleName(
+        /5 items/
+      );
+    });
+
+    it('uses the supplied wording when given', () => {
+      const group = createStudyGroup({
+        items: [
+          {
+            id: 'weak-questions',
+            label: 'Weak Areas',
+            icon: AlertTriangle,
+            badge: 1,
+            badgeAriaLabel: '1 weak question',
+          },
+        ],
+      });
+      renderWithTooltip(<SidebarStudyGroup {...defaultProps} group={group} />);
+
+      expect(screen.getByRole('button', { name: /Weak Areas/ })).toHaveAccessibleName(
+        /1 weak question/
+      );
+    });
+
+    it('says nothing when there is nothing to report', () => {
+      const group = createStudyGroup({
+        items: [{ id: 'random-practice', label: 'Random Practice', icon: Zap }],
+      });
+      renderWithTooltip(<SidebarStudyGroup {...defaultProps} group={group} />);
+
+      expect(screen.getByRole('button', { name: /Study/ })).not.toHaveAccessibleName(
+        /items need attention/
+      );
+    });
   });
 
   it('renders all study items when expanded', () => {
