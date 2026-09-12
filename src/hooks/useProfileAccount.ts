@@ -214,11 +214,26 @@ export function useProfileAccount({
     setDeleteConfirmText("");
   };
 
+  /**
+   * Discard every unsaved edit. Called when the modal closes and when stepping
+   * back to the menu.
+   *
+   * newEmail and deleteConfirmText are in here because the modal is never
+   * unmounted — DashboardSidebar only toggles its `open` prop — so anything
+   * left in state is still there on reopen. deleteConfirmText is also cleared
+   * by the view-change effect, but relying on that meant a field's lifetime
+   * depended on which view happened to be active, which is how newEmail got
+   * missed in the first place. Reset everything here and let the effect be
+   * belt-and-braces.
+   */
   const resetEdits = () => {
     setIsEditingName(false);
     setIsEditingForumUsername(false);
     setDisplayName(userInfo.displayName || "");
     setForumUsername(userInfo.forumUsername || "");
+    setNewEmail("");
+    setDeleteConfirmText("");
+    setShowDeleteConfirm(false);
   };
 
   return {

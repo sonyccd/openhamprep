@@ -91,6 +91,24 @@ describe('AccessibilitySettings', () => {
       expect(screen.getByRole('switch', { name: label })).toBeInTheDocument();
     });
 
+    // The switch has to be a sibling of the icon-and-text block, not nested
+    // inside it: the row uses justify-content: space-between, which does
+    // nothing with a single child and lets the switch drift in beside the
+    // label. Role and name queries pass either way, which is why the first
+    // attempt at this component shipped the wrong layout.
+    it('puts the switch at the trailing edge of the row', () => {
+      render(<AccessibilitySettings />, { wrapper: muiWrapper });
+
+      const input = screen.getByRole('switch', { name: 'Bold All Text' });
+      const switchRoot = input.closest('.MuiSwitch-root')!;
+      const row = switchRoot.parentElement!;
+
+      // Two children: the text block, then the switch.
+      expect(row.children).toHaveLength(2);
+      expect(row.lastElementChild).toBe(switchRoot);
+      expect(switchRoot.previousElementSibling).toHaveTextContent('Bold All Text');
+    });
+
     it('turns bold text on', async () => {
       const user = userEvent.setup();
       render(<AccessibilitySettings />, { wrapper: muiWrapper });

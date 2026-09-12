@@ -1,6 +1,5 @@
 import { Type, Bold, ZoomIn } from "lucide-react";
 import Box from "@mui/material/Box";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import ToggleButton from "@mui/material/ToggleButton";
@@ -26,12 +25,17 @@ const sectionHeading = {
 /**
  * One labelled toggle with an icon and an explanation.
  *
- * FormControlLabel associates the switch with its text, which is what the
- * <Label htmlFor> pairing did before — one of the few controls in this part of
- * the app that was already labelled correctly, so the association is preserved
- * rather than introduced.
+ * The switch is a *sibling* of the icon-and-text block, not nested inside it,
+ * so the row's justify-content: space-between has two children to separate and
+ * the switch sits at the trailing edge. Nesting it inside made space-between
+ * inert and pulled the switch in next to the label text.
+ *
+ * That means the association is htmlFor/id rather than FormControlLabel
+ * wrapping the control — which is what the original did too, and one of the
+ * few places in this area that was already labelled correctly.
  */
 interface ToggleRowProps {
+  id: string;
   icon: React.ElementType;
   label: string;
   description: string;
@@ -39,7 +43,7 @@ interface ToggleRowProps {
   onChange: (checked: boolean) => void;
 }
 
-function ToggleRow({ icon: Icon, label, description, checked, onChange }: ToggleRowProps) {
+function ToggleRow({ id, icon: Icon, label, description, checked, onChange }: ToggleRowProps) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
@@ -59,17 +63,25 @@ function ToggleRow({ icon: Icon, label, description, checked, onChange }: Toggle
           <Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
         </Box>
         <Box sx={{ minWidth: 0 }}>
-          <FormControlLabel
-            control={<Switch checked={checked} onChange={(e) => onChange(e.target.checked)} />}
-            label={label}
-            labelPlacement="start"
-            sx={{ m: 0, "& .MuiFormControlLabel-label": { fontSize: "0.875rem", fontWeight: 500 } }}
-          />
+          <Typography
+            component="label"
+            htmlFor={id}
+            variant="body2"
+            sx={{ display: "block", fontWeight: 500, cursor: "pointer" }}
+          >
+            {label}
+          </Typography>
           <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
             {description}
           </Typography>
         </Box>
       </Box>
+      <Switch
+        id={id}
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        sx={{ flexShrink: 0 }}
+      />
     </Box>
   );
 }
@@ -115,6 +127,7 @@ export function AccessibilitySettings() {
       </Stack>
 
       <ToggleRow
+        id="bold-text"
         icon={Bold}
         label="Bold All Text"
         description="Make all text bold for better readability"
@@ -123,6 +136,7 @@ export function AccessibilitySettings() {
       />
 
       <ToggleRow
+        id="large-font"
         icon={ZoomIn}
         label="Extra Large Text"
         description="Increase text size throughout the app"

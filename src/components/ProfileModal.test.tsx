@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { useState } from 'react';
 import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ProfileModal } from './ProfileModal';
@@ -229,6 +230,49 @@ describe('ProfileModal', () => {
     // damage: after typing, the captured input node still held the old value
     // and focus had moved to a different DOM node holding the new one. It only
     // looked like it worked because autoFocus re-fired on the replacement.
+    // ProfileModal is never unmounted — the sidebar drives it with
+    // open={profileModalOpen} onOpenChange={setProfileModalOpen} — so
+    // useProfileAccount's state survives a close. The original
+    // handleOpenChange cleared newEmail explicitly; resetEdits did not carry
+    // that over, leaving a half-typed address waiting on reopen.
+    //
+    // Closed the way the app closes it, through onOpenChange, rather than by
+    // flipping `open` from outside: the reset hangs off that callback, so
+    // forcing the prop would test a path the app never takes.
+    it('does not keep a half-typed email across close and reopen', async () => {
+      const user = userEvent.setup();
+
+      const Harness = () => {
+        const [open, setOpen] = useState(true);
+        return (
+          <>
+            <button onClick={() => setOpen(true)}>reopen</button>
+            <ProfileModal {...defaultProps} open={open} onOpenChange={setOpen} />
+          </>
+        );
+      };
+
+      render(
+        <BrowserRouter>
+          <AccessibilityProvider>
+            <Harness />
+          </AccessibilityProvider>
+        </BrowserRouter>,
+        { wrapper: muiWrapper }
+      );
+
+      await user.click(screen.getByRole('button', { name: /Name, email, password/ }));
+      await user.type(screen.getByLabelText('New email address'), 'partial@exa');
+
+      await user.keyboard('{Escape}');
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+      await user.click(screen.getByRole('button', { name: 'reopen' }));
+      await user.click(screen.getByRole('button', { name: /Name, email, password/ }));
+
+      expect(screen.getByLabelText('New email address')).toHaveValue('');
+    });
+
     it('keeps the same input node while typing', async () => {
       const user = userEvent.setup();
       renderProfileModal();
