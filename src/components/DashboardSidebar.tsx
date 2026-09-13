@@ -236,7 +236,13 @@ export const DashboardSidebar = ({
           display: { xs: 'block', md: 'none' },
           position: 'fixed',
           left: 16,
-          zIndex: (theme) => theme.zIndex.drawer + 1,
+          // appBar (1100), not drawer + 1. The temporary Drawer's root and
+          // paper both sit at theme.zIndex.drawer (1200), and this button is at
+          // left: 16 — inside the 256px paper — so raising it above the drawer
+          // made it float over the open menu. The shadcn Sheet it replaced put
+          // both at z-50 and relied on portal order, so the sheet covered the
+          // trigger. This restores that: above the page, below the drawer.
+          zIndex: (theme) => theme.zIndex.appBar,
         }}
       >
         <Tooltip title="Open menu" placement="right">
@@ -271,7 +277,7 @@ export const DashboardSidebar = ({
         sx={{ display: { xs: 'block', md: 'none' } }}
         slotProps={{
           paper: {
-            sx: { width: 256, bgcolor: 'background.paper', borderColor: 'divider' },
+            sx: { width: 256, bgcolor: 'background.paper' },
           },
         }}
       >
@@ -281,9 +287,13 @@ export const DashboardSidebar = ({
       </Drawer>
 
       {/* Desktop rail */}
+      {/*
+        Not component="nav": SidebarNavContent renders the <nav> itself, for
+        both the rail and the drawer. Labelling it there keeps one landmark and
+        keeps the two consistent — an outer nav here would nest an unlabelled
+        landmark inside a labelled one on desktop only.
+      */}
       <Box
-        component="nav"
-        aria-label="Main navigation"
         sx={{
           display: { xs: 'none', md: 'flex' },
           flexDirection: 'column',

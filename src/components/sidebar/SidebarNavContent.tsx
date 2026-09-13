@@ -163,6 +163,7 @@ export const SidebarNavContent = ({
       {/* Navigation */}
       <Stack
         component="nav"
+        aria-label="Main navigation"
         spacing={0.5}
         sx={{ flex: 1, py: 2, px: 1, overflowY: 'auto' }}
       >

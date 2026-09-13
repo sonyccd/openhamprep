@@ -87,11 +87,16 @@ describe('SidebarStudyGroup', () => {
       );
     });
 
-    it('announces each item count', () => {
+    it('announces each item count after the label, not before it', () => {
       renderWithTooltip(<SidebarStudyGroup {...defaultProps} />);
 
+      // Anchored rather than a contains-match. The bubble is absolutely
+      // positioned inside the icon's relative wrapper while the announcement
+      // is a sibling after the label, so the two cannot be moved into one
+      // element without reversing the reading order — and a contains-match
+      // would not notice.
       expect(screen.getByRole('button', { name: /Weak Areas/ })).toHaveAccessibleName(
-        /5 items/
+        /^Weak Areas\s*,\s*5 items$/
       );
     });
 

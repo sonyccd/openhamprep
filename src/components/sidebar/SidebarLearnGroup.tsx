@@ -4,7 +4,7 @@ import ButtonBase from '@mui/material/ButtonBase';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { tokenAlpha } from '@/theme/muiTheme';
+import { activeSx, disabledSx, idleSx, row } from './rowStyles';
 import type { NavGroup } from './types';
 import type { View } from '@/types/navigation';
 
@@ -17,18 +17,6 @@ interface SidebarLearnGroupProps {
   onToggle: () => void;
   onNavClick: (view: View, disabled?: boolean) => void;
 }
-
-const activeSx = {
-  color: 'primary.main',
-  bgcolor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 10),
-  border: '1px solid',
-  borderColor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 20),
-} as const;
-
-const idleSx = {
-  color: 'text.secondary',
-  '&:hover': { color: 'text.primary', bgcolor: 'secondary.main' },
-} as const;
 
 export const SidebarLearnGroup = ({
   group,
@@ -65,14 +53,11 @@ export const SidebarLearnGroup = ({
           aria-label="Learn menu"
           aria-expanded={isExpanded}
           sx={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
+            ...row,
+            // The one row that is meant to be centred.
             justifyContent: 'center',
             px: 1,
             py: 1.25,
-            borderRadius: 2,
-            transition: 'color 200ms, background-color 200ms',
             ...(isLearnItemActive ? activeSx : idleSx),
           }}
         >
@@ -92,15 +77,9 @@ export const SidebarLearnGroup = ({
         aria-expanded={isExpanded}
         aria-controls="learn-group-items"
         sx={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          gap: 1.5,
+          ...row,
           px: 1.5,
           py: 1.25,
-          borderRadius: 2,
-          transition: 'color 200ms, background-color 200ms',
           ...(isLearnItemActive ? { color: 'primary.main' } : idleSx),
         }}
       >
@@ -145,25 +124,12 @@ export const SidebarLearnGroup = ({
                 disabled={item.disabled}
                 aria-current={isActive ? 'page' : undefined}
                 sx={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  // ButtonBase centres its content by default
-                  // (ButtonBase.js:53); the plain <button> this replaced did
-                  // not, so the row has to say so.
-                  justifyContent: 'flex-start',
-                  gap: 1.5,
+                  ...row,
                   px: 1.5,
                   py: 1,
-                  borderRadius: 2,
                   fontSize: '0.875rem',
-                  transition: 'color 200ms, background-color 200ms',
                   ...(isActive ? activeSx : idleSx),
-                  '&.Mui-disabled': {
-                    opacity: 0.5,
-                    color: 'text.secondary',
-                    bgcolor: 'transparent',
-                  },
+                  ...disabledSx,
                 }}
               >
                 <Box sx={{ position: 'relative', flexShrink: 0 }}>
