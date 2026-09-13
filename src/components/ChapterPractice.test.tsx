@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import the supabase mock
 import '@/test/mocks/supabase';
+import { muiWrapper } from '@/test/utils';
 
 const mockQuestions = [
   {
@@ -182,7 +183,9 @@ const renderChapterPractice = (props = {}) => {
         <ChapterPractice onBack={onBack} testType="technician" {...props} />
       </TooltipProvider>
     </QueryClientProvider>
-  );
+  ,
+      { wrapper: muiWrapper }
+    );
 
   return { ...result, onBack };
 };
@@ -416,6 +419,8 @@ describe('ChapterPractice Practice View', () => {
           <ChapterPractice onBack={vi.fn()} testType="technician" />
         </TooltipProvider>
       </QueryClientProvider>
+    ,
+      { wrapper: muiWrapper }
     );
 
     // Select Chapter 7
@@ -445,6 +450,8 @@ describe('ChapterPractice Practice View', () => {
           <ChapterPractice onBack={vi.fn()} testType="technician" />
         </TooltipProvider>
       </QueryClientProvider>
+    ,
+      { wrapper: muiWrapper }
     );
 
     // Select Chapter 7
@@ -472,6 +479,8 @@ describe('ChapterPractice Practice View', () => {
           <ChapterPractice onBack={vi.fn()} testType="technician" />
         </TooltipProvider>
       </QueryClientProvider>
+    ,
+      { wrapper: muiWrapper }
     );
 
     // Select Chapter 7
@@ -515,6 +524,8 @@ describe('ChapterPractice Question Wraparound', () => {
           <ChapterPractice onBack={vi.fn()} testType="technician" />
         </TooltipProvider>
       </QueryClientProvider>
+    ,
+      { wrapper: muiWrapper }
     );
 
     // Select Chapter 7 which has 2 questions
@@ -567,6 +578,8 @@ describe('ChapterPractice Answer Flow', () => {
           <ChapterPractice onBack={vi.fn()} testType="technician" />
         </TooltipProvider>
       </QueryClientProvider>
+    ,
+      { wrapper: muiWrapper }
     );
 
     // Select Chapter 7
@@ -599,6 +612,8 @@ describe('ChapterPractice Answer Flow', () => {
           <ChapterPractice onBack={vi.fn()} testType="technician" />
         </TooltipProvider>
       </QueryClientProvider>
+    ,
+      { wrapper: muiWrapper }
     );
 
     // Select Chapter 7
@@ -626,6 +641,8 @@ describe('ChapterPractice Answer Flow', () => {
           <ChapterPractice onBack={vi.fn()} testType="technician" />
         </TooltipProvider>
       </QueryClientProvider>
+    ,
+      { wrapper: muiWrapper }
     );
 
     // Select Chapter 7
@@ -669,6 +686,8 @@ describe('ChapterPractice Navigation', () => {
           <ChapterPractice onBack={vi.fn()} testType="technician" />
         </TooltipProvider>
       </QueryClientProvider>
+    ,
+      { wrapper: muiWrapper }
     );
 
     // Select Chapter 7
@@ -706,6 +725,8 @@ describe('ChapterPractice Navigation', () => {
           <ChapterPractice onBack={vi.fn()} testType="technician" />
         </TooltipProvider>
       </QueryClientProvider>
+    ,
+      { wrapper: muiWrapper }
     );
 
     const chapterButton = screen.getByText('Licensing Regulations').closest('button');
@@ -717,7 +738,7 @@ describe('ChapterPractice Navigation', () => {
 
     // Answer T1A01 correctly, taking the score to 1 of 1.
     await waitFor(() => expect(screen.getByText('A1')).toBeInTheDocument());
-    fireEvent.click(screen.getByText('A1').closest('button')!);
+    fireEvent.click(screen.getByRole('radio', { name: /A1/ }));
     await waitFor(() => expect(screen.getByText('100%')).toBeInTheDocument());
 
     // Out to the question list and straight back in.
@@ -773,6 +794,8 @@ describe('ChapterPractice License Types', () => {
           <ChapterPractice onBack={vi.fn()} testType="general" />
         </TooltipProvider>
       </QueryClientProvider>
+    ,
+      { wrapper: muiWrapper }
     );
 
     expect(screen.getByText('General Class Overview')).toBeInTheDocument();

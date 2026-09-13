@@ -1,22 +1,27 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { Question } from "@/hooks/useQuestions";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import { useAuth } from "@/hooks/useAuth";
 import { useExplanationFeedback } from "@/hooks/useExplanationFeedback";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Popover from "@mui/material/Popover";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
+import { visuallyHidden } from "@mui/utils";
+import { tokenAlpha } from "@/theme/muiTheme";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Bookmark, BookmarkCheck, MessageSquare, ThumbsUp, ThumbsDown, Link } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { GetMoreHelp } from "@/components/GetMoreHelp";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Calculator } from "@/components/Calculator";
 import { LinkPreview } from "@/components/LinkPreview";
 import { GlossaryHighlightedText } from "@/components/GlossaryHighlightedText";
@@ -50,6 +55,8 @@ export function QuestionCard({
   const [noteText, setNoteText] = useState('');
   const [isNoteOpen, setIsNoteOpen] = useState(false);
   const [showGuestBookmarkPopover, setShowGuestBookmarkPopover] = useState(false);
+  const noteAnchorRef = useRef<HTMLButtonElement>(null);
+  const guestAnchorRef = useRef<HTMLButtonElement>(null);
 
   const bookmarked = isBookmarked(question.id);
   const existingNote = getBookmarkNote(question.id);
@@ -90,22 +97,54 @@ export function QuestionCard({
     }
   };
 
-  const getOptionStyles = (option: typeof options[number]) => {
+  /** The row's border, fill and text for each of the four states. */
+  const getOptionSx = (option: (typeof options)[number]) => {
     if (!showResult) {
       return selectedAnswer === option
-        ? "border-primary bg-primary/10 text-foreground"
-        : "border-border hover:border-primary/50 hover:bg-secondary/50";
+        ? {
+            borderColor: "primary.main",
+            bgcolor: (t) => tokenAlpha(t.vars.palette.primary.main, 10),
+          }
+        : {
+            borderColor: "divider",
+            "&:hover": {
+              borderColor: (t) => tokenAlpha(t.vars.palette.primary.main, 50),
+              bgcolor: (t) => tokenAlpha(t.vars.palette.secondary.main, 50),
+            },
+          };
     }
 
     if (option === question.correctAnswer) {
-      return "border-success bg-success/10 text-success";
+      return {
+        borderColor: "success.main",
+        bgcolor: (t) => tokenAlpha(t.vars.palette.success.main, 10),
+        color: "success.main",
+      };
     }
 
     if (selectedAnswer === option && option !== question.correctAnswer) {
-      return "border-destructive bg-destructive/10 text-destructive";
+      return {
+        borderColor: "error.main",
+        bgcolor: (t) => tokenAlpha(t.vars.palette.error.main, 10),
+        color: "error.main",
+      };
     }
 
-    return "border-border opacity-50";
+    return { borderColor: "divider", opacity: 0.5 };
+  };
+
+  /** The circled letter, which doubles as the selection indicator. */
+  const getBadgeSx = (option: (typeof options)[number]) => {
+    if (selectedAnswer === option && !showResult) {
+      return { bgcolor: "primary.main", color: "primary.contrastText" };
+    }
+    if (showResult && option === question.correctAnswer) {
+      return { bgcolor: "success.main", color: "success.contrastText" };
+    }
+    if (showResult && selectedAnswer === option && option !== question.correctAnswer) {
+      return { bgcolor: "error.main", color: "error.contrastText" };
+    }
+    return { bgcolor: "secondary.main", color: "secondary.contrastText" };
   };
 
   return (
@@ -126,98 +165,86 @@ export function QuestionCard({
         {user && (
           <div className="absolute top-4 right-4 flex items-center gap-1 opacity-40 hover:opacity-100 transition-opacity duration-200">
             <Calculator key={question.id} />
-            <Popover open={isNoteOpen} onOpenChange={(open) => {
-              setIsNoteOpen(open);
-              if (open) {
-                setNoteText(existingNote || '');
-              }
-            }}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        "h-7 w-7",
-                        existingNote && "text-accent opacity-100"
-                      )}
-                      aria-label={existingNote ? "Edit note" : "Add note"}
-                    >
-                      <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
-                    </Button>
-                  </PopoverTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{existingNote ? "Edit note" : "Add note"}</p>
-                </TooltipContent>
-              </Tooltip>
-              <PopoverContent className="w-80 bg-card border-border" align="end">
-                <div className="space-y-3">
-                  <p className="text-sm font-medium text-foreground">Add a note</p>
-                  <Textarea
-                    placeholder="Write your notes about this question..."
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    className="min-h-[100px] resize-none"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsNoteOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleSaveNote}
-                    >
-                      Save Note
-                    </Button>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-7 w-7",
-                    bookmarked && "text-primary opacity-100"
-                  )}
-                  onClick={handleBookmarkClick}
-                  aria-label={bookmarked ? "Remove bookmark" : "Add bookmark"}
-                  aria-pressed={bookmarked}
-                >
-                  {bookmarked ? (
-                    <BookmarkCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                  ) : (
-                    <Bookmark className="w-3.5 h-3.5" aria-hidden="true" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{bookmarked ? "Remove bookmark" : "Bookmark this question"}</p>
-              </TooltipContent>
+            {/*
+              MUI's Popover needs an explicit anchor where Radix's derived one
+              from its trigger, so the button holds a ref.
+            */}
+            <Tooltip title={existingNote ? "Edit note" : "Add note"}>
+              <IconButton
+                ref={noteAnchorRef}
+                onClick={() => {
+                  setNoteText(existingNote || '');
+                  setIsNoteOpen(true);
+                }}
+                aria-label={existingNote ? "Edit note" : "Add note"}
+                sx={{
+                  width: 28,
+                  height: 28,
+                  ...(existingNote && { color: "accent", opacity: 1 }),
+                }}
+              >
+                <Box component={MessageSquare} aria-hidden="true" sx={{ width: 14, height: 14 }} />
+              </IconButton>
             </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={handleCopyLink}
-                  aria-label="Copy shareable link"
-                >
-                  <Link className="w-3.5 h-3.5" aria-hidden="true" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Copy shareable link</p>
-              </TooltipContent>
+            <Popover
+              open={isNoteOpen}
+              anchorEl={noteAnchorRef.current}
+              onClose={() => setIsNoteOpen(false)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              slotProps={{ paper: { sx: { width: 320, p: 2 } } }}
+            >
+              <Stack spacing={1.5}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  Add a note
+                </Typography>
+                <TextField
+                  label="Note"
+                  placeholder="Write your notes about this question..."
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  multiline
+                  minRows={4}
+                  fullWidth
+                  size="small"
+                />
+                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+                  <Button variant="outlined" size="small" onClick={() => setIsNoteOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button variant="contained" size="small" onClick={handleSaveNote}>
+                    Save Note
+                  </Button>
+                </Box>
+              </Stack>
+            </Popover>
+            {/*
+              aria-pressed is right here and stays: a bookmark genuinely is an
+              independent on/off toggle. #274 was about the answer options,
+              where four toggles described one choice among four.
+            */}
+            <Tooltip title={bookmarked ? "Remove bookmark" : "Add bookmark"}>
+              <IconButton
+                onClick={handleBookmarkClick}
+                aria-label={bookmarked ? "Remove bookmark" : "Add bookmark"}
+                aria-pressed={bookmarked}
+                sx={{ width: 28, height: 28, ...(bookmarked && { color: "primary.main", opacity: 1 }) }}
+              >
+                <Box
+                  component={bookmarked ? BookmarkCheck : Bookmark}
+                  aria-hidden="true"
+                  sx={{ width: 14, height: 14 }}
+                />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Copy shareable link">
+              <IconButton
+                onClick={handleCopyLink}
+                aria-label="Copy shareable link"
+                sx={{ width: 28, height: 28 }}
+              >
+                <Box component={Link} aria-hidden="true" sx={{ width: 14, height: 14 }} />
+              </IconButton>
             </Tooltip>
           </div>
         )}
@@ -226,35 +253,40 @@ export function QuestionCard({
         {!user && (
           <div className="absolute top-4 right-4 flex items-center gap-1 opacity-40 hover:opacity-100 transition-opacity duration-200">
             <Calculator key={question.id} />
-            <Popover open={showGuestBookmarkPopover} onOpenChange={setShowGuestBookmarkPopover}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      aria-label="Bookmark this question"
-                    >
-                      <Bookmark className="w-3.5 h-3.5" aria-hidden="true" />
-                    </Button>
-                  </PopoverTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Bookmark this question</p>
-                </TooltipContent>
-              </Tooltip>
-              <PopoverContent className="w-64 bg-popover border-border" align="end">
-                <p className="text-sm text-popover-foreground mb-2">
-                  Bookmarks need an account to persist — they'd disappear when you close the tab.
-                </p>
-                <RouterLink
-                  to="/auth?returnTo=/dashboard"
-                  className="text-sm font-medium text-primary hover:underline"
-                >
-                  Create free account
-                </RouterLink>
-              </PopoverContent>
+            <Tooltip title="Bookmark this question">
+              <IconButton
+                ref={guestAnchorRef}
+                onClick={() => setShowGuestBookmarkPopover(true)}
+                aria-label="Bookmark this question"
+                sx={{ width: 28, height: 28 }}
+              >
+                <Box component={Bookmark} aria-hidden="true" sx={{ width: 14, height: 14 }} />
+              </IconButton>
+            </Tooltip>
+            <Popover
+              open={showGuestBookmarkPopover}
+              anchorEl={guestAnchorRef.current}
+              onClose={() => setShowGuestBookmarkPopover(false)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              slotProps={{ paper: { sx: { width: 256, p: 2 } } }}
+            >
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                Bookmarks need an account to persist — they'd disappear when you close the tab.
+              </Typography>
+              <Typography
+                component={RouterLink}
+                to="/auth?returnTo=/dashboard"
+                variant="body2"
+                sx={{
+                  fontWeight: 500,
+                  color: "primary.main",
+                  textDecoration: "none",
+                  "&:hover": { textDecoration: "underline" },
+                }}
+              >
+                Create free account
+              </Typography>
             </Popover>
           </div>
         )}
@@ -276,39 +308,78 @@ export function QuestionCard({
           questionId={question.id}
         />
 
-        {/* Options */}
-        <div className="space-y-4">
+        {/*
+          A real radiogroup of native <input type="radio">, per #274. These were
+          four independent <button>s with aria-pressed, which describes four
+          toggles rather than one choice among four — and gave four tab stops
+          with no arrow-key movement.
+
+          The inputs are visually hidden rather than shown, which is option 2 in
+          #274: the platform supplies arrow keys, a single tab stop landing on
+          the checked option, and grouping by name, while the row keeps exactly
+          the appearance it had. The circled letter stays the visible selection
+          indicator, so no radio dot competes with it.
+
+          Focus has to be drawn on the row instead, since the input carrying it
+          is invisible — hence :focus-within.
+        */}
+        <RadioGroup
+          name={`question-${question.id}`}
+          aria-label="Answer options"
+          value={selectedAnswer ?? ""}
+          onChange={(event) => onSelectAnswer(event.target.value as (typeof options)[number])}
+          sx={{ gap: 2 }}
+        >
           {options.map((option) => (
-            <button
+            <FormControlLabel
               key={option}
-              onClick={() => !showResult && onSelectAnswer(option)}
+              value={option}
               disabled={showResult}
-              aria-pressed={selectedAnswer === option}
-              className={cn(
-                "w-full text-left p-5 rounded-xl border transition-all duration-200",
-                "flex items-start gap-4",
-                getOptionStyles(option),
-                !showResult && "cursor-pointer"
-              )}
-            >
-              <span
-                className={cn(
-                  "flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-mono font-semibold text-sm",
-                  selectedAnswer === option && !showResult
-                    ? "bg-primary text-primary-foreground"
-                    : showResult && option === question.correctAnswer
-                    ? "bg-success text-success-foreground"
-                    : showResult && selectedAnswer === option && option !== question.correctAnswer
-                    ? "bg-destructive text-destructive-foreground"
-                    : "bg-secondary text-secondary-foreground"
-                )}
-              >
-                {option}
-              </span>
-              <span className="flex-1 pt-1.5 text-base leading-relaxed">{question.options[option]}</span>
-            </button>
+              control={<Radio sx={visuallyHidden} />}
+              sx={{
+                m: 0,
+                p: 2.5,
+                borderRadius: 3,
+                border: "1px solid",
+                alignItems: "flex-start",
+                transition: "all 200ms",
+                cursor: showResult ? "default" : "pointer",
+                "&:focus-within": {
+                  outline: "2px solid",
+                  outlineColor: "primary.main",
+                  outlineOffset: 2,
+                },
+                "&.Mui-disabled": { cursor: "default" },
+                ...getOptionSx(option),
+              }}
+              label={
+                <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, width: "100%" }}>
+                  <Box
+                    component="span"
+                    sx={{
+                      flexShrink: 0,
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: "monospace",
+                      fontWeight: 600,
+                      fontSize: "0.875rem",
+                      ...getBadgeSx(option),
+                    }}
+                  >
+                    {option}
+                  </Box>
+                  <Box component="span" sx={{ flex: 1, pt: 0.75, lineHeight: 1.6 }}>
+                    {question.options[option]}
+                  </Box>
+                </Box>
+              }
+            />
           ))}
-        </div>
+        </RadioGroup>
 
         {/* Result Indicator - Elegant inline pill */}
         {showResult && (
@@ -356,45 +427,43 @@ export function QuestionCard({
                     {user && (
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-muted-foreground mr-1">Helpful?</span>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className={cn(
-                                "h-7 w-7",
-                                userFeedback?.is_helpful === true && "text-success bg-success/10"
-                              )}
-                              onClick={() => handleFeedback(true)}
-                              aria-label="Mark explanation as helpful"
-                              aria-pressed={userFeedback?.is_helpful === true}
-                            >
-                              <ThumbsUp className="w-4 h-4" aria-hidden="true" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Helpful</p>
-                          </TooltipContent>
+                        {/* A genuine toggle, so aria-pressed stays — see the
+                            bookmark button above. */}
+                        <Tooltip title="Helpful">
+                          <IconButton
+                            onClick={() => handleFeedback(true)}
+                            aria-label="Mark explanation as helpful"
+                            aria-pressed={userFeedback?.is_helpful === true}
+                            sx={{
+                              width: 28,
+                              height: 28,
+                              ...(userFeedback?.is_helpful === true && {
+                                color: "success.main",
+                                bgcolor: (t) => tokenAlpha(t.vars.palette.success.main, 10),
+                              }),
+                            }}
+                          >
+                            <Box component={ThumbsUp} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                          </IconButton>
                         </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className={cn(
-                                "h-7 w-7",
-                                userFeedback?.is_helpful === false && "text-destructive bg-destructive/10"
-                              )}
-                              onClick={() => handleFeedback(false)}
-                              aria-label="Mark explanation as not helpful"
-                              aria-pressed={userFeedback?.is_helpful === false}
-                            >
-                              <ThumbsDown className="w-4 h-4" aria-hidden="true" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Not helpful</p>
-                          </TooltipContent>
+                        {/* A genuine toggle, so aria-pressed stays — see the
+                            bookmark button above. */}
+                        <Tooltip title="Not helpful">
+                          <IconButton
+                            onClick={() => handleFeedback(false)}
+                            aria-label="Mark explanation as not helpful"
+                            aria-pressed={userFeedback?.is_helpful === false}
+                            sx={{
+                              width: 28,
+                              height: 28,
+                              ...(userFeedback?.is_helpful === false && {
+                                color: "error.main",
+                                bgcolor: (t) => tokenAlpha(t.vars.palette.error.main, 10),
+                              }),
+                            }}
+                          >
+                            <Box component={ThumbsDown} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                          </IconButton>
                         </Tooltip>
                       </div>
                     )}

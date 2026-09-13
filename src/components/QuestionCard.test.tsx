@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QuestionCard } from './QuestionCard';
 import { Question } from '@/hooks/useQuestions';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { muiWrapper } from '@/test/utils';
 
 // Mock dependencies
 vi.mock('@/hooks/useAuth', () => ({
@@ -87,7 +89,9 @@ const renderQuestionCard = (props: Partial<Parameters<typeof QuestionCard>[0]> =
           {...props}
         />
       </TooltipProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
+    // The options read palette tokens, so they need the real theme.
+    { wrapper: muiWrapper }
   );
 };
 
@@ -144,8 +148,56 @@ describe('QuestionCard', () => {
 
     it('highlights selected answer', () => {
       renderQuestionCard({ selectedAnswer: 'B' });
-      
-      expect(screen.getByRole('button', { name: /To make money/ })).toHaveAttribute('aria-pressed', 'true');
+
+      // toBeChecked, not aria-pressed. #274's point was that four independent
+      // toggle buttons describe the wrong thing — this is one choice among
+      // four, and it is a native radio now.
+      expect(screen.getByRole('radio', { name: /To make money/ })).toBeChecked();
+    });
+  });
+
+  // #274: these were four <button>s with aria-pressed, which announced four
+  // independent toggles and gave four tab stops with no arrow-key movement.
+  // Nothing here re-implements the contract — the options are native
+  // <input type="radio">, so the browser supplies it.
+  describe('Answer options as a radiogroup (#274)', () => {
+    it('exposes one radiogroup of four options', () => {
+      renderQuestionCard();
+
+      expect(screen.getByRole('radiogroup', { name: 'Answer options' })).toBeInTheDocument();
+      expect(screen.getAllByRole('radio')).toHaveLength(4);
+    });
+
+    it('takes a single tab stop', async () => {
+      const user = userEvent.setup();
+      renderQuestionCard({ selectedAnswer: 'B' });
+
+      const radios = screen.getAllByRole('radio');
+      screen.getByRole('radio', { name: /To make money/ }).focus();
+
+      await user.tab();
+
+      expect(radios.some((r) => r === document.activeElement)).toBe(false);
+    });
+
+    it('moves the selection with arrow keys', async () => {
+      const user = userEvent.setup();
+      const onSelectAnswer = vi.fn();
+      renderQuestionCard({ selectedAnswer: 'A', onSelectAnswer });
+
+      screen.getAllByRole('radio')[0].focus();
+      await user.keyboard('{ArrowDown}');
+
+      // The whole point of #274: this did nothing before.
+      expect(onSelectAnswer).toHaveBeenCalledWith('B');
+    });
+
+    it('stops accepting answers once the result is shown', () => {
+      renderQuestionCard({ selectedAnswer: 'A', showResult: true });
+
+      for (const radio of screen.getAllByRole('radio')) {
+        expect(radio).toBeDisabled();
+      }
     });
   });
 

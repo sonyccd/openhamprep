@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import the supabase mock
 import '@/test/mocks/supabase';
+import { muiWrapper } from '@/test/utils';
 
 const mockQuestions = [
   {
@@ -112,7 +113,9 @@ const renderPracticeTest = (props = {}) => {
         <PracticeTest onBack={onBack} onTestStateChange={onTestStateChange} testType="technician" {...props} />
       </TooltipProvider>
     </QueryClientProvider>
-  );
+  ,
+      { wrapper: muiWrapper }
+    );
 
   return { ...result, onBack, onTestStateChange };
 };
@@ -250,8 +253,7 @@ describe('PracticeTest', () => {
       });
 
       // Click on an answer option
-      const buttons = screen.getAllByRole('button');
-      const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
+      const optionA = screen.getAllByRole('radio')[0];
       if (optionA) {
         fireEvent.click(optionA);
       }

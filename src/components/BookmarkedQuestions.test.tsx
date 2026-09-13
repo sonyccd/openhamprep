@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import the supabase mock
 import '@/test/mocks/supabase';
+import { muiWrapper } from '@/test/utils';
 
 const mockQuestions = [
   {
@@ -127,7 +128,9 @@ const renderBookmarkedQuestions = (props = {}) => {
         <BookmarkedQuestions onBack={onBack} onStartPractice={onStartPractice} testType="technician" {...props} />
       </TooltipProvider>
     </QueryClientProvider>
-  );
+  ,
+      { wrapper: muiWrapper }
+    );
 
   return { ...result, onBack, onStartPractice };
 };
@@ -272,11 +275,7 @@ describe('BookmarkedQuestions', () => {
       });
       
       // Click on correct answer
-      const buttons = screen.getAllByRole('button');
-      const optionA = buttons.find(btn => btn.textContent?.includes('Emergency'));
-      if (optionA) {
-        fireEvent.click(optionA);
-      }
+      fireEvent.click(screen.getByRole('radio', { name: /Emergency/ }));
       
       await waitFor(() => {
         // Should show "Try Again" button after answering
@@ -497,11 +496,7 @@ describe('BookmarkedQuestions', () => {
       });
 
       // Answer the question
-      const buttons = screen.getAllByRole('button');
-      const optionA = buttons.find(btn => btn.textContent?.includes('Emergency'));
-      if (optionA) {
-        fireEvent.click(optionA);
-      }
+      fireEvent.click(screen.getByRole('radio', { name: /Emergency/ }));
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
