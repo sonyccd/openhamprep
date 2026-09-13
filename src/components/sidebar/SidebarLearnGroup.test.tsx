@@ -2,12 +2,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SidebarLearnGroup } from './SidebarLearnGroup';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { muiWrapper } from '@/test/utils';
 import { BookOpen, Route, GraduationCap } from 'lucide-react';
 import type { NavGroup } from './types';
 
 const renderWithTooltip = (component: React.ReactNode) => {
-  return render(<TooltipProvider>{component}</TooltipProvider>);
+  return render(component, { wrapper: muiWrapper });
 };
 
 const createLearnGroup = (overrides?: Partial<NavGroup>): NavGroup => ({
@@ -223,11 +223,9 @@ describe('SidebarLearnGroup', () => {
     let headerButton = screen.getByText('Learn').closest('button');
     expect(headerButton).toHaveAttribute('aria-expanded', 'true');
 
-    rerender(
-      <TooltipProvider>
-        <SidebarLearnGroup {...defaultProps} isExpanded={false} />
-      </TooltipProvider>
-    );
+    // The wrapper stays in place across a rerender, so only the element is
+    // passed — MUI's Tooltip needs no provider of its own.
+    rerender(<SidebarLearnGroup {...defaultProps} isExpanded={false} />);
 
     headerButton = screen.getByText('Learn').closest('button');
     expect(headerButton).toHaveAttribute('aria-expanded', 'false');

@@ -2,10 +2,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SidebarHeader } from './SidebarHeader';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { muiWrapper } from '@/test/utils';
 
 const renderWithTooltip = (component: React.ReactNode) => {
-  return render(<TooltipProvider>{component}</TooltipProvider>);
+  return render(component, { wrapper: muiWrapper });
 };
 
 describe('SidebarHeader', () => {

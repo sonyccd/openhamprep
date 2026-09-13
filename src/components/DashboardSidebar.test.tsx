@@ -537,4 +537,36 @@ describe('DashboardSidebar', () => {
       expect(screen.getByRole('button', { name: /Dashboard/ })).toBe(before);
     });
   });
+
+  // Neither of these was covered before, and both are the "correct semantics,
+  // wrong rendering" kind that every role and name assertion passes.
+  describe('Shell structure', () => {
+    it('keeps the hamburger below the drawer it opens', () => {
+      render(<DashboardSidebar {...defaultProps} />, { wrapper: createWrapper() });
+
+      // The button sits at left: 16, inside the 256px drawer paper. MUI puts
+      // the temporary Drawer's root and paper at theme.zIndex.drawer (1200),
+      // so anything above that floats over the open menu.
+      //
+      // querySelector rather than getByRole: the wrapper is display: none at
+      // this width — happy-dom has no viewport and applies the md query — so a
+      // role query correctly skips it. The z-index is a flat value, not a
+      // responsive one, so the computed style still resolves.
+      const hamburger = document.querySelector('[aria-label="Open navigation menu"]')!;
+      const z = Number(getComputedStyle(hamburger.parentElement!).zIndex);
+
+      expect(z).toBeLessThan(1200);
+    });
+
+    it('exposes exactly one navigation landmark', () => {
+      render(<DashboardSidebar {...defaultProps} />, { wrapper: createWrapper() });
+
+      // The rail used to wrap SidebarNavContent in a second <nav>, nesting an
+      // unlabelled landmark inside a labelled one — and only on desktop, so the
+      // rail and the drawer disagreed.
+      const landmarks = screen.getAllByRole('navigation');
+      expect(landmarks).toHaveLength(1);
+      expect(landmarks[0]).toHaveAccessibleName('Main navigation');
+    });
+  });
 });

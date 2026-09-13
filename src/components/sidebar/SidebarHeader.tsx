@@ -1,7 +1,7 @@
 import { PanelLeftClose, PanelLeft } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import { OHPLogo } from '@/components/OHPLogo';
 
 interface SidebarHeaderProps {
@@ -10,46 +10,47 @@ interface SidebarHeaderProps {
   onToggleCollapse: () => void;
 }
 
-export function SidebarHeader({
+export const SidebarHeader = ({
   isCollapsed,
   isMobile,
   onToggleCollapse,
-}: SidebarHeaderProps) {
+}: SidebarHeaderProps) => {
+  const label = isCollapsed ? 'Expand sidebar' : 'Collapse sidebar';
+
   return (
-    <div
-      className={cn(
-        'flex items-center h-14 border-b border-border px-4',
-        !isMobile && isCollapsed ? 'justify-center' : 'justify-between'
-      )}
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        height: 56,
+        px: 2,
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+        justifyContent: !isMobile && isCollapsed ? 'center' : 'space-between',
+      }}
     >
       {(isMobile || !isCollapsed) && (
-        <div className="flex items-center">
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          {/* OHPLogo is not in C3's scope, so it keeps its className API. */}
           <OHPLogo variant="horizontal" className="h-9 w-auto" />
-        </div>
+        </Box>
       )}
       {!isMobile && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggleCollapse}
-              className="h-7 w-7 shrink-0"
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              aria-expanded={!isCollapsed}
-            >
-              {isCollapsed ? (
-                <PanelLeft className="w-4 h-4" aria-hidden="true" />
-              ) : (
-                <PanelLeftClose className="w-4 h-4" aria-hidden="true" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            <p>{isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}</p>
-          </TooltipContent>
+        <Tooltip title={label} placement="right">
+          <IconButton
+            onClick={onToggleCollapse}
+            aria-label={label}
+            aria-expanded={!isCollapsed}
+            sx={{ width: 28, height: 28, flexShrink: 0, color: 'text.secondary' }}
+          >
+            <Box
+              component={isCollapsed ? PanelLeft : PanelLeftClose}
+              aria-hidden="true"
+              sx={{ width: 16, height: 16 }}
+            />
+          </IconButton>
         </Tooltip>
       )}
-    </div>
+    </Box>
   );
-}
+};

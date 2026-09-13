@@ -1,6 +1,9 @@
 import { ExternalLink } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import Box from '@mui/material/Box';
+import ButtonBase from '@mui/material/ButtonBase';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import { tokenAlpha } from '@/theme/muiTheme';
 import type { NavItem } from './types';
 
 interface SidebarNavItemProps {
@@ -10,89 +13,137 @@ interface SidebarNavItemProps {
   onClick: () => void;
 }
 
-export function SidebarNavItem({
+/** Shared between the link and button forms so the two cannot drift. */
+const rowSx = (showExpanded: boolean) =>
+  ({
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: showExpanded ? 'flex-start' : 'center',
+    gap: 1.5,
+    px: showExpanded ? 1.5 : 1,
+    py: 1.25,
+    borderRadius: 2,
+    transition: 'color 200ms, background-color 200ms',
+    textAlign: 'left',
+  }) as const;
+
+export const SidebarNavItem = ({
   item,
   isActive,
   showExpanded,
   onClick,
-}: SidebarNavItemProps) {
+}: SidebarNavItemProps) => {
   const Icon = item.icon;
 
   // External link (opens in new tab)
   if (item.external) {
     const linkContent = (
-      <a
+      <Box
+        component="a"
         href={item.external}
         target="_blank"
         rel="noopener noreferrer"
-        className={cn(
-          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
-          'text-muted-foreground hover:text-foreground hover:bg-secondary',
-          !showExpanded && 'justify-center px-2'
-        )}
+        sx={{
+          ...rowSx(showExpanded),
+          textDecoration: 'none',
+          color: 'text.secondary',
+          '&:hover': { color: 'text.primary', bgcolor: 'secondary.main' },
+        }}
       >
-        <div className="relative shrink-0">
-          <Icon className="w-5 h-5" />
-        </div>
+        <Box sx={{ position: 'relative', flexShrink: 0 }}>
+          <Box component={Icon} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+        </Box>
         {showExpanded && (
-          <span className="text-base font-medium truncate flex items-center gap-1">
+          <Typography
+            component="span"
+            sx={{
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {item.label}
-            <ExternalLink className="w-3 h-3" />
-          </span>
+            <Box component={ExternalLink} aria-hidden="true" sx={{ width: 12, height: 12 }} />
+          </Typography>
         )}
-      </a>
+      </Box>
     );
 
     if (!showExpanded) {
       return (
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-          <TooltipContent side="right" className="bg-popover border-border">
-            <p>{item.label}</p>
-          </TooltipContent>
+        <Tooltip title={item.label} placement="right" enterDelay={0}>
+          {linkContent}
         </Tooltip>
       );
     }
 
-    return <div>{linkContent}</div>;
+    return <Box>{linkContent}</Box>;
   }
 
   // Internal nav button
   const buttonContent = (
-    <button
+    <ButtonBase
       onClick={onClick}
       disabled={item.disabled}
       aria-label={!showExpanded ? item.label : undefined}
       aria-current={isActive ? 'page' : undefined}
-      className={cn(
-        'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
-        isActive
-          ? 'bg-primary/10 text-primary border border-primary/20'
-          : 'text-muted-foreground hover:text-foreground hover:bg-secondary',
-        item.disabled &&
-          'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground',
-        !showExpanded && 'justify-center px-2'
-      )}
+      sx={{
+        ...rowSx(showExpanded),
+        ...(isActive
+          ? {
+              color: 'primary.main',
+              bgcolor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 10),
+              border: '1px solid',
+              borderColor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 20),
+            }
+          : {
+              color: 'text.secondary',
+              '&:hover': { color: 'text.primary', bgcolor: 'secondary.main' },
+            }),
+        '&.Mui-disabled': {
+          opacity: 0.5,
+          color: 'text.secondary',
+          bgcolor: 'transparent',
+        },
+      }}
     >
-      <div className="relative shrink-0">
-        <Icon className="w-5 h-5" />
-      </div>
+      <Box sx={{ position: 'relative', flexShrink: 0 }}>
+        <Box component={Icon} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+      </Box>
       {showExpanded && (
-        <span className="text-base font-medium truncate">{item.label}</span>
+        <Typography
+          component="span"
+          sx={{
+            fontWeight: 500,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {item.label}
+        </Typography>
       )}
-    </button>
+    </ButtonBase>
   );
 
   if (!showExpanded) {
+    // MUI's Tooltip does not render on a disabled child, because a disabled
+    // element fires no pointer events — so the collapsed rail would lose the
+    // only label a disabled item has. A span wrapper gives the tooltip
+    // something that does listen.
     return (
-      <Tooltip delayDuration={0}>
-        <TooltipTrigger asChild>{buttonContent}</TooltipTrigger>
-        <TooltipContent side="right" className="bg-popover border-border">
-          <p>{item.label}</p>
-        </TooltipContent>
+      <Tooltip title={item.label} placement="right" enterDelay={0}>
+        <Box component="span" sx={{ display: 'block' }}>
+          {buttonContent}
+        </Box>
       </Tooltip>
     );
   }
 
-  return <div>{buttonContent}</div>;
-}
+  return <Box>{buttonContent}</Box>;
+};
