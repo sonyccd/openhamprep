@@ -286,7 +286,7 @@ export function SubelementPractice({
           </motion.div>
         </div>
       }
-      actions={<QuizNavControls session={session} className="mt-10 flex justify-center gap-4" />}
+      actions={<QuizNavControls session={session} sx={{ mt: 5 }} />}
       footer={
         session.history.length > 1 &&
         `Question ${session.historyIndex + 1} of ${session.history.length}`

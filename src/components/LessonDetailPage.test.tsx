@@ -8,11 +8,10 @@ import { TopicProgress } from '@/hooks/useTopics';
 import { AppNavigationProvider } from '@/hooks/useAppNavigation';
 
 // Mock framer-motion
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
-  },
-}));
+vi.mock('framer-motion', async () => {
+  const { framerMotionMock } = await import('@/test/mocks/framerMotion');
+  return framerMotionMock();
+});
 
 // Mock LessonPath component
 vi.mock('./LessonPath', () => ({

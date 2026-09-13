@@ -250,7 +250,7 @@ export function RandomPractice({
         <QuizNavControls
           session={session}
           nextIcon={<Zap className="w-4 h-4" />}
-          className="mt-10 flex justify-center gap-4"
+          sx={{ mt: 5 }}
         />
       }
       footer={

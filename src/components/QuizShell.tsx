@@ -1,8 +1,12 @@
 import type { ReactNode } from "react";
-import { motion } from "framer-motion";
-import { Loader2, SkipForward, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { SkipForward, ChevronLeft, ChevronRight } from "lucide-react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import Typography from "@mui/material/Typography";
+import { MotionBox } from "@/components/ohp/MotionBox";
 import { PageContainer } from "@/components/ohp/PageContainer";
+import type { SxProps, Theme } from "@mui/material/styles";
 import type { UseQuizSession } from "@/hooks/useQuizSession";
 
 /**
@@ -43,13 +47,13 @@ export function QuizShell({
       {children}
       {actions}
       {footer && (
-        <motion.p
+        <MotionBox
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center text-muted-foreground text-sm mt-4"
+          sx={{ textAlign: "center", color: "text.secondary", fontSize: "0.875rem", mt: 2 }}
         >
           {footer}
-        </motion.p>
+        </MotionBox>
       )}
     </PageContainer>
   );
@@ -67,12 +71,12 @@ export function QuizShellPending({
     <PageContainer
       width={width}
       mobileNavPadding
-      className="flex items-center justify-center"
+      sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
     >
-      <div className="text-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-        {message && <p className="text-muted-foreground">{message}</p>}
-      </div>
+      <Box sx={{ textAlign: "center" }}>
+        <CircularProgress size={32} sx={{ mb: 2 }} />
+        {message && <Typography sx={{ color: "text.secondary" }}>{message}</Typography>}
+      </Box>
     </PageContainer>
   );
 }
@@ -91,12 +95,14 @@ export function QuizShellError({
     <PageContainer
       width={width}
       mobileNavPadding
-      className="flex items-center justify-center"
+      sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
     >
-      <div className="text-center">
-        <p className="text-destructive mb-4">{message}</p>
-        <Button onClick={onBack}>Go Back</Button>
-      </div>
+      <Box sx={{ textAlign: "center" }}>
+        <Typography sx={{ color: "error.main", mb: 2 }}>{message}</Typography>
+        <Button variant="contained" onClick={onBack}>
+          Go Back
+        </Button>
+      </Box>
     </PageContainer>
   );
 }
@@ -109,42 +115,52 @@ export function QuizShellError({
  */
 export function QuizNavControls({
   session,
-  nextIcon = <ChevronRight className="w-4 h-4" />,
-  className = "mt-8 flex justify-center gap-4",
+  nextIcon = <Box component={ChevronRight} sx={{ width: 16, height: 16 }} />,
+  sx,
 }: {
   session: UseQuizSession;
   nextIcon?: ReactNode;
   /**
-   * Only here because the modes disagree on the gap above the controls —
-   * mt-10 in random and subelement practice, mt-8 in chapter practice and weak
+   * Only here because the modes disagree on the gap above the controls — mt-10
+   * in random and subelement practice, mt-8 in chapter practice and weak
    * questions. Two against two, so there is no drift to quietly correct, and
-   * changing either pair would be a visual change this extraction is not
-   * supposed to make. Worth settling when C4 gives these screens a design pass;
-   * until then each mode keeps the spacing it had.
+   * changing either pair would be a visual change. C0 flagged this as worth
+   * settling "when C4 gives these screens a design pass"; C4 turned out to be a
+   * port rather than a redesign, so it is still open.
    */
-  className?: string;
+  sx?: SxProps<Theme>;
 }) {
   const { showResult, canGoBack, isViewingHistory } = session;
 
   return (
-    <div className={className}>
+    <Box sx={[{ mt: 4, display: "flex", justifyContent: "center", gap: 2 }, ...(Array.isArray(sx) ? sx : [sx])]}>
+      {/*
+        Text buttons, not the IconButton + Tooltip the C4 issue prescribes.
+        These carry visible labels today; making them icon-only would be a
+        visual regression and would put the label behind a hover.
+      */}
       {canGoBack && (
-        <Button variant="outline" onClick={session.previous} className="gap-2">
-          <ChevronLeft className="w-4 h-4" />
+        <Button
+          variant="outlined"
+          onClick={session.previous}
+          startIcon={<Box component={ChevronLeft} sx={{ width: 16, height: 16 }} />}
+        >
           Previous
         </Button>
       )}
       {!showResult ? (
-        <Button variant="outline" onClick={session.skip} className="gap-2">
-          <SkipForward className="w-4 h-4" />
+        <Button
+          variant="outlined"
+          onClick={session.skip}
+          startIcon={<Box component={SkipForward} sx={{ width: 16, height: 16 }} />}
+        >
           Skip Question
         </Button>
       ) : (
-        <Button onClick={session.next} variant="default" size="lg" className="gap-2">
+        <Button variant="contained" size="large" onClick={session.next} endIcon={nextIcon}>
           {isViewingHistory ? "Next" : "Next Question"}
-          {nextIcon}
         </Button>
       )}
-    </div>
+    </Box>
   );
 }

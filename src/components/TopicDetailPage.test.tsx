@@ -7,13 +7,10 @@ import { Topic } from '@/hooks/useTopics';
 import { AppNavigationProvider } from '@/hooks/useAppNavigation';
 
 // Mock framer-motion
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
-    aside: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <aside {...props}>{children}</aside>,
-    main: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <main {...props}>{children}</main>,
-  },
-}));
+vi.mock('framer-motion', async () => {
+  const { framerMotionMock } = await import('@/test/mocks/framerMotion');
+  return framerMotionMock();
+});
 
 // Mock child components to simplify testing
 vi.mock('./TopicContent', () => ({

@@ -54,13 +54,29 @@ export function framerMotionMock() {
     return Component;
   };
 
+  // Cached, so motion.button is the same component type on every access.
+  // Without this the Proxy hands back a fresh function each time, which makes
+  // it a new component type every render — React then remounts the subtree
+  // rather than updating it. Any component with state would lose its DOM nodes
+  // mid-interaction: userEvent's mouseenter would trigger a re-render and the
+  // click that followed would land on a detached node.
+  //
+  // The same defect as the in-render components found in #288 and #290,
+  // arriving through a test helper instead of product code — where it is worse,
+  // because the symptom is an unexplained test failure rather than a visible
+  // bug.
+  const cache = new Map<string, React.ElementType>();
+  const forTag = (tag: string) => {
+    if (!cache.has(tag)) cache.set(tag, render(tag as React.ElementType));
+    return cache.get(tag);
+  };
+
   // A Proxy so motion.div, motion.p, motion.button and anything else all work
   // without each test listing the tags its component happens to use.
   const motion = new Proxy(
     { create: render },
     {
-      get: (target, prop: string) =>
-        prop === 'create' ? target.create : render(prop as React.ElementType),
+      get: (target, prop: string) => (prop === 'create' ? target.create : forTag(prop)),
     }
   );
 
