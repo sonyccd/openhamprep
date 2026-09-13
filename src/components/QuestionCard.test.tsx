@@ -168,16 +168,58 @@ describe('QuestionCard', () => {
       expect(screen.getAllByRole('radio')).toHaveLength(4);
     });
 
-    it('takes a single tab stop', async () => {
+    /**
+     * Gate 1 regression guard. The rows were `rounded-xl` (12px) before the
+     * port, and `sx` multiplies a bare `borderRadius` by shape.borderRadius —
+     * also 12 — so the first port shipped `borderRadius: 3`, emitting
+     * calc(3 * 12px) and rounding every option three times as hard.
+     *
+     * happy-dom does not evaluate calc(), so the emitted rule is asserted
+     * rather than the computed style.
+     */
+    it('keeps the option rows at one radius unit', () => {
+      const { container } = renderQuestionCard();
+
+      const row = container.querySelector('label');
+      const rowClass = Array.from(row!.classList).find((c) => c.startsWith('css-'));
+      const rules = Array.from(document.querySelectorAll('style'))
+        .flatMap((s) => (s.textContent ?? '').split('}'))
+        .filter((r) => r.includes(`.${rowClass}`) && r.includes('border-radius'));
+
+      // One unit emits the bare var; any multiplier emits calc(n * var(...)).
+      expect(rules.join(' ')).toContain('border-radius:var(--mui-shape-borderRadius);');
+    });
+
+    /**
+     * The single tab stop is the browser's native radio behaviour: same-name
+     * radios form one group and only the checked one sits in the tab order.
+     *
+     * It is NOT a roving tabindex — all four carry tabIndex 0, and asserting
+     * otherwise fails. Since happy-dom does not implement the native rule
+     * either, the grouping is what can honestly be pinned here: four real
+     * <input type="radio"> sharing one name is precisely the condition the
+     * browser applies that rule to, and it is what the old four-<button>
+     * model lacked.
+     */
+    it('groups the options as same-name radios, which is what makes them one tab stop', () => {
+      renderQuestionCard({ selectedAnswer: 'B' });
+
+      const radios = screen.getAllByRole('radio') as HTMLInputElement[];
+
+      expect(radios).toHaveLength(4);
+      expect(radios.every((r) => r.type === 'radio')).toBe(true);
+      expect(new Set(radios.map((r) => r.name)).size).toBe(1);
+    });
+
+    it('does not move focus between options on Tab', async () => {
       const user = userEvent.setup();
       renderQuestionCard({ selectedAnswer: 'B' });
 
       const radios = screen.getAllByRole('radio');
       screen.getByRole('radio', { name: /To make money/ }).focus();
-
       await user.tab();
 
-      expect(radios.some((r) => r === document.activeElement)).toBe(false);
+      expect(radios).not.toContain(document.activeElement);
     });
 
     it('moves the selection with arrow keys', async () => {

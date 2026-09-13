@@ -19,8 +19,8 @@ import type { UseQuizSession } from "@/hooks/useQuizSession";
  * modes share Previous/Skip/Next. Those live in QuizNavControls below rather
  * than behind flags here, so this component has no idea which mode it is.
  *
- * Stays Tailwind/shadcn on purpose — C4 ports it to MUI, and the point of
- * extracting it now is that C4 ports one frame instead of five.
+ * Extracting it before the MUI port was the point: C4 ported one frame instead
+ * of five.
  */
 interface QuizShellProps {
   /** Mode-specific chrome above the question: score, progress, back links. */
@@ -48,6 +48,10 @@ export function QuizShell({
       {actions}
       {footer && (
         <MotionBox
+          // Was a <motion.p>. Box defaults to a div, so without this the note
+          // silently stops being a paragraph and drops out of a screen
+          // reader's paragraph navigation.
+          component="p"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           sx={{ textAlign: "center", color: "text.secondary", fontSize: "0.875rem", mt: 2 }}
