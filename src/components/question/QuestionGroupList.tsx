@@ -69,6 +69,10 @@ export function QuestionGroupList({
                 <MotionBox
                   key={q.id}
                   component="button"
+                  // Inert today — nothing here is inside a form — but a bare
+                  // <button> defaults to type="submit", so reusing this row
+                  // under a form would submit it on every click.
+                  type="button"
                   onClick={() => onStartPractice(globalIndex)}
                   onMouseEnter={() => onHover(q.id)}
                   onMouseLeave={() => onHover(null)}

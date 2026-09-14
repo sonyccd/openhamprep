@@ -4,10 +4,9 @@ import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 import { visuallyHidden } from "@mui/utils";
 import { tokenAlpha } from "@/theme/muiTheme";
-import type { Question } from "@/hooks/useQuestions";
+import type { Question, AnswerLetter } from "@/hooks/useQuestions";
 
 const OPTIONS = ["A", "B", "C", "D"] as const;
-export type AnswerLetter = (typeof OPTIONS)[number];
 
 interface TopicQuizOptionsProps {
   question: Question;

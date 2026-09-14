@@ -24,6 +24,16 @@ export interface QuestionTopic {
   title: string;
 }
 
+/**
+ * The four answer slots. Every question has exactly these, so the letters are
+ * a closed set rather than a string.
+ *
+ * Declared here, beside Question, because it is the shape of
+ * `correctAnswer` and of the `options` keys. It had drifted into six separate
+ * hand-written copies across the quiz components, plus this inline one.
+ */
+export type AnswerLetter = 'A' | 'B' | 'C' | 'D';
+
 export interface Question {
   id: string;  // UUID
   displayName: string;  // Human-readable ID (T1A01, G2B03, etc.)
@@ -34,7 +44,7 @@ export interface Question {
     C: string;
     D: string;
   };
-  correctAnswer: 'A' | 'B' | 'C' | 'D';
+  correctAnswer: AnswerLetter;
   subelement: string;
   group: string;
   links: LinkData[];

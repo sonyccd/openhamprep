@@ -2,7 +2,8 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import type { Question } from "@/services/questions/questionService";
 import { useQuestionTimer } from "@/hooks/useQuestionTimer";
 
-export type AnswerLetter = "A" | "B" | "C" | "D";
+export type { AnswerLetter } from "@/services/questions/questionService";
+import type { AnswerLetter } from "@/services/questions/questionService";
 
 export interface QuizHistoryEntry {
   question: Question;

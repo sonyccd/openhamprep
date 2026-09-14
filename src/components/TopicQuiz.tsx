@@ -2,9 +2,8 @@ import { useState, useMemo } from "react";
 import { TOPIC_QUIZ_PASSING_THRESHOLD } from "@/types/navigation";
 import { TopicQuizQuestion } from "@/components/question/TopicQuizQuestion";
 import { TopicQuizResults } from "@/components/question/TopicQuizResults";
-import type { Question } from "@/hooks/useQuestions";
+import type { Question, AnswerLetter } from "@/hooks/useQuestions";
 
-type AnswerLetter = "A" | "B" | "C" | "D";
 
 interface TopicQuizProps {
   questions: Question[];

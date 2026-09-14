@@ -3,10 +3,9 @@ import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { tokenAlpha } from "@/theme/muiTheme";
-import type { Question } from "@/hooks/useQuestions";
+import type { Question, AnswerLetter } from "@/hooks/useQuestions";
 
 const OPTIONS = ["A", "B", "C", "D"] as const;
-type AnswerLetter = (typeof OPTIONS)[number];
 
 interface TopicQuizReviewProps {
   incorrectQuestions: Question[];

@@ -9,9 +9,9 @@ import { AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
 import { MotionBox } from "@/components/ohp/MotionBox";
 import { FigureImage } from "@/components/FigureImage";
-import { TopicQuizOptions, type AnswerLetter } from "@/components/question/TopicQuizOptions";
+import { TopicQuizOptions } from "@/components/question/TopicQuizOptions";
 import { tokenAlpha } from "@/theme/muiTheme";
-import type { Question } from "@/hooks/useQuestions";
+import type { Question, AnswerLetter } from "@/hooks/useQuestions";
 
 interface TopicQuizQuestionProps {
   question: Question;

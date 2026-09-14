@@ -6,9 +6,8 @@ import { Trophy, XCircle, RotateCcw } from "lucide-react";
 import { MotionBox } from "@/components/ohp/MotionBox";
 import { TopicQuizReview } from "@/components/question/TopicQuizReview";
 import { tokenAlpha } from "@/theme/muiTheme";
-import type { Question } from "@/hooks/useQuestions";
+import type { Question, AnswerLetter } from "@/hooks/useQuestions";
 
-type AnswerLetter = "A" | "B" | "C" | "D";
 
 interface TopicQuizResultsProps {
   questionCount: number;
