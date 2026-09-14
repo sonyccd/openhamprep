@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookmarks } from '@/hooks/useBookmarks';
@@ -11,18 +11,10 @@ import { queryKeys } from '@/services/queryKeys';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
 import { GuestBanner } from '@/components/dashboard/GuestBanner';
 import { NavigationWarningDialog } from '@/components/dashboard/NavigationWarningDialog';
-import { AlertTriangle, Zap, Brain, Target, X } from 'lucide-react';
+import { Zap, Brain, Target } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { PageContainer } from '@/components/ohp/PageContainer';
 import {

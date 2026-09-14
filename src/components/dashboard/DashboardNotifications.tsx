@@ -1,18 +1,10 @@
 import { useState, useCallback } from 'react';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { AnimatePresence } from 'framer-motion';
-import { X, Bell } from 'lucide-react';
-import { MotionBox } from '@/components/ohp/MotionBox';
 import {
   useDashboardNotifications,
   PUSH_NOTIFICATION_PRIORITY_THRESHOLD,
-  type DashboardNotification,
-  type NotificationVariant,
 } from '@/hooks/useDashboardNotifications';
 import { TestType, View } from '@/types/navigation';
 import { NotificationItem } from './NotificationItem';

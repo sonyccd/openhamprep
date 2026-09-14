@@ -1,11 +1,8 @@
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
 import type { SxProps, Theme } from '@mui/material/styles';
-import { Flame, AlertCircle } from 'lucide-react';
+import { Flame } from 'lucide-react';
 import { MotionBox } from '@/components/ohp/MotionBox';
 import { useDailyStreak } from '@/hooks/useDailyStreak';
-import { STREAK_QUESTIONS_THRESHOLD } from '@/lib/streakConstants';
 import { tokenAlpha } from '@/theme/muiTheme';
 import { tintedPanelSx } from './tintSx';
 import { StreakHeader } from './StreakHeader';
@@ -81,17 +78,6 @@ export function StreakDisplay({ sx, variant = 'full', onAction }: StreakDisplayP
       </Box>
     );
   }
-
-  // Full variant - shows progress and warnings
-  const progressPercent = Math.min(100, (questionsToday / STREAK_QUESTIONS_THRESHOLD) * 100);
-  const isNewRecord = hasStreak && currentStreak === longestStreak;
-  const barToken = todayQualifies ? 'success' : streakAtRisk ? 'warning' : 'primary';
-
-  const actionButton = (label: string) => (
-    <Button variant="contained" color="secondary" size="small" onClick={onAction}>
-      {label}
-    </Button>
-  );
 
   return (
     <MotionBox

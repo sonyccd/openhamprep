@@ -31,15 +31,23 @@ export const tintedPanelSx = (token: TintToken) => ({
       }),
 });
 
-/** The square icon tile inside a panel: a 10% fill behind a coloured glyph. */
-export const iconTileSx = (token: TintToken) => ({
+/**
+ * The square icon tile inside a panel: a 10% fill behind a coloured glyph.
+ *
+ * `neutralBg` is explicit because the two callers genuinely disagreed before
+ * the consolidation: notifications' muted variant tiled in `muted`, while the
+ * next-steps default tiled in `secondary`. They are close enough to look like
+ * a typo and distinct enough to be a pixel diff (index.css: 38 20% 94% against
+ * 38 30% 92%), so neither is hardcoded here.
+ */
+export const iconTileSx = (token: TintToken, neutralBg = "muted") => ({
   p: 1,
   borderRadius: "8px", // rounded-lg
   flexShrink: 0,
   display: "flex",
   ...(token
     ? { bgcolor: (t: Theme) => tokenAlpha(t.vars.palette[token].main, 10) }
-    : { bgcolor: "muted" }),
+    : { bgcolor: neutralBg }),
 });
 
 /** The glyph colour that goes with a tile. */

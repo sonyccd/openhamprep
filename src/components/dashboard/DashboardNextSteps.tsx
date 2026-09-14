@@ -89,7 +89,7 @@ export function DashboardNextSteps({ steps }: DashboardNextStepsProps) {
                 },
               }}
             >
-              <Box sx={iconTileSx(token)}>
+              <Box sx={iconTileSx(token, 'secondary.main')}>
                 <Box
                   component={Icon}
                   aria-hidden="true"
