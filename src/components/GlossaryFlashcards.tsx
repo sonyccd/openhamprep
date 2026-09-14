@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageContainer } from "@/components/ohp/PageContainer";
 import { FlashcardComplete } from "@/components/flashcards/FlashcardComplete";
 import { FlashcardDeck } from "@/components/flashcards/FlashcardDeck";
-import { FlashcardStart, type FlashcardMode } from "@/components/flashcards/FlashcardStart";
+import { FlashcardStart } from "@/components/flashcards/FlashcardStart";
+import type { FlashcardMode } from "@/components/flashcards/types";
 
 interface GlossaryFlashcardsProps {
   onBack: () => void;

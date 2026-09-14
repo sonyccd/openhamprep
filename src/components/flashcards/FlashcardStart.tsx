@@ -5,8 +5,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import { ArrowLeft, Shuffle, Waves } from "lucide-react";
 import { MotionBox } from "@/components/ohp/MotionBox";
-
-export type FlashcardMode = "term-to-definition" | "definition-to-term";
+import type { FlashcardMode } from "./types";
 
 interface FlashcardStartProps {
   termCount: number;

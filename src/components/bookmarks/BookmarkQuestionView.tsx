@@ -149,7 +149,7 @@ export function BookmarkQuestionView({
           button fires no pointer events — without it the hint would vanish in
           exactly the single-bookmark case that explains why it is disabled.
         */}
-        <Tooltip title="Random question">
+        <Tooltip title="Jump to random question">
           <Box component="span" sx={{ display: "inline-flex" }}>
             <Button
               variant="outlined"

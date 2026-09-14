@@ -4,7 +4,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 import { ArrowLeft } from "lucide-react";
 import { FlashcardControls } from "./FlashcardControls";
 import { FlashcardFace } from "./FlashcardFace";
-import type { FlashcardMode } from "./FlashcardStart";
+import type { FlashcardMode } from "./types";
 
 interface FlashcardDeckProps {
   mode: FlashcardMode;
