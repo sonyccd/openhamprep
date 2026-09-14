@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { DashboardNotifications } from './DashboardNotifications';
 import { AlertTriangle, TrendingDown, Clock, Target, Trophy } from 'lucide-react';
 import type { DashboardNotification, NotificationVariant } from '@/hooks/useDashboardNotifications';
+import { muiWrapper } from '@/test/utils/testWrappers';
 
 // Mock the useDashboardNotifications hook
 const mockUseDashboardNotifications = vi.fn();
@@ -55,7 +56,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      const { container } = render(<DashboardNotifications {...defaultProps} />);
+      const { container } = render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
       expect(container.firstChild).toBeNull();
     });
   });
@@ -74,7 +75,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      const { container } = render(<DashboardNotifications {...defaultProps} />);
+      const { container } = render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
       expect(container.firstChild).toBeNull();
     });
   });
@@ -98,7 +99,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByText('Your exam is in 3 days!')).toBeInTheDocument();
       expect(screen.getByText("You're at 72% readiness.")).toBeInTheDocument();
@@ -125,7 +126,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
 
       const actionButton = screen.getByText('Take Practice Test');
       expect(actionButton).toBeInTheDocument();
@@ -149,7 +150,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByRole('button', { name: /dismiss/i })).toBeInTheDocument();
     });
@@ -169,7 +170,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.queryByRole('button', { name: /dismiss/i })).not.toBeInTheDocument();
     });
@@ -192,7 +193,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
 
       fireEvent.click(screen.getByRole('button', { name: /dismiss/i }));
       expect(dismissNotification).toHaveBeenCalledWith('inactivity');
@@ -216,7 +217,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
       expect(screen.getByText('Enable alerts')).toBeInTheDocument();
     });
 
@@ -235,7 +236,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
       expect(screen.queryByText('Enable alerts')).not.toBeInTheDocument();
     });
 
@@ -254,7 +255,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
       expect(screen.queryByText('Enable alerts')).not.toBeInTheDocument();
     });
 
@@ -273,7 +274,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
       expect(screen.queryByText('Enable alerts')).not.toBeInTheDocument();
     });
 
@@ -292,7 +293,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
       expect(screen.queryByText('Enable alerts')).not.toBeInTheDocument();
     });
 
@@ -312,7 +313,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
 
       fireEvent.click(screen.getByText('Enable alerts'));
       expect(requestPermission).toHaveBeenCalledTimes(1);
@@ -346,7 +347,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} maxVisible={2} />);
+      render(<DashboardNotifications {...defaultProps} maxVisible={2} />, { wrapper: muiWrapper });
 
       expect(screen.getByText("You haven't studied in 3 days")).toBeInTheDocument();
       expect(screen.getByText('Accuracy declining')).toBeInTheDocument();
@@ -375,7 +376,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
       expect(screen.getByText("You haven't studied in 4 days")).toBeInTheDocument();
     });
 
@@ -400,7 +401,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
       expect(screen.getByText('Your accuracy has been declining')).toBeInTheDocument();
     });
 
@@ -425,7 +426,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
       expect(screen.getByText('Almost there! 80% of weekly goal complete')).toBeInTheDocument();
     });
 
@@ -451,7 +452,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
       expect(screen.getByText("You've reached 80% readiness! You're almost exam-ready.")).toBeInTheDocument();
     });
   });
@@ -472,7 +473,7 @@ describe('DashboardNotifications', () => {
         },
       });
 
-      render(<DashboardNotifications {...defaultProps} />);
+      render(<DashboardNotifications {...defaultProps} />, { wrapper: muiWrapper });
 
       const dismissButton = screen.getByRole('button', { name: /dismiss notification/i });
       expect(dismissButton).toBeInTheDocument();

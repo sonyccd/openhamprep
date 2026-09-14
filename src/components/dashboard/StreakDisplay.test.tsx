@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { StreakDisplay } from './StreakDisplay';
 import { STREAK_QUESTIONS_THRESHOLD } from '@/lib/streakConstants';
+import { muiWrapper } from '@/test/utils/testWrappers';
 
 // Mock the useDailyStreak hook
 const mockUseDailyStreak = vi.fn();
@@ -27,7 +28,7 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByRole('status', { name: /loading streak/i })).toBeInTheDocument();
     });
   });
@@ -45,7 +46,7 @@ describe('StreakDisplay', () => {
         error: new Error('Failed to fetch'),
       });
 
-      const { container } = render(<StreakDisplay />);
+      const { container } = render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(container.firstChild).toBeNull();
     });
   });
@@ -63,7 +64,7 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      render(<StreakDisplay variant="compact" />);
+      render(<StreakDisplay variant="compact" />, { wrapper: muiWrapper });
       expect(screen.getByText('7')).toBeInTheDocument();
     });
 
@@ -84,28 +85,28 @@ describe('StreakDisplay', () => {
     });
 
     it('displays current streak count', () => {
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText('7')).toBeInTheDocument();
       expect(screen.getByText('days')).toBeInTheDocument();
     });
 
     it('displays "Current streak" label', () => {
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText('Current streak')).toBeInTheDocument();
     });
 
     it('shows best streak badge', () => {
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText('10')).toBeInTheDocument();
     });
 
     it('shows "Complete!" when today qualifies', () => {
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText('Complete!')).toBeInTheDocument();
     });
 
     it('shows success message when streak continues', () => {
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText('Great work! Come back tomorrow to continue your streak.')).toBeInTheDocument();
     });
   });
@@ -125,22 +126,22 @@ describe('StreakDisplay', () => {
     });
 
     it('displays zero streak', () => {
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText('0')).toBeInTheDocument();
     });
 
     it('shows "Start a streak!" message', () => {
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText('Start a streak!')).toBeInTheDocument();
     });
 
     it('shows progress toward threshold questions', () => {
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText(`0/${STREAK_QUESTIONS_THRESHOLD} questions`)).toBeInTheDocument();
     });
 
     it('does not show best streak badge when no history', () => {
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       // Only the streak count "0" should be visible, not a separate badge
       const zeros = screen.getAllByText('0');
       expect(zeros).toHaveLength(1);
@@ -162,17 +163,17 @@ describe('StreakDisplay', () => {
     });
 
     it('shows warning when streak is at risk', () => {
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText(/Answer 3 more questions to keep your streak!/)).toBeInTheDocument();
     });
 
     it('shows current progress', () => {
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText(`2/${STREAK_QUESTIONS_THRESHOLD} questions`)).toBeInTheDocument();
     });
 
     it('displays current streak count', () => {
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText('5')).toBeInTheDocument();
     });
   });
@@ -190,7 +191,7 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText(`3/${STREAK_QUESTIONS_THRESHOLD} questions`)).toBeInTheDocument();
       expect(screen.getByText(/Answer 2 more questions/)).toBeInTheDocument();
     });
@@ -207,7 +208,7 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText(/Answer 1 more question to keep your streak!/)).toBeInTheDocument();
     });
   });
@@ -229,7 +230,7 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByLabelText('New record: 7 day best streak')).toBeInTheDocument();
     });
 
@@ -245,7 +246,7 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByLabelText('Best streak: 9 days')).toBeInTheDocument();
     });
   });
@@ -263,7 +264,7 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText('day')).toBeInTheDocument();
     });
 
@@ -279,7 +280,7 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
       expect(screen.getByText('days')).toBeInTheDocument();
     });
   });
@@ -298,7 +299,7 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      render(<StreakDisplay onAction={handleAction} />);
+      render(<StreakDisplay onAction={handleAction} />, { wrapper: muiWrapper });
 
       const button = screen.getByRole('button', { name: 'Practice Now' });
       expect(button).toBeInTheDocument();
@@ -317,7 +318,7 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      render(<StreakDisplay onAction={handleAction} />);
+      render(<StreakDisplay onAction={handleAction} />, { wrapper: muiWrapper });
 
       screen.getByRole('button', { name: 'Practice Now' }).click();
       expect(handleAction).toHaveBeenCalledTimes(1);
@@ -336,7 +337,7 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      render(<StreakDisplay onAction={handleAction} />);
+      render(<StreakDisplay onAction={handleAction} />, { wrapper: muiWrapper });
 
       expect(screen.getByRole('button', { name: 'Keep Going' })).toBeInTheDocument();
     });
@@ -354,7 +355,7 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      render(<StreakDisplay onAction={handleAction} />);
+      render(<StreakDisplay onAction={handleAction} />, { wrapper: muiWrapper });
 
       expect(screen.getByRole('button', { name: 'Start Practicing' })).toBeInTheDocument();
     });
@@ -372,7 +373,7 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      render(<StreakDisplay onAction={handleAction} />);
+      render(<StreakDisplay onAction={handleAction} />, { wrapper: muiWrapper });
 
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
@@ -389,7 +390,7 @@ describe('StreakDisplay', () => {
         error: null,
       });
 
-      render(<StreakDisplay />);
+      render(<StreakDisplay />, { wrapper: muiWrapper });
 
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });

@@ -1,7 +1,10 @@
-import { motion } from 'framer-motion';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { Settings2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { MotionBox } from '@/components/ohp/MotionBox';
+import { tintedPanelSx } from './tintSx';
 
 interface DashboardProgressProps {
   thisWeekQuestions: number;
@@ -11,6 +14,76 @@ interface DashboardProgressProps {
   onOpenGoalsModal: () => void;
 }
 
+/**
+ * One goal's label, count and bar.
+ *
+ * The bar is a framer-motion width animation, not MUI's LinearProgress. C5's
+ * issue assumed this used shadcn's Progress and could be swapped; it never did.
+ * LinearProgress animates its own indicator and would change both the easing
+ * and the shape, which Gate 1 rules out for a port.
+ */
+function GoalBar({
+  label,
+  current,
+  goal,
+  delay,
+}: {
+  label: string;
+  current: number;
+  goal: number;
+  delay: number;
+}) {
+  const percent = Math.min(100, Math.round((current / goal) * 100));
+  const reached = current >= goal;
+
+  return (
+    <Box>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: '0.75rem',
+          mb: 0.5,
+        }}
+      >
+        <Box component="span" sx={{ color: 'text.secondary' }}>
+          {label}
+        </Box>
+        <Box
+          component="span"
+          sx={{
+            fontFamily: 'monospace',
+            fontWeight: 700,
+            color: reached ? 'success.main' : 'text.primary',
+          }}
+        >
+          {current}/{goal}
+        </Box>
+      </Box>
+      <Box
+        sx={{
+          height: 8,
+          bgcolor: 'secondary.main',
+          borderRadius: '9999px',
+          overflow: 'hidden',
+        }}
+      >
+        <MotionBox
+          initial={{ width: 0 }}
+          animate={{ width: `${percent}%` }}
+          transition={{ duration: 0.5, delay }}
+          sx={{
+            height: '100%',
+            borderRadius: '9999px',
+            bgcolor: reached ? 'success.main' : 'primary.main',
+          }}
+        />
+      </Box>
+    </Box>
+  );
+}
+
 export function DashboardProgress({
   thisWeekQuestions,
   questionsGoal,
@@ -18,82 +91,55 @@ export function DashboardProgress({
   testsGoal,
   onOpenGoalsModal,
 }: DashboardProgressProps) {
-  const questionsProgress = Math.min(100, Math.round((thisWeekQuestions / questionsGoal) * 100));
-  const testsProgress = Math.min(100, Math.round((thisWeekTests / testsGoal) * 100));
-  const questionsGoalReached = thisWeekQuestions >= questionsGoal;
-  const testsGoalReached = thisWeekTests >= testsGoal;
-
   return (
-    <motion.div
+    <MotionBox
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
-      className="bg-card border border-border rounded-xl p-4"
+      sx={tintedPanelSx(null)}
     >
-      <div className="flex-1">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-mono font-bold text-foreground">This Week</h3>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            aria-label="Edit weekly goals"
-            onClick={onOpenGoalsModal}
-          >
-            <Settings2 className="w-4 h-4" />
-          </Button>
-        </div>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 1.5,
+        }}
+      >
+        <Typography
+          component="h3"
+          sx={{
+            fontSize: '0.875rem',
+            fontFamily: 'monospace',
+            fontWeight: 700,
+            color: 'text.primary',
+          }}
+        >
+          This Week
+        </Typography>
+        <IconButton
+          aria-label="Edit weekly goals"
+          onClick={onOpenGoalsModal}
+          sx={{ width: 28, height: 28 }}
+        >
+          <Box component={Settings2} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+        </IconButton>
+      </Box>
 
-        <div className="space-y-3">
-          {/* Questions Progress */}
-          <div>
-            <div className="flex items-center justify-between text-xs mb-1">
-              <span className="text-muted-foreground">Questions</span>
-              <span className={cn(
-                'font-mono font-bold',
-                questionsGoalReached ? 'text-success' : 'text-foreground'
-              )}>
-                {thisWeekQuestions}/{questionsGoal}
-              </span>
-            </div>
-            <div className="h-2 bg-secondary rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${questionsProgress}%` }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className={cn(
-                  'h-full rounded-full',
-                  questionsGoalReached ? 'bg-success' : 'bg-primary'
-                )}
-              />
-            </div>
-          </div>
-
-          {/* Tests Progress */}
-          <div>
-            <div className="flex items-center justify-between text-xs mb-1">
-              <span className="text-muted-foreground">Practice Tests</span>
-              <span className={cn(
-                'font-mono font-bold',
-                testsGoalReached ? 'text-success' : 'text-foreground'
-              )}>
-                {thisWeekTests}/{testsGoal}
-              </span>
-            </div>
-            <div className="h-2 bg-secondary rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${testsProgress}%` }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className={cn(
-                  'h-full rounded-full',
-                  testsGoalReached ? 'bg-success' : 'bg-primary'
-                )}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </motion.div>
+      <Stack spacing={1.5}>
+        <GoalBar
+          label="Questions"
+          current={thisWeekQuestions}
+          goal={questionsGoal}
+          delay={0.2}
+        />
+        <GoalBar
+          label="Practice Tests"
+          current={thisWeekTests}
+          goal={testsGoal}
+          delay={0.3}
+        />
+      </Stack>
+    </MotionBox>
   );
 }

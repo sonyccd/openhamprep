@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DashboardSectionInsights } from './DashboardSectionInsights';
 import { SubelementMetric } from '@/hooks/useReadinessScore';
+import { muiWrapper } from '@/test/utils/testWrappers';
 
 describe('DashboardSectionInsights', () => {
   const createMetric = (overrides: Partial<SubelementMetric> = {}): SubelementMetric => ({
@@ -20,30 +21,25 @@ describe('DashboardSectionInsights', () => {
   });
 
   it('renders nothing when subelementMetrics is undefined', () => {
-    const { container } = render(
-      <DashboardSectionInsights
+    const { container } = render(<DashboardSectionInsights
         subelementMetrics={undefined}
         testType="technician"
         onPracticeSection={vi.fn()}
-      />
-    );
+      />, { wrapper: muiWrapper });
     expect(container.firstChild).toBeNull();
   });
 
   it('renders nothing when subelementMetrics is empty', () => {
-    const { container } = render(
-      <DashboardSectionInsights
+    const { container } = render(<DashboardSectionInsights
         subelementMetrics={{}}
         testType="technician"
         onPracticeSection={vi.fn()}
-      />
-    );
+      />, { wrapper: muiWrapper });
     expect(container.firstChild).toBeNull();
   });
 
   it('renders nothing when all risk scores are below 0.1', () => {
-    const { container } = render(
-      <DashboardSectionInsights
+    const { container } = render(<DashboardSectionInsights
         subelementMetrics={{
           T1: createMetric({ risk_score: 0.05 }),
           T2: createMetric({ risk_score: 0.08 }),
@@ -51,27 +47,23 @@ describe('DashboardSectionInsights', () => {
         }}
         testType="technician"
         onPracticeSection={vi.fn()}
-      />
-    );
+      />, { wrapper: muiWrapper });
     expect(container.firstChild).toBeNull();
   });
 
   it('renders Focus Areas section header', () => {
-    render(
-      <DashboardSectionInsights
+    render(<DashboardSectionInsights
         subelementMetrics={{
           T1: createMetric({ risk_score: 0.5 }),
         }}
         testType="technician"
         onPracticeSection={vi.fn()}
-      />
-    );
+      />, { wrapper: muiWrapper });
     expect(screen.getByText('Focus Areas')).toBeInTheDocument();
   });
 
   it('displays top 3 sections sorted by risk score', () => {
-    render(
-      <DashboardSectionInsights
+    render(<DashboardSectionInsights
         subelementMetrics={{
           T1: createMetric({ risk_score: 0.3 }),
           T2: createMetric({ risk_score: 0.9 }),
@@ -81,8 +73,7 @@ describe('DashboardSectionInsights', () => {
         }}
         testType="technician"
         onPracticeSection={vi.fn()}
-      />
-    );
+      />, { wrapper: muiWrapper });
 
     // Should show T2 (0.9), T5 (0.7), T3 (0.5) - top 3 by risk
     expect(screen.getByText('T2')).toBeInTheDocument();
@@ -95,8 +86,7 @@ describe('DashboardSectionInsights', () => {
   });
 
   it('shows section names for technician test type', () => {
-    render(
-      <DashboardSectionInsights
+    render(<DashboardSectionInsights
         subelementMetrics={{
           T1: createMetric({ risk_score: 0.8 }),
           T5: createMetric({ risk_score: 0.6 }),
@@ -104,8 +94,7 @@ describe('DashboardSectionInsights', () => {
         }}
         testType="technician"
         onPracticeSection={vi.fn()}
-      />
-    );
+      />, { wrapper: muiWrapper });
 
     expect(screen.getByText("Commission's Rules")).toBeInTheDocument();
     expect(screen.getByText('Electrical Principles')).toBeInTheDocument();
@@ -113,8 +102,7 @@ describe('DashboardSectionInsights', () => {
   });
 
   it('shows section names for general test type', () => {
-    render(
-      <DashboardSectionInsights
+    render(<DashboardSectionInsights
         subelementMetrics={{
           G1: createMetric({ risk_score: 0.8 }),
           G5: createMetric({ risk_score: 0.6 }),
@@ -122,8 +110,7 @@ describe('DashboardSectionInsights', () => {
         }}
         testType="general"
         onPracticeSection={vi.fn()}
-      />
-    );
+      />, { wrapper: muiWrapper });
 
     expect(screen.getByText("Commission's Rules")).toBeInTheDocument();
     expect(screen.getByText('Electrical Principles')).toBeInTheDocument();
@@ -131,8 +118,7 @@ describe('DashboardSectionInsights', () => {
   });
 
   it('shows section names for extra test type', () => {
-    render(
-      <DashboardSectionInsights
+    render(<DashboardSectionInsights
         subelementMetrics={{
           E1: createMetric({ risk_score: 0.8 }),
           E5: createMetric({ risk_score: 0.6 }),
@@ -140,8 +126,7 @@ describe('DashboardSectionInsights', () => {
         }}
         testType="extra"
         onPracticeSection={vi.fn()}
-      />
-    );
+      />, { wrapper: muiWrapper });
 
     expect(screen.getByText("Commission's Rules")).toBeInTheDocument();
     expect(screen.getByText('Electrical Principles')).toBeInTheDocument();
@@ -149,15 +134,13 @@ describe('DashboardSectionInsights', () => {
   });
 
   it('shows fallback name for unknown subelement codes', () => {
-    render(
-      <DashboardSectionInsights
+    render(<DashboardSectionInsights
         subelementMetrics={{
           X1: createMetric({ risk_score: 0.8 }),
         }}
         testType="technician"
         onPracticeSection={vi.fn()}
-      />
-    );
+      />, { wrapper: muiWrapper });
 
     expect(screen.getByText('Subelement X1')).toBeInTheDocument();
   });
@@ -166,15 +149,13 @@ describe('DashboardSectionInsights', () => {
     const user = userEvent.setup();
     const handlePractice = vi.fn();
 
-    render(
-      <DashboardSectionInsights
+    render(<DashboardSectionInsights
         subelementMetrics={{
           T3: createMetric({ risk_score: 0.8 }),
         }}
         testType="technician"
         onPracticeSection={handlePractice}
-      />
-    );
+      />, { wrapper: muiWrapper });
 
     await user.click(screen.getByText('T3'));
     expect(handlePractice).toHaveBeenCalledWith('T3');
@@ -182,47 +163,41 @@ describe('DashboardSectionInsights', () => {
   });
 
   it('renders Practice CTA for each section', () => {
-    render(
-      <DashboardSectionInsights
+    render(<DashboardSectionInsights
         subelementMetrics={{
           T1: createMetric({ risk_score: 0.8 }),
           T2: createMetric({ risk_score: 0.6 }),
         }}
         testType="technician"
         onPracticeSection={vi.fn()}
-      />
-    );
+      />, { wrapper: muiWrapper });
 
     const practiceButtons = screen.getAllByText('Practice');
     expect(practiceButtons).toHaveLength(2);
   });
 
   it('renders as buttons with correct role', () => {
-    render(
-      <DashboardSectionInsights
+    render(<DashboardSectionInsights
         subelementMetrics={{
           T1: createMetric({ risk_score: 0.5 }),
         }}
         testType="technician"
         onPracticeSection={vi.fn()}
-      />
-    );
+      />, { wrapper: muiWrapper });
 
     const buttons = screen.getAllByRole('button');
     expect(buttons).toHaveLength(1);
   });
 
   it('handles fewer than 3 sections', () => {
-    render(
-      <DashboardSectionInsights
+    render(<DashboardSectionInsights
         subelementMetrics={{
           T1: createMetric({ risk_score: 0.5 }),
           T2: createMetric({ risk_score: 0.3 }),
         }}
         testType="technician"
         onPracticeSection={vi.fn()}
-      />
-    );
+      />, { wrapper: muiWrapper });
 
     expect(screen.getByText('T1')).toBeInTheDocument();
     expect(screen.getByText('T2')).toBeInTheDocument();
@@ -230,8 +205,7 @@ describe('DashboardSectionInsights', () => {
   });
 
   it('only shows sections with risk score >= 0.1', () => {
-    render(
-      <DashboardSectionInsights
+    render(<DashboardSectionInsights
         subelementMetrics={{
           T1: createMetric({ risk_score: 0.5 }),
           T2: createMetric({ risk_score: 0.05 }),
@@ -239,8 +213,7 @@ describe('DashboardSectionInsights', () => {
         }}
         testType="technician"
         onPracticeSection={vi.fn()}
-      />
-    );
+      />, { wrapper: muiWrapper });
 
     // Only T1 should show (others are below 0.1)
     // But the component takes top 3 by risk_score, then checks if ALL are below 0.1

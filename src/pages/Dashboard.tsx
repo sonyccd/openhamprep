@@ -10,8 +10,19 @@ import { useTestResults, useQuestionAttemptsWithNames, useProfileStats, useWeekl
 import { queryKeys } from '@/services/queryKeys';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, AlertTriangle, Zap, Brain, Target, X } from 'lucide-react';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+import { GuestBanner } from '@/components/dashboard/GuestBanner';
+import { NavigationWarningDialog } from '@/components/dashboard/NavigationWarningDialog';
+import { AlertTriangle, Zap, Brain, Target, X } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { PageContainer } from '@/components/ohp/PageContainer';
 import {
@@ -293,9 +304,19 @@ export default function Dashboard() {
       return <LessonDetailPage slug={selectedLessonSlug} onBack={navigateToLessons} />;
     }
     if (authLoading || (user && (testsLoading || attemptsLoading))) {
-      return <div className="min-h-screen bg-background flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>;
+      return (
+        <Box
+          sx={{
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <CircularProgress size={32} />
+        </Box>
+      );
     }
     // Calculate weekly goal progress
     const questionsGoal = weeklyGoals?.questions_goal || 50;
@@ -368,24 +389,12 @@ export default function Dashboard() {
       <PageContainer width="standard" radioWaveBg>
         {/* Guest banner — shown to unauthenticated users, dismissible */}
         {!user && !guestBannerDismissed && (
-          <div className="flex items-center justify-between gap-3 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 mb-6">
-            <p className="text-sm text-foreground">
-              You're studying as a guest — progress isn't being saved.{' '}
-              <Link to="/auth?returnTo=/dashboard" className="text-primary hover:underline font-medium">
-                Create a free account
-              </Link>
-            </p>
-            <button
-              onClick={() => {
-                localStorage.setItem('guest_banner_dismissed', 'true');
-                setGuestBannerDismissed(true);
-              }}
-              aria-label="Dismiss banner"
-              className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          <GuestBanner
+            onDismiss={() => {
+              localStorage.setItem('guest_banner_dismissed', 'true');
+              setGuestBannerDismissed(true);
+            }}
+          />
         )}
 
         <DashboardHero
@@ -406,9 +415,10 @@ export default function Dashboard() {
           maxVisible={1}
         />
 
-        <div className="mb-6">
-          <StreakDisplay onAction={() => changeView('random-practice')} />
-        </div>
+        <StreakDisplay
+          onAction={() => changeView('random-practice')}
+          sx={{ mb: 3 }}
+        />
 
         <DashboardNextSteps steps={getNextSteps()} />
 
@@ -437,27 +447,11 @@ export default function Dashboard() {
       />
 
       {/* Navigation Warning Dialog */}
-      <AlertDialog open={showNavigationWarning} onOpenChange={setShowNavigationWarning}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
-              Test in Progress
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              You have a practice test in progress. If you leave now, your progress will not be saved. Are you sure you want to end the test?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelNavigation}>
-              Return to Test
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmNavigation} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              End Test
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <NavigationWarningDialog
+        open={showNavigationWarning}
+        onCancel={handleCancelNavigation}
+        onConfirm={handleConfirmNavigation}
+      />
 
       {/* Weekly Goals Modal */}
       {user && <WeeklyGoalsModal open={showGoalsModal} onOpenChange={setShowGoalsModal} userId={user.id} currentGoals={weeklyGoals || null} onGoalsUpdated={() => queryClient.invalidateQueries({
