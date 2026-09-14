@@ -15,6 +15,31 @@ describe('StreakDisplay', () => {
     vi.clearAllMocks();
   });
 
+  /** Same contract as DashboardProgress: a real progressbar, not a bare div. */
+  describe('progress bar semantics', () => {
+    it("exposes today's progress as a named progressbar", () => {
+      mockUseDailyStreak.mockReturnValue({
+        currentStreak: 3,
+        longestStreak: 5,
+        todayQualifies: false,
+        questionsToday: 8,
+        questionsNeeded: STREAK_QUESTIONS_THRESHOLD - 8,
+        streakAtRisk: false,
+        isLoading: false,
+        error: null,
+      });
+
+      render(<StreakDisplay />, { wrapper: muiWrapper });
+
+      const bar = screen.getByRole('progressbar');
+      expect(bar).toHaveAccessibleName("Today's progress");
+      expect(bar).toHaveAttribute(
+        'aria-valuetext',
+        `8 of ${STREAK_QUESTIONS_THRESHOLD} questions`
+      );
+    });
+  });
+
   describe('Loading State', () => {
     it('shows loading skeleton when loading', () => {
       mockUseDailyStreak.mockReturnValue({
