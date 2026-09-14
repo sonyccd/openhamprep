@@ -569,7 +569,7 @@ describe('BookmarkedQuestions', () => {
       fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
 
       await waitFor(() => {
-        const randomButton = screen.getByTitle('Random question');
+        const randomButton = screen.getByRole('button', { name: /random question/i });
         expect(randomButton).toBeInTheDocument();
       });
     });
@@ -580,7 +580,7 @@ describe('BookmarkedQuestions', () => {
       fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
 
       await waitFor(() => {
-        const randomButton = screen.getByTitle('Random question');
+        const randomButton = screen.getByRole('button', { name: /random question/i });
         expect(randomButton).toBeDisabled();
       });
     });
@@ -592,7 +592,7 @@ describe('BookmarkedQuestions', () => {
       fireEvent.click(screen.getByText('What is the purpose of the Amateur Radio Service?'));
 
       await waitFor(() => {
-        const randomButton = screen.getByTitle('Random question');
+        const randomButton = screen.getByRole('button', { name: /random question/i });
         expect(randomButton).not.toBeDisabled();
       });
     });
@@ -611,7 +611,7 @@ describe('BookmarkedQuestions', () => {
         expect(screen.getByText('Question 1 of 3')).toBeInTheDocument();
       });
 
-      const randomButton = screen.getByTitle('Random question');
+      const randomButton = screen.getByRole('button', { name: /random question/i });
       fireEvent.click(randomButton);
 
       await waitFor(() => {

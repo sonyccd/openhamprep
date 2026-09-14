@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { GlossaryFlashcards } from './GlossaryFlashcards';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { muiTheme } from '@/theme/muiTheme';
 
 // Mock Supabase
 const mockSelect = vi.fn();
@@ -29,8 +31,15 @@ function createWrapper() {
       queries: { retry: false },
     },
   });
+  // The MUI theme goes inside the query client rather than beside it — the
+  // ported screens read palette tokens, and the custom keys (muted, accent)
+  // exist only in our theme, so a missing provider throws rather than degrades.
   return ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <MuiThemeProvider theme={muiTheme} defaultMode="light" noSsr>
+        {children}
+      </MuiThemeProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -230,6 +239,32 @@ describe('GlossaryFlashcards', () => {
       await waitFor(() => {
         expect(screen.getByText(/tap to reveal/i)).toBeInTheDocument();
       });
+    });
+
+    /**
+     * Before the port the card was a <div onClick>: no role, no tab stop, no
+     * Enter/Space. The whole exercise was mouse-only. CardActionArea makes it a
+     * real button, and aria-pressed reports which face is showing.
+     */
+    it('flips from the keyboard, not just the mouse', async () => {
+      const user = userEvent.setup();
+
+      render(<GlossaryFlashcards {...defaultProps} />, { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /start studying/i })).toBeInTheDocument();
+      });
+      await user.click(screen.getByRole('button', { name: /start studying/i }));
+
+      const card = await screen.findByRole('button', { name: /reveal the answer/i });
+      expect(card).toHaveAttribute('aria-pressed', 'false');
+
+      card.focus();
+      await user.keyboard('{Enter}');
+
+      const flipped = await screen.findByRole('button', { name: /hide the answer/i });
+      expect(flipped).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByText(/tap to hide/i)).toBeInTheDocument();
     });
   });
 
