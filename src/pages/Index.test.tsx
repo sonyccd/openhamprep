@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { BrowserRouter, MemoryRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import Index from './Index';
 
 const mockNavigate = vi.fn();
@@ -30,7 +30,7 @@ describe('Index Page', () => {
         loading: true,
       });
 
-      const { container } = render(
+      render(
         <BrowserRouter>
           <Index />
         </BrowserRouter>

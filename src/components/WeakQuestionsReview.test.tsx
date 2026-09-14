@@ -944,9 +944,9 @@ describe('WeakQuestionsReview', () => {
     it('changes to different question when randomize is clicked', async () => {
       // Seed Math.random for predictable test
       const originalRandom = Math.random;
-      let callCount = 0;
+      let _callCount = 0;
       Math.random = () => {
-        callCount++;
+        _callCount++;
         // Return values that will result in index 1 (second question)
         return 0.5;
       };

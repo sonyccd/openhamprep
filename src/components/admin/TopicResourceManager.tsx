@@ -79,7 +79,7 @@ export function TopicResourceManager({
   const [newUrl, setNewUrl] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newFile, setNewFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [_isUploading, _setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state for editing
@@ -112,7 +112,7 @@ export function TopicResourceManager({
 
       // Upload file if provided
       if (file) {
-        const fileExt = file.name.split(".").pop()?.toLowerCase() || "";
+        const _fileExt = file.name.split(".").pop()?.toLowerCase() || "";
         const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
         const filePath = `resources/${topicId}/${fileName}`;
 

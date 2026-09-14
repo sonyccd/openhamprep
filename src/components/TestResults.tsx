@@ -58,7 +58,7 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
   const totalQuestions = questions.length;
   const percentage = Math.round((correctCount / totalQuestions) * 100);
 
-  const incorrectQuestions = questions.filter(
+  const _incorrectQuestions = questions.filter(
     (q) => answers[q.id] !== q.correctAnswer
   );
 

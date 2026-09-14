@@ -136,7 +136,7 @@ describe('LessonGallery', () => {
   describe('Loading State', () => {
     it('should show loading skeletons when loading', () => {
       mockIsLoading = true;
-      const { container } = renderComponent();
+      renderComponent();
 
       const skeletons = screen.getAllByTestId('skeleton');
       expect(skeletons.length).toBeGreaterThan(0);

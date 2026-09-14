@@ -553,7 +553,7 @@ describe("error scenarios", () => {
      * would return a 500 error but leave status as "pending".
      */
 
-    interface StatusTransition {
+    interface _StatusTransition {
       initialStatus: "pending" | "synced" | "error" | null;
       errorOccurred: boolean;
       expectedFinalStatus: "pending" | "synced" | "error";

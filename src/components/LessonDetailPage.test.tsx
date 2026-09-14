@@ -164,7 +164,7 @@ describe('LessonDetailPage', () => {
   describe('Loading State', () => {
     it('should show loading skeleton when lesson is loading', () => {
       mockLessonLoading = true;
-      const { container } = renderComponent();
+      renderComponent();
 
       const skeletons = screen.getAllByTestId('skeleton');
       expect(skeletons.length).toBeGreaterThan(0);
@@ -172,7 +172,7 @@ describe('LessonDetailPage', () => {
 
     it('should show multiple skeleton placeholders', () => {
       mockLessonLoading = true;
-      const { container } = renderComponent();
+      renderComponent();
 
       // Title, description, progress and topic items each get a skeleton.
       const skeletons = screen.getAllByTestId('skeleton');

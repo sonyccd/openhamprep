@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TopicEditor } from './TopicEditor';
@@ -663,7 +663,7 @@ describe('TopicEditor', () => {
         return { select: vi.fn() };
       });
 
-      const user = await setupSettingsTabForDelete();
+      const _user = await setupSettingsTabForDelete();
 
       // Click the Delete Topic button in the Danger Zone to open the dialog
       fireEvent.click(screen.getByRole('button', { name: /Delete Topic/i }));
@@ -716,7 +716,7 @@ describe('TopicEditor', () => {
         return { select: vi.fn() };
       });
 
-      const user = await setupSettingsTabForDelete();
+      const _user = await setupSettingsTabForDelete();
 
       fireEvent.click(screen.getByRole('button', { name: /Delete Topic/i }));
 
@@ -767,7 +767,7 @@ describe('TopicEditor', () => {
         return { select: vi.fn() };
       });
 
-      const user = await setupSettingsTabForDelete();
+      const _user = await setupSettingsTabForDelete();
 
       fireEvent.click(screen.getByRole('button', { name: /Delete Topic/i }));
 
@@ -817,7 +817,7 @@ describe('TopicEditor', () => {
         return { select: vi.fn() };
       });
 
-      const user = await setupSettingsTabForDelete();
+      const _user = await setupSettingsTabForDelete();
 
       fireEvent.click(screen.getByRole('button', { name: /Delete Topic/i }));
 
@@ -873,7 +873,7 @@ describe('TopicEditor', () => {
         return { select: vi.fn() };
       });
 
-      const user = await setupSettingsTabForDelete();
+      const _user = await setupSettingsTabForDelete();
 
       fireEvent.click(screen.getByRole('button', { name: /Delete Topic/i }));
 
@@ -926,7 +926,7 @@ describe('TopicEditor', () => {
         return { select: vi.fn() };
       });
 
-      const user = await setupSettingsTabForDelete();
+      const _user = await setupSettingsTabForDelete();
 
       // Initial state - button should be enabled
       const deleteButton = screen.getByRole('button', { name: /Delete Topic/i });

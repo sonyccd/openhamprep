@@ -4,11 +4,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TopicQuestionManager } from './TopicQuestionManager';
 
 // Mock Supabase client
-const mockSelect = vi.fn();
-const mockInsert = vi.fn();
-const mockDelete = vi.fn();
-const mockEq = vi.fn();
-const mockOrder = vi.fn();
+const _mockSelect = vi.fn();
+const _mockInsert = vi.fn();
+const _mockDelete = vi.fn();
+const _mockEq = vi.fn();
+const _mockOrder = vi.fn();
 const mockFrom = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -742,14 +742,14 @@ describe('TopicQuestionManager', () => {
         { id: 'uuid-3', display_name: 'T1A03', question: 'Question 3' },
       ];
 
-      let callCount = 0;
+      let _callCount = 0;
       mockFrom.mockImplementation((table: string) => {
         if (table === 'questions') {
           return {
             select: vi.fn().mockReturnValue({
               order: vi.fn().mockReturnValue({
                 range: vi.fn().mockImplementation((from: number, to: number) => {
-                  callCount++;
+                  _callCount++;
                   // First page returns full page size (simulating more data)
                   if (from === 0) {
                     return Promise.resolve({

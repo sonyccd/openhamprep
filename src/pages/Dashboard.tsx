@@ -1,12 +1,11 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import { useBookmarks } from '@/hooks/useBookmarks';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { useTestReadiness } from '@/hooks/useTestReadiness';
 import { useReadinessScore, recalculateReadiness } from '@/hooks/useReadinessScore';
-import { useTestResults, useQuestionAttemptsWithNames, useProfileStats, useWeeklyGoals } from '@/hooks/useDashboardData';
+import { useTestResults, useQuestionAttemptsWithNames, useWeeklyGoals } from '@/hooks/useDashboardData';
 import { queryKeys } from '@/services/queryKeys';
 import { calculateWeakQuestionIds } from '@/lib/weakQuestions';
 import { filterByTestType } from '@/lib/testTypeUtils';
@@ -42,17 +41,13 @@ import { TopicDetailPage } from '@/components/TopicDetailPage';
 import { LessonGallery } from '@/components/LessonGallery';
 import { LessonDetailPage } from '@/components/LessonDetailPage';
 import { HamRadioToolsGallery } from '@/components/HamRadioToolsGallery';
-import { TestType, testTypes, View } from '@/types/navigation';
+import { TestType, View } from '@/types/navigation';
 import { trackLicenseTypeChanged, trackStudyModeSelected } from '@/lib/amplitude';
 export default function Dashboard() {
   const {
     user,
     loading: authLoading
   } = useAuth();
-  const {
-    bookmarks
-  } = useBookmarks();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const {
     currentView,
@@ -60,7 +55,6 @@ export default function Dashboard() {
     reviewingTestId,
     setReviewingTestId,
     selectedTopicSlug,
-    navigateToTopics,
     selectedLessonSlug,
     navigateToLessons,
     navigateBackFromTopic,
@@ -141,9 +135,6 @@ export default function Dashboard() {
     isLoading: attemptsLoading
   } = useQuestionAttemptsWithNames();
   const {
-    data: profile
-  } = useProfileStats();
-  const {
     data: weeklyGoals
   } = useWeeklyGoals();
 
@@ -170,8 +161,6 @@ export default function Dashboard() {
 
   // Calculate weak questions (questions where incorrect answers > correct answers) - filtered by test type
   const weakQuestionIds = filteredAttempts.length > 0 ? calculateWeakQuestionIds(filteredAttempts) : [];
-  const currentTest = testTypes.find(t => t.id === selectedTest);
-  const isTestAvailable = currentTest?.available ?? false;
 
   // Use test readiness hook for calculations - use examType for database-backed readiness
   const {

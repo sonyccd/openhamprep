@@ -47,7 +47,6 @@ vi.mock('sonner', () => ({
   },
 }));
 
-import { toast } from 'sonner';
 
 // Sample resources
 const mockResources: TopicResource[] = [

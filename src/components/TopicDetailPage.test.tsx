@@ -128,7 +128,7 @@ describe('TopicDetailPage', () => {
   describe('Loading State', () => {
     it('should show loading skeleton when topic is loading', () => {
       mockTopicLoading = true;
-      const { container } = renderComponent();
+      renderComponent();
 
       const skeletons = screen.getAllByTestId('skeleton');
       expect(skeletons.length).toBeGreaterThan(0);

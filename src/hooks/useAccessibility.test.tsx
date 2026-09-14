@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
-import { AccessibilityProvider, useAccessibility, FontFamily } from './useAccessibility';
+import { AccessibilityProvider, useAccessibility } from './useAccessibility';
 import React from 'react';
 
 // Test component that exposes hook values
@@ -271,8 +271,8 @@ describe('useAccessibility', () => {
   describe('localStorage unavailable', () => {
     it('handles localStorage errors gracefully', async () => {
       // Mock localStorage to throw
-      const originalGetItem = localStorage.getItem;
-      const originalSetItem = localStorage.setItem;
+      const _originalGetItem = localStorage.getItem;
+      const _originalSetItem = localStorage.setItem;
 
       vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
         throw new Error('localStorage unavailable');

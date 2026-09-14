@@ -10,14 +10,13 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { RESOURCE_TYPE_CONFIG, getResourceIcon, getResourceColorClass } from "@/lib/resourceTypes";
+import { RESOURCE_TYPE_CONFIG } from "@/lib/resourceTypes";
 import { useState } from "react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
 
 function getStorageUrl(storagePath: string): string {
   const { data } = supabase.storage

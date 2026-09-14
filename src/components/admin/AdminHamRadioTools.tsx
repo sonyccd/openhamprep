@@ -7,7 +7,6 @@ import {
   useUpdateHamRadioTool,
   useDeleteHamRadioTool,
   HamRadioTool,
-  HamRadioToolCategory,
   getToolImageUrl,
 } from "@/hooks/useHamRadioTools";
 import { Button } from "@/components/ui/button";

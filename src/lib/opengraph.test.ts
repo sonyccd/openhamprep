@@ -3,8 +3,6 @@ import {
   isCrawler,
   escapeHtml,
   isValidQuestionId,
-  isValidDisplayName,
-  isUUID,
   getLicenseName,
   buildQuestionUrl,
   buildOpenGraphHtml,

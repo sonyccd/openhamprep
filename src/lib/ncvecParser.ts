@@ -41,7 +41,7 @@ async function extractTextFromDocx(file: File): Promise<string> {
  * Extract FCC reference from question header line
  * e.g., "T1A01 (C) [97.1]" -> "97.1"
  */
-function extractFccReference(headerLine: string): string | null {
+function _extractFccReference(headerLine: string): string | null {
   const match = headerLine.match(/\[([^\]]+)\]/);
   return match ? match[1].trim() : null;
 }

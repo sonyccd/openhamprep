@@ -16,7 +16,7 @@ describe('FigureLightbox', () => {
 
   describe('Rendering', () => {
     it('should render nothing when isOpen is false', () => {
-      const { container } = render(
+      render(
         <FigureLightbox {...defaultProps} isOpen={false} />
       );
       // Radix Dialog doesn't render portal content when closed

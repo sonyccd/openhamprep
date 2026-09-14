@@ -100,7 +100,7 @@ export function GlobalSearch({
   testType,
 }: GlobalSearchProps) {
   const navigate = useNavigate();
-  const { setCurrentView, navigateToTopic, navigateToGlossaryTerm } =
+  const { navigateToTopic, navigateToGlossaryTerm } =
     useAppNavigation();
   const { query, setQuery, results, isLoading, hasResults, reset, totalCount, error } =
     useGlobalSearch(testType);
@@ -158,7 +158,7 @@ export function GlobalSearch({
     }
   };
 
-  const modKey = getModifierKey();
+  const _modKey = getModifierKey();
 
   return (
     <CommandDialog open={open} onOpenChange={handleOpenChange}>

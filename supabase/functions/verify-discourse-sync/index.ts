@@ -4,7 +4,6 @@ import {
   corsHeaders,
   DISCOURSE_URL,
   MAX_PAGINATION_PAGES,
-  QUESTION_ID_PATTERN,
   CATEGORY_MAP,
   getCategorySlug,
   isServiceRoleToken,
@@ -14,8 +13,7 @@ import {
 import {
   extractQuestionIdFromTitle,
   extractTopicId,
-  buildTopicUrl,
-} from "./logic.ts";
+  } from "./logic.ts";
 
 /**
  * Verify Discourse Sync Edge Function

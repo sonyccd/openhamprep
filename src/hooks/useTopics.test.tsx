@@ -8,7 +8,6 @@ import {
   useTopic,
   useTopicContent,
   useTopicProgress,
-  useTopicCompleted,
   useToggleTopicComplete,
   useTopicQuestions,
   Topic,
@@ -18,7 +17,7 @@ import {
 const mockFrom = vi.fn();
 const mockDownload = vi.fn();
 const mockGetUser = vi.fn();
-const mockUpsert = vi.fn();
+const _mockUpsert = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -350,7 +349,7 @@ describe('useTopics Hooks', () => {
         error: null,
       });
 
-      const { result, rerender } = renderHook(
+      const { result } = renderHook(
         () => useTopicContent('articles/test.md'),
         { wrapper }
       );

@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (accessToken && refreshToken) {
           // Explicitly set the session with the tokens from the URL
-          const { data: { session }, error } = await supabase.auth.setSession({
+          const { data: { session } } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
