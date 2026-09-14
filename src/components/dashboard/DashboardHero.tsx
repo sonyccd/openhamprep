@@ -101,25 +101,18 @@ export function DashboardHero({
               value={recentAvgScore}
               size={140}
               strokeWidth={10}
+              // The number alone says nothing about what is being measured, and
+              // the readiness level is conveyed visually by colour — which a
+              // screen reader cannot see. Both go in the announcement.
+              label="Exam readiness"
+              valueText={`${recentAvgScore}% — ${readinessTitle}`}
               color={(t) =>
                 token
                   ? t.vars.palette[token].main
                   : tokenAlpha(t.vars.palette.text.secondary, 30)
               }
               trackColor={(t) => t.vars.palette.secondary.main}
-            >
-              <Box
-                component="span"
-                sx={{
-                  fontSize: '2.25rem',
-                  fontFamily: 'monospace',
-                  fontWeight: 700,
-                  color: token ? `${token}.main` : 'text.secondary',
-                }}
-              >
-                {recentAvgScore}%
-              </Box>
-            </ScoreRing>
+            />
           )}
         </Box>
 

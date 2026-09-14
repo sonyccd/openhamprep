@@ -21,6 +21,29 @@ describe('DashboardHero', () => {
     onAction: vi.fn(),
   };
 
+  /**
+   * The readiness level reaches sighted users as the ring's colour, which a
+   * screen reader cannot see, so it has to be in the announced value too.
+   */
+  it('announces the score as a named meter carrying the readiness level', () => {
+    render(<DashboardHero {...defaultProps} />, { wrapper: muiWrapper });
+
+    const meter = screen.getByRole('meter');
+    expect(meter).toHaveAccessibleName('Exam readiness');
+    expect(meter).toHaveAttribute('aria-valuenow', '78');
+    expect(meter).toHaveAttribute('aria-valuetext', '78% — Almost Ready!');
+  });
+
+  it('shows the question mark instead of a meter before any score exists', () => {
+    render(
+      <DashboardHero {...defaultProps} readinessLevel="not-started" recentAvgScore={0} />,
+      { wrapper: muiWrapper }
+    );
+
+    expect(screen.queryByRole('meter')).not.toBeInTheDocument();
+    expect(screen.getByText('?')).toBeInTheDocument();
+  });
+
   it('renders readiness title and message', () => {
     render(<DashboardHero {...defaultProps} />, { wrapper: muiWrapper });
     expect(screen.getByText('Almost Ready!')).toBeInTheDocument();
