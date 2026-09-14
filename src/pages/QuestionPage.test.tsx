@@ -56,13 +56,10 @@ vi.mock('@/hooks/useQuestions', () => ({
 }));
 
 // Mock framer-motion
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => (
-      <div {...props}>{children}</div>
-    ),
-  },
-}));
+vi.mock('framer-motion', async () => {
+  const { framerMotionMock } = await import('@/test/mocks/framerMotion');
+  return framerMotionMock();
+});
 
 // Mock ThemeToggle
 vi.mock('@/components/ThemeToggle', () => ({

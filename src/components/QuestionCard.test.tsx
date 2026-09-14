@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QuestionCard } from './QuestionCard';
 import { Question } from '@/hooks/useQuestions';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { muiWrapper } from '@/test/utils';
 
 // Mock dependencies
 vi.mock('@/hooks/useAuth', () => ({
@@ -42,12 +44,10 @@ vi.mock('sonner', () => ({
   },
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
-  },
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async () => {
+  const { framerMotionMock } = await import('@/test/mocks/framerMotion');
+  return framerMotionMock();
+});
 
 // Mock FigureImage component to verify it receives correct props
 vi.mock('./FigureImage', () => ({
@@ -89,7 +89,9 @@ const renderQuestionCard = (props: Partial<Parameters<typeof QuestionCard>[0]> =
           {...props}
         />
       </TooltipProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
+    // The options read palette tokens, so they need the real theme.
+    { wrapper: muiWrapper }
   );
 };
 
@@ -146,8 +148,98 @@ describe('QuestionCard', () => {
 
     it('highlights selected answer', () => {
       renderQuestionCard({ selectedAnswer: 'B' });
-      
-      expect(screen.getByRole('button', { name: /To make money/ })).toHaveAttribute('aria-pressed', 'true');
+
+      // toBeChecked, not aria-pressed. #274's point was that four independent
+      // toggle buttons describe the wrong thing — this is one choice among
+      // four, and it is a native radio now.
+      expect(screen.getByRole('radio', { name: /To make money/ })).toBeChecked();
+    });
+  });
+
+  // #274: these were four <button>s with aria-pressed, which announced four
+  // independent toggles and gave four tab stops with no arrow-key movement.
+  // Nothing here re-implements the contract — the options are native
+  // <input type="radio">, so the browser supplies it.
+  describe('Answer options as a radiogroup (#274)', () => {
+    it('exposes one radiogroup of four options', () => {
+      renderQuestionCard();
+
+      expect(screen.getByRole('radiogroup', { name: 'Answer options' })).toBeInTheDocument();
+      expect(screen.getAllByRole('radio')).toHaveLength(4);
+    });
+
+    /**
+     * Gate 1 regression guard. The rows were `rounded-xl` (12px) before the
+     * port, and `sx` multiplies a bare `borderRadius` by shape.borderRadius —
+     * also 12 — so the first port shipped `borderRadius: 3`, emitting
+     * calc(3 * 12px) and rounding every option three times as hard.
+     *
+     * happy-dom does not evaluate calc(), so the emitted rule is asserted
+     * rather than the computed style.
+     */
+    it('keeps the option rows at one radius unit', () => {
+      const { container } = renderQuestionCard();
+
+      const row = container.querySelector('label');
+      const rowClass = Array.from(row!.classList).find((c) => c.startsWith('css-'));
+      const rules = Array.from(document.querySelectorAll('style'))
+        .flatMap((s) => (s.textContent ?? '').split('}'))
+        .filter((r) => r.includes(`.${rowClass}`) && r.includes('border-radius'));
+
+      // One unit emits the bare var; any multiplier emits calc(n * var(...)).
+      expect(rules.join(' ')).toContain('border-radius:var(--mui-shape-borderRadius);');
+    });
+
+    /**
+     * The single tab stop is the browser's native radio behaviour: same-name
+     * radios form one group and only the checked one sits in the tab order.
+     *
+     * It is NOT a roving tabindex — all four carry tabIndex 0, and asserting
+     * otherwise fails. Since happy-dom does not implement the native rule
+     * either, the grouping is what can honestly be pinned here: four real
+     * <input type="radio"> sharing one name is precisely the condition the
+     * browser applies that rule to, and it is what the old four-<button>
+     * model lacked.
+     */
+    it('groups the options as same-name radios, which is what makes them one tab stop', () => {
+      renderQuestionCard({ selectedAnswer: 'B' });
+
+      const radios = screen.getAllByRole('radio') as HTMLInputElement[];
+
+      expect(radios).toHaveLength(4);
+      expect(radios.every((r) => r.type === 'radio')).toBe(true);
+      expect(new Set(radios.map((r) => r.name)).size).toBe(1);
+    });
+
+    it('does not move focus between options on Tab', async () => {
+      const user = userEvent.setup();
+      renderQuestionCard({ selectedAnswer: 'B' });
+
+      const radios = screen.getAllByRole('radio');
+      screen.getByRole('radio', { name: /To make money/ }).focus();
+      await user.tab();
+
+      expect(radios).not.toContain(document.activeElement);
+    });
+
+    it('moves the selection with arrow keys', async () => {
+      const user = userEvent.setup();
+      const onSelectAnswer = vi.fn();
+      renderQuestionCard({ selectedAnswer: 'A', onSelectAnswer });
+
+      screen.getAllByRole('radio')[0].focus();
+      await user.keyboard('{ArrowDown}');
+
+      // The whole point of #274: this did nothing before.
+      expect(onSelectAnswer).toHaveBeenCalledWith('B');
+    });
+
+    it('stops accepting answers once the result is shown', () => {
+      renderQuestionCard({ selectedAnswer: 'A', showResult: true });
+
+      for (const radio of screen.getAllByRole('radio')) {
+        expect(radio).toBeDisabled();
+      }
     });
   });
 

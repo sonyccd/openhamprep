@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import the supabase mock first
 import '@/test/mocks/supabase';
+import { muiWrapper } from '@/test/utils';
 
 const mockQuestions = [
   {
@@ -96,13 +97,10 @@ vi.mock('sonner', () => ({
   }),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
-    p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement> & { children?: React.ReactNode }) => <p {...props}>{children}</p>,
-  },
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async () => {
+  const { framerMotionMock } = await import('@/test/mocks/framerMotion');
+  return framerMotionMock();
+});
 
 const createTestQueryClient = () =>
   new QueryClient({
@@ -119,7 +117,9 @@ const renderRandomPractice = (props = {}) => {
         <RandomPractice onBack={vi.fn()} testType="technician" {...props} />
       </TooltipProvider>
     </QueryClientProvider>
-  );
+  ,
+      { wrapper: muiWrapper }
+    );
 };
 
 describe('RandomPractice', () => {
@@ -173,14 +173,12 @@ describe('RandomPractice', () => {
       renderRandomPractice();
       
       await waitFor(() => {
-        const buttons = screen.getAllByRole('button');
-        const optionA = buttons.find(btn => btn.textContent === 'AEmergency' || btn.textContent === 'AAnswer 1');
+        const optionA = screen.getAllByRole('radio')[0];
         expect(optionA).toBeDefined();
       });
       
       // Click on an answer option
-      const buttons = screen.getAllByRole('button');
-      const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
+      const optionA = screen.getAllByRole('radio')[0];
       if (optionA) {
         fireEvent.click(optionA);
       }
@@ -199,8 +197,7 @@ describe('RandomPractice', () => {
         expect(screen.getByRole('button', { name: /skip/i })).toBeInTheDocument();
       });
       
-      const buttons = screen.getAllByRole('button');
-      const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
+      const optionA = screen.getAllByRole('radio')[0];
       if (optionA) {
         fireEvent.click(optionA);
       }
@@ -216,14 +213,12 @@ describe('RandomPractice', () => {
       renderRandomPractice();
       
       await waitFor(() => {
-        const buttons = screen.getAllByRole('button');
-        const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
+        const optionA = screen.getAllByRole('radio')[0];
         expect(optionA).toBeDefined();
       });
       
       // Answer first question
-      const buttons = screen.getAllByRole('button');
-      const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
+      const optionA = screen.getAllByRole('radio')[0];
       if (optionA) fireEvent.click(optionA);
       
       await waitFor(() => {
@@ -314,14 +309,12 @@ describe('RandomPractice', () => {
 
       // Wait for first question to load
       await waitFor(() => {
-        const buttons = screen.getAllByRole('button');
-        const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
+        const optionA = screen.getAllByRole('radio')[0];
         expect(optionA).toBeDefined();
       });
 
       // Answer first question
-      const buttons1 = screen.getAllByRole('button');
-      const optionA1 = buttons1.find(btn => btn.textContent?.startsWith('A'));
+      const optionA1 = screen.getAllByRole('radio')[0];
       if (optionA1) fireEvent.click(optionA1);
 
       await waitFor(() => {
@@ -336,8 +329,7 @@ describe('RandomPractice', () => {
       });
 
       // Answer second question
-      const buttons2 = screen.getAllByRole('button');
-      const optionA2 = buttons2.find(btn => btn.textContent?.startsWith('A'));
+      const optionA2 = screen.getAllByRole('radio')[0];
       if (optionA2) fireEvent.click(optionA2);
 
       await waitFor(() => {
@@ -363,16 +355,8 @@ describe('RandomPractice', () => {
       const { unmount } = renderRandomPractice();
 
       // Answer one question so stats.total > 0
-      await waitFor(() => {
-        const optionA = screen
-          .getAllByRole('button')
-          .find((btn) => btn.textContent?.startsWith('A'));
-        expect(optionA).toBeDefined();
-      });
-      const optionA = screen
-        .getAllByRole('button')
-        .find((btn) => btn.textContent?.startsWith('A'));
-      fireEvent.click(optionA!);
+      await waitFor(() => expect(screen.getAllByRole('radio')).toHaveLength(4));
+      fireEvent.click(screen.getAllByRole('radio')[0]);
 
       unmount();
 

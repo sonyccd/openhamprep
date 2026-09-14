@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import the supabase mock
 import '@/test/mocks/supabase';
+import { muiWrapper } from '@/test/utils';
 
 const mockQuestions = [
   {
@@ -82,13 +83,10 @@ vi.mock('@/hooks/useGlossaryTerms', () => ({
   useGlossaryTerms: () => ({ data: [] }),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
-    p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement> & { children?: React.ReactNode }) => <p {...props}>{children}</p>,
-  },
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async () => {
+  const { framerMotionMock } = await import('@/test/mocks/framerMotion');
+  return framerMotionMock();
+});
 
 vi.mock('sonner', () => ({
   toast: {
@@ -115,7 +113,9 @@ const renderPracticeTest = (props = {}) => {
         <PracticeTest onBack={onBack} onTestStateChange={onTestStateChange} testType="technician" {...props} />
       </TooltipProvider>
     </QueryClientProvider>
-  );
+  ,
+      { wrapper: muiWrapper }
+    );
 
   return { ...result, onBack, onTestStateChange };
 };
@@ -253,8 +253,7 @@ describe('PracticeTest', () => {
       });
 
       // Click on an answer option
-      const buttons = screen.getAllByRole('button');
-      const optionA = buttons.find(btn => btn.textContent?.startsWith('A'));
+      const optionA = screen.getAllByRole('radio')[0];
       if (optionA) {
         fireEvent.click(optionA);
       }

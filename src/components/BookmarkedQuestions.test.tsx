@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import the supabase mock
 import '@/test/mocks/supabase';
+import { muiWrapper } from '@/test/utils';
 
 const mockQuestions = [
   {
@@ -104,13 +105,10 @@ vi.mock('@/hooks/useGlossaryTerms', () => ({
   useGlossaryTerms: () => ({ data: [] }),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
-    p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement> & { children?: React.ReactNode }) => <p {...props}>{children}</p>,
-  },
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async () => {
+  const { framerMotionMock } = await import('@/test/mocks/framerMotion');
+  return framerMotionMock();
+});
 
 const createTestQueryClient = () =>
   new QueryClient({
@@ -130,7 +128,9 @@ const renderBookmarkedQuestions = (props = {}) => {
         <BookmarkedQuestions onBack={onBack} onStartPractice={onStartPractice} testType="technician" {...props} />
       </TooltipProvider>
     </QueryClientProvider>
-  );
+  ,
+      { wrapper: muiWrapper }
+    );
 
   return { ...result, onBack, onStartPractice };
 };
@@ -275,11 +275,7 @@ describe('BookmarkedQuestions', () => {
       });
       
       // Click on correct answer
-      const buttons = screen.getAllByRole('button');
-      const optionA = buttons.find(btn => btn.textContent?.includes('Emergency'));
-      if (optionA) {
-        fireEvent.click(optionA);
-      }
+      fireEvent.click(screen.getByRole('radio', { name: /Emergency/ }));
       
       await waitFor(() => {
         // Should show "Try Again" button after answering
@@ -500,11 +496,7 @@ describe('BookmarkedQuestions', () => {
       });
 
       // Answer the question
-      const buttons = screen.getAllByRole('button');
-      const optionA = buttons.find(btn => btn.textContent?.includes('Emergency'));
-      if (optionA) {
-        fireEvent.click(optionA);
-      }
+      fireEvent.click(screen.getByRole('radio', { name: /Emergency/ }));
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();

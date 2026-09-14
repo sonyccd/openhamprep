@@ -12,11 +12,10 @@ vi.mock('canvas-confetti', () => ({
   default: vi.fn(),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
-  },
-}));
+vi.mock('framer-motion', async () => {
+  const { framerMotionMock } = await import('@/test/mocks/framerMotion');
+  return framerMotionMock();
+});
 
 // Default to an authenticated session so each test reflects realistic user state.
 // The Guest save card describe block overrides this to user: null.

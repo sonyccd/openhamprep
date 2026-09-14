@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import the supabase mock
 import '@/test/mocks/supabase';
+import { muiWrapper } from '@/test/utils';
 
 const mockQuestions = [
   {
@@ -103,16 +104,10 @@ vi.mock('@/hooks/useGlossaryTerms', () => ({
   useGlossaryTerms: () => ({ data: [] }),
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
-    p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement> & { children?: React.ReactNode }) => <p {...props}>{children}</p>,
-    button: ({ children, onClick, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
-      <button onClick={onClick} {...props}>{children}</button>
-    ),
-  },
-  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock('framer-motion', async () => {
+  const { framerMotionMock } = await import('@/test/mocks/framerMotion');
+  return framerMotionMock();
+});
 
 vi.mock('@/components/QuestionListView', () => ({
   QuestionListView: ({ onStartPractice, onBack, title }: { onStartPractice: (index?: number) => void; onBack: () => void; title: string }) => (
@@ -142,7 +137,9 @@ const renderSubelementPractice = (props = {}) => {
         <SubelementPractice onBack={onBack} testType="technician" {...props} />
       </TooltipProvider>
     </QueryClientProvider>
-  );
+  ,
+      { wrapper: muiWrapper }
+    );
 
   return { ...result, onBack };
 };
@@ -292,6 +289,8 @@ describe('SubelementPractice Stats', () => {
           <SubelementPractice onBack={vi.fn()} testType="technician" />
         </TooltipProvider>
       </QueryClientProvider>
+    ,
+      { wrapper: muiWrapper }
     );
 
     // Select a topic (T1 = Commission's Rules)
@@ -325,6 +324,8 @@ describe('SubelementPractice Stats', () => {
           <SubelementPractice onBack={vi.fn()} testType="technician" />
         </TooltipProvider>
       </QueryClientProvider>
+    ,
+      { wrapper: muiWrapper }
     );
 
     const t1Button = screen.getByText("Commission's Rules").closest('button');
@@ -336,7 +337,7 @@ describe('SubelementPractice Stats', () => {
 
     // Answer T1A01 correctly, taking the score to 1 correct.
     await waitFor(() => expect(screen.getByText('A1')).toBeInTheDocument());
-    fireEvent.click(screen.getByText('A1').closest('button')!);
+    fireEvent.click(screen.getByRole('radio', { name: /A1/ }));
     await waitFor(() =>
       expect(screen.getByText('1', { selector: '.text-success' })).toBeInTheDocument()
     );
@@ -371,6 +372,8 @@ describe('SubelementPractice Question Wraparound', () => {
           <SubelementPractice onBack={vi.fn()} testType="technician" />
         </TooltipProvider>
       </QueryClientProvider>
+    ,
+      { wrapper: muiWrapper }
     );
 
     // Select T1 topic which has 2 questions
