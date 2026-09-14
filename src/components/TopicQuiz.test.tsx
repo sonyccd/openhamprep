@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TopicQuiz } from './TopicQuiz';
 import { Question } from '@/hooks/useQuestions';
+import { muiWrapper } from '@/test/utils/testWrappers';
 
 const mockQuestions: Question[] = [
   {
@@ -84,7 +85,7 @@ describe('TopicQuiz', () => {
 
   describe('Quiz Mode', () => {
     it('renders the first question initially', () => {
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByText('What is the first question?')).toBeInTheDocument();
       expect(screen.getByText('T1A01')).toBeInTheDocument();
@@ -92,7 +93,7 @@ describe('TopicQuiz', () => {
     });
 
     it('displays all answer options', () => {
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByText('Answer A')).toBeInTheDocument();
       expect(screen.getByText('Answer B')).toBeInTheDocument();
@@ -101,14 +102,14 @@ describe('TopicQuiz', () => {
     });
 
     it('shows 0 answered initially', () => {
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByText('0 answered')).toBeInTheDocument();
     });
 
     it('updates answered count when selecting an answer', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
       await user.click(screen.getByText('Answer A'));
 
@@ -117,7 +118,7 @@ describe('TopicQuiz', () => {
 
     it('navigates to the next question when Next is clicked', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
       await user.click(screen.getByText('Next'));
 
@@ -129,7 +130,7 @@ describe('TopicQuiz', () => {
 
     it('navigates to the previous question when Previous is clicked', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
       // Go to second question
       await user.click(screen.getByText('Next'));
@@ -145,7 +146,7 @@ describe('TopicQuiz', () => {
     });
 
     it('disables Previous button on first question', () => {
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
       const previousButton = screen.getByRole('button', { name: /previous/i });
       expect(previousButton).toBeDisabled();
@@ -153,7 +154,7 @@ describe('TopicQuiz', () => {
 
     it('shows Submit Quiz button on the last question', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
       // Navigate to last question
       await user.click(screen.getByText('Next'));
@@ -166,7 +167,7 @@ describe('TopicQuiz', () => {
 
     it('disables Submit Quiz button when not all questions are answered', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
       // Navigate to last question without answering
       await user.click(screen.getByText('Next'));
@@ -180,7 +181,7 @@ describe('TopicQuiz', () => {
 
     it('enables Submit Quiz button when all questions are answered', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
       // Answer first question
       await user.click(screen.getByText('Answer A'));
@@ -203,19 +204,66 @@ describe('TopicQuiz', () => {
       expect(submitButton).not.toBeDisabled();
     });
 
-    it('highlights selected answer', async () => {
+    it('marks the selected answer as checked', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
-      const optionButton = screen.getByText('Answer A').closest('button');
-      await user.click(optionButton!);
+      const optionA = screen.getByRole('radio', { name: /Answer A/ });
+      await user.click(optionA);
 
-      expect(optionButton).toHaveAttribute('aria-pressed', 'true');
+      expect(optionA).toBeChecked();
+    });
+  });
+
+  /**
+   * The other half of #274. These options were four <button>s with
+   * aria-pressed, which describes four independent toggles rather than one
+   * choice among four, and gave four tab stops with no arrow-key movement.
+   * QuestionCard got the same treatment in #292.
+   */
+  describe('Answer options as a radiogroup (#274)', () => {
+    it('exposes one radiogroup of four options', () => {
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
+
+      expect(screen.getByRole('radiogroup', { name: 'Answer options' })).toBeInTheDocument();
+      expect(screen.getAllByRole('radio')).toHaveLength(4);
+    });
+
+    it('groups the options as same-name radios, which is what makes them one tab stop', () => {
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
+
+      const radios = screen.getAllByRole('radio') as HTMLInputElement[];
+
+      expect(radios.every((r) => r.type === 'radio')).toBe(true);
+      expect(new Set(radios.map((r) => r.name)).size).toBe(1);
+    });
+
+    it('moves the selection with arrow keys', async () => {
+      const user = userEvent.setup();
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
+
+      await user.click(screen.getByRole('radio', { name: /Answer A/ }));
+      await user.keyboard('{ArrowDown}');
+
+      // The whole point of #274: this did nothing before.
+      expect(screen.getByRole('radio', { name: /Answer B/ })).toBeChecked();
+    });
+
+    it('re-groups per question, so answers do not bleed across questions', async () => {
+      const user = userEvent.setup();
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
+
+      const firstName = (screen.getAllByRole('radio')[0] as HTMLInputElement).name;
+      await user.click(screen.getByRole('button', { name: /next question/i }));
+
+      const secondName = (screen.getAllByRole('radio')[0] as HTMLInputElement).name;
+      expect(secondName).not.toBe(firstName);
+      expect(screen.queryByRole('radio', { checked: true })).not.toBeInTheDocument();
     });
 
     it('has aria-labels on navigation buttons', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByRole('button', { name: /go to previous question/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /go to next question/i })).toBeInTheDocument();
@@ -252,7 +300,8 @@ describe('TopicQuiz', () => {
           questions={[questionWithFigure]}
           onComplete={vi.fn()}
           onDone={vi.fn()}
-        />
+        />,
+        { wrapper: muiWrapper }
       );
 
       expect(screen.getByAltText('Figure for question T6C02')).toBeInTheDocument();
@@ -263,7 +312,7 @@ describe('TopicQuiz', () => {
     it('calls onSaveAttempts with all answered questions on submit', async () => {
       const user = userEvent.setup();
       const onSaveAttempts = vi.fn().mockResolvedValue({ success: true });
-      render(<TopicQuiz {...defaultProps} onSaveAttempts={onSaveAttempts} />);
+      render(<TopicQuiz {...defaultProps} onSaveAttempts={onSaveAttempts} />, { wrapper: muiWrapper });
 
       // Answer all questions
       await user.click(screen.getByText('Answer A'));
@@ -296,7 +345,7 @@ describe('TopicQuiz', () => {
     it('calls onComplete with correct results for passing score', async () => {
       const user = userEvent.setup();
       const onComplete = vi.fn();
-      render(<TopicQuiz {...defaultProps} onComplete={onComplete} passingThreshold={0.8} />);
+      render(<TopicQuiz {...defaultProps} onComplete={onComplete} passingThreshold={0.8} />, { wrapper: muiWrapper });
 
       // Answer all correctly (100%)
       await user.click(screen.getByText('Answer A')); // Correct
@@ -323,7 +372,7 @@ describe('TopicQuiz', () => {
     it('calls onComplete with correct results for failing score', async () => {
       const user = userEvent.setup();
       const onComplete = vi.fn();
-      render(<TopicQuiz {...defaultProps} onComplete={onComplete} passingThreshold={0.8} />);
+      render(<TopicQuiz {...defaultProps} onComplete={onComplete} passingThreshold={0.8} />, { wrapper: muiWrapper });
 
       // Answer 1/3 correctly (33%)
       await user.click(screen.getByText('Answer A')); // Correct
@@ -365,7 +414,7 @@ describe('TopicQuiz', () => {
 
     it('shows passing message when score meets threshold', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} passingThreshold={0.8} />);
+      render(<TopicQuiz {...defaultProps} passingThreshold={0.8} />, { wrapper: muiWrapper });
 
       await submitQuizWithAnswers(user, ['A', 'B', 'C']); // All correct
 
@@ -379,7 +428,7 @@ describe('TopicQuiz', () => {
 
     it('shows failing message when score is below threshold', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} passingThreshold={0.8} />);
+      render(<TopicQuiz {...defaultProps} passingThreshold={0.8} />, { wrapper: muiWrapper });
 
       await submitQuizWithAnswers(user, ['A', 'A', 'A']); // 1/3 correct
 
@@ -392,7 +441,7 @@ describe('TopicQuiz', () => {
 
     it('shows incorrect answers for review', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} passingThreshold={0.8} />);
+      render(<TopicQuiz {...defaultProps} passingThreshold={0.8} />, { wrapper: muiWrapper });
 
       await submitQuizWithAnswers(user, ['A', 'A', 'A']); // 1/3 correct (Q2 and Q3 wrong)
 
@@ -405,7 +454,7 @@ describe('TopicQuiz', () => {
 
     it('does not show review section when all answers correct', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} passingThreshold={0.8} />);
+      render(<TopicQuiz {...defaultProps} passingThreshold={0.8} />, { wrapper: muiWrapper });
 
       await submitQuizWithAnswers(user, ['A', 'B', 'C']); // All correct
 
@@ -417,7 +466,7 @@ describe('TopicQuiz', () => {
 
     it('shows Try Again button in results', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
       await submitQuizWithAnswers(user, ['A', 'B', 'C']);
 
@@ -428,7 +477,7 @@ describe('TopicQuiz', () => {
 
     it('shows Done button in results', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
       await submitQuizWithAnswers(user, ['A', 'B', 'C']);
 
@@ -440,7 +489,7 @@ describe('TopicQuiz', () => {
     it('calls onDone when Done button is clicked', async () => {
       const user = userEvent.setup();
       const onDone = vi.fn();
-      render(<TopicQuiz {...defaultProps} onDone={onDone} />);
+      render(<TopicQuiz {...defaultProps} onDone={onDone} />, { wrapper: muiWrapper });
 
       await submitQuizWithAnswers(user, ['A', 'B', 'C']);
 
@@ -454,7 +503,7 @@ describe('TopicQuiz', () => {
 
     it('resets quiz when Try Again is clicked', async () => {
       const user = userEvent.setup();
-      render(<TopicQuiz {...defaultProps} />);
+      render(<TopicQuiz {...defaultProps} />, { wrapper: muiWrapper });
 
       await submitQuizWithAnswers(user, ['A', 'B', 'C']);
 
@@ -478,7 +527,7 @@ describe('TopicQuiz', () => {
     it('handles single question quiz', async () => {
       const user = userEvent.setup();
       const singleQuestion = [mockQuestions[0]];
-      render(<TopicQuiz {...defaultProps} questions={singleQuestion} />);
+      render(<TopicQuiz {...defaultProps} questions={singleQuestion} />, { wrapper: muiWrapper });
 
       expect(screen.getByText('1 / 1')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /submit quiz/i })).toBeInTheDocument();
@@ -494,7 +543,7 @@ describe('TopicQuiz', () => {
     it('works without onSaveAttempts callback', async () => {
       const user = userEvent.setup();
       const onComplete = vi.fn();
-      render(<TopicQuiz questions={mockQuestions} onComplete={onComplete} onDone={vi.fn()} />);
+      render(<TopicQuiz questions={mockQuestions} onComplete={onComplete} onDone={vi.fn()} />, { wrapper: muiWrapper });
 
       // Answer all questions
       await user.click(screen.getByText('Answer A'));
@@ -523,7 +572,7 @@ describe('TopicQuiz', () => {
       const user = userEvent.setup();
       const onSaveAttempts = vi.fn().mockResolvedValue({ success: false, error: 'Database connection failed' });
       const onComplete = vi.fn();
-      render(<TopicQuiz {...defaultProps} onSaveAttempts={onSaveAttempts} onComplete={onComplete} />);
+      render(<TopicQuiz {...defaultProps} onSaveAttempts={onSaveAttempts} onComplete={onComplete} />, { wrapper: muiWrapper });
 
       // Answer all questions
       await user.click(screen.getByText('Answer A'));
@@ -553,7 +602,7 @@ describe('TopicQuiz', () => {
     it('does not show results when save fails', async () => {
       const user = userEvent.setup();
       const onSaveAttempts = vi.fn().mockResolvedValue({ success: false, error: 'Save failed' });
-      render(<TopicQuiz {...defaultProps} onSaveAttempts={onSaveAttempts} />);
+      render(<TopicQuiz {...defaultProps} onSaveAttempts={onSaveAttempts} />, { wrapper: muiWrapper });
 
       // Answer all questions
       await user.click(screen.getByText('Answer A'));
@@ -619,7 +668,7 @@ describe('TopicQuiz', () => {
         },
       ];
 
-      render(<TopicQuiz questions={fiveQuestions} onComplete={onComplete} onDone={vi.fn()} />);
+      render(<TopicQuiz questions={fiveQuestions} onComplete={onComplete} onDone={vi.fn()} />, { wrapper: muiWrapper });
 
       // Answer 4/5 correctly (80% - should pass)
       await user.click(screen.getByText('Answer A')); // Correct
