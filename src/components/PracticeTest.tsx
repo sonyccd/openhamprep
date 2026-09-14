@@ -10,7 +10,6 @@ import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShort
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { ArrowLeft, ArrowRight, CheckCircle, Loader2, Play, AlertTriangle, History, Trophy, XCircle, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TestType, testConfig, examDistribution } from "@/types/navigation";

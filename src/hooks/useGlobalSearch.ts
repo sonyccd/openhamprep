@@ -3,7 +3,7 @@ import { getTestTypePrefix } from '@/lib/testTypeUtils';
 import { truncateText } from '@/lib/searchUtils';
 import { searchService } from '@/services/search/searchService';
 import { unwrapOrThrow } from '@/services/types';
-import type { SearchContentResponse } from '@/services/search/searchService';
+import type {  } from '@/services/search/searchService';
 import type { TestType } from '@/types/navigation';
 
 /**

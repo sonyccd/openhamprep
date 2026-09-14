@@ -225,7 +225,7 @@ Deno.test("calculateReadiness - pass probability at r0 threshold is 0.5", () => 
     totalPoolSize: 100,
   };
 
-  const result = calculateReadiness(metrics, DEFAULT_CONFIG);
+  const _result = calculateReadiness(metrics, DEFAULT_CONFIG);
   // 35*1 + 20*1 + 15*0.5 + 15*0.5 + 15*0 = 35 + 20 + 7.5 + 7.5 = 70
 
   // At r0=65, probability should be 0.5

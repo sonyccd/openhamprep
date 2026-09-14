@@ -1,8 +1,11 @@
-import { motion } from 'framer-motion';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import type { Theme } from '@mui/material/styles';
 import { LucideIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { CircularProgress } from '@/components/ui/circular-progress';
-import { cn } from '@/lib/utils';
+import { MotionBox } from '@/components/ohp/MotionBox';
+import { ScoreRing } from '@/components/ohp/ScoreRing';
+import { tokenAlpha } from '@/theme/muiTheme';
 import type { ReadinessLevel } from '@/lib/readinessConfig';
 
 interface NextAction {
@@ -22,6 +25,17 @@ interface DashboardHeroProps {
   onAction: () => void;
 }
 
+/**
+ * Which palette key the readiness level speaks in. `null` is "not started",
+ * where nothing is scored yet and the whole block stays neutral.
+ */
+const LEVEL_TOKEN: Record<ReadinessLevel, 'success' | 'primary' | 'warning' | null> = {
+  ready: 'success',
+  'getting-close': 'primary',
+  'needs-work': 'warning',
+  'not-started': null,
+};
+
 export function DashboardHero({
   readinessLevel,
   readinessTitle,
@@ -30,95 +44,117 @@ export function DashboardHero({
   nextAction,
   onAction,
 }: DashboardHeroProps) {
-  const getColorClasses = () => {
-    switch (readinessLevel) {
-      case 'ready':
-        return {
-          progress: 'stroke-success',
-          score: 'text-success',
-          title: 'text-success',
-          button: 'bg-success text-success-foreground hover:bg-success/90',
-        };
-      case 'getting-close':
-        return {
-          progress: 'stroke-primary',
-          score: 'text-primary',
-          title: 'text-primary',
-          button: '',
-        };
-      case 'needs-work':
-        return {
-          progress: 'stroke-warning',
-          score: 'text-warning',
-          title: 'text-warning',
-          button: 'bg-warning text-warning-foreground hover:bg-warning/90',
-        };
-      default:
-        return {
-          progress: 'stroke-muted-foreground/30',
-          score: 'text-muted-foreground',
-          title: 'text-foreground',
-          button: '',
-        };
-    }
-  };
-
-  const colors = getColorClasses();
+  const token = LEVEL_TOKEN[readinessLevel] ?? null;
   const ActionIcon = nextAction.icon;
   const showDashedCircle = readinessLevel === 'not-started';
 
+  // getting-close used the default button, so only the other two tint it.
+  const buttonTint =
+    token === 'success' || token === 'warning'
+      ? {
+          bgcolor: `${token}.main`,
+          color: `${token}.contrastText`,
+          '&:hover': { bgcolor: (t: Theme) => tokenAlpha(t.vars.palette[token].main, 90) },
+        }
+      : {};
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="mb-6"
-    >
-      <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 p-6 md:p-8">
-        {/* Circular Score */}
-        <div className="shrink-0">
+    <MotionBox initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} sx={{ mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: 'center',
+          gap: { xs: 3, md: 4 },
+          p: { xs: 3, md: 4 },
+        }}
+      >
+        <Box sx={{ flexShrink: 0 }}>
           {showDashedCircle ? (
-            <div
-              className="relative flex items-center justify-center rounded-full border-4 border-dashed border-muted-foreground/30"
-              style={{ width: 140, height: 140 }}
+            <Box
+              sx={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 140,
+                height: 140,
+                borderRadius: '50%',
+                border: '4px dashed',
+                borderColor: (t) => tokenAlpha(t.vars.palette.text.secondary, 30),
+              }}
             >
-              <span className="text-4xl font-mono font-bold text-muted-foreground">?</span>
-            </div>
+              <Box
+                component="span"
+                sx={{
+                  fontSize: '2.25rem',
+                  fontFamily: 'monospace',
+                  fontWeight: 700,
+                  color: 'text.secondary',
+                }}
+              >
+                ?
+              </Box>
+            </Box>
           ) : (
-            <CircularProgress
+            <ScoreRing
               value={recentAvgScore}
               size={140}
               strokeWidth={10}
-              progressClassName={colors.progress}
-              trackClassName="stroke-secondary"
-            >
-              <span className={cn('text-4xl font-mono font-bold', colors.score)}>
-                {recentAvgScore}%
-              </span>
-            </CircularProgress>
+              // The number alone says nothing about what is being measured, and
+              // the readiness level is conveyed visually by colour — which a
+              // screen reader cannot see. Both go in the announcement.
+              label="Exam readiness"
+              valueText={`${recentAvgScore}% — ${readinessTitle}`}
+              color={(t) =>
+                token
+                  ? t.vars.palette[token].main
+                  : tokenAlpha(t.vars.palette.text.secondary, 30)
+              }
+              trackColor={(t) => t.vars.palette.secondary.main}
+            />
           )}
-        </div>
+        </Box>
 
-        {/* Content */}
-        <div className="flex-1 text-center md:text-left space-y-3">
-          <div>
-            <h1 className={cn('text-2xl md:text-3xl font-bold', colors.title)}>
+        <Box
+          sx={{
+            flex: 1,
+            textAlign: { xs: 'center', md: 'left' },
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1.5,
+          }}
+        >
+          <Box>
+            <Typography
+              component="h1"
+              sx={{
+                fontSize: { xs: '1.5rem', md: '1.875rem' },
+                fontWeight: 700,
+                // 'not-started' titled in plain foreground, not muted.
+                color: token ? `${token}.main` : 'text.primary',
+              }}
+            >
               {readinessTitle}
-            </h1>
-            <p className="text-muted-foreground mt-1 max-w-md">
+            </Typography>
+            <Typography sx={{ color: 'text.secondary', mt: 0.5, maxWidth: 448 }}>
               {readinessMessage}
-            </p>
-          </div>
+            </Typography>
+          </Box>
 
-          <Button
-            size="lg"
-            className={cn('gap-2 mt-2', colors.button)}
-            onClick={onAction}
-          >
-            <ActionIcon className="w-5 h-5" />
-            {nextAction.actionLabel}
-          </Button>
-        </div>
-      </div>
-    </motion.div>
+          <Box sx={{ alignSelf: { xs: 'center', md: 'flex-start' } }}>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={onAction}
+              startIcon={<Box component={ActionIcon} sx={{ width: 20, height: 20 }} />}
+              sx={{ mt: 1, ...buttonTint }}
+            >
+              {nextAction.actionLabel}
+            </Button>
+          </Box>
+        </Box>
+      </Box>
+    </MotionBox>
   );
 }

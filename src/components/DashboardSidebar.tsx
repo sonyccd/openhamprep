@@ -9,7 +9,6 @@ import {
   MapPin,
   GraduationCap,
   Book,
-  Search,
   Route,
   Brain,
   FileText,
@@ -18,7 +17,6 @@ import {
   Wrench,
   Users,
 } from 'lucide-react';
-import { getModifierKey } from '@/lib/searchUtils';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -37,12 +35,6 @@ import type { View } from '@/types/navigation';
 import { SidebarNavContent } from '@/components/sidebar/SidebarNavContent';
 import { LicenseSelectModal } from '@/components/LicenseSelectModal';
 import {
-  SidebarHeader,
-  SidebarLicenseSelector,
-  SidebarNavItem,
-  SidebarStudyGroup,
-  SidebarLearnGroup,
-  SidebarFooter,
   type NavItem,
   type NavGroup,
   type DashboardSidebarProps,

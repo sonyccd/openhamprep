@@ -25,7 +25,7 @@ vi.mock('@/hooks/useAppNavigation', () => ({
 
 // Mock Supabase
 const mockSelect = vi.fn();
-const mockEq = vi.fn();
+const _mockEq = vi.fn();
 const mockMaybeSingle = vi.fn();
 const mockOrder = vi.fn();
 

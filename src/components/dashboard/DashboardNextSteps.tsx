@@ -1,6 +1,9 @@
-import { motion } from 'framer-motion';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import { LucideIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { MotionBox } from '@/components/ohp/MotionBox';
+import { tokenAlpha } from '@/theme/muiTheme';
+import { iconTileSx, tintColor, tintedPanelSx, type TintToken } from './tintSx';
 
 export interface NextStep {
   id: string;
@@ -16,84 +19,126 @@ interface DashboardNextStepsProps {
   steps: NextStep[];
 }
 
+/** 'secondary' is the untinted card; the other two speak in their palette key. */
+const STEP_TOKEN: Record<NextStep['variant'], TintToken> = {
+  warning: 'warning',
+  primary: 'primary',
+  secondary: null,
+};
+
 export function DashboardNextSteps({ steps }: DashboardNextStepsProps) {
   if (steps.length === 0) return null;
 
-  const getVariantClasses = (variant: NextStep['variant']) => {
-    switch (variant) {
-      case 'warning':
-        return {
-          icon: 'bg-warning/10 text-warning',
-          badge: 'bg-warning text-warning-foreground',
-          hover: 'hover:border-warning/50',
-        };
-      case 'primary':
-        return {
-          icon: 'bg-primary/10 text-primary',
-          badge: 'bg-primary text-primary-foreground',
-          hover: 'hover:border-primary/50',
-        };
-      default:
-        return {
-          icon: 'bg-secondary text-muted-foreground',
-          badge: 'bg-muted text-muted-foreground',
-          hover: 'hover:border-border',
-        };
-    }
-  };
-
   return (
-    <div className="mb-6">
-      <h2 className="text-sm font-mono font-bold text-muted-foreground mb-3 px-1">
+    <Box sx={{ mb: 3 }}>
+      <Typography
+        component="h2"
+        sx={{
+          fontSize: '0.875rem',
+          fontFamily: 'monospace',
+          fontWeight: 700,
+          color: 'text.secondary',
+          mb: 1.5,
+          px: 0.5,
+        }}
+      >
         What to do next
-      </h2>
-      <div className={cn(
-        'grid gap-3',
-        steps.length === 1 && 'grid-cols-1',
-        steps.length === 2 && 'grid-cols-1 sm:grid-cols-2',
-        steps.length >= 3 && 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-      )}>
+      </Typography>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 1.5,
+          gridTemplateColumns: {
+            xs: '1fr',
+            ...(steps.length >= 2 && { sm: 'repeat(2, 1fr)' }),
+            ...(steps.length >= 3 && { lg: 'repeat(3, 1fr)' }),
+          },
+        }}
+      >
         {steps.map((step, index) => {
           const Icon = step.icon;
-          const classes = getVariantClasses(step.variant);
+          const token = STEP_TOKEN[step.variant];
 
           return (
-            <motion.button
+            <MotionBox
               key={step.id}
+              component="button"
+              type="button"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               onClick={step.onClick}
-              className={cn(
-                'flex items-start gap-3 p-4 rounded-xl border border-border bg-card text-left',
-                'transition-all duration-200',
-                'hover:bg-secondary/50 hover:shadow-sm',
-                classes.hover
-              )}
+              sx={{
+                // The card is untinted whatever the variant — the variant only
+                // colours the icon tile, the badge and the hover border.
+                ...tintedPanelSx(null),
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 1.5,
+                textAlign: 'left',
+                font: 'inherit',
+                color: 'inherit',
+                cursor: 'pointer',
+                width: '100%',
+                '&:hover': {
+                  bgcolor: (t) => tokenAlpha(t.vars.palette.secondary.main, 50),
+                  boxShadow: 1,
+                  borderColor: token
+                    ? (t) => tokenAlpha(t.vars.palette[token].main, 50)
+                    : 'divider',
+                },
+              }}
             >
-              <div className={cn('p-2 rounded-lg shrink-0', classes.icon)}>
-                <Icon className="w-5 h-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-foreground">{step.title}</span>
+              <Box sx={iconTileSx(token, 'secondary.main')}>
+                <Box
+                  component={Icon}
+                  aria-hidden="true"
+                  sx={{ width: 20, height: 20, color: tintColor(token) }}
+                />
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box component="span" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                    {step.title}
+                  </Box>
                   {step.badge && (
-                    <span className={cn(
-                      'text-xs font-mono font-bold px-1.5 py-0.5 rounded',
-                      classes.badge
-                    )}>
+                    <Box
+                      component="span"
+                      sx={{
+                        fontSize: '0.75rem',
+                        fontFamily: 'monospace',
+                        fontWeight: 700,
+                        px: 0.75,
+                        py: 0.25,
+                        borderRadius: '4px',
+                        ...(token
+                          ? { bgcolor: `${token}.main`, color: `${token}.contrastText` }
+                          : { bgcolor: 'muted', color: 'text.secondary' }),
+                      }}
+                    >
                       {step.badge}
-                    </span>
+                    </Box>
                   )}
-                </div>
-                <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">
+                </Box>
+                <Typography
+                  component="p"
+                  sx={{
+                    fontSize: '0.875rem',
+                    color: 'text.secondary',
+                    mt: 0.25,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
+                >
                   {step.description}
-                </p>
-              </div>
-            </motion.button>
+                </Typography>
+              </Box>
+            </MotionBox>
           );
         })}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

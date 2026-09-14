@@ -1,6 +1,9 @@
-import { motion } from 'framer-motion';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { MotionBox } from '@/components/ohp/MotionBox';
+import { tokenAlpha } from '@/theme/muiTheme';
 import { getSubelementName } from '@/lib/subelementNames';
 import { SubelementMetric } from '@/hooks/useReadinessScore';
 import { TestType } from '@/types/navigation';
@@ -49,51 +52,104 @@ export function DashboardSectionInsights({
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="mb-6"
-    >
-      <h2 className="text-sm font-mono font-bold text-muted-foreground mb-3 px-1">
+    <MotionBox initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} sx={{ mb: 3 }}>
+      <Typography
+        component="h2"
+        sx={{
+          fontSize: '0.875rem',
+          fontFamily: 'monospace',
+          fontWeight: 700,
+          color: 'text.secondary',
+          mb: 1.5,
+          px: 0.5,
+        }}
+      >
         Focus Areas
-      </h2>
-      <div className="space-y-2">
+      </Typography>
+      <Stack spacing={1}>
         {focusAreas.map((area, index) => (
-          <motion.button
+          <MotionBox
             key={area.subelement}
+            component="button"
+            type="button"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.05 }}
             onClick={() => onPracticeSection(area.subelement)}
             aria-label={`Practice ${area.name} section`}
-            className={cn(
-              'w-full flex items-center gap-3 px-4 py-3 rounded-xl',
-              'border border-warning/30 bg-warning/5',
-              'transition-all duration-200 group',
-              'hover:bg-warning/10 hover:border-warning/50 hover:shadow-sm'
-            )}
+            sx={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              px: 2,
+              py: 1.5,
+              borderRadius: 1, // rounded-xl, and shape.borderRadius is 12
+              border: '1px solid',
+              borderColor: (t) => tokenAlpha(t.vars.palette.warning.main, 30),
+              bgcolor: (t) => tokenAlpha(t.vars.palette.warning.main, 5),
+              transition: 'all 200ms',
+              font: 'inherit',
+              cursor: 'pointer',
+              '&:hover': {
+                bgcolor: (t) => tokenAlpha(t.vars.palette.warning.main, 10),
+                borderColor: (t) => tokenAlpha(t.vars.palette.warning.main, 50),
+                boxShadow: 1,
+              },
+              // The chevron nudge lived on a Tailwind `group-hover:` pair.
+              '&:hover .FocusArea-chevron': { transform: 'translateX(2px)' },
+            }}
           >
-            {/* Subelement code badge */}
-            <span className="font-mono font-bold text-warning text-sm">
+            <Box
+              component="span"
+              sx={{
+                fontFamily: 'monospace',
+                fontWeight: 700,
+                color: 'warning.main',
+                fontSize: '0.875rem',
+              }}
+            >
               {area.subelement}
-            </span>
+            </Box>
 
-            {/* Section name */}
-            <span className="flex-1 text-left font-medium text-foreground truncate">
+            <Box
+              component="span"
+              sx={{
+                flex: 1,
+                textAlign: 'left',
+                fontWeight: 500,
+                color: 'text.primary',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {area.name}
-            </span>
+            </Box>
 
-            {/* Practice CTA */}
-            <span className="flex items-center gap-1 text-sm text-warning font-medium shrink-0">
+            <Box
+              component="span"
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                fontSize: '0.875rem',
+                color: 'warning.main',
+                fontWeight: 500,
+                flexShrink: 0,
+              }}
+            >
               Practice
-              <ChevronRight className={cn(
-                'w-4 h-4',
-                'group-hover:translate-x-0.5 transition-transform duration-200'
-              )} />
-            </span>
-          </motion.button>
+              <Box
+                component={ChevronRight}
+                className="FocusArea-chevron"
+                aria-hidden="true"
+                sx={{ width: 16, height: 16, transition: 'transform 200ms' }}
+              />
+            </Box>
+          </MotionBox>
         ))}
-      </div>
-    </motion.div>
+      </Stack>
+    </MotionBox>
   );
 }

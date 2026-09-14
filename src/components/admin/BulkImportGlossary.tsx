@@ -24,7 +24,7 @@ interface ImportTerm {
   id?: string;
 }
 
-interface ExistingTerm extends ImportTerm {
+interface _ExistingTerm extends ImportTerm {
   id: string;
   created_at?: string;
   edit_history?: unknown[];
@@ -134,7 +134,7 @@ export function BulkImportGlossary() {
   };
 
   const checkForConflicts = async (terms: ImportTerm[]) => {
-    const termNames = terms.map(t => t.term.toLowerCase());
+    const _termNames = terms.map(t => t.term.toLowerCase());
     
     const { data: existingTerms } = await supabase
       .from('glossary_terms')

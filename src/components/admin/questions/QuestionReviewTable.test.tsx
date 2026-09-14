@@ -190,7 +190,7 @@ describe('QuestionReviewTable', () => {
   });
 
   it('applies no highlight when highlightQuestionId is not set', () => {
-    const { container } = render(
+    render(
       <QuestionReviewTable questions={[makeQuestion()]} onEdit={vi.fn()} />
     );
     // getAllByRole('row') includes the header row.

@@ -131,7 +131,7 @@ describe('useGlossaryTerms', () => {
       expect(mockSelect).toHaveBeenCalledTimes(1);
 
       // Re-render with same wrapper should use cached data
-      const { result: result2 } = renderHook(() => useGlossaryTerms(), { wrapper });
+      const { result: _result2 } = renderHook(() => useGlossaryTerms(), { wrapper });
 
       // Should still only have one call (cached)
       expect(mockSelect).toHaveBeenCalledTimes(1);

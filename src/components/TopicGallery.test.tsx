@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TopicGallery } from './TopicGallery';
 import { Topic } from '@/hooks/useTopics';
@@ -128,7 +128,7 @@ describe('TopicGallery', () => {
   describe('Loading State', () => {
     it('should show loading skeletons when loading', () => {
       mockIsLoading = true;
-      const { container } = renderComponent();
+      renderComponent();
 
       // Check for skeleton elements
       const skeletons = screen.getAllByTestId('skeleton');

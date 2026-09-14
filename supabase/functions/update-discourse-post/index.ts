@@ -11,8 +11,7 @@ import {
   extractTopicId,
   formatTopicBody,
   buildExternalIdUrl,
-  isValidDiscourseUrl,
-} from "./logic.ts";
+  } from "./logic.ts";
 
 /**
  * Update Discourse Post Edge Function
@@ -24,7 +23,7 @@ import {
  * Security: Requires admin role or service_role token.
  */
 
-interface Question {
+interface _Question {
   id: string;  // UUID
   display_name: string;  // Human-readable ID (T1A01, etc.)
   question: string;

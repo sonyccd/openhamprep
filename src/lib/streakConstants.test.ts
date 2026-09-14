@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   STREAK_QUESTIONS_THRESHOLD,
   STREAK_TESTS_THRESHOLD,

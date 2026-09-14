@@ -4,7 +4,6 @@ import {
   corsHeaders,
   DISCOURSE_URL,
   MAX_PAGINATION_PAGES,
-  MAX_TITLE_LENGTH,
   CATEGORY_MAP,
   getCategorySlug,
   isServiceRoleToken,
@@ -42,7 +41,7 @@ interface Question {
   explanation: string | null;
 }
 
-interface DiscourseCategory {
+interface _DiscourseCategory {
   id: number;
   name: string;
   slug: string;

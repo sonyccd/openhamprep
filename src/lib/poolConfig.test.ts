@@ -4,7 +4,6 @@ import {
   getPoolVersionForExamType,
   getPoolConfig,
   isCurrentPool,
-  type ExamType
 } from './poolConfig';
 
 describe('poolConfig', () => {

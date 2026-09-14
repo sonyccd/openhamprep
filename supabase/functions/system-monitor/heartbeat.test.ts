@@ -1,11 +1,6 @@
 /// <reference lib="deno.ns" />
 
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import {
-  assertSpyCalls,
-  spy,
-  stub,
-} from "https://deno.land/std@0.224.0/testing/mock.ts";
 
 // ============================================================
 // HEARTBEAT FUNCTION (extracted for testing)

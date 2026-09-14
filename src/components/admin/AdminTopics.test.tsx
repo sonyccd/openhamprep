@@ -39,7 +39,6 @@ vi.mock('sonner', () => ({
   },
 }));
 
-import { toast } from 'sonner';
 
 // Sample topic data
 const mockTopics: Topic[] = [

@@ -27,7 +27,6 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 // Import mocked supabase for getToolImageUrl tests
-import { supabase } from '@/integrations/supabase/client';
 
 // Sample test data
 const mockCategories: HamRadioToolCategory[] = [

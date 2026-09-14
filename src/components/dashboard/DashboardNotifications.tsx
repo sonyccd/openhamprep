@@ -1,15 +1,13 @@
 import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bell } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import Stack from '@mui/material/Stack';
+import type { SxProps, Theme } from '@mui/material/styles';
+import { AnimatePresence } from 'framer-motion';
 import {
   useDashboardNotifications,
   PUSH_NOTIFICATION_PRIORITY_THRESHOLD,
-  type DashboardNotification,
-  type NotificationVariant,
 } from '@/hooks/useDashboardNotifications';
 import { TestType, View } from '@/types/navigation';
+import { NotificationItem } from './NotificationItem';
 
 /**
  * Props for the DashboardNotifications component.
@@ -27,139 +25,8 @@ export interface DashboardNotificationsProps {
   onNavigate: (view: View) => void;
   /** Maximum notifications to show (default: 1) */
   maxVisible?: number;
-  /** Additional CSS classes */
-  className?: string;
-}
-
-/**
- * Get CSS classes for a notification variant.
- */
-function getVariantClasses(variant: NotificationVariant): {
-  container: string;
-  iconBg: string;
-  icon: string;
-} {
-  switch (variant) {
-    case 'destructive':
-      return {
-        container: 'bg-destructive/5 border-destructive/30',
-        iconBg: 'bg-destructive/10',
-        icon: 'text-destructive',
-      };
-    case 'warning':
-      return {
-        container: 'bg-warning/5 border-warning/30',
-        iconBg: 'bg-warning/10',
-        icon: 'text-warning',
-      };
-    case 'success':
-      return {
-        container: 'bg-success/5 border-success/30',
-        iconBg: 'bg-success/10',
-        icon: 'text-success',
-      };
-    case 'muted':
-    default:
-      return {
-        container: 'bg-card border-border',
-        iconBg: 'bg-muted',
-        icon: 'text-muted-foreground',
-      };
-  }
-}
-
-/**
- * Single notification item component.
- */
-function NotificationItem({
-  notification,
-  onDismiss,
-  showPushPrompt,
-  onRequestPush,
-}: {
-  notification: DashboardNotification;
-  onDismiss: () => void;
-  showPushPrompt: boolean;
-  onRequestPush: () => void;
-}) {
-  const { icon: Icon, title, description, action, dismissible, variant } = notification;
-  const classes = getVariantClasses(variant);
-
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: -10, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -10, scale: 0.98 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
-      className={cn(
-        'rounded-xl p-4 border transition-colors',
-        classes.container
-      )}
-    >
-      <div className="flex items-start gap-3">
-        {/* Icon */}
-        <div className={cn('p-2 rounded-lg shrink-0', classes.iconBg)}>
-          <Icon className={cn('w-5 h-5', classes.icon)} />
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-foreground">{title}</p>
-          <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Push notification prompt - icon only on mobile, full button on desktop */}
-          {showPushPrompt && (
-            <>
-              {/* Mobile: icon-only button */}
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={onRequestPush}
-                className="sm:hidden"
-                aria-label="Enable notifications"
-              >
-                <Bell className="w-4 h-4" />
-              </Button>
-              {/* Desktop: full button with text */}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={onRequestPush}
-                className="hidden sm:flex"
-              >
-                <Bell className="w-4 h-4 mr-1.5" />
-                Enable alerts
-              </Button>
-            </>
-          )}
-
-          {/* Main action */}
-          {action && (
-            <Button size="sm" variant="secondary" onClick={action.onClick}>
-              {action.label}
-            </Button>
-          )}
-
-          {/* Dismiss button */}
-          {dismissible && (
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={onDismiss}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            >
-              <X className="w-4 h-4" />
-              <span className="sr-only">Dismiss notification</span>
-            </Button>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
+  /** Additional styles for the list wrapper */
+  sx?: SxProps<Theme>;
 }
 
 /**
@@ -186,7 +53,7 @@ export function DashboardNotifications({
   questionsGoal,
   onNavigate,
   maxVisible = 1,
-  className,
+  sx,
 }: DashboardNotificationsProps) {
   const {
     notifications,
@@ -234,7 +101,7 @@ export function DashboardNotifications({
     topNotification.priority <= PUSH_NOTIFICATION_PRIORITY_THRESHOLD;
 
   return (
-    <div className={cn('mb-6 space-y-3', className)}>
+    <Stack spacing={1.5} sx={{ mb: 3, ...sx }}>
       <AnimatePresence mode="popLayout">
         {visibleNotifications.map((notification) => (
           <NotificationItem
@@ -246,6 +113,6 @@ export function DashboardNotifications({
           />
         ))}
       </AnimatePresence>
-    </div>
+    </Stack>
   );
 }

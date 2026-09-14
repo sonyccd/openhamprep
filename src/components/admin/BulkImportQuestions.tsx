@@ -16,7 +16,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ConflictResolutionDialog, ConflictItem, ResolutionAction } from "./ConflictResolutionDialog";
+import { ConflictResolutionDialog, ConflictItem } from "./ConflictResolutionDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   ImportQuestion,
@@ -50,7 +50,7 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
   const [step, setStep] = useState<ImportStep>('upload');
   const [conflicts, setConflicts] = useState<ConflictItem<ImportQuestion>[]>([]);
   const [newQuestions, setNewQuestions] = useState<ImportQuestion[]>([]);
-  const [parsedSyllabus, setParsedSyllabus] = useState<SyllabusEntry[]>([]);
+  const [_parsedSyllabus, setParsedSyllabus] = useState<SyllabusEntry[]>([]);
   const [importWarnings, setImportWarnings] = useState<string[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   // Derived: when the file's answer keys look 1-based, gate import behind an

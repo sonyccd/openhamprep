@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useState } from 'react';
-import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ProfileModal } from './ProfileModal';
 import { BrowserRouter } from 'react-router-dom';
@@ -76,7 +76,7 @@ const renderProfileModal = (props = {}) => {
 };
 
 // Helper to click a menu item by its label text
-const clickMenuItem = async (user: ReturnType<typeof userEvent.setup>, label: string) => {
+const _clickMenuItem = async (user: ReturnType<typeof userEvent.setup>, label: string) => {
   const menuItems = screen.getAllByRole('button');
   const menuItem = menuItems.find(btn => {
     const textContent = btn.textContent || '';

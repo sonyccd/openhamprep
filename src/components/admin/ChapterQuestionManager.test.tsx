@@ -5,8 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ChapterQuestionManager } from './ChapterQuestionManager';
 
 // Mock Supabase client
-const mockUpdate = vi.fn();
-const mockEq = vi.fn();
+const _mockUpdate = vi.fn();
+const _mockEq = vi.fn();
 const mockFrom = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({

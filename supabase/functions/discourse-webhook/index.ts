@@ -92,7 +92,7 @@ interface DiscourseWebhookPayload {
   post: DiscoursePost;
 }
 
-interface DiscourseTopic {
+interface _DiscourseTopic {
   id: number;
   title: string;
   slug: string;

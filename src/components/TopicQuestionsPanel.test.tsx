@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TopicQuestionsPanel } from './TopicQuestionsPanel';
 
@@ -69,7 +69,7 @@ describe('TopicQuestionsPanel', () => {
   describe('Loading State', () => {
     it('should show loading skeleton when loading', () => {
       mockIsLoading = true;
-      const { container } = renderComponent();
+      renderComponent();
 
       expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
     });
@@ -164,7 +164,7 @@ describe('TopicQuestionsPanel', () => {
 
   describe('Collapsible Behavior', () => {
     it('should have collapsible trigger on desktop', () => {
-      const { container } = renderComponent();
+      renderComponent();
 
       // A collapsible trigger reports its state through aria-expanded.
       expect(

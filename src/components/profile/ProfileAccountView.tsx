@@ -4,7 +4,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { KeyRound, Mail, MessageSquare, Trash2, User } from "lucide-react";
+import { KeyRound, Mail, MessageSquare, User } from "lucide-react";
 import { ProfileEditableField } from "./ProfileEditableField";
 import { ProfileDangerZone } from "./ProfileDangerZone";
 import { tokenAlpha } from "@/theme/muiTheme";
