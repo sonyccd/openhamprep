@@ -4,7 +4,7 @@ import { queryKeys, unwrapOrThrow } from "@/services";
 import { questionService } from "@/services/questions/questionService";
 
 // Re-export domain types for backward compatibility
-export type { Question, LinkData, QuestionTopic } from "@/services/questions/questionService";
+export type { Question, LinkData, QuestionTopic, AnswerLetter } from "@/services/questions/questionService";
 
 import type { Question } from "@/services/questions/questionService";
 

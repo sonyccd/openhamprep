@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QuestionListView } from './QuestionListView';
 import { Question } from '@/hooks/useQuestions';
+import { muiWrapper } from '@/test/utils/testWrappers';
 
 // Mock framer-motion
 vi.mock('framer-motion', async () => {
@@ -51,19 +52,19 @@ describe('QuestionListView', () => {
 
   describe('Header', () => {
     it('displays the title', () => {
-      render(<QuestionListView {...defaultProps} />);
+      render(<QuestionListView {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByText("Commission's Rules")).toBeInTheDocument();
     });
 
     it('displays the subtitle', () => {
-      render(<QuestionListView {...defaultProps} />);
+      render(<QuestionListView {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByText('Subelement T1')).toBeInTheDocument();
     });
 
     it('displays the badge', () => {
-      render(<QuestionListView {...defaultProps} />);
+      render(<QuestionListView {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByText('T1')).toBeInTheDocument();
     });
@@ -73,14 +74,15 @@ describe('QuestionListView', () => {
         <QuestionListView
           {...defaultProps}
           description="This is a test description about the topic."
-        />
+        />,
+        { wrapper: muiWrapper }
       );
 
       expect(screen.getByText('This is a test description about the topic.')).toBeInTheDocument();
     });
 
     it('does not display description section when not provided', () => {
-      render(<QuestionListView {...defaultProps} />);
+      render(<QuestionListView {...defaultProps} />, { wrapper: muiWrapper });
 
       // The description text should not be present
       expect(screen.queryByText(/This is a test description/)).not.toBeInTheDocument();
@@ -89,7 +91,7 @@ describe('QuestionListView', () => {
 
   describe('Navigation', () => {
     it('displays back button', () => {
-      render(<QuestionListView {...defaultProps} />);
+      render(<QuestionListView {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument();
     });
@@ -98,7 +100,7 @@ describe('QuestionListView', () => {
       const user = userEvent.setup();
       const onBack = vi.fn();
 
-      render(<QuestionListView {...defaultProps} onBack={onBack} />);
+      render(<QuestionListView {...defaultProps} onBack={onBack} />, { wrapper: muiWrapper });
 
       await user.click(screen.getByRole('button', { name: /back/i }));
 
@@ -108,7 +110,7 @@ describe('QuestionListView', () => {
 
   describe('Practice All Button', () => {
     it('displays Practice All Questions button', () => {
-      render(<QuestionListView {...defaultProps} />);
+      render(<QuestionListView {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByRole('button', { name: /practice all questions/i })).toBeInTheDocument();
     });
@@ -117,7 +119,7 @@ describe('QuestionListView', () => {
       const user = userEvent.setup();
       const onStartPractice = vi.fn();
 
-      render(<QuestionListView {...defaultProps} onStartPractice={onStartPractice} />);
+      render(<QuestionListView {...defaultProps} onStartPractice={onStartPractice} />, { wrapper: muiWrapper });
 
       await user.click(screen.getByRole('button', { name: /practice all questions/i }));
 
@@ -128,13 +130,13 @@ describe('QuestionListView', () => {
 
   describe('Search', () => {
     it('displays search input', () => {
-      render(<QuestionListView {...defaultProps} />);
+      render(<QuestionListView {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByPlaceholderText(/search questions/i)).toBeInTheDocument();
     });
 
     it('filters questions by display name', async () => {
-      render(<QuestionListView {...defaultProps} />);
+      render(<QuestionListView {...defaultProps} />, { wrapper: muiWrapper });
 
       const searchInput = screen.getByPlaceholderText(/search questions/i);
       fireEvent.change(searchInput, { target: { value: 'T1A01' } });
@@ -158,7 +160,8 @@ describe('QuestionListView', () => {
         <QuestionListView
           {...defaultProps}
           questions={questionsWithUniqueText}
-        />
+        />,
+        { wrapper: muiWrapper }
       );
 
       const searchInput = screen.getByPlaceholderText(/search questions/i);
@@ -173,7 +176,7 @@ describe('QuestionListView', () => {
     });
 
     it('shows no results message when search has no matches', async () => {
-      render(<QuestionListView {...defaultProps} />);
+      render(<QuestionListView {...defaultProps} />, { wrapper: muiWrapper });
 
       const searchInput = screen.getByPlaceholderText(/search questions/i);
       fireEvent.change(searchInput, { target: { value: 'xyz123nonexistent' } });
@@ -182,7 +185,7 @@ describe('QuestionListView', () => {
     });
 
     it('is case insensitive', async () => {
-      render(<QuestionListView {...defaultProps} />);
+      render(<QuestionListView {...defaultProps} />, { wrapper: muiWrapper });
 
       const searchInput = screen.getByPlaceholderText(/search questions/i);
       fireEvent.change(searchInput, { target: { value: 't1a01' } });
@@ -193,7 +196,7 @@ describe('QuestionListView', () => {
 
   describe('Question Grouping', () => {
     it('groups questions by questionGroup', () => {
-      render(<QuestionListView {...defaultProps} />);
+      render(<QuestionListView {...defaultProps} />, { wrapper: muiWrapper });
 
       // Should show group headers
       expect(screen.getByText('T1A')).toBeInTheDocument();
@@ -201,7 +204,7 @@ describe('QuestionListView', () => {
     });
 
     it('displays questions within their groups', () => {
-      render(<QuestionListView {...defaultProps} />);
+      render(<QuestionListView {...defaultProps} />, { wrapper: muiWrapper });
 
       // All questions should be visible
       expect(screen.getByText('T1A01')).toBeInTheDocument();
@@ -218,7 +221,7 @@ describe('QuestionListView', () => {
         createMockQuestion('T1B01', 'T1B'),
       ];
 
-      render(<QuestionListView {...defaultProps} questions={unorderedQuestions} />);
+      render(<QuestionListView {...defaultProps} questions={unorderedQuestions} />, { wrapper: muiWrapper });
 
       // Verify all groups are present (the component sorts them internally)
       expect(screen.getByText('T1A')).toBeInTheDocument();
@@ -237,7 +240,7 @@ describe('QuestionListView', () => {
       const user = userEvent.setup();
       const onStartPractice = vi.fn();
 
-      render(<QuestionListView {...defaultProps} onStartPractice={onStartPractice} />);
+      render(<QuestionListView {...defaultProps} onStartPractice={onStartPractice} />, { wrapper: muiWrapper });
 
       // Click on T1A02 (which is at index 1 in mockQuestions)
       const questionButton = screen.getByText('T1A02').closest('button');
@@ -253,7 +256,7 @@ describe('QuestionListView', () => {
       const user = userEvent.setup();
       const onStartPractice = vi.fn();
 
-      render(<QuestionListView {...defaultProps} onStartPractice={onStartPractice} />);
+      render(<QuestionListView {...defaultProps} onStartPractice={onStartPractice} />, { wrapper: muiWrapper });
 
       // Click on T1B01 (which is at index 3 in mockQuestions)
       const questionButton = screen.getByText('T1B01').closest('button');
@@ -267,13 +270,13 @@ describe('QuestionListView', () => {
 
   describe('Question Display', () => {
     it('displays question display name', () => {
-      render(<QuestionListView {...defaultProps} />);
+      render(<QuestionListView {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByText('T1A01')).toBeInTheDocument();
     });
 
     it('displays question text', () => {
-      render(<QuestionListView {...defaultProps} />);
+      render(<QuestionListView {...defaultProps} />, { wrapper: muiWrapper });
 
       expect(screen.getByText('Question T1A01?')).toBeInTheDocument();
     });
@@ -284,7 +287,7 @@ describe('QuestionListView', () => {
         createMockQuestion('T1A01', 'T1A', longQuestion),
       ];
 
-      render(<QuestionListView {...defaultProps} questions={questionsWithLongText} />);
+      render(<QuestionListView {...defaultProps} questions={questionsWithLongText} />, { wrapper: muiWrapper });
 
       // Should show truncated text with "..."
       const truncatedText = screen.getByText(/\.\.\.$/);
@@ -299,7 +302,7 @@ describe('QuestionListView', () => {
         createMockQuestion('T1A01', 'T1A', shortQuestion),
       ];
 
-      render(<QuestionListView {...defaultProps} questions={questionsWithShortText} />);
+      render(<QuestionListView {...defaultProps} questions={questionsWithShortText} />, { wrapper: muiWrapper });
 
       expect(screen.getByText('Short question?')).toBeInTheDocument();
       expect(screen.queryByText(/\.\.\.$/)).not.toBeInTheDocument();
@@ -308,7 +311,7 @@ describe('QuestionListView', () => {
 
   describe('Empty State', () => {
     it('shows no questions message when questions array is empty', () => {
-      render(<QuestionListView {...defaultProps} questions={[]} />);
+      render(<QuestionListView {...defaultProps} questions={[]} />, { wrapper: muiWrapper });
 
       expect(screen.getByText(/no questions available/i)).toBeInTheDocument();
     });
@@ -320,7 +323,7 @@ describe('QuestionListView', () => {
         { ...createMockQuestion('T1A01', 'T1A'), questionGroup: undefined } as Question,
       ];
 
-      render(<QuestionListView {...defaultProps} questions={questionsWithoutGroup} />);
+      render(<QuestionListView {...defaultProps} questions={questionsWithoutGroup} />, { wrapper: muiWrapper });
 
       // Should fall back to "Other" group
       expect(screen.getByText('Other')).toBeInTheDocument();

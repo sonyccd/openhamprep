@@ -1,13 +1,13 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { MotionBox } from "@/components/ohp/MotionBox";
-import { AnswerOptions, type AnswerLetter } from "@/components/question/AnswerOptions";
+import { AnswerOptions } from "@/components/question/AnswerOptions";
 import { QuestionCardActions } from "@/components/question/QuestionCardActions";
 import { QuestionExplanation } from "@/components/question/QuestionExplanation";
 import { GlossaryHighlightedText } from "@/components/GlossaryHighlightedText";
 import { FigureImage } from "@/components/FigureImage";
 import { tokenAlpha } from "@/theme/muiTheme";
-import type { Question } from "@/hooks/useQuestions";
+import type { Question, AnswerLetter } from "@/hooks/useQuestions";
 
 interface QuestionCardProps {
   question: Question;
