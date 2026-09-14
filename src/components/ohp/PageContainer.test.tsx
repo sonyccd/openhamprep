@@ -164,6 +164,43 @@ describe('PageContainer', () => {
       expect(getComputedStyle(content()).maxWidth).toBe('1024px');
     });
 
+    it('passes contentSx through to the inner element', () => {
+      renderContainer({ contentSx: { display: 'flex' } });
+
+      expect(cssFor(content())).toContain('display:flex');
+    });
+
+    it('keeps the width tier when contentSx is given', () => {
+      renderContainer({ width: 'wide', contentSx: { display: 'flex' } });
+
+      expect(getComputedStyle(content()).maxWidth).toBe('1024px');
+    });
+
+    /**
+     * Why contentSx exists at all.
+     *
+     * `sx` lands on the outer Box, and Container sits between it and the
+     * children as a plain block — it emits no display and no height of its
+     * own. So a child's `flex: 1` has nothing to size against, and a screen
+     * that centres itself vertically silently stacks from the top instead.
+     * contentClassName has always been the Tailwind-era way round this
+     * (TestResultReview uses it); contentSx is the same for ported callers.
+     */
+    it('does not give the inner element a flex context from sx alone', () => {
+      renderContainer({ sx: { display: 'flex', flexDirection: 'column' } });
+
+      expect(cssFor(content())).not.toContain('display:flex');
+    });
+
+    it('gives the inner element a flex context when contentSx asks for one', () => {
+      renderContainer({
+        sx: { display: 'flex', flexDirection: 'column' },
+        contentSx: { display: 'flex', flex: 1 },
+      });
+
+      expect(cssFor(content())).toContain('display:flex');
+    });
+
     it('merges a caller sx rather than replacing the defaults', () => {
       renderContainer({ sx: { backgroundColor: 'rgb(1, 2, 3)' } });
 

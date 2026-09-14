@@ -131,7 +131,11 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
 
   if (!hasStarted) {
     return (
-      <PageContainer width="narrow" sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <PageContainer
+        width="narrow"
+        sx={{ display: "flex", flexDirection: "column", height: "100%" }}
+        contentSx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+      >
         <FlashcardStart
           termCount={terms.length}
           mode={mode}
@@ -145,7 +149,11 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
 
   if (isComplete) {
     return (
-      <PageContainer width="narrow" sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <PageContainer
+        width="narrow"
+        sx={{ display: "flex", flexDirection: "column", height: "100%" }}
+        contentSx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+      >
         <FlashcardComplete
           knownCount={stats.known.size}
           unknownCount={stats.unknown.size}
@@ -157,7 +165,11 @@ export function GlossaryFlashcards({ onBack }: GlossaryFlashcardsProps) {
   }
 
   return (
-    <PageContainer width="narrow" sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <PageContainer
+        width="narrow"
+        sx={{ display: "flex", flexDirection: "column", height: "100%" }}
+        contentSx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+      >
       <FlashcardDeck
         mode={mode}
         front={mode === "term-to-definition" ? currentTerm?.term : currentTerm?.definition}
