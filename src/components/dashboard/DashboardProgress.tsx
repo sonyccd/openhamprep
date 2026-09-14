@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
+import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { Settings2 } from 'lucide-react';
@@ -14,24 +15,15 @@ interface DashboardProgressProps {
   onOpenGoalsModal: () => void;
 }
 
-/**
- * One goal's label, count and bar.
- *
- * The bar is a framer-motion width animation, not MUI's LinearProgress. C5's
- * issue assumed this used shadcn's Progress and could be swapped; it never did.
- * LinearProgress animates its own indicator and would change both the easing
- * and the shape, which Gate 1 rules out for a port.
- */
+/** One goal's label, count and bar. */
 function GoalBar({
   label,
   current,
   goal,
-  delay,
 }: {
   label: string;
   current: number;
   goal: number;
-  delay: number;
 }) {
   const percent = Math.min(100, Math.round((current / goal) * 100));
   const reached = current >= goal;
@@ -61,25 +53,19 @@ function GoalBar({
           {current}/{goal}
         </Box>
       </Box>
-      <Box
+      <LinearProgress
+        variant="determinate"
+        value={percent}
+        color={reached ? 'success' : 'primary'}
+        aria-label={label}
+        aria-valuetext={`${current} of ${goal}`}
         sx={{
           height: 8,
-          bgcolor: 'secondary.main',
           borderRadius: '9999px',
-          overflow: 'hidden',
+          bgcolor: 'secondary.main',
+          '& .MuiLinearProgress-bar': { borderRadius: '9999px' },
         }}
-      >
-        <MotionBox
-          initial={{ width: 0 }}
-          animate={{ width: `${percent}%` }}
-          transition={{ duration: 0.5, delay }}
-          sx={{
-            height: '100%',
-            borderRadius: '9999px',
-            bgcolor: reached ? 'success.main' : 'primary.main',
-          }}
-        />
-      </Box>
+      />
     </Box>
   );
 }
@@ -127,18 +113,8 @@ export function DashboardProgress({
       </Box>
 
       <Stack spacing={1.5}>
-        <GoalBar
-          label="Questions"
-          current={thisWeekQuestions}
-          goal={questionsGoal}
-          delay={0.2}
-        />
-        <GoalBar
-          label="Practice Tests"
-          current={thisWeekTests}
-          goal={testsGoal}
-          delay={0.3}
-        />
+        <GoalBar label="Questions" current={thisWeekQuestions} goal={questionsGoal} />
+        <GoalBar label="Practice Tests" current={thisWeekTests} goal={testsGoal} />
       </Stack>
     </MotionBox>
   );

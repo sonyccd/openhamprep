@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
 import { AlertCircle } from 'lucide-react';
 import { MotionBox } from '@/components/ohp/MotionBox';
@@ -57,19 +58,19 @@ export function StreakProgress({
         )}
       </Box>
 
-      <Box sx={{ height: 8, bgcolor: 'secondary.main', borderRadius: '9999px', overflow: 'hidden' }}>
-        <MotionBox
-          initial={{ width: 0 }}
-          animate={{ width: `${progressPercent}%` }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          sx={{
-            height: '100%',
-            borderRadius: '9999px',
-            transition: 'background-color 200ms',
-            bgcolor: `${barToken}.main`,
-          }}
-        />
-      </Box>
+      <LinearProgress
+        variant="determinate"
+        value={progressPercent}
+        color={barToken}
+        aria-label="Today's progress"
+        aria-valuetext={`${questionsToday} of ${STREAK_QUESTIONS_THRESHOLD} questions`}
+        sx={{
+          height: 8,
+          borderRadius: '9999px',
+          bgcolor: 'secondary.main',
+          '& .MuiLinearProgress-bar': { borderRadius: '9999px' },
+        }}
+      />
 
       {streakAtRisk && !todayQualifies && (
         <MotionBox
