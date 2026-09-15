@@ -10,7 +10,9 @@ const mockTools = vi.fn();
 const mockCategories = vi.fn();
 const mockCreate = vi.fn((_vars, opts?: { onSuccess?: () => void }) => opts?.onSuccess?.());
 const mockUpdate = vi.fn((_vars, opts?: { onSuccess?: () => void }) => opts?.onSuccess?.());
-const mockDelete = vi.fn((_id, opts?: { onSuccess?: () => void }) => opts?.onSuccess?.());
+const mockDelete = vi.fn(
+  (_id, opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => opts?.onSuccess?.()
+);
 
 vi.mock('@/hooks/useHamRadioTools', () => ({
   useAdminHamRadioTools: () => ({ data: mockTools(), isLoading: false }),
@@ -92,6 +94,27 @@ describe('AdminHamRadioTools', () => {
       expect(screen.getByText('Draft')).toBeInTheDocument();
     });
 
+    it('narrows by category alongside the search term', async () => {
+      const user = userEvent.setup();
+      mockCategories.mockReturnValue([category(), category({ id: 'cat-2', name: 'Mapping', slug: 'mapping' })]);
+      mockTools.mockReturnValue([
+        tool(),
+        tool({
+          id: 'tool-2',
+          title: 'Grid Square Map',
+          category_id: 'cat-2',
+          category: { id: 'cat-2', name: 'Mapping', slug: 'mapping' },
+        }),
+      ]);
+      renderTools();
+
+      await user.click(screen.getByRole('combobox', { name: 'Category' }));
+      await user.click(screen.getByRole('option', { name: 'Mapping' }));
+
+      expect(screen.getByText('Grid Square Map')).toBeInTheDocument();
+      expect(screen.queryByText('QRZ Callsign Lookup')).not.toBeInTheDocument();
+    });
+
     it('filters by search term', async () => {
       const user = userEvent.setup();
       mockTools.mockReturnValue([tool(), tool({ id: 'tool-2', title: 'Grid Square Map' })]);
@@ -137,6 +160,18 @@ describe('AdminHamRadioTools', () => {
       expect(dialog.getByRole('textbox', { name: 'URL' })).toBeInTheDocument();
       expect(dialog.getByRole('combobox', { name: 'Category' })).toBeInTheDocument();
       expect(dialog.getByRole('switch', { name: 'Published' })).toBeInTheDocument();
+    });
+
+    /** There is no tool id to attach an image to until the tool exists. */
+    it('explains that images come after creation', async () => {
+      const user = userEvent.setup();
+      renderTools();
+
+      await user.click(screen.getByRole('button', { name: /add tool/i }));
+
+      expect(
+        within(screen.getByRole('dialog')).getByText(/add an image after creating the tool/i)
+      ).toBeInTheDocument();
     });
 
     it('keeps submit disabled until title, description and URL are all filled', async () => {
@@ -241,6 +276,29 @@ describe('AdminHamRadioTools', () => {
       );
 
       expect(mockDelete).toHaveBeenCalledWith('tool-1', expect.anything());
+    });
+
+    it('reports a failed delete without closing the dialog', async () => {
+      const user = userEvent.setup();
+      const { toast } = await import('sonner');
+      mockDelete.mockImplementationOnce((_id, opts?: { onError?: (e: Error) => void }) =>
+        opts?.onError?.(new Error('network down'))
+      );
+      renderTools();
+
+      await user.click(screen.getByRole('button', { name: 'Edit QRZ Callsign Lookup' }));
+      await user.click(screen.getByRole('button', { name: /delete tool/i }));
+      await user.click(
+        within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' })
+      );
+
+      expect(toast.error).toHaveBeenCalledWith('Failed to delete tool: network down');
+
+      // The edit dialog behind the confirm stays aria-hidden until the confirm
+      // finishes transitioning out, so it is unreachable before then.
+      await waitForElementToBeRemoved(() => screen.queryByRole('alertdialog'));
+      // Still editing, so the work is not lost.
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
 
     it('does not delete until the confirmation is accepted', async () => {

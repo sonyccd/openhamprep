@@ -71,6 +71,7 @@ export function AdminHamRadioTools() {
         onClose={() => setEditingTool(null)}
         categories={categories}
         isPending={updateTool.isPending}
+        isDeleting={deleteTool.isPending}
         onSubmit={handleUpdateTool}
         onDelete={handleDeleteTool}
       />

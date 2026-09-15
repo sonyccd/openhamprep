@@ -6,6 +6,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Typography from "@mui/material/Typography";
 import { Plus } from "lucide-react";
 import { ToolFields } from "./ToolFields";
 import { EMPTY_TOOL_DRAFT, isToolDraftValid, type ToolDraft } from "./toolDraft";
@@ -46,6 +47,13 @@ export function ToolAddDialog({
       <DialogContent>
         <Box sx={{ pt: 1 }}>
           <ToolFields value={draft} onChange={setDraft} categories={categories} />
+          {/*
+            Add-only. The edit dialog has a real upload control; here there is
+            no tool id to attach an image to yet, so the hint stands in for it.
+          */}
+          <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", mt: 2 }}>
+            You can add an image after creating the tool.
+          </Typography>
         </Box>
       </DialogContent>
       <DialogActions>

@@ -21,6 +21,8 @@ interface ToolEditDialogProps {
   onClose: () => void;
   categories: { id: string; name: string }[];
   isPending: boolean;
+  /** Separate from isPending: a save and a delete can't both be in flight. */
+  isDeleting?: boolean;
   onSubmit: (draft: ToolDraft) => void;
   onDelete: () => void;
 }
@@ -30,6 +32,7 @@ export function ToolEditDialog({
   onClose,
   categories,
   isPending,
+  isDeleting = false,
   onSubmit,
   onDelete,
 }: ToolEditDialogProps) {
@@ -118,6 +121,7 @@ export function ToolEditDialog({
         open={confirmingDelete}
         title="Delete Tool"
         description={`Are you sure you want to delete "${tool?.title}"? This action cannot be undone.`}
+        isPending={isDeleting}
         onCancel={() => setConfirmingDelete(false)}
         onConfirm={() => {
           setConfirmingDelete(false);

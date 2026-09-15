@@ -96,7 +96,14 @@ export function useToolAdmin({
     }
     if (!user) { toast.error('Your session has expired. Please sign in again.'); return; }
 
-    const next = {
+    /*
+     * Typed to primitives on purpose. The diff below compares with !==, which
+     * is right for strings, booleans and null but silently wrong for objects
+     * and arrays — an array-valued field would read as changed on every save.
+     * Annotating the payload means adding such a field fails to compile here
+     * rather than quietly corrupting the edit history.
+     */
+    const next: Record<string, string | boolean | null> = {
       title: draft.title.trim(),
       description: draft.description.trim(),
       url: draft.url.trim(),
