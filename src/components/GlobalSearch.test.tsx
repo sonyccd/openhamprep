@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { GlobalSearch } from './GlobalSearch';
+import { muiWrapper } from '@/test/utils/testWrappers';
 
 // Mock the hooks
 const mockSetQuery = vi.fn();
@@ -64,7 +65,8 @@ const renderGlobalSearch = (props = {}) => {
   return render(
     <BrowserRouter>
       <GlobalSearch {...defaultProps} {...props} />
-    </BrowserRouter>
+    </BrowserRouter>,
+    { wrapper: muiWrapper }
   );
 };
 
@@ -298,8 +300,7 @@ describe('GlobalSearch', () => {
 
       renderGlobalSearch();
 
-      // Questions group heading (may be hidden by cmdk when no search value)
-      expect(screen.getByText('Questions', { selector: '[cmdk-group-heading]' })).toBeInTheDocument();
+      expect(screen.getByText('Questions')).toBeInTheDocument();
       // Question title and subtitle
       expect(screen.getByText('T5A01')).toBeInTheDocument();
       expect(screen.getByText('What is current measured in?')).toBeInTheDocument();
@@ -329,7 +330,7 @@ describe('GlobalSearch', () => {
 
       renderGlobalSearch();
 
-      expect(screen.getByText('Glossary', { selector: '[cmdk-group-heading]' })).toBeInTheDocument();
+      expect(screen.getByText('Glossary')).toBeInTheDocument();
       expect(screen.getByText('Antenna')).toBeInTheDocument();
       expect(screen.getByText('A device for transmitting radio waves.')).toBeInTheDocument();
     });
@@ -359,7 +360,7 @@ describe('GlobalSearch', () => {
 
       renderGlobalSearch();
 
-      expect(screen.getByText('Topics', { selector: '[cmdk-group-heading]' })).toBeInTheDocument();
+      expect(screen.getByText('Topics')).toBeInTheDocument();
       expect(screen.getByText('Antenna Basics')).toBeInTheDocument();
       expect(screen.getByText('Learn about antenna fundamentals.')).toBeInTheDocument();
     });
@@ -406,10 +407,10 @@ describe('GlobalSearch', () => {
 
       renderGlobalSearch();
 
-      expect(screen.getByText('Questions', { selector: '[cmdk-group-heading]' })).toBeInTheDocument();
-      expect(screen.getByText('Glossary', { selector: '[cmdk-group-heading]' })).toBeInTheDocument();
-      expect(screen.getByText('Topics', { selector: '[cmdk-group-heading]' })).toBeInTheDocument();
-      expect(screen.getByText('Tools', { selector: '[cmdk-group-heading]' })).toBeInTheDocument();
+      expect(screen.getByText('Questions')).toBeInTheDocument();
+      expect(screen.getByText('Glossary')).toBeInTheDocument();
+      expect(screen.getByText('Topics')).toBeInTheDocument();
+      expect(screen.getByText('Tools')).toBeInTheDocument();
     });
 
     it('displays tool results', () => {
@@ -437,7 +438,7 @@ describe('GlobalSearch', () => {
 
       renderGlobalSearch();
 
-      expect(screen.getByText('Tools', { selector: '[cmdk-group-heading]' })).toBeInTheDocument();
+      expect(screen.getByText('Tools')).toBeInTheDocument();
       expect(screen.getByText('WSJT-X')).toBeInTheDocument();
       expect(screen.getByText('Weak signal communication software.')).toBeInTheDocument();
     });
@@ -496,8 +497,8 @@ describe('GlobalSearch', () => {
       renderGlobalSearch({ onOpenChange });
 
       const user = userEvent.setup();
-      const resultItem = screen.getByText('T5A01').closest('[cmdk-item]');
-      await user.click(resultItem!);
+      const resultItem = screen.getByRole('option', { name: new RegExp('T5A01') });
+      await user.click(resultItem);
 
       expect(mockNavigate).toHaveBeenCalledWith('/questions/T5A01');
       expect(onOpenChange).toHaveBeenCalledWith(false);
@@ -529,8 +530,8 @@ describe('GlobalSearch', () => {
       renderGlobalSearch({ onOpenChange });
 
       const user = userEvent.setup();
-      const resultItem = screen.getByText('Antenna').closest('[cmdk-item]');
-      await user.click(resultItem!);
+      const resultItem = screen.getByRole('option', { name: new RegExp('Antenna') });
+      await user.click(resultItem);
 
       expect(mockNavigateToGlossaryTerm).toHaveBeenCalledWith('g1');
       expect(onOpenChange).toHaveBeenCalledWith(false);
@@ -563,8 +564,8 @@ describe('GlobalSearch', () => {
       renderGlobalSearch({ onOpenChange });
 
       const user = userEvent.setup();
-      const resultItem = screen.getByText('Antenna Basics').closest('[cmdk-item]');
-      await user.click(resultItem!);
+      const resultItem = screen.getByRole('option', { name: new RegExp('Antenna Basics') });
+      await user.click(resultItem);
 
       expect(mockNavigateToTopic).toHaveBeenCalledWith('antenna-basics');
       expect(onOpenChange).toHaveBeenCalledWith(false);
@@ -599,8 +600,8 @@ describe('GlobalSearch', () => {
       renderGlobalSearch({ onOpenChange });
 
       const user = userEvent.setup();
-      const resultItem = screen.getByText('WSJT-X').closest('[cmdk-item]');
-      await user.click(resultItem!);
+      const resultItem = screen.getByRole('option', { name: new RegExp('WSJT-X') });
+      await user.click(resultItem);
 
       expect(windowOpenSpy).toHaveBeenCalledWith(
         'https://wsjt.sourceforge.io/',
@@ -652,8 +653,8 @@ describe('GlobalSearch', () => {
 
       renderGlobalSearch();
 
-      // cmdk items should have option role for accessibility
-      const resultItem = screen.getByText('T5A01').closest('[cmdk-item]');
+      // Rows carry role=option, from useAutocomplete's getOptionProps.
+      const resultItem = screen.getByRole('option', { name: new RegExp('T5A01') });
       expect(resultItem).toBeInTheDocument();
     });
 
@@ -670,7 +671,8 @@ describe('GlobalSearch', () => {
       renderGlobalSearch();
 
       const input = screen.getByPlaceholderText('Search questions, glossary, topics, tools...');
-      // Input should be focused (cmdk auto-focuses the input)
+      // Opening with a keyboard shortcut and then having to click would
+      // defeat the point, so the input takes focus on mount.
       expect(document.activeElement).toBe(input);
     });
   });
@@ -702,7 +704,7 @@ describe('GlobalSearch', () => {
       renderGlobalSearch();
 
       // Find the result item containing the icon
-      const resultItem = screen.getByText('T5A01').closest('[cmdk-item]');
+      const resultItem = screen.getByRole('option', { name: new RegExp('T5A01') });
       expect(resultItem).toBeInTheDocument();
     });
   });

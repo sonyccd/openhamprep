@@ -1,17 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import { HelpCircle, BookText, Library, Loader2, AlertCircle, Wrench } from 'lucide-react';
-import {
-  CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandSeparator,
-} from '@/components/ui/command';
+import Dialog from '@mui/material/Dialog';
 import { useGlobalSearch, SearchResult } from '@/hooks/useGlobalSearch';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
-import { getModifierKey } from '@/lib/searchUtils';
+import { SearchPalette } from '@/components/search/SearchPalette';
 import type { TestType } from '@/types/navigation';
 
 interface GlobalSearchProps {
@@ -20,105 +11,27 @@ interface GlobalSearchProps {
   testType: TestType;
 }
 
-/**
- * Icon component for search result types
- */
-function ResultIcon({ type }: { type: SearchResult['type'] }) {
-  const iconClass = 'h-4 w-4 text-muted-foreground';
-
-  switch (type) {
-    case 'question':
-      return <HelpCircle className={iconClass} aria-hidden="true" />;
-    case 'glossary':
-      return <BookText className={iconClass} aria-hidden="true" />;
-    case 'topic':
-      return <Library className={iconClass} aria-hidden="true" />;
-    case 'tool':
-      return <Wrench className={iconClass} aria-hidden="true" />;
-    default:
-      return null;
-  }
-}
+/** Mirrors MIN_QUERY_LENGTH in useGlobalSearch. */
+const MIN_QUERY_LENGTH = 3;
 
 /**
- * Get accessible label for result type
+ * Global search command palette.
+ *
+ * Built on MUI's useAutocomplete, replacing cmdk — this was its only consumer,
+ * so the port removes the dependency outright along with ui/command.tsx.
+ *
+ * The hook rather than the full Autocomplete component because Autocomplete
+ * renders its listbox in a floating Popper, and a palette needs the list in
+ * the dialog under the input. The hook is Autocomplete's own engine, so the
+ * WAI-ARIA combobox wiring, active-option tracking and the arrow/Enter/Escape
+ * model all still come from MUI; only the layout is ours.
  */
-function getResultTypeLabel(type: SearchResult['type']): string {
-  switch (type) {
-    case 'question':
-      return 'Question';
-    case 'glossary':
-      return 'Glossary term';
-    case 'topic':
-      return 'Topic';
-    case 'tool':
-      return 'Tool';
-    default:
-      return '';
-  }
-}
-
-/**
- * Individual search result item
- */
-function SearchResultItem({
-  result,
-  onSelect,
-}: {
-  result: SearchResult;
-  onSelect: () => void;
-}) {
-  const typeLabel = getResultTypeLabel(result.type);
-
-  return (
-    <CommandItem
-      value={`${result.type}-${result.id}-${result.title}`}
-      onSelect={onSelect}
-      className="flex items-start gap-3 py-3"
-      aria-label={`${typeLabel}: ${result.title}. ${result.subtitle}`}
-    >
-      <div className="mt-0.5">
-        <ResultIcon type={result.type} />
-      </div>
-      <div className="flex flex-col gap-0.5 overflow-hidden">
-        <span className="font-medium text-sm truncate">{result.title}</span>
-        <span className="text-xs text-muted-foreground truncate">
-          {result.subtitle}
-        </span>
-      </div>
-    </CommandItem>
-  );
-}
-
-/**
- * Global search command palette component.
- * Provides keyboard-driven search across questions, glossary, and topics.
- */
-export function GlobalSearch({
-  open,
-  onOpenChange,
-  testType,
-}: GlobalSearchProps) {
+export function GlobalSearch({ open, onOpenChange, testType }: GlobalSearchProps) {
   const navigate = useNavigate();
-  const { navigateToTopic, navigateToGlossaryTerm } =
-    useAppNavigation();
+  const { navigateToTopic, navigateToGlossaryTerm } = useAppNavigation();
   const { query, setQuery, results, isLoading, hasResults, reset, totalCount, error } =
     useGlobalSearch(testType);
 
-  /**
-   * Generate screen reader status message
-   */
-  const getStatusMessage = (): string => {
-    if (error) return 'Search failed. Please try again.';
-    if (isLoading) return 'Searching...';
-    if (query.length < 3) return '';
-    if (!hasResults) return `No results found for ${query}`;
-    return `${totalCount} result${totalCount === 1 ? '' : 's'} found`;
-  };
-
-  /**
-   * Handle dialog open/close state changes
-   */
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       // Reset search state when closing
@@ -127,9 +40,6 @@ export function GlobalSearch({
     onOpenChange(newOpen);
   };
 
-  /**
-   * Handle selection of a search result
-   */
   const handleSelect = (result: SearchResult) => {
     // Close the dialog first
     handleOpenChange(false);
@@ -158,144 +68,27 @@ export function GlobalSearch({
     }
   };
 
-  const _modKey = getModifierKey();
-
   return (
-    <CommandDialog open={open} onOpenChange={handleOpenChange}>
-      <CommandInput
-        placeholder="Search questions, glossary, topics, tools..."
-        value={query}
-        onValueChange={setQuery}
+    <Dialog
+      open={open}
+      onClose={() => handleOpenChange(false)}
+      fullWidth
+      maxWidth="sm"
+      aria-label="Search"
+      slotProps={{ paper: { sx: { borderRadius: 1, overflow: 'hidden' } } }}
+    >
+      <SearchPalette
+        query={query}
+        onQueryChange={setQuery}
+        results={results}
+        isLoading={isLoading}
+        hasResults={hasResults}
+        totalCount={totalCount}
+        error={Boolean(error)}
+        minQueryLength={MIN_QUERY_LENGTH}
+        onSelect={handleSelect}
+        onClose={() => handleOpenChange(false)}
       />
-      {/* Screen reader status announcements */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className="sr-only"
-      >
-        {getStatusMessage()}
-      </div>
-
-      <CommandList className="max-h-[350px]">
-        {/* Error state */}
-        {error && (
-          <div
-            className="py-6 flex items-center justify-center gap-2 text-sm text-destructive"
-            role="alert"
-          >
-            <AlertCircle className="h-4 w-4" aria-hidden="true" />
-            Search failed. Please try again.
-          </div>
-        )}
-
-        {/* Loading state */}
-        {!error && isLoading && (
-          <div
-            className="py-6 flex items-center justify-center gap-2 text-sm text-muted-foreground"
-            role="status"
-            aria-label="Searching"
-          >
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            Searching...
-          </div>
-        )}
-
-        {/* Empty state - only show when we have a query of sufficient length but no results */}
-        {!error && !isLoading && query.length >= 3 && !hasResults && (
-          <CommandEmpty>No results found for "{query}"</CommandEmpty>
-        )}
-
-        {/* Initial state - show when dialog is open but no query or query too short */}
-        {!error && !isLoading && query.length < 3 && (
-          <div className="py-6 text-center text-sm text-muted-foreground">
-            {query.length === 0
-              ? 'Start typing to search...'
-              : `Type ${3 - query.length} more character${3 - query.length === 1 ? '' : 's'}...`}
-          </div>
-        )}
-
-        {/* Questions results */}
-        {!isLoading && results.questions.length > 0 && (
-          <CommandGroup heading="Questions">
-            {results.questions.map((result) => (
-              <SearchResultItem
-                key={`question-${result.id}`}
-                result={result}
-                onSelect={() => handleSelect(result)}
-              />
-            ))}
-          </CommandGroup>
-        )}
-
-        {/* Glossary results */}
-        {!isLoading && results.glossary.length > 0 && (
-          <>
-            {results.questions.length > 0 && <CommandSeparator />}
-            <CommandGroup heading="Glossary">
-              {results.glossary.map((result) => (
-                <SearchResultItem
-                  key={`glossary-${result.id}`}
-                  result={result}
-                  onSelect={() => handleSelect(result)}
-                />
-              ))}
-            </CommandGroup>
-          </>
-        )}
-
-        {/* Topics results */}
-        {!isLoading && results.topics.length > 0 && (
-          <>
-            {(results.questions.length > 0 || results.glossary.length > 0) && (
-              <CommandSeparator />
-            )}
-            <CommandGroup heading="Topics">
-              {results.topics.map((result) => (
-                <SearchResultItem
-                  key={`topic-${result.id}`}
-                  result={result}
-                  onSelect={() => handleSelect(result)}
-                />
-              ))}
-            </CommandGroup>
-          </>
-        )}
-
-        {/* Tools results */}
-        {!isLoading && results.tools.length > 0 && (
-          <>
-            {(results.questions.length > 0 || results.glossary.length > 0 || results.topics.length > 0) && (
-              <CommandSeparator />
-            )}
-            <CommandGroup heading="Tools">
-              {results.tools.map((result) => (
-                <SearchResultItem
-                  key={`tool-${result.id}`}
-                  result={result}
-                  onSelect={() => handleSelect(result)}
-                />
-              ))}
-            </CommandGroup>
-          </>
-        )}
-      </CommandList>
-
-      {/* Keyboard hints footer */}
-      <div className="border-t border-border px-3 py-2 flex items-center gap-4 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <kbd className="bg-muted px-1.5 py-0.5 rounded font-mono">↑↓</kbd>
-          Navigate
-        </span>
-        <span className="flex items-center gap-1">
-          <kbd className="bg-muted px-1.5 py-0.5 rounded font-mono">↵</kbd>
-          Select
-        </span>
-        <span className="flex items-center gap-1">
-          <kbd className="bg-muted px-1.5 py-0.5 rounded font-mono">Esc</kbd>
-          Close
-        </span>
-      </div>
-    </CommandDialog>
+    </Dialog>
   );
 }
