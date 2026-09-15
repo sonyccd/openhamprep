@@ -6,19 +6,39 @@ import { MotionBox } from "@/components/ohp/MotionBox";
 import { tokenAlpha } from "@/theme/muiTheme";
 import type { ReactNode } from "react";
 
-interface ScoreBannerProps {
+interface ScoreBannerBaseProps {
   passed: boolean;
   correctCount: number;
   totalQuestions: number;
   percentage: number;
-  /** Large for a just-finished exam, compact for a historic one. */
-  size?: "large" | "compact";
   /** Above the verdict — the date, on the historic view. */
   meta?: ReactNode;
   /** Below the metrics — the passing-score note, on the fresh view. */
   footnote?: ReactNode;
-  children?: ReactNode;
 }
+
+/**
+ * A discriminated union rather than an optional `children`, because the
+ * compact layout is a single row with nowhere to put it.
+ *
+ * `children?: never` makes passing it with size="compact" a compile error
+ * instead of content that silently disappears — meta and footnote render in
+ * both layouts, so nothing else about the API hints that children would not.
+ */
+type ScoreBannerProps = ScoreBannerBaseProps &
+  (
+    | {
+        /** The just-finished exam: stacked, centred, with room for a message. */
+        size?: "large";
+        /** Between the verdict and the metrics. Large layout only. */
+        children?: ReactNode;
+      }
+    | {
+        /** A historic result: one row, no room for a message. */
+        size: "compact";
+        children?: never;
+      }
+  );
 
 /** Correct / Incorrect / Score, at whichever scale the caller wants. */
 function Metric({ value, label, size }: { value: string | number; label: string; size: "large" | "compact" }) {
