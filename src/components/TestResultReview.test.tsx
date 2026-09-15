@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { TestResultReview } from './TestResultReview';
+import { muiWrapper } from '@/test/utils/testWrappers';
 
 // Mock useQuestions
 const mockQuestions = [
@@ -65,7 +66,9 @@ function createWrapper() {
     },
   });
   return ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      {muiWrapper({ children })}
+    </QueryClientProvider>
   );
 }
 

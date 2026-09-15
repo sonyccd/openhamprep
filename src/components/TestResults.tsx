@@ -1,19 +1,24 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
 import confetti from "canvas-confetti";
-import { Button } from "@/components/ui/button";
-import { Question } from "@/hooks/useQuestions";
-import { QuestionCard } from "@/components/QuestionCard";
-import { ArrowLeft, ArrowRight, RotateCcw, Home, Trophy, XCircle } from "lucide-react";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { TestType, testConfig } from "@/types/navigation";
+import { RotateCcw, Home } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { MotionBox } from "@/components/ohp/MotionBox";
 import { PageContainer } from "@/components/ohp/PageContainer";
+import { AnswerReviewDetail } from "@/components/results/AnswerReviewDetail";
+import { AnswerReviewList } from "@/components/results/AnswerReviewList";
+import { ScoreBanner } from "@/components/results/ScoreBanner";
+import { TestType, testConfig } from "@/types/navigation";
+import type { AnswerLetter, Question } from "@/hooks/useQuestions";
 
 interface TestResultsProps {
   questions: Question[];
-  answers: Record<string, 'A' | 'B' | 'C' | 'D'>;
+  answers: Record<string, AnswerLetter>;
   onRetake: () => void;
   onBack: () => void;
   testType?: TestType;
@@ -29,7 +34,7 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
     (q) => answers[q.id] === q.correctAnswer
   ).length;
   const passed = correctCount >= passingScore;
-  
+
   // Fire confetti once when user passes (respects reduced motion preference)
   const hasTriggeredConfetti = useRef(false);
   useEffect(() => {
@@ -58,211 +63,135 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
   const totalQuestions = questions.length;
   const percentage = Math.round((correctCount / totalQuestions) * 100);
 
-  const _incorrectQuestions = questions.filter(
-    (q) => answers[q.id] !== q.correctAnswer
-  );
-
   if (reviewIndex !== null) {
     const question = questions[reviewIndex];
     return (
       <PageContainer width="standard" mobileNavPadding>
-        <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => setReviewIndex(null)}
-            className="gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Results
-          </Button>
-        </div>
-
-        <QuestionCard
+        <AnswerReviewDetail
           question={question}
           selectedAnswer={answers[question.id] || null}
-          onSelectAnswer={() => {}}
-          showResult={true}
+          index={reviewIndex}
+          total={questions.length}
+          onBack={() => setReviewIndex(null)}
+          onPrev={() => setReviewIndex(Math.max(0, reviewIndex - 1))}
+          onNext={() => setReviewIndex(Math.min(questions.length - 1, reviewIndex + 1))}
         />
-
-        <div className="mt-8 flex justify-between">
-          <Button
-            variant="outline"
-            onClick={() => setReviewIndex(Math.max(0, reviewIndex - 1))}
-            disabled={reviewIndex === 0}
-            className="gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() =>
-              setReviewIndex(Math.min(questions.length - 1, reviewIndex + 1))
-            }
-            disabled={reviewIndex === questions.length - 1}
-            className="gap-2"
-          >
-            Next
-            <ArrowRight className="w-4 h-4" />
-          </Button>
-        </div>
       </PageContainer>
     );
   }
 
   return (
     <PageContainer width="narrow" mobileNavPadding radioWaveBg>
-        {/* Result Header */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className={cn(
-            "text-center p-8 rounded-2xl border-2 mb-8",
-            passed
-              ? "bg-success/10 border-success/30"
-              : "bg-destructive/10 border-destructive/30"
-          )}
-        >
-          <div className="flex justify-center mb-4">
-            {passed ? (
-              <Trophy className="w-16 h-16 text-success" />
-            ) : (
-              <XCircle className="w-16 h-16 text-destructive" />
-            )}
-          </div>
-          <h1
-            className={cn(
-              "text-3xl sm:text-4xl font-mono font-bold mb-2",
-              passed ? "text-success" : "text-destructive"
-            )}
-          >
-            {passed ? "PASSED!" : "NOT PASSED"}
-          </h1>
-          <p className="text-lg text-muted-foreground mb-4">
-            {passed
-              ? "Congratulations! You passed the practice exam."
-              : "Keep studying and try again!"}
-          </p>
-
-          {/* Score Display */}
-          <div className="flex items-center justify-center gap-4 sm:gap-8 mt-6">
-            <div className="text-center">
-              <p className="text-4xl sm:text-5xl font-mono font-bold text-foreground">
-                {correctCount}
-              </p>
-              <p className="text-sm text-muted-foreground">Correct</p>
-            </div>
-            <div className="w-px h-16 bg-border" />
-            <div className="text-center">
-              <p className="text-4xl sm:text-5xl font-mono font-bold text-foreground">
-                {totalQuestions - correctCount}
-              </p>
-              <p className="text-sm text-muted-foreground">Incorrect</p>
-            </div>
-            <div className="w-px h-16 bg-border" />
-            <div className="text-center">
-              <p className="text-4xl sm:text-5xl font-mono font-bold text-foreground">
-                {percentage}%
-              </p>
-              <p className="text-sm text-muted-foreground">Score</p>
-            </div>
-          </div>
-
-          <p className="text-sm text-muted-foreground mt-4">
+      <ScoreBanner
+        passed={passed}
+        correctCount={correctCount}
+        totalQuestions={totalQuestions}
+        percentage={percentage}
+        footnote={
+          <Typography sx={{ fontSize: "0.875rem", color: "text.secondary", mt: 2 }}>
             Passing score: {passingScore} out of {questionCount} (74%)
-          </p>
-        </motion.div>
+          </Typography>
+        }
+      >
+        <Typography sx={{ fontSize: "1.125rem", color: "text.secondary", mb: 2 }}>
+          {passed
+            ? "Congratulations! You passed the practice exam."
+            : "Keep studying and try again!"}
+        </Typography>
+      </ScoreBanner>
 
-        {!user && !saveCardDismissed && (
-          <div className="border border-border rounded-lg p-4 mb-6 bg-card">
-            <p className="text-sm text-muted-foreground mb-3">
-              Test results require an account to save — there's nowhere to put them without one.
-            </p>
-            <div className="flex items-center gap-3">
-              <Link
-                to="/auth?returnTo=/dashboard"
-                className="text-sm font-medium text-primary hover:underline"
-              >
-                Create free account
-              </Link>
-              <button
-                onClick={() => setSaveCardDismissed(true)}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Continue without saving
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="flex flex-col sm:flex-row gap-4 mb-8"
+      {!user && !saveCardDismissed && (
+        /*
+          A save-moment prompt, so an Alert — but severity="info" with the icon
+          off and an outlined surface, which keeps the understated look the
+          guest-mode spec asks for. role="status" rather than Alert's default
+          "alert": this appears with the results rather than interrupting, and
+          it must never read as gating the content behind it.
+        */
+        <Alert
+          severity="info"
+          variant="outlined"
+          icon={false}
+          role="status"
+          sx={{ mb: 3, borderColor: "divider", bgcolor: "background.paper" }}
         >
-          <Button onClick={onRetake} variant="default" className="flex-1 gap-2">
-            <RotateCcw className="w-4 h-4" />
-            Retake Test
-          </Button>
-          <Button onClick={onBack} variant="outline" className="flex-1 gap-2">
-            <Home className="w-4 h-4" />
-            Back to Menu
-          </Button>
-        </motion.div>
+          <Typography sx={{ fontSize: "0.875rem", color: "text.secondary", mb: 1.5 }}>
+            Test results require an account to save — there's nowhere to put them without one.
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              component={Link}
+              to="/auth?returnTo=/dashboard"
+              sx={{
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                color: "primary.main",
+                textDecoration: "none",
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
+              Create free account
+            </Box>
+            <Button
+              variant="text"
+              size="small"
+              onClick={() => setSaveCardDismissed(true)}
+              sx={{ fontSize: "0.875rem", color: "text.secondary", minWidth: 0, p: 0 }}
+            >
+              Continue without saving
+            </Button>
+          </Box>
+        </Alert>
+      )}
 
-        {/* Review Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-card border border-border rounded-xl p-6"
+      <MotionBox
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          gap: 2,
+          mb: 4,
+        }}
+      >
+        <Button
+          variant="contained"
+          onClick={onRetake}
+          startIcon={<Box component={RotateCcw} sx={{ width: 16, height: 16 }} />}
+          sx={{ flex: 1 }}
         >
-          <h2 className="text-xl font-mono font-bold text-foreground mb-4">
+          Retake Test
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={onBack}
+          startIcon={<Box component={Home} sx={{ width: 16, height: 16 }} />}
+          sx={{ flex: 1 }}
+        >
+          Back to Menu
+        </Button>
+      </MotionBox>
+
+      <MotionBox
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Paper variant="outlined" sx={{ borderRadius: 1, p: 3 }}>
+          <Typography
+            component="h2"
+            sx={{ fontSize: "1.25rem", fontFamily: "monospace", fontWeight: 700, mb: 2 }}
+          >
             Review Your Answers
-          </h2>
-
-          <div className="space-y-2">
-            {questions.map((q, idx) => {
-              const isCorrect = answers[q.id] === q.correctAnswer;
-              return (
-                <button
-                  key={q.id}
-                  onClick={() => setReviewIndex(idx)}
-                  className={cn(
-                    "w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left",
-                    isCorrect
-                      ? "border-success/30 bg-success/5 hover:bg-success/10"
-                      : "border-destructive/30 bg-destructive/5 hover:bg-destructive/10"
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-mono font-bold",
-                      isCorrect
-                        ? "bg-success text-success-foreground"
-                        : "bg-destructive text-destructive-foreground"
-                    )}
-                  >
-                    {idx + 1}
-                  </span>
-                  <span className="flex-1 text-sm text-muted-foreground truncate">
-                    {q.id}: {q.question.substring(0, 60)}...
-                  </span>
-                  <span
-                    className={cn(
-                      "text-xs font-mono",
-                      isCorrect ? "text-success" : "text-destructive"
-                    )}
-                  >
-                    {isCorrect ? "✓" : "✗"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </motion.div>
+          </Typography>
+          <AnswerReviewList
+            questions={questions}
+            answers={answers}
+            onSelect={setReviewIndex}
+          />
+        </Paper>
+      </MotionBox>
     </PageContainer>
   );
 }

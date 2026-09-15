@@ -4,9 +4,10 @@ import { MemoryRouter } from 'react-router-dom';
 import { TestResults } from './TestResults';
 import { Question } from '@/hooks/useQuestions';
 import confetti from 'canvas-confetti';
+import { muiWrapper } from '@/test/utils/testWrappers';
 
 const renderWithRouter = (ui: React.ReactElement) =>
-  render(<MemoryRouter>{ui}</MemoryRouter>);
+  render(<MemoryRouter>{ui}</MemoryRouter>, { wrapper: muiWrapper });
 
 vi.mock('canvas-confetti', () => ({
   default: vi.fn(),
@@ -323,6 +324,32 @@ describe('TestResults', () => {
   });
 
   describe('Review section', () => {
+    /**
+     * The review rows were bare <button>s and the verdict was a raw ✓ or ✗.
+     * Correctness reached sighted users as a colour and a glyph, and everyone
+     * else as either nothing or a literal "check mark". The list is a real
+     * list now and the state is spelled out.
+     */
+    it('exposes the answers as a list with the verdict in text', () => {
+      const { questions, answers } = createQuestionsAndAnswers(5, 3, 'T');
+
+      renderWithRouter(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      expect(screen.getAllByRole('listitem')).toHaveLength(5);
+
+      const rows = screen.getAllByRole('button', { name: /Answered (in)?correctly/ });
+      expect(rows).toHaveLength(5);
+      expect(rows.filter((r) => /Answered correctly/.test(r.textContent ?? ''))).toHaveLength(3);
+      expect(rows.filter((r) => /Answered incorrectly/.test(r.textContent ?? ''))).toHaveLength(2);
+    });
+
     it('displays all questions in review list', () => {
       const { questions, answers } = createQuestionsAndAnswers(5, 3, 'T');
 
@@ -423,7 +450,8 @@ describe('TestResults', () => {
             testType="technician"
             {...defaultProps}
           />
-        </MemoryRouter>
+        </MemoryRouter>,
+        { wrapper: muiWrapper }
       );
 
       vi.advanceTimersByTime(200);
