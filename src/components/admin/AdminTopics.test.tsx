@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AdminTopics } from './AdminTopics';
 import { Topic } from '@/hooks/useTopics';
+import { muiWrapper } from '@/test/utils/testWrappers';
 
 // Mock Supabase client
 const mockFrom = vi.fn();
@@ -89,7 +90,8 @@ describe('AdminTopics', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <AdminTopics />
-      </QueryClientProvider>
+      </QueryClientProvider>,
+      { wrapper: muiWrapper }
     );
   };
 
@@ -284,11 +286,15 @@ describe('AdminTopics', () => {
 
       fireEvent.click(screen.getByText('Add Topic'));
 
-      expect(screen.getByText('Title')).toBeInTheDocument();
-      expect(screen.getByText('Slug (URL-friendly)')).toBeInTheDocument();
-      expect(screen.getByText('Description')).toBeInTheDocument();
-      expect(screen.getByText('License Types')).toBeInTheDocument();
-      expect(screen.getByText('Publish immediately')).toBeInTheDocument();
+      // Asking by role and name, not by text: MUI renders a TextField's label
+      // twice (the visible <label> and the outline's <legend>), and — more to
+      // the point — this asserts each label actually names its control, which
+      // the old <Label>/<Input> pairs never did.
+      expect(screen.getByRole('textbox', { name: 'Title' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Slug (URL-friendly)' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Description' })).toBeInTheDocument();
+      expect(screen.getByRole('group', { name: 'License Types' })).toBeInTheDocument();
+      expect(screen.getByRole('switch', { name: 'Publish immediately' })).toBeInTheDocument();
     });
 
     it('should close dialog when Cancel is clicked', async () => {

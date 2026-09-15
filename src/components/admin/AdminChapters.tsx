@@ -145,13 +145,15 @@ export function AdminChapters() {
               </Tabs>
               <TextField
                 placeholder="Search chapters..."
-                aria-label="Search chapters"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 size="small"
                 fullWidth
                 sx={{ mt: 2 }}
                 slotProps={{
+                  // aria-label on TextField lands on the FormControl root, not
+                  // the input, so the field would have no accessible name.
+                  htmlInput: { "aria-label": "Search chapters" },
                   input: {
                     startAdornment: (
                       <InputAdornment position="start">
