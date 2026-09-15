@@ -30,7 +30,9 @@ export interface SearchResults {
 }
 
 const DEBOUNCE_MS = 300;
-const MIN_QUERY_LENGTH = 3; // Minimum characters before searching
+/** Minimum characters before searching. Exported so the UI's "type N more"
+ *  hint cannot drift from the threshold that actually gates the query. */
+export const MIN_QUERY_LENGTH = 3;
 const EMPTY_RESULTS: SearchResults = {
   questions: [],
   glossary: [],
