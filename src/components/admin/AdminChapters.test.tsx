@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import the supabase mock
 import '@/test/mocks/supabase';
+import { muiWrapper } from '@/test/utils/testWrappers';
 
 const mockChapters = [
   {
@@ -105,7 +106,8 @@ const renderAdminChapters = () => {
   return render(
     <QueryClientProvider client={queryClient}>
       <AdminChapters />
-    </QueryClientProvider>
+    </QueryClientProvider>,
+    { wrapper: muiWrapper }
   );
 };
 
@@ -244,8 +246,48 @@ describe('AdminChapters', () => {
       await user.click(screen.getByRole('button', { name: /add chapter/i }));
 
       expect(screen.getByText('Add New Chapter')).toBeInTheDocument();
-      expect(screen.getByText('Chapter Number')).toBeInTheDocument();
-      expect(screen.getByText('Title')).toBeInTheDocument();
+      expect(screen.getByRole('spinbutton', { name: 'Chapter Number' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Title' })).toBeInTheDocument();
+    });
+
+    /**
+     * Before the port every field was a shadcn <Label> with no htmlFor beside
+     * an <Input> with no id, so none of them named their control — the sixth
+     * instance of that bug class in this migration. TextField's label prop
+     * wires the pair, and asking for the controls by name is what proves it.
+     */
+    it('labels every field so each control has an accessible name', async () => {
+      const user = userEvent.setup();
+      renderAdminChapters();
+
+      await user.click(screen.getByRole('button', { name: /add chapter/i }));
+
+      expect(screen.getByRole('spinbutton', { name: 'Chapter Number' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Title' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('textbox', { name: 'Description (optional)' })
+      ).toBeInTheDocument();
+    });
+
+    /** The add and edit dialogs render one shared ChapterFields, not two copies. */
+    it('keeps the add draft out of the edit dialog', async () => {
+      const user = userEvent.setup();
+      renderAdminChapters();
+
+      await user.click(screen.getByRole('button', { name: /add chapter/i }));
+      await user.type(screen.getByRole('textbox', { name: 'Title' }), 'Draft title');
+      await user.click(screen.getByRole('button', { name: /^Cancel$/ }));
+
+      // MUI's Dialog marks the rest of the app aria-hidden while open, so the
+      // row's Edit button is unreachable until the close transition finishes.
+      const editButton = await screen.findByRole('button', {
+        name: /^Edit Welcome to Amateur Radio$/,
+      });
+      await user.click(editButton);
+
+      expect(screen.getByRole('textbox', { name: 'Title' })).toHaveValue(
+        'Welcome to Amateur Radio'
+      );
     });
 
     it('shows current license type in add dialog', async () => {
@@ -395,7 +437,7 @@ describe('AdminChapters', () => {
       await user.click(screen.getByRole('button', { name: /^Edit Welcome to Amateur Radio$/ }));
 
       const detailsTab = screen.getByRole('tab', { name: /details/i });
-      expect(detailsTab).toHaveAttribute('data-state', 'active');
+      expect(detailsTab).toHaveAttribute('aria-selected', 'true');
     });
 
     it('shows chapter title in dialog header', async () => {
