@@ -146,6 +146,13 @@ export const queryKeys = {
     /** Single topic by slug */
     detail: (slug: string) => ['topic', slug] as const,
 
+    /**
+     * Prefix for every topic detail — use when a write could affect any of
+     * them and the slug is not to hand. Note this is NOT a prefix of .all(),
+     * which is ['topics']; the two have to be invalidated separately.
+     */
+    detailRoot: ['topic'] as const,
+
     /** Topic content from storage (deprecated) */
     content: (contentPath: string | null | undefined) =>
       ['topic-content', contentPath] as const,
