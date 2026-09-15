@@ -1,14 +1,19 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+import { Calendar } from "lucide-react";
 import { Question, useQuestions } from "@/hooks/useQuestions";
-import { QuestionCard } from "@/components/QuestionCard";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, ArrowRight, Trophy, XCircle, Loader2, Calendar } from "lucide-react";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { MotionBox } from "@/components/ohp/MotionBox";
 import { PageContainer } from "@/components/ohp/PageContainer";
+import { AnswerReviewDetail } from "@/components/results/AnswerReviewDetail";
+import { AnswerReviewList } from "@/components/results/AnswerReviewList";
+import { ScoreBanner } from "@/components/results/ScoreBanner";
 
 interface TestResultReviewProps {
   testResultId: string;
@@ -59,19 +64,27 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
 
   if (resultLoading || attemptsLoading || !allQuestions) {
     return (
-      <PageContainer width="narrow" className="flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" role="status" aria-label="Loading results" />
+      <PageContainer
+        width="narrow"
+        sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        <CircularProgress size={32} role="status" aria-label="Loading results" />
       </PageContainer>
     );
   }
 
   if (!testResult || !attempts) {
     return (
-      <PageContainer width="narrow" className="flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-destructive mb-4">Test result not found</p>
-          <Button onClick={onBack}>Go Back</Button>
-        </div>
+      <PageContainer
+        width="narrow"
+        sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        <Box sx={{ textAlign: "center" }}>
+          <Typography sx={{ color: "error.main", mb: 2 }}>Test result not found</Typography>
+          <Button variant="contained" onClick={onBack}>
+            Go Back
+          </Button>
+        </Box>
       </PageContainer>
     );
   }
@@ -98,170 +111,85 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
     const question = questions[reviewIndex];
     return (
       <PageContainer width="standard">
-        <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => setReviewIndex(null)}
-            className="gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Results
-          </Button>
-        </div>
-
-        <QuestionCard
+        <AnswerReviewDetail
           question={question}
           selectedAnswer={answers[question.id] || null}
-          onSelectAnswer={() => {}}
-          showResult={true}
+          index={reviewIndex}
+          total={questions.length}
+          onBack={() => setReviewIndex(null)}
+          onPrev={() => setReviewIndex(Math.max(0, reviewIndex - 1))}
+          onNext={() => setReviewIndex(Math.min(questions.length - 1, reviewIndex + 1))}
           enableGlossaryHighlight
           onTopicClick={navigateToTopic}
         />
-
-        <div className="mt-8 flex justify-between">
-          <Button
-            variant="outline"
-            onClick={() => setReviewIndex(Math.max(0, reviewIndex - 1))}
-            disabled={reviewIndex === 0}
-            className="gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() =>
-              setReviewIndex(Math.min(questions.length - 1, reviewIndex + 1))
-            }
-            disabled={reviewIndex === questions.length - 1}
-            className="gap-2"
-          >
-            Next
-            <ArrowRight className="w-4 h-4" />
-          </Button>
-        </div>
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer width="narrow" radioWaveBg className="flex flex-col h-full" contentClassName="flex flex-col flex-1 overflow-hidden">
-
-          {/* Result Header - Fixed */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className={cn(
-              "p-6 rounded-2xl border-2 mb-4 shrink-0",
-              passed
-                ? "bg-success/10 border-success/30"
-                : "bg-destructive/10 border-destructive/30"
-            )}
+    <PageContainer
+      width="narrow"
+      radioWaveBg
+      sx={{ display: "flex", flexDirection: "column", height: "100%" }}
+      contentSx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+    >
+      <ScoreBanner
+        passed={passed}
+        correctCount={correctCount}
+        totalQuestions={totalQuestions}
+        percentage={percentage}
+        size="compact"
+        meta={
+          <Box
+            sx={{ display: "flex", alignItems: "center", gap: 1, color: "text.secondary", mb: 2 }}
           >
-            {/* Date */}
-            <div className="flex items-center gap-2 text-muted-foreground mb-4">
-              <Calendar className="w-4 h-4" />
-              <span className="text-sm">
-                {completedAt.toLocaleDateString()} at {completedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
+            <Box component={Calendar} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+            <Box component="span" sx={{ fontSize: "0.875rem" }}>
+              {completedAt.toLocaleDateString()} at{" "}
+              {completedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </Box>
+          </Box>
+        }
+      />
 
-            {/* Status and Score Display - All in one row */}
-            <div className="flex items-center gap-6">
-              {/* Pass/Fail Status */}
-              <div className="flex items-center gap-3">
-                {passed ? (
-                  <Trophy className="w-10 h-10 text-success" />
-                ) : (
-                  <XCircle className="w-10 h-10 text-destructive" />
-                )}
-                <h1
-                  className={cn(
-                    "text-2xl font-mono font-bold",
-                    passed ? "text-success" : "text-destructive"
-                  )}
-                >
-                  {passed ? "PASSED" : "FAILED"}
-                </h1>
-              </div>
-
-              <div className="w-px h-12 bg-border" />
-
-              {/* Metrics */}
-              <div className="flex items-center gap-6 flex-1">
-                <div className="text-center">
-                  <p className="text-3xl font-mono font-bold text-foreground">
-                    {correctCount}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Correct</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-3xl font-mono font-bold text-foreground">
-                    {totalQuestions - correctCount}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Incorrect</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-3xl font-mono font-bold text-foreground">
-                    {percentage}%
-                  </p>
-                  <p className="text-xs text-muted-foreground">Score</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Review Section - Scrollable */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-card border border-border rounded-xl p-6 flex flex-col flex-1 overflow-hidden min-h-0"
+      <MotionBox
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+      >
+        <Paper
+          variant="outlined"
+          sx={{
+            borderRadius: 1,
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            minHeight: 0,
+            overflow: "hidden",
+          }}
+        >
+          <Typography
+            component="h2"
+            sx={{
+              fontSize: "1.25rem",
+              fontFamily: "monospace",
+              fontWeight: 700,
+              mb: 2,
+              flexShrink: 0,
+            }}
           >
-            <h2 className="text-xl font-mono font-bold text-foreground mb-4 shrink-0">
-              Review Your Answers
-            </h2>
-
-            <div className="space-y-2 overflow-y-auto flex-1 min-h-0 pr-2">
-              {questions.map((q, idx) => {
-                const isCorrect = answers[q.id] === q.correctAnswer;
-                return (
-                  <button
-                    key={q.id}
-                    onClick={() => setReviewIndex(idx)}
-                    className={cn(
-                      "w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left",
-                      isCorrect
-                        ? "border-success/30 bg-success/5 hover:bg-success/10"
-                        : "border-destructive/30 bg-destructive/5 hover:bg-destructive/10"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-mono font-bold shrink-0",
-                        isCorrect
-                          ? "bg-success text-success-foreground"
-                          : "bg-destructive text-destructive-foreground"
-                      )}
-                    >
-                      {idx + 1}
-                    </span>
-                    <span className="flex-1 text-sm text-muted-foreground truncate">
-                      {q.displayName}: {q.question.substring(0, 60)}...
-                    </span>
-                    <span
-                      className={cn(
-                        "text-xs font-mono shrink-0",
-                        isCorrect ? "text-success" : "text-destructive"
-                      )}
-                    >
-                      {isCorrect ? "✓" : "✗"}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
+            Review Your Answers
+          </Typography>
+          <AnswerReviewList
+            questions={questions}
+            answers={answers}
+            onSelect={setReviewIndex}
+            scrollable
+          />
+        </Paper>
+      </MotionBox>
     </PageContainer>
   );
 }
