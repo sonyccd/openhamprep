@@ -65,6 +65,7 @@ vi.mock('sonner', () => ({
 }));
 
 import { toast } from 'sonner';
+import { muiWrapper } from '@/test/utils/testWrappers';
 
 // Sample topic data
 const mockTopic: Topic = {
@@ -117,7 +118,8 @@ describe('TopicEditor', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <TopicEditor topic={topic} onBack={mockOnBack} />
-      </QueryClientProvider>
+      </QueryClientProvider>,
+      { wrapper: muiWrapper }
     );
   };
 
@@ -295,7 +297,8 @@ describe('TopicEditor', () => {
       render(
         <QueryClientProvider client={queryClient}>
           <TopicEditor topic={mockTopic} onBack={mockOnBack} />
-        </QueryClientProvider>
+        </QueryClientProvider>,
+        { wrapper: muiWrapper }
       );
 
       // Wait for tabs to be available
@@ -370,13 +373,23 @@ describe('TopicEditor', () => {
       expect(screen.getByText('Extra')).toBeInTheDocument();
     });
 
+    /**
+     * The heading names the fieldset via aria-labelledby rather than a second
+     * visible legend. Without one or the other the group has no accessible
+     * name, and someone arriving mid-group hears only "Technician".
+     */
+    it('should name the license checkbox group from its heading', async () => {
+      await setupSettingsTab();
+      expect(screen.getByRole('group', { name: 'License Types' })).toBeInTheDocument();
+    });
+
     it('should have correct license types checked', async () => {
       await setupSettingsTab();
-      const checkboxes = screen.getAllByRole('checkbox');
-      // First two checkboxes should be checked (Technician and General)
-      expect(checkboxes[0]).toHaveAttribute('data-state', 'checked');
-      expect(checkboxes[1]).toHaveAttribute('data-state', 'checked');
-      expect(checkboxes[2]).toHaveAttribute('data-state', 'unchecked');
+      // Asking by name rather than by index, and reading real checkedness
+      // rather than Radix's data-state attribute.
+      expect(screen.getByRole('checkbox', { name: 'Technician' })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: 'General' })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: 'Extra' })).not.toBeChecked();
     });
 
     it('should display display order input', async () => {
@@ -562,7 +575,8 @@ describe('TopicEditor', () => {
       render(
         <QueryClientProvider client={queryClient}>
           <TopicEditor topic={mockTopic} onBack={mockOnBack} />
-        </QueryClientProvider>
+        </QueryClientProvider>,
+        { wrapper: muiWrapper }
       );
 
       await waitFor(() => {
@@ -673,7 +687,7 @@ describe('TopicEditor', () => {
       });
 
       // Find and click the confirm button in the dialog (role="alertdialog" content)
-      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: /delete topic/i });
+      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' });
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
@@ -724,7 +738,7 @@ describe('TopicEditor', () => {
         expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
       });
 
-      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: /delete topic/i });
+      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' });
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
@@ -775,7 +789,7 @@ describe('TopicEditor', () => {
         expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
       });
 
-      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: /delete topic/i });
+      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' });
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
@@ -825,7 +839,7 @@ describe('TopicEditor', () => {
         expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
       });
 
-      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: /delete topic/i });
+      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' });
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
@@ -881,7 +895,7 @@ describe('TopicEditor', () => {
         expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
       });
 
-      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: /delete topic/i });
+      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' });
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
@@ -938,7 +952,7 @@ describe('TopicEditor', () => {
         expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
       });
 
-      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: /delete topic/i });
+      const confirmButton = within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' });
       fireEvent.click(confirmButton);
 
       // Wait a tick for the mutation to start

@@ -1,503 +1,231 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+import Typography from "@mui/material/Typography";
 import {
   ArrowLeft,
-  Save,
-  Loader2,
-  Settings,
-  FileText,
-  Link as LinkIcon,
   Eye,
   EyeOff,
+  FileText,
   HelpCircle,
-  Trash2,
+  Link as LinkIcon,
+  Settings,
 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Checkbox } from "@/components/ui/checkbox";
+import { tokenAlpha } from "@/theme/muiTheme";
 import { Topic, useTopicQuestions } from "@/hooks/useTopics";
 import { TopicMarkdownEditor } from "./TopicMarkdownEditor";
 import { TopicResourceManager } from "./TopicResourceManager";
 import { TopicQuestionManager } from "./TopicQuestionManager";
-import { EditHistoryViewer, EditHistoryEntry } from "./EditHistoryViewer";
+import type { EditHistoryEntry } from "./EditHistoryViewer";
+import { ConfirmDeleteDialog } from "./shared/ConfirmDeleteDialog";
+import { TopicSettingsTab, type TopicSettings } from "./topics/TopicSettingsTab";
+import { useTopicEditor } from "./topics/useTopicEditor";
 
 interface TopicEditorProps {
   topic: Topic;
   onBack: () => void;
 }
 
-const LICENSE_OPTIONS = [
-  { value: "technician", label: "Technician" },
-  { value: "general", label: "General" },
-  { value: "extra", label: "Extra" },
-];
+const TAB_IDS = ["content", "questions", "resources", "settings"] as const;
 
 export function TopicEditor({ topic, onBack }: TopicEditorProps) {
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("content");
-
-  // Settings form state
-  const [title, setTitle] = useState(topic.title);
-  const [slug, setSlug] = useState(topic.slug);
-  const [description, setDescription] = useState(topic.description || "");
-  const [licenseTypes, setLicenseTypes] = useState<string[]>(topic.license_types || []);
-  const [isPublished, setIsPublished] = useState(topic.is_published);
-  const [displayOrder, setDisplayOrder] = useState(topic.display_order || 0);
+  const [activeTab, setActiveTab] = useState(0);
   const [hasSettingsChanges, setHasSettingsChanges] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  // Fetch linked questions count
+  const [settings, setSettings] = useState<TopicSettings>({
+    title: topic.title,
+    slug: topic.slug,
+    description: topic.description || "",
+    licenseTypes: topic.license_types || [],
+    isPublished: topic.is_published,
+    displayOrder: topic.display_order || 0,
+  });
+
   const { data: linkedQuestions } = useTopicQuestions(topic.id);
-
-  // Fetch fresh topic data with resources
-  const { data: freshTopic } = useQuery({
-    queryKey: ["admin-topic-detail", topic.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("topics")
-        .select(`
-          *,
-          subelements:topic_subelements(id, topic_id, subelement),
-          resources:topic_resources(id, topic_id, resource_type, title, url, storage_path, description, display_order, created_at)
-        `)
-        .eq("id", topic.id)
-        .single();
-
-      if (error) throw error;
-      return data as Topic;
-    },
-    initialData: topic,
+  const { freshTopic, updateSettingsMutation, deleteTopicMutation } = useTopicEditor({
+    topic,
+    settings,
+    onSaved: () => setHasSettingsChanges(false),
+    onDeleted: onBack,
   });
 
-  const updateSettingsMutation = useMutation({
-    mutationFn: async () => {
-      if (!user) throw new Error('Not authenticated');
-      const changes: Record<string, { from: unknown; to: unknown }> = {};
-
-      if (topic.title !== title.trim()) {
-        changes.title = { from: topic.title, to: title.trim() };
-      }
-      if (topic.slug !== slug.trim()) {
-        changes.slug = { from: topic.slug, to: slug.trim() };
-      }
-      if (topic.description !== description.trim()) {
-        changes.description = { from: topic.description, to: description.trim() };
-      }
-      if (JSON.stringify(topic.license_types) !== JSON.stringify(licenseTypes)) {
-        changes.license_types = { from: topic.license_types, to: licenseTypes };
-      }
-      if (topic.is_published !== isPublished) {
-        changes.is_published = { from: topic.is_published, to: isPublished };
-      }
-      if (topic.display_order !== displayOrder) {
-        changes.display_order = { from: topic.display_order, to: displayOrder };
-      }
-
-      const historyEntry: EditHistoryEntry = {
-        user_id: user.id,
-        user_email: user.email || "Unknown",
-        action: "updated",
-        changes,
-        timestamp: new Date().toISOString(),
-      };
-
-      const existingHistory = (topic.edit_history as EditHistoryEntry[]) || [];
-
-      const { error } = await supabase
-        .from("topics")
-        .update({
-          title: title.trim(),
-          slug: slug.trim().toLowerCase().replace(/\s+/g, "-"),
-          description: description.trim() || null,
-          license_types: licenseTypes,
-          is_published: isPublished,
-          display_order: displayOrder,
-          content_path: `articles/${slug.trim().toLowerCase().replace(/\s+/g, "-")}.md`,
-          edit_history: JSON.parse(JSON.stringify([...existingHistory, historyEntry])),
-        })
-        .eq("id", topic.id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-topics"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-topic-detail", topic.id] });
-      queryClient.invalidateQueries({ queryKey: ["topics"] });
-      setHasSettingsChanges(false);
-      toast.success("Settings saved successfully");
-    },
-    onError: (error) => {
-      toast.error("Failed to save settings: " + error.message);
-    },
-  });
-
-  const deleteTopicMutation = useMutation({
-    mutationFn: async () => {
-      // First, delete the markdown content from storage if it exists
-      const contentPath = freshTopic?.content_path || topic.content_path;
-      if (contentPath) {
-        const { error: storageError } = await supabase.storage
-          .from("topic-content")
-          .remove([contentPath]);
-
-        // Log but don't fail if storage deletion fails (file may not exist)
-        if (storageError) {
-          console.warn("Failed to delete topic content from storage:", storageError.message);
-        }
-      }
-
-      // Then delete the database record (cascades to related tables)
-      const { error } = await supabase
-        .from("topics")
-        .delete()
-        .eq("id", topic.id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-topics"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-topic-detail", topic.id] });
-      queryClient.invalidateQueries({ queryKey: ["topics"] });
-      toast.success("Topic deleted successfully");
-      onBack(); // Navigate back to the list
-    },
-    onError: (error) => {
-      toast.error("Failed to delete topic: " + error.message);
-    },
-  });
-
-  const handleDeleteTopic = () => {
-    deleteTopicMutation.mutate();
-  };
-
-  const handleSettingsChange = () => {
+  const changeSettings = (next: TopicSettings) => {
+    setSettings(next);
     setHasSettingsChanges(true);
   };
 
-  const toggleLicenseType = (type: string) => {
-    if (licenseTypes.includes(type)) {
-      setLicenseTypes(licenseTypes.filter((t) => t !== type));
-    } else {
-      setLicenseTypes([...licenseTypes, type]);
-    }
-    handleSettingsChange();
-  };
+  const isPublished = freshTopic?.is_published ?? topic.is_published;
+  const questionCount = linkedQuestions?.length || 0;
+  // Falls back to the prop like the title and slug above, so the count is right
+  // on first paint instead of appearing once the detail query lands.
+  const resourceCount = (freshTopic?.resources ?? topic.resources)?.length || 0;
 
-  const generateSlug = () => {
-    const newSlug = title
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, "")
-      .replace(/\s+/g, "-");
-    setSlug(newSlug);
-    handleSettingsChange();
-  };
+  const panelProps = (index: number) => ({
+    role: "tabpanel" as const,
+    hidden: activeTab !== index,
+    id: `topic-panel-${TAB_IDS[index]}`,
+    "aria-labelledby": `topic-tab-${TAB_IDS[index]}`,
+  });
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6 shrink-0">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={onBack} className="-ml-2">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 3,
+          flexShrink: 0,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Button
+            variant="text"
+            size="small"
+            onClick={onBack}
+            startIcon={<Box component={ArrowLeft} sx={{ width: 16, height: 16 }} />}
+            sx={{ ml: -1, color: "text.primary" }}
+          >
             Back
           </Button>
-          <div>
-            <h2 className="text-xl font-bold text-foreground">{freshTopic?.title || topic.title}</h2>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-sm text-muted-foreground">/{freshTopic?.slug || topic.slug}</span>
-              {(freshTopic?.is_published ?? topic.is_published) ? (
-                <Badge variant="default" className="bg-success/20 text-success text-xs">
-                  <Eye className="w-3 h-3 mr-1" />
-                  Published
-                </Badge>
+          <Box>
+            <Typography component="h2" sx={{ fontSize: "1.25rem", fontWeight: 700 }}>
+              {freshTopic?.title || topic.title}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
+              <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
+                /{freshTopic?.slug || topic.slug}
+              </Typography>
+              {isPublished ? (
+                <Chip
+                  size="small"
+                  icon={<Box component={Eye} sx={{ width: 12, height: 12 }} />}
+                  label="Published"
+                  sx={{
+                    fontSize: "0.75rem",
+                    color: "success.main",
+                    bgcolor: (t) => tokenAlpha(t.vars.palette.success.main, 20),
+                    "& .MuiChip-icon": { color: "success.main" },
+                  }}
+                />
               ) : (
-                <Badge variant="secondary" className="text-xs">
-                  <EyeOff className="w-3 h-3 mr-1" />
-                  Draft
-                </Badge>
+                <Chip
+                  size="small"
+                  icon={<Box component={EyeOff} sx={{ width: 12, height: 12 }} />}
+                  label="Draft"
+                  sx={{ fontSize: "0.75rem" }}
+                />
               )}
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-        <TabsList className="shrink-0 mb-4">
-          <TabsTrigger value="content" className="gap-2">
-            <FileText className="w-4 h-4" />
-            Content
-          </TabsTrigger>
-          <TabsTrigger value="questions" className="gap-2">
-            <HelpCircle className="w-4 h-4" />
-            Questions
-            {(linkedQuestions?.length || 0) > 0 && (
-              <Badge variant="secondary" className="ml-1 text-xs">
-                {linkedQuestions?.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="resources" className="gap-2">
-            <LinkIcon className="w-4 h-4" />
-            Resources
-            {(freshTopic?.resources?.length || 0) > 0 && (
-              <Badge variant="secondary" className="ml-1 text-xs">
-                {freshTopic?.resources?.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="gap-2">
-            <Settings className="w-4 h-4" />
-            Settings
-          </TabsTrigger>
-        </TabsList>
+      <Tabs
+        value={activeTab}
+        onChange={(_event, next) => setActiveTab(next)}
+        aria-label="Topic sections"
+        sx={{ flexShrink: 0, mb: 2, borderBottom: "1px solid", borderColor: "divider" }}
+      >
+        <Tab
+          label="Content"
+          icon={<Box component={FileText} sx={{ width: 16, height: 16 }} />}
+          iconPosition="start"
+          id="topic-tab-content"
+          aria-controls="topic-panel-content"
+        />
+        <Tab
+          label={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              Questions
+              {questionCount > 0 && <Chip size="small" label={questionCount} />}
+            </Box>
+          }
+          icon={<Box component={HelpCircle} sx={{ width: 16, height: 16 }} />}
+          iconPosition="start"
+          id="topic-tab-questions"
+          aria-controls="topic-panel-questions"
+        />
+        <Tab
+          label={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              Resources
+              {resourceCount > 0 && <Chip size="small" label={resourceCount} />}
+            </Box>
+          }
+          icon={<Box component={LinkIcon} sx={{ width: 16, height: 16 }} />}
+          iconPosition="start"
+          id="topic-tab-resources"
+          aria-controls="topic-panel-resources"
+        />
+        <Tab
+          label="Settings"
+          icon={<Box component={Settings} sx={{ width: 16, height: 16 }} />}
+          iconPosition="start"
+          id="topic-tab-settings"
+          aria-controls="topic-panel-settings"
+        />
+      </Tabs>
 
-        {/* Content Tab */}
-        <TabsContent value="content" className="flex-1 min-h-0 mt-0">
+      <Box {...panelProps(0)} sx={{ flex: 1, minHeight: 0 }}>
+        {activeTab === 0 && (
           <TopicMarkdownEditor
             topicId={topic.id}
             topicSlug={freshTopic?.slug || topic.slug}
             initialContent={freshTopic?.content || topic.content}
           />
-        </TabsContent>
+        )}
+      </Box>
 
-        {/* Questions Tab */}
-        <TabsContent value="questions" className="flex-1 min-h-0 mt-0 overflow-y-auto">
-          <TopicQuestionManager topicId={topic.id} />
-        </TabsContent>
+      <Box {...panelProps(1)} sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+        {activeTab === 1 && <TopicQuestionManager topicId={topic.id} />}
+      </Box>
 
-        {/* Resources Tab */}
-        <TabsContent value="resources" className="flex-1 min-h-0 mt-0 overflow-y-auto">
-          <TopicResourceManager
-            topicId={topic.id}
-            resources={freshTopic?.resources || []}
+      <Box {...panelProps(2)} sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+        {activeTab === 2 && (
+          <TopicResourceManager topicId={topic.id} resources={freshTopic?.resources || []} />
+        )}
+      </Box>
+
+      <Box {...panelProps(3)} sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+        {activeTab === 3 && (
+          <TopicSettingsTab
+            value={settings}
+            onChange={changeSettings}
+            onGenerateSlug={() =>
+              changeSettings({
+                ...settings,
+                slug: settings.title
+                  .toLowerCase()
+                  .replace(/[^\w\s-]/g, "")
+                  .replace(/\s+/g, "-"),
+              })
+            }
+            editHistory={(freshTopic?.edit_history as EditHistoryEntry[]) || []}
+            hasChanges={hasSettingsChanges}
+            isSaving={updateSettingsMutation.isPending}
+            isDeleting={deleteTopicMutation.isPending}
+            onSave={() => updateSettingsMutation.mutate()}
+            onDelete={() => setShowDeleteDialog(true)}
           />
-        </TabsContent>
+        )}
+      </Box>
 
-        {/* Settings Tab */}
-        <TabsContent value="settings" className="flex-1 min-h-0 mt-0 overflow-y-auto">
-          <div className="space-y-6 max-w-2xl">
-            {/* Basic Info */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Basic Information</h3>
-              <div>
-                <Label>Title</Label>
-                <Input
-                  value={title}
-                  onChange={(e) => {
-                    setTitle(e.target.value);
-                    handleSettingsChange();
-                  }}
-                  placeholder="Topic title"
-                />
-              </div>
-              <div>
-                <Label>Slug (URL-friendly)</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={slug}
-                    onChange={(e) => {
-                      setSlug(e.target.value);
-                      handleSettingsChange();
-                    }}
-                    placeholder="topic-slug"
-                  />
-                  <Button type="button" variant="outline" size="sm" onClick={generateSlug}>
-                    Generate
-                  </Button>
-                </div>
-              </div>
-              <div>
-                <Label>Description</Label>
-                <Textarea
-                  value={description}
-                  onChange={(e) => {
-                    setDescription(e.target.value);
-                    handleSettingsChange();
-                  }}
-                  placeholder="Brief description for the topic card..."
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Visibility */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Visibility</h3>
-              <div className="flex items-center gap-3">
-                <Switch
-                  checked={isPublished}
-                  onCheckedChange={(checked) => {
-                    setIsPublished(checked);
-                    handleSettingsChange();
-                  }}
-                />
-                <div>
-                  <Label>Published</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {isPublished
-                      ? "This topic is visible to all users"
-                      : "This topic is only visible to admins"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* License Types */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">License Types</h3>
-              <p className="text-sm text-muted-foreground">
-                Select which license classes this topic applies to
-              </p>
-              <div className="flex gap-4">
-                {LICENSE_OPTIONS.map((opt) => (
-                  <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox
-                      checked={licenseTypes.includes(opt.value)}
-                      onCheckedChange={() => toggleLicenseType(opt.value)}
-                    />
-                    <span className="text-sm">{opt.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Display Order */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Display Order</h3>
-              <div>
-                <Label>Order</Label>
-                <Input
-                  type="number"
-                  value={displayOrder}
-                  onChange={(e) => {
-                    setDisplayOrder(parseInt(e.target.value) || 0);
-                    handleSettingsChange();
-                  }}
-                  className="w-32"
-                />
-                <p className="text-sm text-muted-foreground mt-1">
-                  Lower numbers appear first in the topic list
-                </p>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Edit History */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Edit History</h3>
-              <EditHistoryViewer
-                history={(freshTopic?.edit_history as EditHistoryEntry[]) || []}
-              />
-            </div>
-
-            <Separator />
-
-            {/* Danger Zone */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-destructive">Danger Zone</h3>
-              <div className="border border-destructive/30 rounded-lg p-4 bg-destructive/5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">Delete this topic</p>
-                    <p className="text-sm text-muted-foreground">
-                      This will permanently remove the topic, all linked resources, and user progress data.
-                    </p>
-                  </div>
-                  <Button
-                    variant="destructive"
-                    onClick={() => setShowDeleteDialog(true)}
-                    disabled={deleteTopicMutation.isPending}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Topic
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Save Button */}
-            <div className="flex justify-end pt-4">
-              <Button
-                onClick={() => updateSettingsMutation.mutate()}
-                disabled={!hasSettingsChanges || updateSettingsMutation.isPending}
-              >
-                {updateSettingsMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4 mr-2" />
-                )}
-                Save Settings
-              </Button>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="border-destructive/20">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 className="w-5 h-5 text-destructive" />
-              Delete Topic
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-left">
-              Are you sure you want to delete <span className="font-semibold text-foreground">"{topic.title}"</span>?
-              <span className="block mt-2 text-destructive/80">
-                This will permanently remove the topic, all linked resources, and user progress data. This action cannot be undone.
-              </span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteTopicMutation.isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteTopic}
-              disabled={deleteTopicMutation.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteTopicMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Topic
-                </>
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+      <ConfirmDeleteDialog
+        open={showDeleteDialog}
+        title="Delete Topic"
+        description={`Are you sure you want to delete "${topic.title}"? This will permanently remove the topic, all linked resources, and user progress data. This action cannot be undone.`}
+        isPending={deleteTopicMutation.isPending}
+        onCancel={() => setShowDeleteDialog(false)}
+        onConfirm={() => {
+          setShowDeleteDialog(false);
+          deleteTopicMutation.mutate();
+        }}
+      />
+    </Box>
   );
 }
