@@ -88,7 +88,6 @@ export function ToolEditDialog({
 
           <EditHistoryViewer
             history={(tool?.edit_history || []) as EditHistoryEntry[]}
-            entityType="tool"
           />
 
           <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>

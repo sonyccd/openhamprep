@@ -1,14 +1,11 @@
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Checkbox from "@mui/material/Checkbox";
-import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import FormGroup from "@mui/material/FormGroup";
-import FormLabel from "@mui/material/FormLabel";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
-import { LICENSE_OPTIONS, generateSlug, type ContentDraft } from "./contentDraft";
+import { generateSlug, type ContentDraft } from "./contentDraft";
+import { LicenseTypeCheckboxes } from "../shared/LicenseTypeCheckboxes";
 
 interface ContentEntityFieldsProps {
   value: ContentDraft;
@@ -35,13 +32,6 @@ interface ContentEntityFieldsProps {
  */
 export function ContentEntityFields({ value, onChange }: ContentEntityFieldsProps) {
   const patch = (fields: Partial<ContentDraft>) => onChange({ ...value, ...fields });
-
-  const toggleLicense = (type: string) =>
-    patch({
-      licenseTypes: value.licenseTypes.includes(type)
-        ? value.licenseTypes.filter((t) => t !== type)
-        : [...value.licenseTypes, type],
-    });
 
   return (
     <Stack spacing={2}>
@@ -90,23 +80,11 @@ export function ContentEntityFields({ value, onChange }: ContentEntityFieldsProp
         fullWidth
       />
 
-      <FormControl component="fieldset" variant="standard">
-        <FormLabel component="legend">License Types</FormLabel>
-        <FormGroup row sx={{ gap: 2, mt: 1 }}>
-          {LICENSE_OPTIONS.map((option) => (
-            <FormControlLabel
-              key={option.value}
-              control={
-                <Checkbox
-                  checked={value.licenseTypes.includes(option.value)}
-                  onChange={() => toggleLicense(option.value)}
-                />
-              }
-              label={option.label}
-            />
-          ))}
-        </FormGroup>
-      </FormControl>
+      <LicenseTypeCheckboxes
+        label="License Types"
+        value={value.licenseTypes}
+        onChange={(licenseTypes) => patch({ licenseTypes })}
+      />
 
       <FormControlLabel
         control={

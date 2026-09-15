@@ -7,11 +7,7 @@ export interface ContentDraft {
   isPublished: boolean;
 }
 
-export const LICENSE_OPTIONS = [
-  { value: "technician", label: "Technician" },
-  { value: "general", label: "General" },
-  { value: "extra", label: "Extra" },
-] as const;
+import { LICENSE_OPTIONS } from "../shared/LicenseTypeCheckboxes";
 
 export const EMPTY_CONTENT_DRAFT: ContentDraft = {
   title: "",
