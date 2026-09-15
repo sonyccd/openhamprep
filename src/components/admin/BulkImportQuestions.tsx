@@ -1,681 +1,194 @@
-import { useState, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { Upload, FileJson, FileSpreadsheet, FileText, Loader2, CheckCircle2, XCircle, AlertTriangle, Download, GitMerge } from "lucide-react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import Typography from "@mui/material/Typography";
+import { AlertTriangle, FileText, GitMerge, Upload } from "lucide-react";
+import { downloadFile } from "@/lib/downloadFile";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { ConflictResolutionDialog, ConflictItem } from "./ConflictResolutionDialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  ImportQuestion,
-  ValidationResult,
-  TestType,
   TEST_TYPE_PREFIXES,
-  parseCSV,
-  parseJSON,
-  validateQuestions,
   mergeQuestion,
-  ONE_BASED_KEY_WARNING,
+  type ImportQuestion,
+  type TestType,
 } from "@/lib/questionImportParser";
-import { parseNCVECDocument, SyllabusEntry } from "@/lib/ncvecParser";
+import { BulkImportDialog } from "./bulkImport/BulkImportDialog";
+import { ConflictResolutionDialog } from "./bulkImport/ConflictResolutionDialog";
+import { ImportFileDropzone } from "./bulkImport/ImportFileDropzone";
+import { ImportFormatCard, ImportFormatRow } from "./bulkImport/ImportFormatCard";
+import { ImportValidationSummary } from "./bulkImport/ImportValidationSummary";
+import { ImportWarningPanel } from "./bulkImport/ImportWarningPanel";
+import { QuestionImportWarnings } from "./bulkImport/QuestionImportWarnings";
+import { QuestionPreview } from "./bulkImport/QuestionPreview";
+import { exampleQuestionsCSV, exampleQuestionsJSON } from "./bulkImport/questionExamples";
+import { useQuestionImport } from "./bulkImport/useQuestionImport";
 
 interface BulkImportQuestionsProps {
   testType: TestType;
 }
 
-type ImportStep = 'upload' | 'conflicts' | 'importing';
-
 export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
-  const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
-  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
-  const [importProgress, setImportProgress] = useState(0);
-  const [importedCount, setImportedCount] = useState(0);
-  const [skippedCount, setSkippedCount] = useState(0);
-  const [step, setStep] = useState<ImportStep>('upload');
-  const [conflicts, setConflicts] = useState<ConflictItem<ImportQuestion>[]>([]);
-  const [newQuestions, setNewQuestions] = useState<ImportQuestion[]>([]);
-  const [_parsedSyllabus, setParsedSyllabus] = useState<SyllabusEntry[]>([]);
-  const [importWarnings, setImportWarnings] = useState<string[]>([]);
-  const [confirmed, setConfirmed] = useState(false);
-  // Derived: when the file's answer keys look 1-based, gate import behind an
-  // explicit confirmation so a silent shift-by-one can't slip through.
-  const requiresConfirmation = importWarnings.includes(ONE_BASED_KEY_WARNING);
+  const {
+    isOpen,
+    setOpen,
+    fileInputRef,
+    isProcessing,
+    isImporting,
+    validationResult,
+    importProgress,
+    importedCount,
+    skippedCount,
+    step,
+    setStep,
+    conflicts,
+    newQuestions,
+    importWarnings,
+    requiresConfirmation,
+    confirmed,
+    setConfirmed,
+    handleFileSelect,
+    handleConflictsResolved,
+    runImport,
+  } = useQuestionImport(testType);
 
   const prefix = TEST_TYPE_PREFIXES[testType];
-
-  const checkForConflicts = async (questions: ImportQuestion[]) => {
-    // Note: After UUID migration, question IDs (e.g., "T1A01") are stored in display_name
-    const displayNames = questions.map(q => q.id);
-
-    const { data: existingQuestions } = await supabase
-      .from('questions')
-      .select('*')
-      .in('display_name', displayNames);
-
-    if (!existingQuestions || existingQuestions.length === 0) {
-      return { conflicts: [], newQuestions: questions };
-    }
-
-    // Map by display_name (the question ID like "T1A01")
-    const existingMap = new Map(existingQuestions.map(q => [q.display_name, q]));
-    const conflictList: ConflictItem<ImportQuestion>[] = [];
-    const newList: ImportQuestion[] = [];
-
-    for (const q of questions) {
-      const existing = existingMap.get(q.id);
-      if (existing) {
-        conflictList.push({
-          id: q.id,
-          existing: {
-            id: existing.display_name, // Use display_name as the logical ID
-            question: existing.question,
-            options: existing.options as string[],
-            correct_answer: existing.correct_answer,
-            subelement: existing.subelement,
-            question_group: existing.question_group,
-            explanation: existing.explanation || undefined,
-            links: (existing.links as unknown[]) || [],
-          },
-          incoming: q,
-          resolution: 'keep', // default to keep existing
-        });
-      } else {
-        newList.push(q);
-      }
-    }
-
-    return { conflicts: conflictList, newQuestions: newList };
-  };
-
-  // File validation constants
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-  const ALLOWED_TYPES: Record<string, string> = {
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
-    'text/csv': '.csv',
-    'application/json': '.json',
-    'text/plain': '.csv', // Some systems report CSV as text/plain
-  };
-
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // File size validation
-    if (file.size > MAX_FILE_SIZE) {
-      toast.error('File too large. Maximum size is 10MB');
-      return;
-    }
-
-    // File extension validation (required)
-    const allowedExtensions = ['.csv', '.json', '.docx'];
-    const hasValidExtension = allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
-
-    if (!hasValidExtension) {
-      toast.error('Invalid file extension. Please upload a .csv, .json, or .docx file');
-      return;
-    }
-
-    // MIME type validation (required when browser provides it)
-    // Some browsers may return empty string for certain file types
-    const hasValidMimeType = Object.keys(ALLOWED_TYPES).includes(file.type);
-    if (file.type !== '' && !hasValidMimeType) {
-      toast.error('Invalid file type detected. Please upload a valid CSV, JSON, or DOCX file');
-      return;
-    }
-
-    setIsProcessing(true);
-    setValidationResult(null);
-    setConflicts([]);
-    setNewQuestions([]);
-    setParsedSyllabus([]);
-    setImportWarnings([]);
-    setConfirmed(false);
-
-    try {
-      let questions: ImportQuestion[] = [];
-      const parseWarnings: string[] = [];
-
-      if (file.name.toLowerCase().endsWith('.docx')) {
-        // Parse NCVEC Word document
-        const { questions: ncvecQuestions, syllabus, warnings } = await parseNCVECDocument(file);
-        questions = ncvecQuestions;
-        setParsedSyllabus(syllabus);
-        parseWarnings.push(...warnings);
-      } else if (file.name.toLowerCase().endsWith('.json')) {
-        const content = await file.text();
-        questions = parseJSON(content, parseWarnings);
-      } else if (file.name.toLowerCase().endsWith('.csv')) {
-        const content = await file.text();
-        questions = parseCSV(content, parseWarnings);
-      } else {
-        toast.error('Please upload a CSV, JSON, or DOCX file');
-        return;
-      }
-
-      setImportWarnings(parseWarnings);
-      if (parseWarnings.length > 0) {
-        toast.warning(`Parsed with ${parseWarnings.length} warning(s) — see details below`);
-      }
-
-      if (questions.length === 0) {
-        toast.error('No valid questions found in file');
-        return;
-      }
-
-      const result = validateQuestions(questions, testType);
-      setValidationResult(result);
-
-      if (result.valid.length === 0) {
-        toast.error('No valid questions to import');
-      } else {
-        // Check for conflicts
-        const { conflicts: conflictList, newQuestions: newList } = await checkForConflicts(result.valid);
-        setConflicts(conflictList);
-        setNewQuestions(newList);
-
-        if (conflictList.length > 0) {
-          toast.info(`Found ${conflictList.length} conflicts and ${newList.length} new questions`);
-        } else if (result.errors.length > 0) {
-          toast.warning(`Found ${result.valid.length} valid questions and ${result.errors.length} with errors`);
-        } else {
-          toast.success(`${result.valid.length} questions ready to import`);
-        }
-      }
-    } catch (error: unknown) {
-      toast.error('Failed to parse file: ' + (error instanceof Error ? error.message : String(error)));
-    } finally {
-      setIsProcessing(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-
-  const handleConflictsResolved = async (resolvedConflicts: ConflictItem<ImportQuestion>[]) => {
-    setConflicts(resolvedConflicts);
-    setStep('importing');
-    await handleImport(resolvedConflicts);
-  };
-
-  const handleImport = async (resolvedConflicts?: ConflictItem<ImportQuestion>[]) => {
-    // Defense in depth: the action buttons are already disabled until the
-    // 1-based confirmation is checked, but never let any other call path import
-    // a suspected-1-based file without that explicit acknowledgement.
-    if (requiresConfirmation && !confirmed) return;
-
-    const conflictsToProcess = resolvedConflicts || conflicts;
-
-    setIsImporting(true);
-    setImportProgress(0);
-    setImportedCount(0);
-    setSkippedCount(0);
-
-    const questionsToImport: ImportQuestion[] = [...newQuestions];
-
-    // Process conflicts based on resolution
-    for (const conflict of conflictsToProcess) {
-      if (conflict.resolution === 'keep') {
-        // Skip - keep existing
-        continue;
-      } else if (conflict.resolution === 'replace') {
-        questionsToImport.push(conflict.incoming);
-      } else if (conflict.resolution === 'merge') {
-        questionsToImport.push(mergeQuestion(conflict.existing, conflict.incoming));
-      }
-    }
-
-    const total = questionsToImport.length;
-    let imported = 0;
-    let skipped = 0;
-    const failedQuestions: { id: string; error: string }[] = [];
-
-    if (total === 0) {
-      setIsImporting(false);
-      toast.info('No questions to import (all conflicts set to keep existing)');
-      resetState();
-      setIsOpen(false);
-      return;
-    }
-
-    // Import in batches of 50 for better performance
-    const batchSize = 50;
-    for (let i = 0; i < total; i += batchSize) {
-      const batch = questionsToImport.slice(i, i + batchSize);
-
-      for (const q of batch) {
-        try {
-          // Build the upsert object
-          // Note: After UUID migration, 'id' is UUID and 'display_name' is the question ID (e.g., "T1A01")
-          // We use onConflict: 'display_name' to handle updates to existing questions
-          const upsertData: Record<string, unknown> = {
-            display_name: q.id, // Question ID like "T1A01" goes in display_name
-            question: q.question,
-            options: q.options,
-            correct_answer: q.correct_answer,
-            subelement: q.subelement,
-            question_group: q.question_group,
-            explanation: q.explanation || null,
-            links: q.links || [],
-          };
-
-          // Add optional NCVEC fields if present
-          if (q.fcc_reference) {
-            upsertData.fcc_reference = q.fcc_reference;
-          }
-          if (q.figure_reference) {
-            upsertData.figure_reference = q.figure_reference;
-          }
-
-          const { error } = await supabase
-            .from('questions')
-            .upsert(upsertData, { onConflict: 'display_name' });
-
-          if (error) {
-            console.error('Upsert error for question', q.id, ':', error);
-            failedQuestions.push({ id: q.id, error: error.message });
-            skipped++;
-          } else {
-            imported++;
-          }
-        } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-          failedQuestions.push({ id: q.id, error: errorMessage });
-          skipped++;
-        }
-      }
-
-      setImportProgress(Math.round(((i + batch.length) / total) * 100));
-      setImportedCount(imported);
-      setSkippedCount(skipped);
-    }
-
-    queryClient.invalidateQueries({ queryKey: ['admin-questions-full'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-stats-questions'] });
-    queryClient.invalidateQueries({ queryKey: ['questions'] });
-
-    setIsImporting(false);
-
-    const keptCount = conflictsToProcess.filter(c => c.resolution === 'keep').length;
-
-    // Show detailed error info if there were failures
-    if (failedQuestions.length > 0) {
-      const failedIds = failedQuestions.slice(0, 5).map(f => f.id).join(', ');
-      const moreCount = failedQuestions.length > 5 ? ` and ${failedQuestions.length - 5} more` : '';
-      toast.error(`Failed to import: ${failedIds}${moreCount}. Check console for details.`);
-    }
-
-    toast.success(`Imported ${imported} questions${keptCount > 0 ? `, kept ${keptCount} existing` : ''}${skipped > 0 ? `, ${skipped} failed` : ''}`);
-    
-    resetState();
-    setIsOpen(false);
-  };
-
-  const resetState = () => {
-    setValidationResult(null);
-    setImportProgress(0);
-    setImportedCount(0);
-    setSkippedCount(0);
-    setStep('upload');
-    setConflicts([]);
-    setNewQuestions([]);
-    setParsedSyllabus([]);
-    setImportWarnings([]);
-    setConfirmed(false);
-  };
-
-  const downloadExampleCSV = () => {
-    const exampleData = `id,question,option_a,option_b,option_c,option_d,correct_answer,subelement,question_group,explanation
-${prefix}1A01,"What is the purpose of the amateur radio service?","Commercial broadcasting","Emergency communications and self-training","Government communications","Military operations",B,${prefix}1,${prefix}1A,"The amateur radio service exists for emergency communications and self-training in radio communications."
-${prefix}1A02,"Which agency regulates amateur radio in the United States?","FBI","FCC","FAA","EPA",B,${prefix}1,${prefix}1A,"The Federal Communications Commission (FCC) regulates amateur radio in the United States."
-${prefix}1A03,"What is the minimum age requirement for an amateur radio license?","18 years old","21 years old","16 years old","No minimum age",D,${prefix}1,${prefix}1A,"There is no minimum age requirement for an amateur radio license."`;
-    
-    const blob = new Blob([exampleData], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `example_questions_${testType}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const downloadExampleJSON = () => {
-    const exampleData = [
-      {
-        id: `${prefix}1A01`,
-        question: "What is the purpose of the amateur radio service?",
-        options: [
-          "Commercial broadcasting",
-          "Emergency communications and self-training",
-          "Government communications",
-          "Military operations"
-        ],
-        correct_answer: 1,
-        subelement: `${prefix}1`,
-        question_group: `${prefix}1A`,
-        explanation: "The amateur radio service exists for emergency communications and self-training in radio communications."
-      },
-      {
-        id: `${prefix}1A02`,
-        question: "Which agency regulates amateur radio in the United States?",
-        options: ["FBI", "FCC", "FAA", "EPA"],
-        correct_answer: 1,
-        subelement: `${prefix}1`,
-        question_group: `${prefix}1A`,
-        explanation: "The Federal Communications Commission (FCC) regulates amateur radio in the United States."
-      },
-      {
-        id: `${prefix}1A03`,
-        question: "What is the minimum age requirement for an amateur radio license?",
-        options: ["18 years old", "21 years old", "16 years old", "No minimum age"],
-        correct_answer: 3,
-        subelement: `${prefix}1`,
-        question_group: `${prefix}1A`,
-        explanation: "There is no minimum age requirement for an amateur radio license."
-      }
-    ];
-    
-    const blob = new Blob([JSON.stringify(exampleData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `example_questions_${testType}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const renderQuestionPreview = (q: ImportQuestion) => (
-    <div className="text-xs space-y-1">
-      <p className="font-medium line-clamp-2">{q.question}</p>
-      <div className="text-muted-foreground">
-        <p>Options: {q.options.filter(o => o).length}/4</p>
-        <p>Answer: {['A', 'B', 'C', 'D'][q.correct_answer]}</p>
-        <p className={q.explanation ? 'text-success' : 'text-warning'}>
-          Explanation: {q.explanation ? 'Yes' : 'None'}
-        </p>
-        <p className={q.links && q.links.length > 0 ? 'text-success' : 'text-warning'}>
-          Links: {q.links?.length || 0}
-        </p>
-      </div>
-    </div>
-  );
-
-  const renderMergedQuestion = (existing: ImportQuestion, incoming: ImportQuestion) => {
-    const merged = mergeQuestion(existing, incoming);
-    return (
-      <div className="text-xs space-y-1">
-        <p className="font-medium line-clamp-2">{merged.question}</p>
-        <div className="text-muted-foreground">
-          <p>Options: {merged.options.filter(o => o).length}/4</p>
-          <p>Answer: {['A', 'B', 'C', 'D'][merged.correct_answer]}</p>
-          <p className={merged.explanation ? 'text-success' : 'text-warning'}>
-            Explanation: {merged.explanation ? (existing.explanation ? 'Kept' : 'Added') : 'None'}
-          </p>
-          <p className={merged.links && merged.links.length > 0 ? 'text-success' : 'text-warning'}>
-            Links: {merged.links?.length || 0} {existing.links && existing.links.length > 0 ? '(Kept)' : ''}
-          </p>
-        </div>
-      </div>
-    );
-  };
+  const inConflictStep = step === "conflicts" && conflicts.length > 0;
+  const blocked = isImporting || (requiresConfirmation && !confirmed);
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      setIsOpen(open);
-      if (!open) resetState();
-    }}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <Upload className="w-4 h-4 mr-2" />
-          Bulk Import
-        </Button>
-      </DialogTrigger>
-      <DialogContent className={`max-h-[90vh] overflow-hidden flex flex-col ${step === 'conflicts' ? 'max-w-4xl' : 'max-w-2xl'}`}>
-        <DialogHeader>
-          <DialogTitle>
-            {step === 'conflicts' ? 'Resolve Import Conflicts' : 'Bulk Import Questions'}
-          </DialogTitle>
-        </DialogHeader>
-
-        {step === 'conflicts' && conflicts.length > 0 ? (
-          <>
-            {requiresConfirmation && (
-              <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs text-warning">
-                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>
-                  Heads up: this file's answer keys looked 1-based (digits read as 0=A…3=D). You confirmed import — double-check merged answers below.
-                </span>
-              </div>
+    <BulkImportDialog
+      open={isOpen}
+      onOpenChange={setOpen}
+      title="Bulk Import Questions"
+      inConflictStep={inConflictStep}
+      conflictContent={
+        <>
+          {requiresConfirmation && (
+            <ImportWarningPanel sx={{ mb: 2 }}>
+              Heads up: this file's answer keys looked 1-based (digits read as 0=A…3=D). You
+              confirmed import — double-check merged answers below.
+            </ImportWarningPanel>
+          )}
+          <ConflictResolutionDialog
+            conflicts={conflicts}
+            onResolve={handleConflictsResolved}
+            // Back out to the review screen with all parsed data (and the
+            // 1-based gate) intact — don't reset, which would force a full
+            // re-upload and re-parse of large DOCX files.
+            onCancel={() => setStep("upload")}
+            renderExisting={(q: ImportQuestion) => <QuestionPreview question={q} />}
+            renderIncoming={(q: ImportQuestion) => <QuestionPreview question={q} />}
+            renderMerged={(existing, incoming) => (
+              <QuestionPreview
+                question={mergeQuestion(existing, incoming)}
+                against={existing}
+              />
             )}
-            <ConflictResolutionDialog
-              conflicts={conflicts}
-              onResolve={handleConflictsResolved}
-              // Back out to the review screen with all parsed data (and the
-              // 1-based gate) intact — don't reset, which would force a full
-              // re-upload and re-parse of large DOCX files.
-              onCancel={() => setStep('upload')}
-              renderExisting={renderQuestionPreview}
-              renderIncoming={renderQuestionPreview}
-              renderMerged={renderMergedQuestion}
-              getItemLabel={(q) => q.id}
-              itemType="question"
-            />
-          </>
-        ) : (
-          <div className="space-y-4 py-4 flex-1 overflow-hidden flex flex-col">
-            {/* File Format Info */}
-            <Card className="bg-secondary/30">
-              <CardHeader className="py-3">
-                <CardTitle className="text-sm font-medium">Supported Formats</CardTitle>
-              </CardHeader>
-              <CardContent className="py-2 space-y-3 text-sm">
-                <div className="flex items-start gap-2">
-                  <FileSpreadsheet className="w-4 h-4 mt-0.5 text-success" />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium">CSV</p>
-                      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={downloadExampleCSV}>
-                        <Download className="w-3 h-3 mr-1" />
-                        Example
-                      </Button>
-                    </div>
-                    <p className="text-muted-foreground text-xs">
-                      Columns: id, question, option_a, option_b, option_c, option_d, correct_answer (0-3 or A-D), subelement, question_group, explanation (optional)
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <FileJson className="w-4 h-4 mt-0.5 text-info" />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium">JSON</p>
-                      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={downloadExampleJSON}>
-                        <Download className="w-3 h-3 mr-1" />
-                        Example
-                      </Button>
-                    </div>
-                    <p className="text-muted-foreground text-xs">
-                      Array of objects with: id, question, options (array), correct_answer (0-3), subelement, question_group, explanation (optional)
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <FileText className="w-4 h-4 mt-0.5 text-primary" />
-                  <div className="flex-1">
-                    <p className="font-medium">NCVEC Word Document (.docx)</p>
-                    <p className="text-muted-foreground text-xs">
-                      Official NCVEC question pool documents. Automatically extracts questions, FCC references, and syllabus info.
-                    </p>
-                  </div>
-                </div>
-                <p className="text-xs text-amber-500 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  Question IDs must start with "{prefix}" for {testType} exam
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* File Upload */}
-            <div>
-              <Label>Select File</Label>
-              <div className="mt-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv,.json,.docx"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  disabled={isProcessing || isImporting}
-                />
-                <Button
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isProcessing || isImporting}
-                  className="w-full h-20 border-dashed"
-                >
-                  {isProcessing ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <div className="flex flex-col items-center gap-1">
-                      <Upload className="w-5 h-5" />
-                      <span>Click to upload CSV, JSON, or DOCX</span>
-                    </div>
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {/* Validation Results */}
-            {validationResult && (
-              <div className="flex-1 overflow-hidden flex flex-col">
-                <div className="flex items-center gap-4 mb-3 flex-wrap">
-                  <Badge variant="secondary" className="bg-success/20 text-success">
-                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                    {validationResult.valid.length} Valid
-                  </Badge>
-                  {validationResult.errors.length > 0 && (
-                    <Badge variant="secondary" className="bg-destructive/20 text-destructive">
-                      <XCircle className="w-3 h-3 mr-1" />
-                      {validationResult.errors.length} Errors
-                    </Badge>
-                  )}
-                  {conflicts.length > 0 && (
-                    <Badge variant="secondary" className="bg-warning/20 text-warning">
-                      <GitMerge className="w-3 h-3 mr-1" />
-                      {conflicts.length} Conflicts
-                    </Badge>
-                  )}
-                  {newQuestions.length > 0 && (
-                    <Badge variant="secondary" className="bg-info/20 text-info">
-                      <Upload className="w-3 h-3 mr-1" />
-                      {newQuestions.length} New
-                    </Badge>
-                  )}
-                </div>
-
-                {validationResult.errors.length > 0 && (
-                  <ScrollArea className="flex-1 max-h-48 border rounded-lg p-3">
-                    <div className="space-y-2">
-                      {validationResult.errors.map((err, idx) => (
-                        <div key={idx} className="text-sm p-2 rounded bg-destructive/10 border border-destructive/20">
-                          <div className="font-medium text-destructive">
-                            Row {err.row}{err.id ? ` (${err.id})` : ''}
-                          </div>
-                          <ul className="text-xs text-muted-foreground mt-1 list-disc list-inside">
-                            {err.errors.map((e, i) => (
-                              <li key={i}>{e}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                )}
-
-                {/* Import Progress */}
-                {isImporting && (
-                  <div className="space-y-2 mt-3">
-                    <Progress value={importProgress} className="h-2" />
-                    <p className="text-sm text-muted-foreground text-center">
-                      Importing... {importedCount} imported, {skippedCount} skipped
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Parse warnings (shown persistently, not just as a toast) */}
-            {importWarnings.length > 0 && (
-              <div className="space-y-2 rounded-lg border border-warning/30 bg-warning/10 p-3">
-                <div className="flex items-center gap-2 text-sm font-medium text-warning">
-                  <AlertTriangle className="w-4 h-4" />
-                  {importWarnings.length} warning{importWarnings.length > 1 ? 's' : ''}
-                </div>
-                <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground">
-                  {importWarnings.map((w, i) => (
-                    <li key={i}>{w}</li>
-                  ))}
-                </ul>
-                {requiresConfirmation && (
-                  <label className="flex items-start gap-2 pt-1 text-xs font-medium text-foreground cursor-pointer">
-                    <Checkbox
-                      checked={confirmed}
-                      onCheckedChange={(v) => setConfirmed(v === true)}
-                      className="mt-0.5"
-                    />
-                    {/* Details (0-based mapping, 4 rejected, false-positive note)
-                        live in the ONE_BASED_KEY_WARNING bullet rendered above,
-                        so they aren't restated here. */}
-                    <span>I've verified these answer keys are 0-based — import anyway.</span>
-                  </label>
-                )}
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setIsOpen(false)}>
-                Cancel
+            getItemLabel={(q) => q.id}
+            itemType="question"
+          />
+        </>
+      }
+      actions={
+        <>
+          <Button variant="outlined" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          {validationResult &&
+            validationResult.valid.length > 0 &&
+            (conflicts.length > 0 ? (
+              <Button
+                variant="contained"
+                onClick={() => setStep("conflicts")}
+                disabled={blocked}
+                startIcon={<Box component={GitMerge} sx={{ width: 16, height: 16 }} />}
+              >
+                Resolve {conflicts.length} Conflicts
               </Button>
-              {validationResult && validationResult.valid.length > 0 && (
-                conflicts.length > 0 ? (
-                  <Button onClick={() => setStep('conflicts')} disabled={isImporting || (requiresConfirmation && !confirmed)}>
-                    <GitMerge className="w-4 h-4 mr-2" />
-                    Resolve {conflicts.length} Conflicts
-                  </Button>
-                ) : (
-                  <Button onClick={() => handleImport()} disabled={isImporting || (requiresConfirmation && !confirmed)}>
-                    {isImporting ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Upload className="w-4 h-4 mr-2" />
-                    )}
-                    Import {newQuestions.length} Questions
-                  </Button>
-                )
-              )}
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+            ) : (
+              <Button
+                variant="contained"
+                onClick={() => runImport()}
+                disabled={blocked}
+                startIcon={
+                  isImporting ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <Box component={Upload} sx={{ width: 16, height: 16 }} />
+                  )
+                }
+              >
+                Import {newQuestions.length} Questions
+              </Button>
+            ))}
+        </>
+      }
+    >
+      <ImportFormatCard
+        csvColumns="id, question, option_a, option_b, option_c, option_d, correct_answer (0-3 or A-D), subelement, question_group, explanation (optional)"
+        jsonShape="Array of objects with: id, question, options (array), correct_answer (0-3), subelement, question_group, explanation (optional)"
+        onDownloadCSV={() =>
+          downloadFile(
+            `example_questions_${testType}.csv`,
+            exampleQuestionsCSV(prefix),
+            "text/csv"
+          )
+        }
+        onDownloadJSON={() =>
+          downloadFile(
+            `example_questions_${testType}.json`,
+            JSON.stringify(exampleQuestionsJSON(prefix), null, 2),
+            "application/json"
+          )
+        }
+      >
+        <ImportFormatRow
+          icon={FileText}
+          iconColor="primary.main"
+          name="NCVEC Word Document (.docx)"
+          detail="Official NCVEC question pool documents. Automatically extracts questions, FCC references, and syllabus info."
+        />
+        <Typography
+          sx={{
+            fontSize: "0.75rem",
+            color: "warning.main",
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+          }}
+        >
+          <Box component={AlertTriangle} aria-hidden="true" sx={{ width: 12, height: 12 }} />
+          Question IDs must start with "{prefix}" for {testType} exam
+        </Typography>
+      </ImportFormatCard>
+
+      <ImportFileDropzone
+        accept=".csv,.json,.docx"
+        prompt="Click to upload CSV, JSON, or DOCX"
+        disabled={isProcessing || isImporting}
+        isProcessing={isProcessing}
+        onFileSelect={handleFileSelect}
+        inputRef={fileInputRef}
+      />
+
+      {validationResult && (
+        <ImportValidationSummary
+          validCount={validationResult.valid.length}
+          errors={validationResult.errors}
+          errorLabel={(err) => `Row ${err.row}${err.id ? ` (${err.id})` : ""}`}
+          conflictCount={conflicts.length}
+          newCount={newQuestions.length}
+          isImporting={isImporting}
+          importProgress={importProgress}
+          importedCount={importedCount}
+          skippedCount={skippedCount}
+        />
+      )}
+
+      <QuestionImportWarnings
+        warnings={importWarnings}
+        requiresConfirmation={requiresConfirmation}
+        confirmed={confirmed}
+        onConfirmedChange={setConfirmed}
+      />
+    </BulkImportDialog>
   );
 }
