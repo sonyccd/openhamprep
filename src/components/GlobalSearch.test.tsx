@@ -13,6 +13,10 @@ const mockNavigateToGlossaryTerm = vi.fn();
 const mockNavigateToTopic = vi.fn();
 
 vi.mock('@/hooks/useGlobalSearch', () => ({
+  // The real threshold, not a stand-in: SearchStatus's "type N more
+  // characters" hint is computed from it, so a mock value would make those
+  // assertions test the mock rather than the component.
+  MIN_QUERY_LENGTH: 3,
   useGlobalSearch: vi.fn(() => ({
     query: '',
     setQuery: mockSetQuery,
@@ -94,7 +98,7 @@ describe('GlobalSearch', () => {
     it('renders the dialog when open', () => {
       renderGlobalSearch();
 
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: /search/i })).toBeInTheDocument();
     });
 
     it('does not render when closed', () => {
@@ -618,7 +622,7 @@ describe('GlobalSearch', () => {
     it('has accessible dialog role', () => {
       renderGlobalSearch();
 
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: /search/i })).toBeInTheDocument();
     });
 
     it('has accessible search input', () => {

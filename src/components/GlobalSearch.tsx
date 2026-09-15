@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import Dialog from '@mui/material/Dialog';
-import { useGlobalSearch, SearchResult } from '@/hooks/useGlobalSearch';
+import DialogTitle from '@mui/material/DialogTitle';
+import { visuallyHidden } from '@mui/utils';
+import { useGlobalSearch, MIN_QUERY_LENGTH, SearchResult } from '@/hooks/useGlobalSearch';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { SearchPalette } from '@/components/search/SearchPalette';
 import type { TestType } from '@/types/navigation';
@@ -10,9 +12,6 @@ interface GlobalSearchProps {
   onOpenChange: (open: boolean) => void;
   testType: TestType;
 }
-
-/** Mirrors MIN_QUERY_LENGTH in useGlobalSearch. */
-const MIN_QUERY_LENGTH = 3;
 
 /**
  * Global search command palette.
@@ -74,9 +73,24 @@ export function GlobalSearch({ open, onOpenChange, testType }: GlobalSearchProps
       onClose={() => handleOpenChange(false)}
       fullWidth
       maxWidth="sm"
-      aria-label="Search"
+      aria-labelledby="global-search-title"
       slotProps={{ paper: { sx: { borderRadius: 1, overflow: 'hidden' } } }}
     >
+      {/*
+        A real title, hidden. aria-label does not reach the dialog: MUI
+        forwards only aria-labelledby/aria-describedby to the Paper that
+        carries role="dialog", so a bare aria-label lands on the Modal root and
+        names nothing. Worse, Dialog then generates its own aria-labelledby
+        pointing at an id no element has — measured: role=dialog
+        aria-labelledby=":r1:" with the palette reporting no accessible name.
+
+        cmdk's CommandDialog supplied a VisuallyHidden DialogTitle for exactly
+        this. Same shape here, same reason NavigationWarningDialog carries its
+        labelling by hand (#283).
+      */}
+      <DialogTitle id="global-search-title" sx={visuallyHidden}>
+        Search
+      </DialogTitle>
       <SearchPalette
         query={query}
         onQueryChange={setQuery}

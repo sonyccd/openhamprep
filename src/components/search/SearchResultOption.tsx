@@ -5,21 +5,29 @@ import { tokenAlpha } from "@/theme/muiTheme";
 import type { SearchResult } from "@/hooks/useGlobalSearch";
 import type { HTMLAttributes } from "react";
 
-const ICONS = {
+type ResultType = SearchResult["type"];
+
+/*
+ * Record rather than a bare object literal: the switch statements these
+ * replaced had a default arm, so adding a result type used to degrade
+ * silently. Typed this way, a new member of the union fails to compile until
+ * all three maps have an entry.
+ */
+const ICONS: Record<ResultType, typeof HelpCircle> = {
   question: HelpCircle,
   glossary: BookText,
   topic: Library,
   tool: Wrench,
 } as const;
 
-export const TYPE_LABELS = {
+export const TYPE_LABELS: Record<ResultType, string> = {
   question: "Question",
   glossary: "Glossary term",
   topic: "Topic",
   tool: "Tool",
 } as const;
 
-export const GROUP_LABELS = {
+export const GROUP_LABELS: Record<ResultType, string> = {
   question: "Questions",
   glossary: "Glossary",
   topic: "Topics",
