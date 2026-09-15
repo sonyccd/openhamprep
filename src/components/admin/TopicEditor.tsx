@@ -415,7 +415,6 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
               <h3 className="font-semibold text-foreground">Edit History</h3>
               <EditHistoryViewer
                 history={(freshTopic?.edit_history as EditHistoryEntry[]) || []}
-                entityType="topic"
               />
             </div>
 

@@ -352,7 +352,7 @@ export function QuestionEditDialog({
 
           <Divider />
 
-          <EditHistoryViewer history={question?.edit_history || []} entityType="question" />
+          <EditHistoryViewer history={question?.edit_history || []} />
         </Stack>
       </DialogContent>
 

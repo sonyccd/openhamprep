@@ -20,10 +20,9 @@ export interface EditHistoryEntry {
 
 interface EditHistoryViewerProps {
   history: EditHistoryEntry[];
-  entityType: 'question' | 'term' | 'tool';
 }
 
-export function EditHistoryViewer({ history, entityType }: EditHistoryViewerProps) {
+export function EditHistoryViewer({ history }: EditHistoryViewerProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   if (!history || history.length === 0) {

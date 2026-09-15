@@ -60,7 +60,7 @@ export function TermEditDialog({
 
           <Divider />
 
-          <EditHistoryViewer history={term?.edit_history || []} entityType="term" />
+          <EditHistoryViewer history={term?.edit_history || []} />
 
           <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
             <Button
