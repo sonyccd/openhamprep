@@ -4,7 +4,8 @@ import InputBase from "@mui/material/InputBase";
 import useAutocomplete from "@mui/material/useAutocomplete";
 import { visuallyHidden } from "@mui/utils";
 import { Search } from "lucide-react";
-import { GROUP_LABELS, SearchResultOption } from "./SearchResultOption";
+import { GROUP_LABELS } from "./SearchResultOption";
+import { SearchResultList, type SearchResultGroup } from "./SearchResultList";
 import { SearchShortcutHints } from "./SearchShortcutHints";
 import { SearchStatus } from "./SearchStatus";
 import type { SearchResult, SearchResults } from "@/hooks/useGlobalSearch";
@@ -89,12 +90,7 @@ export function SearchPalette({
 
   const { ref: inputRef, ...inputProps } = getInputProps();
 
-  const grouped = groupedOptions as Array<{
-    key: number;
-    index: number;
-    group: string;
-    options: SearchResult[];
-  }>;
+  const grouped = groupedOptions as SearchResultGroup[];
 
   const statusMessage = error
     ? "Search failed. Please try again."
@@ -155,46 +151,11 @@ export function SearchPalette({
       />
 
       {!error && !isLoading && grouped.length > 0 && (
-        <Box
-          component="ul"
-          {...getListboxProps()}
-          sx={{ maxHeight: 350, overflowY: "auto", m: 0, p: 1, listStyle: "none" }}
-        >
-          {grouped.map((group) => (
-            <Box component="li" key={group.key} sx={{ listStyle: "none" }}>
-              <Box
-                sx={{
-                  px: 1.5,
-                  py: 0.75,
-                  fontSize: "0.75rem",
-                  fontWeight: 600,
-                  color: "text.secondary",
-                }}
-              >
-                {group.group}
-              </Box>
-              <Box component="ul" sx={{ m: 0, p: 0, listStyle: "none" }}>
-                {group.options.map((result, index) => {
-                  // group.index is the offset of this group's first option in
-                  // the flattened list, which is what getOptionProps expects —
-                  // the same arithmetic Autocomplete.js:822 does. `key` is
-                  // React's and must not reach the DOM as an attribute.
-                  const { key: _key, ...optionProps } = getOptionProps({
-                    option: result,
-                    index: group.index + index,
-                  }) as ReturnType<typeof getOptionProps> & { key?: string };
-                  return (
-                    <SearchResultOption
-                      key={`${result.type}-${result.id}`}
-                      result={result}
-                      optionProps={optionProps}
-                    />
-                  );
-                })}
-              </Box>
-            </Box>
-          ))}
-        </Box>
+        <SearchResultList
+          grouped={grouped}
+          listboxProps={getListboxProps()}
+          getOptionProps={getOptionProps}
+        />
       )}
 
       <SearchShortcutHints />
