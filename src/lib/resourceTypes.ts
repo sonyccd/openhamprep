@@ -15,8 +15,16 @@ interface ResourceTypeConfig {
   icon: LucideIcon;
   label: string;
   pluralLabel: string;
-  /** Semantic color class for the icon/text */
+  /** Semantic color class for the icon/text — for the Tailwind consumers */
   colorClass: string;
+  /**
+   * The same colour as an MUI palette token, for ported components.
+   *
+   * Kept alongside colorClass rather than replacing it: TopicResourcePanel and
+   * LinkPreview still read the class, and they are ported separately. The two
+   * must stay in step — a resource type is the same colour in both.
+   */
+  token: string;
   /** Background color class with opacity for badges */
   bgClass: string;
   /** Border color class with opacity */
@@ -40,6 +48,7 @@ export const RESOURCE_TYPE_CONFIG: Record<ResourceType, ResourceTypeConfig> = {
     label: "Video",
     pluralLabel: "Videos",
     colorClass: "text-destructive",
+    token: "error.main",
     bgClass: "bg-destructive/10",
     borderClass: "border-destructive/30",
   },
@@ -48,6 +57,7 @@ export const RESOURCE_TYPE_CONFIG: Record<ResourceType, ResourceTypeConfig> = {
     label: "Article",
     pluralLabel: "Articles",
     colorClass: "text-info",
+    token: "info.main",
     bgClass: "bg-info/10",
     borderClass: "border-info/30",
   },
@@ -56,6 +66,7 @@ export const RESOURCE_TYPE_CONFIG: Record<ResourceType, ResourceTypeConfig> = {
     label: "PDF",
     pluralLabel: "PDFs",
     colorClass: "text-warning",
+    token: "warning.main",
     bgClass: "bg-warning/10",
     borderClass: "border-warning/30",
   },
@@ -64,6 +75,7 @@ export const RESOURCE_TYPE_CONFIG: Record<ResourceType, ResourceTypeConfig> = {
     label: "Image",
     pluralLabel: "Images",
     colorClass: "text-success",
+    token: "success.main",
     bgClass: "bg-success/10",
     borderClass: "border-success/30",
   },
@@ -72,6 +84,7 @@ export const RESOURCE_TYPE_CONFIG: Record<ResourceType, ResourceTypeConfig> = {
     label: "Link",
     pluralLabel: "Links",
     colorClass: "text-accent",
+    token: "accent",
     bgClass: "bg-accent/10",
     borderClass: "border-accent/30",
   },
@@ -117,6 +130,16 @@ export function getResourceColorClass(type: string): string {
 }
 
 /**
+ * Get the MUI palette token for a resource type.
+ *
+ * `accent` is flat on the palette rather than a {main} object, which sx
+ * resolves the same way — it emits var(--mui-palette-accent).
+ */
+export function getResourceColorToken(type: string): string {
+  return RESOURCE_TYPE_CONFIG[type as ResourceType]?.token ?? "text.secondary";
+}
+
+/**
  * Get all resource types as an array for dropdowns/selects.
  */
 export function getResourceTypeOptions() {
@@ -125,5 +148,6 @@ export function getResourceTypeOptions() {
     label: config.label,
     icon: config.icon,
     colorClass: config.colorClass,
+    token: config.token,
   }));
 }
