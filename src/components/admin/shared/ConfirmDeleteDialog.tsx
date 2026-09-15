@@ -12,6 +12,8 @@ interface ConfirmDeleteDialogProps {
   description: string;
   onCancel: () => void;
   onConfirm: () => void;
+  /** Disables Delete while the mutation is in flight, so it cannot fire twice. */
+  isPending?: boolean;
 }
 
 /**
@@ -27,6 +29,7 @@ export function ConfirmDeleteDialog({
   description,
   onCancel,
   onConfirm,
+  isPending = false,
 }: ConfirmDeleteDialogProps) {
   const id = useId();
 
@@ -46,7 +49,7 @@ export function ConfirmDeleteDialog({
         <Button variant="outlined" onClick={onCancel}>
           Cancel
         </Button>
-        <Button variant="contained" color="error" onClick={onConfirm}>
+        <Button variant="contained" color="error" onClick={onConfirm} disabled={isPending}>
           Delete
         </Button>
       </DialogActions>
