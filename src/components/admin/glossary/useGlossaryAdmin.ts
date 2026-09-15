@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { queryKeys } from "@/services/queryKeys";
 import type { EditHistoryEntry } from "../EditHistoryViewer";
 import type { GlossaryTerm } from "./termDraft";
 
@@ -25,7 +26,7 @@ export function useGlossaryAdmin({ onAdded, onUpdated, onDeleted }: UseGlossaryA
   const { user } = useAuth();
 
   const { data: terms = [], isLoading } = useQuery({
-    queryKey: ['admin-glossary-terms'],
+    queryKey: queryKeys.glossary.adminTerms(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('glossary_terms')
@@ -62,8 +63,8 @@ export function useGlossaryAdmin({ onAdded, onUpdated, onDeleted }: UseGlossaryA
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-glossary-terms'] });
-      queryClient.invalidateQueries({ queryKey: ['glossary-terms'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.glossary.adminTerms() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.glossary.terms() });
       onAdded();
       toast.success("Term added successfully");
     },
@@ -106,8 +107,8 @@ export function useGlossaryAdmin({ onAdded, onUpdated, onDeleted }: UseGlossaryA
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-glossary-terms'] });
-      queryClient.invalidateQueries({ queryKey: ['glossary-terms'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.glossary.adminTerms() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.glossary.terms() });
       onUpdated();
       toast.success("Term updated successfully");
     },
@@ -126,8 +127,8 @@ export function useGlossaryAdmin({ onAdded, onUpdated, onDeleted }: UseGlossaryA
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-glossary-terms'] });
-      queryClient.invalidateQueries({ queryKey: ['glossary-terms'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.glossary.adminTerms() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.glossary.terms() });
       onDeleted();
       toast.success("Term deleted successfully");
     },

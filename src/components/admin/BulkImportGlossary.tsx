@@ -17,6 +17,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ConflictResolutionDialog, ConflictItem } from "./ConflictResolutionDialog";
+import { queryKeys } from '@/services/queryKeys';
 
 interface ImportTerm {
   term: string;
@@ -342,7 +343,7 @@ export function BulkImportGlossary() {
       setSkippedCount(skipped);
     }
 
-    queryClient.invalidateQueries({ queryKey: ['admin-glossary-terms'] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.glossary.adminTerms() });
     queryClient.invalidateQueries({ queryKey: ['glossary-terms'] });
 
     setIsImporting(false);

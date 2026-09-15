@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, screen, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
@@ -173,10 +173,36 @@ describe('AdminGlossary', () => {
       );
     });
 
+    it('saves an edited term', async () => {
+      const user = userEvent.setup();
+      renderAdminGlossary();
+
+      await user.click(await screen.findByRole('button', { name: 'Edit Antenna' }));
+
+      const definition = screen.getByRole('textbox', { name: 'Definition' });
+      await user.clear(definition);
+      await user.type(definition, 'A radiating element.');
+      await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ term: 'Antenna', definition: 'A radiating element.' })
+      );
+    });
+
+    it('will not save with a field emptied', async () => {
+      const user = userEvent.setup();
+      renderAdminGlossary();
+
+      await user.click(await screen.findByRole('button', { name: 'Edit Antenna' }));
+      await user.clear(screen.getByRole('textbox', { name: 'Term' }));
+
+      expect(screen.getByRole('button', { name: /save changes/i })).toBeDisabled();
+    });
+
     /**
      * Radix's AlertDialog supplied role="alertdialog" and registered its
-     * Description automatically; MUI's Dialog does neither, so ConfirmDeleteDialog
-     * carries both by hand (#283).
+     * Description automatically; MUI's Dialog does neither, so
+     * ConfirmDeleteDialog carries both by hand (#283).
      */
     it('confirms before deleting, as a named alertdialog', async () => {
       const user = userEvent.setup();
@@ -189,6 +215,36 @@ describe('AdminGlossary', () => {
       expect(confirm).toHaveAccessibleName('Delete Term');
       expect(confirm).toHaveAccessibleDescription(/cannot be undone/i);
       expect(mockDelete).not.toHaveBeenCalled();
+    });
+
+    it('deletes once the confirmation is accepted', async () => {
+      const user = userEvent.setup();
+      renderAdminGlossary();
+
+      await user.click(await screen.findByRole('button', { name: 'Edit Antenna' }));
+      await user.click(screen.getByRole('button', { name: /delete term/i }));
+      await user.click(
+        within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' })
+      );
+
+      expect(mockDelete).toHaveBeenCalled();
+    });
+
+    it('abandons the delete when the confirmation is cancelled', async () => {
+      const user = userEvent.setup();
+      renderAdminGlossary();
+
+      await user.click(await screen.findByRole('button', { name: 'Edit Antenna' }));
+      await user.click(screen.getByRole('button', { name: /delete term/i }));
+      await user.click(
+        within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Cancel' })
+      );
+
+      expect(mockDelete).not.toHaveBeenCalled();
+      // The confirm has to finish leaving before the edit dialog behind it is
+      // reachable again — it is aria-hidden until then.
+      await waitForElementToBeRemoved(() => screen.queryByRole('alertdialog'));
+      expect(screen.getByRole('textbox', { name: 'Term' })).toHaveValue('Antenna');
     });
   });
 });

@@ -184,6 +184,12 @@ export const queryKeys = {
   glossary: {
     /** All glossary terms */
     terms: () => ['glossary-terms'] as const,
+
+    /**
+     * The admin list, which carries edit_history the public query does not
+     * select. Separate cache entry, so a write has to invalidate both.
+     */
+    adminTerms: () => ['admin-glossary-terms'] as const,
   },
 
   // ---------------------------------------------------------------------------
