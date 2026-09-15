@@ -11,7 +11,7 @@ import type { ArrlChapterWithCount } from "@/types/chapters";
 interface ChapterListProps {
   chapters: ArrlChapterWithCount[];
   searchTerm: string;
-  licenseLabel?: string;
+  licenseLabel: string;
   onEdit: (chapter: ArrlChapterWithCount) => void;
   onAdd: () => void;
 }

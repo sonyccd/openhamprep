@@ -21,7 +21,7 @@ interface ChapterAddDialogProps {
   open: boolean;
   onClose: () => void;
   /** The licence the new chapter belongs to, shown so it cannot be a surprise. */
-  licenseLabel?: string;
+  licenseLabel: string;
   isPending: boolean;
   onSubmit: (draft: ChapterDraft, onSuccess: () => void) => void;
 }

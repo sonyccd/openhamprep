@@ -21,11 +21,20 @@ import { ChapterList } from "./chapters/ChapterList";
 import type { ChapterDraft } from "./chapters/chapterDraft";
 import type { ArrlChapterWithCount, LicenseType } from "@/types/chapters";
 
-const LICENSE_TABS: { value: LicenseType; label: string }[] = [
-  { value: "T", label: "Technician" },
-  { value: "G", label: "General" },
-  { value: "E", label: "Extra" },
-];
+/*
+ * A total map rather than an array searched with .find(), whose result is
+ * string | undefined even though every LicenseType has a label. That optional
+ * flowed into the add dialog's Chip, which would have rendered empty rather
+ * than complaining. Record also means a new licence type fails to compile here
+ * instead of silently losing its label.
+ */
+const LICENSE_LABELS: Record<LicenseType, string> = {
+  T: "Technician",
+  G: "General",
+  E: "Extra",
+};
+
+const LICENSE_TABS = Object.entries(LICENSE_LABELS) as [LicenseType, string][];
 
 export function AdminChapters() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,7 +45,7 @@ export function AdminChapters() {
   const { data: chapters = [], isLoading } = useArrlChaptersWithCounts(selectedLicense);
   const { addChapter, updateChapter, deleteChapter } = useChapterMutations();
 
-  const licenseLabel = LICENSE_TABS.find((t) => t.value === selectedLicense)?.label;
+  const licenseLabel = LICENSE_LABELS[selectedLicense];
 
   /**
    * Both dialogs validate the same way, so the check lives here rather than in
@@ -130,8 +139,8 @@ export function AdminChapters() {
                 onChange={(_event, value) => setSelectedLicense(value as LicenseType)}
                 aria-label="License type"
               >
-                {LICENSE_TABS.map((tab) => (
-                  <Tab key={tab.value} value={tab.value} label={tab.label} />
+                {LICENSE_TABS.map(([value, label]) => (
+                  <Tab key={value} value={value} label={label} />
                 ))}
               </Tabs>
               <TextField

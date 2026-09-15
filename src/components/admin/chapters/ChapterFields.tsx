@@ -19,8 +19,12 @@ interface ChapterFieldsProps {
  * none of them named anything. TextField wires the pair itself.
  */
 export function ChapterFields({ value, onChange }: ChapterFieldsProps) {
-  const set = <K extends keyof ChapterDraft>(key: K) =>
-    (event: React.ChangeEvent<HTMLInputElement>) =>
+  // HTMLTextAreaElement as well as HTMLInputElement: the description field is
+  // multiline, so MUI renders a <textarea> there. Narrowing to HTMLInputElement
+  // only compiles because strictFunctionTypes is off in tsconfig.app.json.
+  const set =
+    <K extends keyof ChapterDraft>(key: K) =>
+    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       onChange({ ...value, [key]: event.target.value });
 
   return (

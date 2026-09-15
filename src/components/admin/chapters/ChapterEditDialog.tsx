@@ -13,7 +13,11 @@ import { Pencil, Trash2 } from "lucide-react";
 import { ChapterQuestionManager } from "../ChapterQuestionManager";
 import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
 import { ChapterFields } from "./ChapterFields";
-import { isChapterDraftValid, type ChapterDraft } from "./chapterDraft";
+import {
+  EMPTY_CHAPTER_DRAFT,
+  isChapterDraftValid,
+  type ChapterDraft,
+} from "./chapterDraft";
 import type { ArrlChapterWithCount } from "@/types/chapters";
 
 interface ChapterEditDialogProps {
@@ -32,11 +36,7 @@ export function ChapterEditDialog({
   onDelete,
 }: ChapterEditDialogProps) {
   const [tab, setTab] = useState(0);
-  const [draft, setDraft] = useState<ChapterDraft>({
-    chapterNumber: "",
-    title: "",
-    description: "",
-  });
+  const [draft, setDraft] = useState<ChapterDraft>(EMPTY_CHAPTER_DRAFT);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   // Refill from whichever chapter was opened, and start on Details each time.
