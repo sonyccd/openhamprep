@@ -165,6 +165,14 @@ export const queryKeys = {
 
     /** Admin topics (includes unpublished) */
     admin: () => ['admin-topics'] as const,
+
+    /**
+     * One topic with its resources, for the admin editor. Distinct from
+     * .detail(): that one is by slug and public, this is by id and carries
+     * unpublished rows. Anything writing a topic's resources has to invalidate
+     * this or the editor keeps showing what it loaded.
+     */
+    adminDetail: (topicId: string) => ['admin-topic-detail', topicId] as const,
   },
 
   // ---------------------------------------------------------------------------

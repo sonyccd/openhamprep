@@ -21,6 +21,11 @@ export function useTopicResources(topicId: string, resources: TopicResource[]) {
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.topics.admin() });
     queryClient.invalidateQueries({ queryKey: queryKeys.topics.detailRoot });
+    // The admin editor renders this list from its own query, which neither of
+    // the above is a prefix of. Without this the row is written, the success
+    // toast shows, and the list on screen does not move — it reads as a save
+    // that silently did not take.
+    queryClient.invalidateQueries({ queryKey: queryKeys.topics.adminDetail(topicId) });
   };
 
   const addResource = useMutation({

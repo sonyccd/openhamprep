@@ -68,7 +68,8 @@ const renderManager = (resources: TopicResource[] = [resource(), uploaded]) => {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{muiWrapper({ children })}</QueryClientProvider>
   );
-  return render(<TopicResourceManager topicId="topic-123" resources={resources} />, { wrapper });
+  render(<TopicResourceManager topicId="topic-123" resources={resources} />, { wrapper });
+  return { queryClient };
 };
 
 const openAdd = async (user: ReturnType<typeof userEvent.setup>) => {
@@ -335,6 +336,49 @@ describe('TopicResourceManager', () => {
       await waitFor(() =>
         expect(mockRemove).toHaveBeenCalledWith([mockUpload.mock.calls[0][0]])
       );
+    });
+  });
+
+  /**
+   * The admin editor renders this list from its own query,
+   * topics.adminDetail(id) — which neither topics.admin() nor
+   * topics.detailRoot is a prefix of. Before this, a resource was written and
+   * the toast shown while the list on screen stayed put, reading as a save
+   * that had silently not taken.
+   */
+  describe('refreshing what is on screen', () => {
+    const invalidatedKeys = (queryClient: ReturnType<typeof createTestQueryClient>) => {
+      const spy = vi.spyOn(queryClient, 'invalidateQueries');
+      return () => spy.mock.calls.map((call) => JSON.stringify(call[0]?.queryKey));
+    };
+
+    it('invalidates the editor query the list is actually drawn from', async () => {
+      const user = userEvent.setup();
+      const { queryClient } = renderManager();
+      const keys = invalidatedKeys(queryClient);
+
+      await user.click(screen.getByRole('button', { name: 'Delete Introduction Video' }));
+      await user.click(
+        within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' })
+      );
+
+      await waitFor(() =>
+        expect(keys()).toContain(JSON.stringify(['admin-topic-detail', 'topic-123']))
+      );
+    });
+
+    it('also refreshes the topic list and the public topic detail', async () => {
+      const user = userEvent.setup();
+      const { queryClient } = renderManager();
+      const keys = invalidatedKeys(queryClient);
+
+      await user.click(screen.getByRole('button', { name: 'Delete Introduction Video' }));
+      await user.click(
+        within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' })
+      );
+
+      await waitFor(() => expect(keys()).toContain(JSON.stringify(['admin-topics'])));
+      expect(keys()).toContain(JSON.stringify(['topic']));
     });
   });
 
