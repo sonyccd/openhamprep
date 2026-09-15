@@ -5,6 +5,14 @@ import type { AnswerLetter } from "@/services/questions/questionService";
 
 const LETTERS: AnswerLetter[] = ["A", "B", "C", "D"];
 
+/**
+ * The incoming side of a conflict has been through validateQuestions, but the
+ * existing side is read straight off the database row — so an out-of-range key
+ * reaches here. Showing what is actually stored beats rendering "undefined",
+ * since this panel exists for an admin to compare the two.
+ */
+const answerLabel = (index: number) => LETTERS[index] ?? `invalid (${index})`;
+
 interface QuestionPreviewProps {
   question: ImportQuestion;
   /**
@@ -41,7 +49,7 @@ export function QuestionPreview({ question, against }: QuestionPreviewProps) {
       </Typography>
       <Box sx={{ color: "text.secondary", fontSize: "inherit" }}>
         <p>Options: {question.options.filter((o) => o).length}/4</p>
-        <p>Answer: {LETTERS[question.correct_answer]}</p>
+        <p>Answer: {answerLabel(question.correct_answer)}</p>
         <Box component="p" sx={{ color: question.explanation ? "success.main" : "warning.main" }}>
           Explanation: {explanationState}
         </Box>

@@ -209,6 +209,23 @@ describe('BulkImportQuestions', () => {
       await user.click(await screen.findByRole('button', { name: 'Resolve 1 Conflicts' }));
     };
 
+    /**
+     * Only the incoming side of a conflict has been through
+     * validateQuestions — the database side is read straight off the row, so
+     * an out-of-range key reaches the preview. It must say what is stored
+     * rather than render an empty "Answer:".
+     */
+    it('shows an out-of-range stored answer rather than a blank', async () => {
+      const user = userEvent.setup();
+      mockExisting.mockReturnValue([{ ...existing, correct_answer: 7 }]);
+      await open(user);
+      await upload(user, ONE_GOOD_ROW);
+      await user.click(await screen.findByRole('button', { name: 'Resolve 1 Conflicts' }));
+
+      expect(screen.getByText('Answer: invalid (7)')).toBeInTheDocument();
+      expect(screen.getByText('Answer: B')).toBeInTheDocument();
+    });
+
     it('lists the clash under its question ID', async () => {
       const user = userEvent.setup();
       await reachConflicts(user);

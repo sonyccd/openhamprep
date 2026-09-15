@@ -11,6 +11,7 @@ import {
   type GlossaryValidationResult,
   type ImportTerm,
 } from '@/lib/glossaryImportParser';
+import { rejectImportFile } from './importFileChecks';
 import type { ConflictItem, ImportStep } from './importTypes';
 
 const BATCH_SIZE = 10;
@@ -94,6 +95,13 @@ export function useGlossaryImport() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const rejection = rejectImportFile(file, ['.csv', '.json']);
+    if (rejection) {
+      toast.error(rejection);
+      return;
+    }
+
+    const name = file.name.toLowerCase();
     setIsProcessing(true);
     setValidationResult(null);
     setConflicts([]);
@@ -101,16 +109,10 @@ export function useGlossaryImport() {
 
     try {
       const content = await file.text();
-      let terms: ImportTerm[] = [];
-
-      if (file.name.endsWith('.json')) {
-        terms = parseJSON(content);
-      } else if (file.name.endsWith('.csv')) {
-        terms = parseCSV(content);
-      } else {
-        toast.error('Please upload a CSV or JSON file');
-        return;
-      }
+      // rejectImportFile has already limited this to .csv or .json, matched
+      // case-insensitively — which the old endsWith('.csv') did not, so a file
+      // named TERMS.CSV fell through to an error.
+      const terms = name.endsWith('.json') ? parseJSON(content) : parseCSV(content);
 
       if (terms.length === 0) {
         toast.error('No valid terms found in file');

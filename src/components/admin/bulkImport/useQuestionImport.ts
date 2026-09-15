@@ -112,7 +112,7 @@ export function useQuestionImport(testType: TestType) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const rejection = rejectImportFile(file);
+    const rejection = rejectImportFile(file, ['.csv', '.json', '.docx']);
     if (rejection) {
       toast.error(rejection);
       return;

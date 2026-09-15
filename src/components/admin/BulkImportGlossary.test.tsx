@@ -139,6 +139,47 @@ describe('BulkImportGlossary', () => {
       expect(screen.getByText('Missing definition')).toBeInTheDocument();
     });
 
+    /**
+     * The format branches used to be case-sensitive endsWith checks, so a file
+     * saved as TERMS.CSV matched neither and was refused outright.
+     */
+    it('reads a file whose extension is uppercase', async () => {
+      const user = userEvent.setup();
+      await open(user);
+
+      await user.upload(
+        screen.getByLabelText('Click to upload CSV or JSON'),
+        new File([ONE_GOOD_ROW], 'TERMS.CSV', { type: 'text/csv' })
+      );
+
+      expect(await screen.findByText('1 Valid')).toBeInTheDocument();
+    });
+
+    /**
+     * Proves this importer asks for the narrow format list: the message names
+     * only CSV and JSON, where the question importer's names DOCX too.
+     *
+     * A .docx would be the clearer case, but the input's accept=".csv,.json"
+     * keeps one from ever reaching the handler here — the guard exists for the
+     * paths accept does not cover, and importFileChecks.test.ts covers it
+     * directly.
+     */
+    it('rejects a file whose type it cannot parse, naming only its formats', async () => {
+      const user = userEvent.setup();
+      const { toast } = await import('sonner');
+      await open(user);
+
+      await user.upload(
+        screen.getByLabelText('Click to upload CSV or JSON'),
+        new File(['PK...'], 'terms.csv', { type: 'image/png' })
+      );
+
+      expect(toast.error).toHaveBeenCalledWith(
+        'Invalid file type detected. Please upload a valid CSV or JSON file'
+      );
+      expect(screen.queryByText('1 Valid')).not.toBeInTheDocument();
+    });
+
     it('offers no import action when nothing parsed', async () => {
       const user = userEvent.setup();
       await open(user);
