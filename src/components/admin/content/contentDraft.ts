@@ -21,9 +21,22 @@ export const EMPTY_CONTENT_DRAFT: ContentDraft = {
   isPublished: false,
 };
 
+/**
+ * Why a draft cannot be submitted yet, or null when it can.
+ *
+ * One definition rather than two: the submit button disables on it and both
+ * callers guard on it, so the button and the toast can never disagree about
+ * what "valid" means.
+ */
+export const contentDraftError = (draft: ContentDraft): string | null => {
+  if (!draft.title.trim()) return "Please enter a title";
+  if (!draft.slug.trim()) return "Please enter a slug";
+  return null;
+};
+
 /** Title and slug are both required; everything else has a sensible default. */
 export const isContentDraftValid = (draft: ContentDraft): boolean =>
-  draft.title.trim().length > 0 && draft.slug.trim().length > 0;
+  contentDraftError(draft) === null;
 
 export const generateSlug = (title: string): string =>
   title

@@ -17,7 +17,7 @@ import { Topic } from "@/hooks/useTopics";
 import { TopicEditor } from "./TopicEditor";
 import { ContentAddDialog } from "./content/ContentAddDialog";
 import { TopicList } from "./content/TopicList";
-import type { ContentDraft } from "./content/contentDraft";
+import { contentDraftError, type ContentDraft } from "./content/contentDraft";
 
 export function AdminTopics() {
   const queryClient = useQueryClient();
@@ -94,6 +94,14 @@ export function AdminTopics() {
   });
 
   const handleAddTopic = (draft: ContentDraft) => {
+    // The submit button is disabled on the same condition; this is the guard
+    // for any path that bypasses it, and it matches AdminLessons rather than
+    // leaving the twins to disagree.
+    const invalid = contentDraftError(draft);
+    if (invalid) {
+      toast.error(invalid);
+      return;
+    }
     addTopic.mutate({
       title: draft.title,
       slug: draft.slug,

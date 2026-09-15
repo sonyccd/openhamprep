@@ -16,7 +16,7 @@ import { EditHistoryEntry } from "./EditHistoryViewer";
 import { LessonEditor } from "./LessonEditor";
 import { ContentAddDialog } from "./content/ContentAddDialog";
 import { LessonList } from "./content/LessonList";
-import type { ContentDraft } from "./content/contentDraft";
+import { contentDraftError, type ContentDraft } from "./content/contentDraft";
 
 export function AdminLessons() {
   const { user } = useAuth();
@@ -28,12 +28,9 @@ export function AdminLessons() {
   const createLesson = useCreateLesson();
 
   const handleAddLesson = (draft: ContentDraft) => {
-    if (!draft.title.trim()) {
-      toast.error("Please enter a title");
-      return;
-    }
-    if (!draft.slug.trim()) {
-      toast.error("Please enter a slug");
+    const invalid = contentDraftError(draft);
+    if (invalid) {
+      toast.error(invalid);
       return;
     }
 

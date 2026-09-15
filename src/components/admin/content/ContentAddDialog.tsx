@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useId, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -7,7 +7,6 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import { Plus } from "lucide-react";
-import { useId } from "react";
 import { ContentEntityFields } from "./ContentEntityFields";
 import {
   EMPTY_CONTENT_DRAFT,
@@ -28,9 +27,15 @@ interface ContentAddDialogProps {
 /**
  * The add dialog for both topics and lessons.
  *
- * The draft resets on close rather than on submit: the caller's mutation
- * decides whether the dialog closes, so clearing on submit would wipe the form
- * under a failed save.
+ * The draft resets when the dialog *opens*, not when it closes. Closing has
+ * several paths — Cancel, Escape, the backdrop, and a successful mutation, and
+ * the last of those runs in the caller and only flips the `open` prop. This
+ * component stays mounted throughout, so a reset hung off the close handler
+ * misses that path entirely and the next Add shows the previous entry. The
+ * same leak #288 found in ProfileModal.
+ *
+ * Resetting on open also leaves a failed save alone: the dialog stays open, so
+ * the effect does not re-run and the user keeps what they typed.
  */
 export function ContentAddDialog({
   open,
@@ -43,15 +48,18 @@ export function ContentAddDialog({
   const id = useId();
   const [draft, setDraft] = useState<ContentDraft>(EMPTY_CONTENT_DRAFT);
 
-  const handleClose = () => {
-    setDraft(EMPTY_CONTENT_DRAFT);
-    onClose();
-  };
+  useEffect(() => {
+    if (open) {
+      setDraft(EMPTY_CONTENT_DRAFT);
+    }
+  }, [open]);
+
+
 
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
       maxWidth="sm"
       fullWidth
       aria-labelledby={`${id}-title`}
@@ -63,7 +71,7 @@ export function ContentAddDialog({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button variant="outlined" onClick={handleClose}>
+        <Button variant="outlined" onClick={onClose}>
           Cancel
         </Button>
         <Button
