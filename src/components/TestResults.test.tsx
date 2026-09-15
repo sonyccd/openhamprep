@@ -50,14 +50,22 @@ vi.mock('@/hooks/useGlossaryTerms', () => ({
   useGlossaryTerms: () => ({ data: [] }),
 }));
 
-const createMockQuestion = (id: string, correctAnswer: 'A' | 'B' | 'C' | 'D' = 'A'): Question => ({
-  id,
-  question: `Question ${id}?`,
+const createMockQuestion = (
+  displayName: string,
+  correctAnswer: 'A' | 'B' | 'C' | 'D' = 'A'
+): Question => ({
+  // id is the UUID primary key and displayName is the human-readable code
+  // (T1A01). The fixture used to set only `id`, to the human code, so a row
+  // rendering the wrong field was indistinguishable from one rendering the
+  // right one — which is how TestResults shipped a raw UUID in every row.
+  id: `uuid-${displayName}`,
+  displayName,
+  question: `Question about ${displayName}?`,
   options: { A: 'Option A', B: 'Option B', C: 'Option C', D: 'Option D' },
   correctAnswer,
-  subelement: id.slice(0, 2),
-  group: id.slice(0, 3),
-  explanation: `Explanation for ${id}`,
+  subelement: displayName.slice(0, 2),
+  group: displayName.slice(0, 3),
+  explanation: `Explanation for ${displayName}`,
   links: [],
 });
 
@@ -330,6 +338,27 @@ describe('TestResults', () => {
      * else as either nothing or a literal "check mark". The list is a real
      * list now and the state is spelled out.
      */
+    /**
+     * TestResults rendered `q.id` — the UUID primary key — beside every row,
+     * while TestResultReview rendered `q.displayName`. Sharing the list settled
+     * it on the human-readable code; this keeps it settled.
+     */
+    it('labels rows with the question code, not the UUID', () => {
+      const { questions, answers } = createQuestionsAndAnswers(3, 2, 'T');
+
+      renderWithRouter(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      expect(screen.getByText(/^T00: /)).toBeInTheDocument();
+      expect(screen.queryByText(/uuid-/)).not.toBeInTheDocument();
+    });
+
     it('exposes the answers as a list with the verdict in text', () => {
       const { questions, answers } = createQuestionsAndAnswers(5, 3, 'T');
 
@@ -365,7 +394,7 @@ describe('TestResults', () => {
       expect(screen.getByText('Review Your Answers')).toBeInTheDocument();
       // Should show all 5 questions
       questions.forEach((q) => {
-        expect(screen.getByText(new RegExp(q.id))).toBeInTheDocument();
+        expect(screen.getByText(new RegExp(`${q.displayName}: `))).toBeInTheDocument();
       });
     });
   });
@@ -534,6 +563,27 @@ describe('TestResults', () => {
         'href',
         '/auth?returnTo=/dashboard'
       );
+    });
+
+    /**
+     * Deliberately role="status", not Alert's default role="alert". This
+     * appears with the results rather than interrupting, and a save-moment
+     * prompt must never read as gating the content behind it.
+     */
+    it('announces politely rather than as an alert', () => {
+      const { questions, answers } = createQuestionsAndAnswers(35, 26, 'T');
+
+      renderWithRouter(
+        <TestResults
+          questions={questions}
+          answers={answers}
+          testType="technician"
+          {...defaultProps}
+        />
+      );
+
+      expect(screen.getByRole('status')).toHaveTextContent(/require an account to save/i);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
     it('dismisses save card when "Continue without saving" is clicked', () => {
