@@ -1,385 +1,160 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import CircularProgress from "@mui/material/CircularProgress";
+import InputAdornment from "@mui/material/InputAdornment";
+import TextField from "@mui/material/TextField";
 import { toast } from "sonner";
-import { Plus, Trash2, Search, Loader2, Pencil } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { BulkImportGlossary } from "./BulkImportGlossary";
 import { BulkExport, escapeCSVField } from "./BulkExport";
-import { EditHistoryViewer, EditHistoryEntry } from "./EditHistoryViewer";
-import { Separator } from "@/components/ui/separator";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  } from "@/components/ui/dialog";
-
-interface GlossaryTerm {
-  id: string;
-  term: string;
-  definition: string;
-  edit_history?: EditHistoryEntry[];
-}
+import { TermAddDialog } from "./glossary/TermAddDialog";
+import { TermEditDialog } from "./glossary/TermEditDialog";
+import { TermList } from "./glossary/TermList";
+import { termDraftError, type GlossaryTerm, type TermDraft } from "./glossary/termDraft";
+import { useGlossaryAdmin } from "./glossary/useGlossaryAdmin";
 
 export function AdminGlossary() {
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const [newTerm, setNewTerm] = useState("");
-  const [newDefinition, setNewDefinition] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
   // Edit state
   const [editingTerm, setEditingTerm] = useState<GlossaryTerm | null>(null);
-  const [editTerm, setEditTerm] = useState("");
-  const [editDefinition, setEditDefinition] = useState("");
 
-  const { data: terms = [], isLoading } = useQuery({
-    queryKey: ['admin-glossary-terms'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('glossary_terms')
-        .select('id, term, definition, edit_history')
-        .order('term', { ascending: true });
-      
-      if (error) throw error;
-      return data.map(t => ({
-        ...t,
-        edit_history: (Array.isArray(t.edit_history) ? t.edit_history : []) as unknown as EditHistoryEntry[]
-      })) as GlossaryTerm[];
-    },
+  const { terms, isLoading, addTerm, updateTerm, deleteTerm } = useGlossaryAdmin({
+    onAdded: () => setIsAddDialogOpen(false),
+    onUpdated: () => setEditingTerm(null),
+    onDeleted: () => setEditingTerm(null),
   });
-
-  const addTerm = useMutation({
-    mutationFn: async ({ term, definition }: { term: string; definition: string }) => {
-      if (!user) throw new Error('Not authenticated');
-      const historyEntry: EditHistoryEntry = {
-        user_id: user.id,
-        user_email: user.email || 'Unknown',
-        action: 'created',
-        changes: {},
-        timestamp: new Date().toISOString(),
-      };
-
-      const { error } = await supabase
-        .from('glossary_terms')
-        .insert({ 
-          term: term.trim(), 
-          definition: definition.trim(),
-          edit_history: JSON.parse(JSON.stringify([historyEntry]))
-        });
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-glossary-terms'] });
-      queryClient.invalidateQueries({ queryKey: ['glossary-terms'] });
-      setNewTerm("");
-      setNewDefinition("");
-      setIsAddDialogOpen(false);
-      toast.success("Term added successfully");
-    },
-    onError: (error) => {
-      toast.error("Failed to add term: " + error.message);
-    },
-  });
-
-  const updateTerm = useMutation({
-    mutationFn: async ({ id, term, definition, originalTerm }: { id: string; term: string; definition: string; originalTerm: GlossaryTerm }) => {
-      if (!user) throw new Error('Not authenticated');
-      // Build changes object
-      const changes: Record<string, { from: unknown; to: unknown }> = {};
-      if (originalTerm.term !== term.trim()) {
-        changes.term = { from: originalTerm.term, to: term.trim() };
-      }
-      if (originalTerm.definition !== definition.trim()) {
-        changes.definition = { from: originalTerm.definition, to: definition.trim() };
-      }
-
-      const historyEntry: EditHistoryEntry = {
-        user_id: user.id,
-        user_email: user.email || 'Unknown',
-        action: 'updated',
-        changes,
-        timestamp: new Date().toISOString(),
-      };
-
-      const existingHistory = originalTerm.edit_history || [];
-
-      const { error } = await supabase
-        .from('glossary_terms')
-        .update({ 
-          term: term.trim(), 
-          definition: definition.trim(),
-          edit_history: JSON.parse(JSON.stringify([...existingHistory, historyEntry]))
-        })
-        .eq('id', id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-glossary-terms'] });
-      queryClient.invalidateQueries({ queryKey: ['glossary-terms'] });
-      setEditingTerm(null);
-      toast.success("Term updated successfully");
-    },
-    onError: (error) => {
-      toast.error("Failed to update term: " + error.message);
-    },
-  });
-
-  const deleteTerm = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('glossary_terms')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-glossary-terms'] });
-      queryClient.invalidateQueries({ queryKey: ['glossary-terms'] });
-      setEditingTerm(null);
-      toast.success("Term deleted successfully");
-    },
-    onError: (error) => {
-      toast.error("Failed to delete term: " + error.message);
-    },
-  });
-
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const filteredTerms = terms.filter(t => 
     t.term.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.definition.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddTerm = () => {
-    if (!newTerm.trim() || !newDefinition.trim()) {
-      toast.error("Please fill in both term and definition");
+  const handleAddTerm = (draft: TermDraft) => {
+    const invalid = termDraftError(draft);
+    if (invalid) {
+      toast.error(invalid);
       return;
     }
-    addTerm.mutate({ term: newTerm, definition: newDefinition });
+    addTerm.mutate({ term: draft.term, definition: draft.definition });
   };
 
-  const handleEditClick = (term: GlossaryTerm) => {
-    setEditingTerm(term);
-    setEditTerm(term.term);
-    setEditDefinition(term.definition);
-  };
-
-  const handleUpdateTerm = () => {
-    if (!editingTerm || !editTerm.trim() || !editDefinition.trim()) {
-      toast.error("Please fill in both term and definition");
+  const handleUpdateTerm = (draft: TermDraft) => {
+    if (!editingTerm) return;
+    const invalid = termDraftError(draft);
+    if (invalid) {
+      toast.error(invalid);
       return;
     }
-    updateTerm.mutate({ id: editingTerm.id, term: editTerm, definition: editDefinition, originalTerm: editingTerm });
+    updateTerm.mutate({
+      id: editingTerm.id,
+      term: draft.term,
+      definition: draft.definition,
+      originalTerm: editingTerm,
+    });
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
-      {/* Edit Dialog */}
-      <Dialog open={!!editingTerm} onOpenChange={(open) => !open && setEditingTerm(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Edit Term</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label>Term</Label>
-              <Input
-                value={editTerm}
-                onChange={(e) => setEditTerm(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Definition</Label>
-              <Textarea
-                value={editDefinition}
-                onChange={(e) => setEditDefinition(e.target.value)}
-                rows={5}
-              />
-            </div>
-            
-            <Separator />
-            
-            <EditHistoryViewer 
-              history={editingTerm?.edit_history || []} 
-              entityType="term" 
-            />
-            <div className="flex justify-between gap-2">
-              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Term
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Term</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete "{editingTerm?.term}"? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={() => editingTerm && deleteTerm.mutate(editingTerm.id)}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setEditingTerm(null)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleUpdateTerm} disabled={updateTerm.isPending}>
-                  {updateTerm.isPending ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : null}
-                  Save Changes
-                </Button>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+    <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      <TermEditDialog
+        term={editingTerm}
+        onClose={() => setEditingTerm(null)}
+        isPending={updateTerm.isPending}
+        onSubmit={handleUpdateTerm}
+        onDelete={(id) => deleteTerm.mutate(id)}
+      />
 
-      {/* Add Term Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Add New Term</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label>Term</Label>
-              <Input
-                placeholder="Enter term..."
-                value={newTerm}
-                onChange={(e) => setNewTerm(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Definition</Label>
-              <Textarea
-                placeholder="Enter definition..."
-                value={newDefinition}
-                onChange={(e) => setNewDefinition(e.target.value)}
-                rows={5}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddTerm} disabled={addTerm.isPending}>
-                {addTerm.isPending ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Plus className="w-4 h-4 mr-2" />
-                )}
-                Add Term
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <TermAddDialog
+        open={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        isPending={addTerm.isPending}
+        onSubmit={handleAddTerm}
+      />
 
-      {/* Search and List */}
-      <Card className="flex-1 flex flex-col min-h-0">
-        <CardHeader className="shrink-0">
-          <CardTitle className="flex items-center justify-between">
-            <span>Glossary Terms ({terms.length})</span>
-            <div className="flex items-center gap-2">
-              <BulkExport
-                data={terms}
-                filename="glossary_terms"
-                itemLabel="terms"
-                formatCSV={(items) => {
-                  const header = 'term,definition';
-                  const rows = items.map(t => 
-                    `${escapeCSVField(t.term)},${escapeCSVField(t.definition)}`
-                  );
-                  return [header, ...rows].join('\n');
-                }}
-                formatJSON={(items) => items.map(t => ({
-                  term: t.term,
-                  definition: t.definition,
-                }))}
-              />
-              <BulkImportGlossary />
-              <Button onClick={() => setIsAddDialogOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Term
-              </Button>
-            </div>
-          </CardTitle>
-          <div className="relative mt-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
+      <Card
+        variant="outlined"
+        sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+      >
+        <CardHeader
+          sx={{ flexShrink: 0 }}
+          title={
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box component="span" sx={{ fontSize: "1.25rem" }}>
+                Glossary Terms ({terms.length})
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <BulkExport
+                  data={terms}
+                  filename="glossary_terms"
+                  itemLabel="terms"
+                  formatCSV={(items) => {
+                    const header = "term,definition";
+                    const rows = items.map(
+                      (t) => `${escapeCSVField(t.term)},${escapeCSVField(t.definition)}`
+                    );
+                    return [header, ...rows].join("\n");
+                  }}
+                  formatJSON={(items) =>
+                    items.map((t) => ({ term: t.term, definition: t.definition }))
+                  }
+                />
+                <BulkImportGlossary />
+                <Button
+                  variant="contained"
+                  onClick={() => setIsAddDialogOpen(true)}
+                  startIcon={<Box component={Plus} sx={{ width: 16, height: 16 }} />}
+                >
+                  Add Term
+                </Button>
+              </Box>
+            </Box>
+          }
+          subheader={
+            <TextField
               placeholder="Search terms..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              size="small"
+              fullWidth
+              sx={{ mt: 2 }}
+              slotProps={{
+                // aria-label on TextField lands on the FormControl root, not
+                // the input, so the field would have no accessible name (#302).
+                htmlInput: { "aria-label": "Search terms" },
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Box
+                        component={Search}
+                        aria-hidden="true"
+                        sx={{ width: 16, height: 16, color: "text.secondary" }}
+                      />
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
-          </div>
-        </CardHeader>
-        <CardContent className="flex-1 min-h-0 overflow-hidden">
+          }
+        />
+        <CardContent sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            </div>
+            <Box
+              role="status"
+              aria-label="Loading glossary terms"
+              sx={{ display: "flex", justifyContent: "center", py: 4 }}
+            >
+              <CircularProgress size={24} />
+            </Box>
           ) : (
-            <div className="space-y-3 h-full overflow-y-auto pb-4">
-              {filteredTerms.map((term) => (
-                <div 
-                  key={term.id} 
-                  className="flex items-start justify-between p-4 rounded-lg border border-border bg-card hover:bg-secondary/30 transition-colors"
-                >
-                  <div className="flex-1 min-w-0 mr-4">
-                    <h4 className="font-semibold text-foreground">{term.term}</h4>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{term.definition}</p>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="text-muted-foreground hover:text-primary"
-                    onClick={() => handleEditClick(term)}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-              {filteredTerms.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">No terms found</p>
-              )}
-            </div>
+            <TermList terms={filteredTerms} onEdit={setEditingTerm} />
           )}
         </CardContent>
       </Card>
-    </div>
+    </Box>
   );
 }

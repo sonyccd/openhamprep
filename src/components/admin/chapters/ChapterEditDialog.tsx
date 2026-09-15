@@ -11,7 +11,7 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import { Pencil, Trash2 } from "lucide-react";
 import { ChapterQuestionManager } from "../ChapterQuestionManager";
-import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
+import { ConfirmDeleteDialog } from "../shared/ConfirmDeleteDialog";
 import { ChapterFields } from "./ChapterFields";
 import {
   EMPTY_CHAPTER_DRAFT,
