@@ -1,15 +1,26 @@
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import type { EditHistoryEntry } from "../EditHistoryViewer";
-import type { HamRadioTool } from "@/hooks/useHamRadioTools";
+import type {
+  HamRadioTool,
+  useCreateHamRadioTool,
+  useDeleteHamRadioTool,
+  useUpdateHamRadioTool,
+} from "@/hooks/useHamRadioTools";
 import { toolDraftError, type ToolDraft } from "./toolDraft";
 
 interface UseToolAdminOptions {
   tools: HamRadioTool[];
   editingTool: HamRadioTool | null;
-  createTool: { mutate: (vars: unknown, opts: unknown) => void };
-  updateTool: { mutate: (vars: unknown, opts: unknown) => void };
-  deleteTool: { mutate: (id: string, opts: unknown) => void };
+  /*
+   * Taken from the hooks that produce them rather than restated as
+   * { mutate: (vars: unknown, ...) }. The loose version compiled but threw away
+   * the payload types, so a wrong field name in a mutate() call here would have
+   * reached the database instead of the compiler.
+   */
+  createTool: ReturnType<typeof useCreateHamRadioTool>;
+  updateTool: ReturnType<typeof useUpdateHamRadioTool>;
+  deleteTool: ReturnType<typeof useDeleteHamRadioTool>;
   /** Called once a write lands, so the caller can close its dialog. */
   onAdded: () => void;
   onSaved: () => void;
