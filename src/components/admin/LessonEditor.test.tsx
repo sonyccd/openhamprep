@@ -133,6 +133,19 @@ describe('LessonEditor', () => {
       );
     });
 
+    /**
+     * The Card heading names the group instead of a second visible legend, so
+     * the fieldset carries aria-labelledby. Without one or the other it has no
+     * accessible name and someone arriving mid-group hears only "Technician".
+     */
+    it('names the licence checkbox group from its heading', async () => {
+      const user = userEvent.setup();
+      renderEditor();
+      await openSettings(user);
+
+      expect(screen.getByRole('group', { name: 'License Types' })).toBeInTheDocument();
+    });
+
     it('toggles licence types', async () => {
       const user = userEvent.setup();
       renderEditor();

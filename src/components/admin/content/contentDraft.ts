@@ -1,3 +1,5 @@
+import { LICENSE_OPTIONS } from "../shared/LicenseTypeCheckboxes";
+
 /** The shape AdminTopics and AdminLessons both create: they are the same form. */
 export interface ContentDraft {
   title: string;
@@ -6,8 +8,6 @@ export interface ContentDraft {
   licenseTypes: string[];
   isPublished: boolean;
 }
-
-import { LICENSE_OPTIONS } from "../shared/LicenseTypeCheckboxes";
 
 export const EMPTY_CONTENT_DRAFT: ContentDraft = {
   title: "",

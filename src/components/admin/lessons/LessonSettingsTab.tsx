@@ -1,3 +1,4 @@
+import { useId } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -41,6 +42,7 @@ export function LessonSettingsTab({
   onGenerateSlug,
   editHistory,
 }: LessonSettingsTabProps) {
+  const licenseHeadingId = useId();
   const patch = (fields: Partial<LessonSettings>) => onChange({ ...value, ...fields });
 
   return (
@@ -93,10 +95,15 @@ export function LessonSettingsTab({
       </Card>
 
       <Card variant="outlined">
-        <CardHeader title="License Types" />
+        {/*
+          The Card heading names the group rather than a second visible legend,
+          so labelledBy points at it — without one or the other the fieldset
+          has no accessible name at all.
+        */}
+        <CardHeader title="License Types" slotProps={{ title: { id: licenseHeadingId } }} />
         <CardContent>
-          {/* The Card heading already names the group, so no duplicate legend. */}
           <LicenseTypeCheckboxes
+            labelledBy={licenseHeadingId}
             value={value.licenseTypes}
             onChange={(licenseTypes) => patch({ licenseTypes })}
           />

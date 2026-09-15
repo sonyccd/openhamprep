@@ -13,8 +13,16 @@ export const LICENSE_OPTIONS = [
 interface LicenseTypeCheckboxesProps {
   value: string[];
   onChange: (next: string[]) => void;
-  /** Rendered as the group's name. Omit where a Card heading already says it. */
+  /** Rendered as the group's name. Omit where a heading already says it. */
   label?: string;
+  /**
+   * Names the group from an existing heading instead of a second visible one.
+   *
+   * Without either, the fieldset has no accessible name — measured: a group
+   * rendered with neither prop reports "(none)". Each checkbox is still
+   * labelled, but someone arriving mid-group hears no "License Types".
+   */
+  labelledBy?: string;
 }
 
 /**
@@ -25,12 +33,17 @@ interface LicenseTypeCheckboxesProps {
  * names the group — the old markup put a bare <Label> above the checkboxes,
  * which named nothing.
  */
-export function LicenseTypeCheckboxes({ value, onChange, label }: LicenseTypeCheckboxesProps) {
+export function LicenseTypeCheckboxes({
+  value,
+  onChange,
+  label,
+  labelledBy,
+}: LicenseTypeCheckboxesProps) {
   const toggle = (type: string) =>
     onChange(value.includes(type) ? value.filter((t) => t !== type) : [...value, type]);
 
   return (
-    <FormControl component="fieldset" variant="standard">
+    <FormControl component="fieldset" variant="standard" aria-labelledby={labelledBy}>
       {label && <FormLabel component="legend">{label}</FormLabel>}
       <FormGroup row sx={{ gap: 2, ...(label && { mt: 1 }) }}>
         {LICENSE_OPTIONS.map((option) => (
