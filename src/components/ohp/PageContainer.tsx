@@ -17,6 +17,16 @@ interface PageContainerProps {
   sx?: SxProps<Theme>;
   /** Additional className for the inner content container */
   contentClassName?: string;
+  /**
+   * Additional sx for the inner content container.
+   *
+   * The sx twin of contentClassName, and the only way to give children a flex
+   * context: `sx` lands on the outer Box, and Container sits between it and
+   * them as a plain block, so a child's `flex: 1` has nothing to size against.
+   * TestResultReview has always reached for contentClassName to do this;
+   * contentSx is the same thing for components past the Tailwind line.
+   */
+  contentSx?: SxProps<Theme>;
 }
 
 /**
@@ -58,6 +68,7 @@ export const PageContainer = ({
   className,
   sx,
   contentClassName,
+  contentSx,
 }: PageContainerProps) => {
   return (
     <Box
@@ -85,7 +96,10 @@ export const PageContainer = ({
         disableGutters
         maxWidth={false}
         className={contentClassName}
-        sx={{ maxWidth: MAX_WIDTHS[width], mx: "auto" }}
+        sx={[
+          { maxWidth: MAX_WIDTHS[width], mx: "auto" },
+          ...(Array.isArray(contentSx) ? contentSx : [contentSx]),
+        ]}
       >
         {children}
       </Container>
