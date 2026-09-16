@@ -125,6 +125,7 @@ export function ProfileEditableField({
         >
           <Typography
             variant="body2"
+            component="span"
             sx={{
               fontWeight: 500,
               overflow: "hidden",

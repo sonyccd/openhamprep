@@ -77,7 +77,10 @@ export function ConflictRow({
             aria-hidden="true"
             sx={{ width: 16, height: 16, color: "text.secondary" }}
           />
-          <Typography sx={{ fontWeight: 500 }}>{label}</Typography>
+          {/* span, not the default <p>: this sits inside a <button>. */}
+          <Typography component="span" sx={{ fontWeight: 500 }}>
+            {label}
+          </Typography>
         </ButtonBase>
 
         <RadioGroup
