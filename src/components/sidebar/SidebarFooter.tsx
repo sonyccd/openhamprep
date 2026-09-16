@@ -172,10 +172,20 @@ export const SidebarFooter = ({
             >
               <Avatar sx={{ ...avatarSx(36), flexShrink: 0 }}>{getInitials()}</Avatar>
               <Box sx={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                <Typography variant="body2" sx={{ fontWeight: 500, ...truncate }}>
+                {/* span + display:block — body2 maps to <p>, which a <button>
+                    may not contain. */}
+                <Typography
+                  variant="body2"
+                  component="span"
+                  sx={{ display: 'block', fontWeight: 500, ...truncate }}
+                >
                   {userInfo.displayName || 'User'}
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', ...truncate }}>
+                <Typography
+                  variant="body2"
+                  component="span"
+                  sx={{ display: 'block', color: 'text.secondary', ...truncate }}
+                >
                   {userInfo.email || ''}
                 </Typography>
               </Box>

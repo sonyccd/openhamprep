@@ -11,8 +11,6 @@ interface PasswordFieldProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
-  /** Rendered under the field when there is no error. */
-  helperText?: React.ReactNode;
   autoComplete?: string;
 }
 
@@ -31,7 +29,6 @@ export function PasswordField({
   value,
   onChange,
   error,
-  helperText,
   autoComplete,
 }: PasswordFieldProps) {
   const [visible, setVisible] = useState(false);
@@ -45,7 +42,7 @@ export function PasswordField({
       value={value}
       onChange={(event) => onChange(event.target.value)}
       error={Boolean(error)}
-      helperText={error ?? helperText}
+      helperText={error}
       autoComplete={autoComplete}
       required
       fullWidth

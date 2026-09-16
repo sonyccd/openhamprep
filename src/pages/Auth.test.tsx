@@ -391,6 +391,21 @@ describe('Auth', () => {
       );
     });
 
+    /**
+     * A <button> takes phrasing content only. The original wrapped two <p>
+     * elements; the first pass at this port swapped them for Typography, which
+     * defaults to body1 and maps straight back to <p> — so the markup was
+     * still invalid, just less obviously. Both are spans now.
+     */
+    it('puts no flow content inside the guest button', () => {
+      renderAuth();
+
+      const guest = screen.getByRole('button', { name: /Continue as guest/ });
+      const flow = Array.from(guest.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6'));
+
+      expect(flow.map((el) => el.tagName)).toEqual([]);
+    });
+
     it('lets a guest through to the dashboard', async () => {
       const user = userEvent.setup();
       renderAuth();

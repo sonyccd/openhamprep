@@ -146,10 +146,16 @@ export default function Auth() {
           "&:hover": { bgcolor: (t) => tokenAlpha(t.vars.palette.accent, 50) },
         }}
       >
-        <Typography sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
+        {/* component="span" with display:block: Typography's body variants map
+            to <p>, and a <button> takes phrasing content only — so the default
+            would put two <p> elements inside this button. */}
+        <Typography component="span" sx={{ display: "block", fontSize: "0.875rem", fontWeight: 500 }}>
           Continue as guest →
         </Typography>
-        <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
+        <Typography
+          component="span"
+          sx={{ display: "block", fontSize: "0.875rem", color: "text.secondary" }}
+        >
           Progress won't be saved
         </Typography>
       </ButtonBase>
