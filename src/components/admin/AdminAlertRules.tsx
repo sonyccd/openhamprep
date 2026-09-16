@@ -50,7 +50,12 @@ export function AdminAlertRules() {
       cooldown_minutes: formData.cooldown_minutes,
       target_functions: parseTargetFunctions(formData.target_functions),
       config: buildRuleConfig(formData),
-      is_enabled: true,
+      // Whether a rule is on is not part of this form — it is the switch on
+      // the card. Sending a hardcoded true, which is what this did, meant
+      // editing a disabled rule to fix a typo silently switched it back on,
+      // since useUpdateAlertRule applies whatever fields it is handed. A new
+      // rule still starts enabled.
+      is_enabled: editingRule?.is_enabled ?? true,
     };
 
     if (editingRule) {

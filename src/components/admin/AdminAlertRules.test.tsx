@@ -254,6 +254,41 @@ describe('AdminAlertRules', () => {
       expect(dialog().getByRole('textbox', { name: /Rule Name/ })).toHaveValue('');
     });
 
+    /**
+     * Whether a rule is on belongs to the switch on the card, not to this
+     * form. Saving used to send a hardcoded is_enabled: true, so editing a
+     * disabled rule — even just to fix a typo — quietly switched it back on,
+     * with nothing on screen to say so.
+     */
+    it('leaves a disabled rule disabled when it is edited', async () => {
+      const user = userEvent.setup();
+      renderRules();
+
+      await user.click(screen.getByRole('button', { name: 'Edit Timeout Detection' }));
+      const description = dialog().getByRole('textbox', { name: 'Description' });
+      await user.clear(description);
+      await user.type(description, 'Fixed a typo');
+      await user.click(dialog().getByRole('button', { name: 'Save Changes' }));
+
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'rule-2', is_enabled: false }),
+        expect.anything()
+      );
+    });
+
+    it('leaves an enabled rule enabled when it is edited', async () => {
+      const user = userEvent.setup();
+      renderRules();
+
+      await user.click(screen.getByRole('button', { name: 'Edit High Error Rate' }));
+      await user.click(dialog().getByRole('button', { name: 'Save Changes' }));
+
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'rule-1', is_enabled: true }),
+        expect.anything()
+      );
+    });
+
     it('saves the edit against the rule it opened on', async () => {
       const user = userEvent.setup();
       renderRules();
@@ -321,6 +356,20 @@ describe('AdminAlertRules', () => {
 
       expect(mockCreate).toHaveBeenCalledWith(
         expect.objectContaining({ target_functions: ['one', 'two', 'three'] }),
+        expect.anything()
+      );
+    });
+
+    /** A brand new rule starts switched on; there is no control for it here. */
+    it('creates a rule enabled', async () => {
+      const user = userEvent.setup();
+      await openCreate(user);
+
+      await user.type(dialog().getByRole('textbox', { name: /Rule Name/ }), 'New Rule');
+      await user.click(dialog().getByRole('button', { name: 'Create Rule' }));
+
+      expect(mockCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ is_enabled: true }),
         expect.anything()
       );
     });
