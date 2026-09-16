@@ -59,10 +59,51 @@ describe('ruleToFormData', () => {
 
   /**
    * Out-of-range stored values are passed through rather than silently
-   * corrected, so the editor shows what is actually stored.
+   * corrected, so the editor shows what is actually stored and it can be seen
+   * and fixed.
    */
   it('passes a stored cooldown through even when out of range', () => {
     expect(ruleToFormData(rule({ cooldown_minutes: 0 })).cooldown_minutes).toBe(0);
+  });
+
+  /**
+   * The config fields have to agree with cooldown above. A `|| default`
+   * fallback swapped a stored 0 for the default, so an out-of-range config
+   * value was invisible in the editor and got written back as the default on
+   * the next save.
+   */
+  it('passes a stored 0 in config through, rather than reading it as missing', () => {
+    const form = ruleToFormData(
+      rule({ config: { threshold: 0, window_minutes: 0 } })
+    );
+
+    expect(form.threshold).toBe(0);
+    expect(form.window_minutes).toBe(0);
+  });
+
+  /** config is untyped JSON, so a wrong-typed value must not reach the field. */
+  it.each([
+    ['a string', '7'],
+    ['null', null],
+    ['an object', {}],
+    ['NaN', NaN],
+  ])('falls back when threshold is %s', (_label, threshold) => {
+    expect(ruleToFormData(rule({ config: { threshold } })).threshold).toBe(
+      DEFAULT_FORM_DATA.threshold
+    );
+  });
+
+  it('falls back when a text field holds something that is not a string', () => {
+    const form = ruleToFormData(rule({ config: { pattern: 42, error_pattern: {} } }));
+
+    expect(form.pattern).toBe('');
+    expect(form.error_pattern).toBe('');
+  });
+
+  it('treats only a real true as case sensitive', () => {
+    expect(ruleToFormData(rule({ config: { case_sensitive: true } })).case_sensitive).toBe(true);
+    expect(ruleToFormData(rule({ config: { case_sensitive: 'yes' } })).case_sensitive).toBe(false);
+    expect(ruleToFormData(rule({ config: {} })).case_sensitive).toBe(false);
   });
 });
 

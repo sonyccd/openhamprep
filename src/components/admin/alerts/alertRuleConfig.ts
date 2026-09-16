@@ -64,11 +64,22 @@ export const DEFAULT_FORM_DATA: RuleFormData = {
 };
 
 /**
- * Seeds the form from an existing rule, or returns the blank defaults.
+ * config is an untyped JSON column, so these check the type rather than
+ * casting and hoping.
  *
- * The config column is untyped JSON, so every field falls back to its default
- * rather than trusting what is stored.
+ * They fall back only when the value is missing or the wrong type — not when
+ * it is falsy. `x || default` would swap a stored 0 for the default, which is
+ * both wrong (the editor should show what is stored, so an out-of-range value
+ * can be seen and corrected) and inconsistent with cooldown_minutes, which is
+ * a real column and is passed straight through.
  */
+const numberOr = (value: unknown, fallback: number) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+
+const stringOr = (value: unknown, fallback: string) =>
+  typeof value === 'string' ? value : fallback;
+
+/** Seeds the form from an existing rule, or returns the blank defaults. */
 export function ruleToFormData(rule?: AlertRule): RuleFormData {
   if (!rule) return DEFAULT_FORM_DATA;
 
@@ -80,13 +91,15 @@ export function ruleToFormData(rule?: AlertRule): RuleFormData {
     severity: rule.severity,
     cooldown_minutes: rule.cooldown_minutes,
     target_functions: rule.target_functions?.join(', ') || '',
-    threshold: (config.threshold as number) || DEFAULT_FORM_DATA.threshold,
-    window_minutes: (config.window_minutes as number) || DEFAULT_FORM_DATA.window_minutes,
-    pattern: (config.pattern as string) || '',
-    case_sensitive: (config.case_sensitive as boolean) || false,
-    consecutive_failures:
-      (config.consecutive_failures as number) || DEFAULT_FORM_DATA.consecutive_failures,
-    error_pattern: (config.error_pattern as string) || '',
+    threshold: numberOr(config.threshold, DEFAULT_FORM_DATA.threshold),
+    window_minutes: numberOr(config.window_minutes, DEFAULT_FORM_DATA.window_minutes),
+    pattern: stringOr(config.pattern, ''),
+    case_sensitive: config.case_sensitive === true,
+    consecutive_failures: numberOr(
+      config.consecutive_failures,
+      DEFAULT_FORM_DATA.consecutive_failures
+    ),
+    error_pattern: stringOr(config.error_pattern, ''),
   };
 }
 
