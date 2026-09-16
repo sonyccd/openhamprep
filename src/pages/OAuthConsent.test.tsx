@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { muiTheme } from '@/theme/muiTheme';
 import OAuthConsent from './OAuthConsent';
 import { BrowserRouter } from 'react-router-dom';
 import React from 'react';
@@ -30,7 +32,9 @@ vi.mock('@/hooks/useOAuthConsent', () => ({
 const renderOAuthConsent = () => {
   return render(
     <BrowserRouter>
-      <OAuthConsent />
+      <MuiThemeProvider theme={muiTheme} defaultMode="light" noSsr>
+        <OAuthConsent />
+      </MuiThemeProvider>
     </BrowserRouter>
   );
 };
@@ -69,7 +73,10 @@ describe('OAuthConsent', () => {
     it('renders the forum username input', () => {
       renderOAuthConsent();
 
-      expect(screen.getByText('Forum Username')).toBeInTheDocument();
+      // Queried by role, not text: MUI's outlined TextField renders the label
+      // twice — once as the <label>, once in the <legend> that notches the
+      // border — so getByText finds two.
+      expect(screen.getByRole('textbox', { name: 'Forum Username' })).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Choose a username')).toBeInTheDocument();
     });
 

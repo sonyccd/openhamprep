@@ -1,11 +1,26 @@
-import { useState } from 'react';
-import { useOAuthConsent } from '@/hooks/useOAuthConsent';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2, MessageCircle, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useState } from "react";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardActions from "@mui/material/CardActions";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import CircularProgress from "@mui/material/CircularProgress";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { AlertCircle, MessageCircle } from "lucide-react";
+import { useOAuthConsent } from "@/hooks/useOAuthConsent";
+import { tokenAlpha } from "@/theme/muiTheme";
+
+const centredPage = {
+  minHeight: "100vh",
+  bgcolor: "background.default",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  p: 2,
+} as const;
 
 export default function OAuthConsent() {
   const {
@@ -18,45 +33,45 @@ export default function OAuthConsent() {
     handleCancel,
   } = useOAuthConsent();
 
-  const [forumUsername, setForumUsername] = useState('');
+  const [forumUsername, setForumUsername] = useState("");
 
   if (isLoading || isAutoApproving) {
+    const message = isAutoApproving ? "Connecting to the forum..." : "Loading...";
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">
-            {isAutoApproving
-              ? 'Connecting to the forum...'
-              : 'Loading...'}
-          </p>
-        </div>
-      </div>
+      <Box sx={centredPage}>
+        <Box sx={{ textAlign: "center" }}>
+          {/* The visible text names the spinner, so it needs no second label. */}
+          <CircularProgress aria-labelledby="oauth-consent-status" />
+          <Typography id="oauth-consent-status" sx={{ color: "text.secondary", mt: 2 }}>
+            {message}
+          </Typography>
+        </Box>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="w-5 h-5" />
-              Authorization Error
-            </CardTitle>
-          </CardHeader>
+      <Box sx={centredPage}>
+        <Card variant="outlined" sx={{ width: "100%", maxWidth: 448 }}>
+          <CardHeader
+            title={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "error.main" }}>
+                <Box component={AlertCircle} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+                Authorization Error
+              </Box>
+            }
+          />
           <CardContent>
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+            <Alert severity="error">{error}</Alert>
           </CardContent>
-          <CardFooter>
-            <Button variant="outline" onClick={() => window.history.back()} className="w-full">
+          <CardActions>
+            <Button variant="outlined" fullWidth onClick={() => window.history.back()}>
               Go Back
             </Button>
-          </CardFooter>
+          </CardActions>
         </Card>
-      </div>
+      </Box>
     );
   }
 
@@ -65,62 +80,69 @@ export default function OAuthConsent() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-            <MessageCircle className="w-6 h-6 text-primary" />
-          </div>
-          <CardTitle>Create Your Forum Username</CardTitle>
-          <CardDescription>
-            Choose a username to use on the Open Ham Prep forum. This will be visible to other users.
-          </CardDescription>
-        </CardHeader>
+    <Box sx={centredPage}>
+      <Card variant="outlined" sx={{ width: "100%", maxWidth: 448 }}>
+        <CardHeader
+          sx={{ textAlign: "center" }}
+          title={
+            <>
+              <Box
+                sx={{
+                  mx: "auto",
+                  width: 48,
+                  height: 48,
+                  borderRadius: "50%",
+                  bgcolor: (t) => tokenAlpha(t.vars.palette.primary.main, 10),
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mb: 2,
+                }}
+              >
+                <Box
+                  component={MessageCircle}
+                  aria-hidden="true"
+                  sx={{ width: 24, height: 24, color: "primary.main" }}
+                />
+              </Box>
+              <Typography variant="h6" component="h1">
+                Create Your Forum Username
+              </Typography>
+            </>
+          }
+          subheader="Choose a username to use on the Open Ham Prep forum. This will be visible to other users."
+        />
 
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <Label htmlFor="forum-username" className="text-sm font-medium">
-              Forum Username
-            </Label>
-            <Input
-              id="forum-username"
-              value={forumUsername}
-              onChange={(e) => setForumUsername(e.target.value)}
-              placeholder="Choose a username"
-              disabled={isProcessing}
-              autoFocus
-            />
-            <p className="text-xs text-muted-foreground">
-              3-20 characters: letters, numbers, underscores, or hyphens.
-            </p>
-          </div>
+        <CardContent>
+          <TextField
+            id="forum-username"
+            label="Forum Username"
+            placeholder="Choose a username"
+            value={forumUsername}
+            onChange={(event) => setForumUsername(event.target.value)}
+            disabled={isProcessing}
+            helperText="3-20 characters: letters, numbers, underscores, or hyphens."
+            slotProps={{ inputLabel: { shrink: true } }}
+            autoFocus
+            fullWidth
+          />
         </CardContent>
 
-        <CardFooter className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isProcessing}
-            className="flex-1"
-          >
+        <CardActions sx={{ gap: 1.5, px: 2, pb: 2 }}>
+          <Button variant="outlined" onClick={handleCancel} disabled={isProcessing} sx={{ flex: 1 }}>
             Cancel
           </Button>
           <Button
+            variant="contained"
             onClick={() => handleApprove(forumUsername)}
             disabled={isProcessing || !forumUsername.trim()}
-            className="flex-1"
+            sx={{ flex: 1 }}
+            startIcon={isProcessing ? <CircularProgress size={16} color="inherit" /> : undefined}
           >
-            {isProcessing ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              'Continue to Forum'
-            )}
+            {isProcessing ? "Saving..." : "Continue to Forum"}
           </Button>
-        </CardFooter>
+        </CardActions>
       </Card>
-    </div>
+    </Box>
   );
 }
