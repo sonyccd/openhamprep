@@ -94,7 +94,7 @@ export function RandomPractice({
         // Show special message for new all-time best
         if (newStreak > 1) {
           toast.success(`New all-time best: ${newStreak} streak!`, {
-            icon: <Box component={Award} sx={{ width: 20, height: 20, color: "primary.main" }} />,
+            icon: <Box component={Award} aria-hidden="true" sx={{ width: 20, height: 20, color: "primary.main" }} />,
             duration: 3000
           });
         }
@@ -104,7 +104,7 @@ export function RandomPractice({
     if (STREAK_MILESTONES.includes(newStreak)) {
       setShowStreakCelebration(true);
       toast.success(getMilestoneMessage(newStreak), {
-        icon: <Box component={Trophy} sx={{ width: 20, height: 20, color: "primary.main" }} />,
+        icon: <Box component={Trophy} aria-hidden="true" sx={{ width: 20, height: 20, color: "primary.main" }} />,
         duration: 3000
       });
       setTimeout(() => setShowStreakCelebration(false), 1500);
@@ -213,7 +213,7 @@ export function RandomPractice({
                 onClick={handleReset}
                 sx={{ color: "text.secondary", "&:hover": { color: "text.primary" } }}
               >
-                <Box component={RotateCcw} sx={{ width: 16, height: 16 }} />
+                <Box component={RotateCcw} aria-hidden="true" sx={{ width: 16, height: 16 }} />
               </IconButton>
             </Box>
           </Box>
@@ -222,7 +222,7 @@ export function RandomPractice({
       actions={
         <QuizNavControls
           session={session}
-          nextIcon={<Box component={Zap} sx={{ width: 16, height: 16 }} />}
+          nextIcon={<Box component={Zap} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
           sx={{ mt: 5 }}
         />
       }
