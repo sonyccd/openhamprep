@@ -54,12 +54,21 @@ export default function OAuthConsent() {
     return (
       <Box sx={centredPage}>
         <Card variant="outlined" sx={{ width: "100%", maxWidth: 448 }}>
+          {/* disableTypography: CardHeader otherwise wraps the title in a
+              Typography forced to component="span", which styles it like a
+              heading while exposing nothing — and makes any block element
+              passed here invalid inside that span. */}
           <CardHeader
+            disableTypography
             title={
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "error.main" }}>
+              <Typography
+                variant="h6"
+                component="h1"
+                sx={{ display: "flex", alignItems: "center", gap: 1, color: "error.main" }}
+              >
                 <Box component={AlertCircle} aria-hidden="true" sx={{ width: 20, height: 20 }} />
                 Authorization Error
-              </Box>
+              </Typography>
             }
           />
           <CardContent>
@@ -83,6 +92,7 @@ export default function OAuthConsent() {
     <Box sx={centredPage}>
       <Card variant="outlined" sx={{ width: "100%", maxWidth: 448 }}>
         <CardHeader
+          disableTypography
           sx={{ textAlign: "center" }}
           title={
             <>
@@ -110,7 +120,12 @@ export default function OAuthConsent() {
               </Typography>
             </>
           }
-          subheader="Choose a username to use on the Open Ham Prep forum. This will be visible to other users."
+          subheader={
+            <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+              Choose a username to use on the Open Ham Prep forum. This will be visible to other
+              users.
+            </Typography>
+          }
         />
 
         <CardContent>

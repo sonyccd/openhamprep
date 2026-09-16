@@ -61,7 +61,11 @@ describe('OAuthConsent', () => {
     it('renders the username creation page', () => {
       renderOAuthConsent();
 
-      expect(screen.getByText('Create Your Forum Username')).toBeInTheDocument();
+      // By role, not text: CardHeader styles its title like a heading while
+      // exposing nothing, so a getByText assertion passes either way.
+      expect(
+        screen.getByRole('heading', { name: 'Create Your Forum Username' })
+      ).toBeInTheDocument();
     });
 
     it('displays the description text', () => {
@@ -164,7 +168,7 @@ describe('OAuthConsent', () => {
 
       renderOAuthConsent();
 
-      expect(screen.getByText('Authorization Error')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Authorization Error' })).toBeInTheDocument();
       expect(screen.getByText('Test error message')).toBeInTheDocument();
     });
 
