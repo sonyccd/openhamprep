@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/button";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
@@ -8,9 +11,11 @@ import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShort
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useQuizSession } from "@/hooks/useQuizSession";
 import { QuestionListView } from "@/components/QuestionListView";
-import { RotateCcw, ChevronRight, CheckCircle, ArrowLeft } from "lucide-react";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { RotateCcw, ArrowLeft, CheckCircle } from "lucide-react";
+import { MotionBox } from "@/components/ohp/MotionBox";
+import { ChoiceRow } from "@/components/ChoiceRow";
+import { QuizProgress } from "@/components/QuizProgress";
+import { QuizScoreline } from "@/components/QuizScoreline";
 import { getSubelementName } from "@/lib/subelementNames";
 import { TestType } from "@/types/navigation";
 import { PageContainer } from "@/components/ohp/PageContainer";
@@ -152,51 +157,30 @@ export function SubelementPractice({
   if (topicView === 'list' || !selectedSubelement) {
     return (
       <PageContainer width="standard" mobileNavPadding>
-        <div className="flex items-center justify-end mb-8">
-        </div>
-
-        <motion.div initial={{
-          opacity: 0,
-          y: 10
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} className="mb-6">
-          <h1 className="text-2xl font-mono font-bold text-foreground mb-2">
+        <MotionBox initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} sx={{ mb: 3 }}>
+          <Typography
+            variant="h5"
+            component="h1"
+            sx={{ fontFamily: "monospace", fontWeight: 700, mb: 1 }}
+          >
             Choose a Topic
-          </h1>
-          <p className="text-muted-foreground">
+          </Typography>
+          <Typography sx={{ color: "text.secondary" }}>
             Focus on specific areas to strengthen your knowledge
-          </p>
-        </motion.div>
+          </Typography>
+        </MotionBox>
 
-        <div className="grid gap-3">
-          {subelements.map((sub, index) => {
-            return <motion.button key={sub} initial={{
-              opacity: 0,
-              x: -20
-            }} animate={{
-              opacity: 1,
-              x: 0
-            }} transition={{
-              delay: index * 0.05
-            }} onClick={() => handleSelectSubelement(sub)} className={cn("w-full p-4 rounded-xl border bg-card text-left", "hover:bg-secondary hover:border-foreground/20 hover:shadow-lg", "transition-all duration-200 group")}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center font-mono font-bold text-foreground">
-                    {sub}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">
-                      {getSubelementNameForTest(sub)}
-                    </h3>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-              </div>
-            </motion.button>;
-          })}
-        </div>
+        <Box sx={{ display: "grid", gap: 1.5 }}>
+          {subelements.map((sub, index) => (
+            <ChoiceRow
+              key={sub}
+              index={index}
+              badge={sub}
+              title={getSubelementNameForTest(sub)}
+              onClick={() => handleSelectSubelement(sub)}
+            />
+          ))}
+        </Box>
       </PageContainer>
     );
   }
@@ -220,71 +204,87 @@ export function SubelementPractice({
   if (!question) return <QuizShellPending />;
 
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
-  const progress = Math.round(session.askedIds.length / currentQuestions.length * 100);
 
   return (
     <QuizShell
       header={
-        <div className="mb-12">
-          {/* Top row: Back button and topic name */}
-          <div className="flex items-center justify-between mb-8">
-            <Button variant="ghost" onClick={handleBackToQuestions} className="gap-2 -ml-2">
-              <ArrowLeft className="w-4 h-4" />
+        <Box sx={{ mb: 6 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 4 }}>
+            <Button
+              variant="text"
+              onClick={handleBackToQuestions}
+              startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+              sx={{ ml: -1, color: "text.primary" }}
+            >
               Question List
             </Button>
-            <div className="flex items-center gap-2">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <KeyboardShortcutsHelp />
-              <span className="font-mono text-sm text-muted-foreground">
+              <Box
+                component="span"
+                sx={{ fontFamily: "monospace", fontSize: "0.875rem", color: "text.secondary" }}
+              >
                 {selectedSubelement}
-              </span>
-            </div>
-          </div>
+              </Box>
+            </Box>
+          </Box>
 
-          {/* Progress & Stats - Unified Minimal */}
-          <motion.div
+          <MotionBox
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-4"
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
           >
-            {/* Progress bar - primary visual element */}
-            <div className="relative">
-              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  className="h-full bg-primary rounded-full transition-all duration-300"
-                />
-              </div>
-            </div>
+            <QuizProgress asked={session.askedIds.length} total={currentQuestions.length} />
 
-            {/* Inline stats below progress */}
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-3 font-mono text-muted-foreground">
-                <span className="text-success font-medium">{stats.correct}</span>
-                <span className="text-muted-foreground/40">/</span>
-                <span className="text-destructive font-medium">{stats.total - stats.correct}</span>
-                <span className="text-muted-foreground/30 mx-1">|</span>
-                <span className="text-primary font-medium">{percentage}%</span>
-                <span className="text-muted-foreground/30 mx-1">|</span>
-                <span className="text-muted-foreground">
-                  {session.askedIds.length}/{currentQuestions.length}
-                </span>
-                {session.askedIds.length === currentQuestions.length && (
-                  <CheckCircle className="w-3.5 h-3.5 text-success" />
-                )}
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={session.reset}
-                className="text-muted-foreground hover:text-foreground"
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                fontSize: "0.875rem",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  fontFamily: "monospace",
+                  color: "text.secondary",
+                }}
               >
-                <RotateCcw className="w-4 h-4" />
-                <span className="sr-only">Reset</span>
-              </Button>
-            </div>
-          </motion.div>
-        </div>
+                <QuizScoreline correct={stats.correct} incorrect={stats.total - stats.correct} />
+                <Box component="span" aria-hidden="true" sx={{ opacity: 0.3, mx: 0.5 }}>
+                  |
+                </Box>
+                <Box component="span" sx={{ color: "primary.main", fontWeight: 500 }}>
+                  {percentage}%
+                </Box>
+                <Box component="span" aria-hidden="true" sx={{ opacity: 0.3, mx: 0.5 }}>
+                  |
+                </Box>
+                <Box component="span">
+                  {session.askedIds.length}/{currentQuestions.length}
+                </Box>
+                {session.askedIds.length === currentQuestions.length && (
+                  <Box
+                    component={CheckCircle}
+                    aria-hidden="true"
+                    sx={{ width: 14, height: 14, color: "success.main" }}
+                  />
+                )}
+              </Box>
+              <IconButton
+                aria-label="Reset"
+                size="small"
+                onClick={session.reset}
+                sx={{ color: "text.secondary", "&:hover": { color: "text.primary" } }}
+              >
+                <Box component={RotateCcw} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+              </IconButton>
+            </Box>
+          </MotionBox>
+        </Box>
       }
       actions={<QuizNavControls session={session} sx={{ mt: 5 }} />}
       footer={
