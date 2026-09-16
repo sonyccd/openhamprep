@@ -143,11 +143,12 @@ describe('RandomPractice', () => {
     it('shows initial stats at zero', async () => {
       renderRandomPractice();
 
+      // The counts used to be bare numbers told apart by colour; each now
+      // carries a hidden label, and the pair is a named group.
       await waitFor(() => {
-        // Stats are now displayed inline as numbers without labels
-        // Look for the correct/incorrect count display (0 / 0 format)
-        const statsContainer = screen.getByText('0', { selector: '.text-success' });
-        expect(statsContainer).toBeInTheDocument();
+        const score = screen.getByRole('group', { name: 'Score' });
+        expect(score).toHaveTextContent('0 correct');
+        expect(score).toHaveTextContent('0 incorrect');
       });
     });
 
@@ -268,10 +269,8 @@ describe('RandomPractice', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /reset/i }));
 
-      // Stats should be reset (still showing zero in inline format)
       await waitFor(() => {
-        const statsContainer = screen.getByText('0', { selector: '.text-success' });
-        expect(statsContainer).toBeInTheDocument();
+        expect(screen.getByRole('group', { name: 'Score' })).toHaveTextContent('0 correct');
       });
     });
   });

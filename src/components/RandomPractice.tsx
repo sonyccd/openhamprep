@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Button } from "@/components/ui/button";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
@@ -11,12 +12,13 @@ import { useQuizSession } from "@/hooks/useQuizSession";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from '@/services/queryKeys';
-import { Zap, RotateCcw, Flame, Trophy, Award } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Zap, RotateCcw, Trophy, Award } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { TestType } from "@/types/navigation";
 import { QuizShell, QuizShellPending, QuizShellError, QuizNavControls } from "@/components/QuizShell";
+import { QuizScoreline } from "@/components/QuizScoreline";
+import { StreakIndicator } from "@/components/StreakIndicator";
+import { MotionBox } from "@/components/ohp/MotionBox";
 
 interface RandomPracticeProps {
   onBack: () => void;
@@ -92,7 +94,7 @@ export function RandomPractice({
         // Show special message for new all-time best
         if (newStreak > 1) {
           toast.success(`New all-time best: ${newStreak} streak!`, {
-            icon: <Award className="w-5 h-5 text-primary" />,
+            icon: <Box component={Award} sx={{ width: 20, height: 20, color: "primary.main" }} />,
             duration: 3000
           });
         }
@@ -102,7 +104,7 @@ export function RandomPractice({
     if (STREAK_MILESTONES.includes(newStreak)) {
       setShowStreakCelebration(true);
       toast.success(getMilestoneMessage(newStreak), {
-        icon: <Trophy className="w-5 h-5 text-primary" />,
+        icon: <Box component={Trophy} sx={{ width: 20, height: 20, color: "primary.main" }} />,
         duration: 3000
       });
       setTimeout(() => setShowStreakCelebration(false), 1500);
@@ -192,64 +194,35 @@ export function RandomPractice({
   return (
     <QuizShell
       header={
-        <div className="mb-12">
-          <div className="flex items-center justify-between">
-            {/* Inline Stats */}
-            <motion.div
+        <Box sx={{ mb: 6 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <MotionBox
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 text-sm font-mono"
+              sx={{ display: "flex", alignItems: "center" }}
             >
-              <span className="text-success font-medium">{stats.correct}</span>
-              <span className="text-muted-foreground/40">/</span>
-              <span className="text-destructive font-medium">{stats.total - stats.correct}</span>
+              <QuizScoreline correct={stats.correct} incorrect={stats.total - stats.correct} />
+              <StreakIndicator streak={streak} celebrating={showStreakCelebration} />
+            </MotionBox>
 
-              {/* Streak - only visible when active */}
-              <AnimatePresence>
-                {streak > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="ml-3 flex items-center gap-1.5 text-primary relative"
-                  >
-                    {showStreakCelebration && (
-                      <motion.div
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: [1, 2, 1], opacity: [1, 0.5, 0] }}
-                        transition={{ duration: 1 }}
-                        className="absolute inset-0 flex items-center justify-center"
-                      >
-                        <Trophy className="w-6 h-6 text-primary" />
-                      </motion.div>
-                    )}
-                    <Flame className={cn("w-4 h-4", streak >= 5 && "animate-pulse")} />
-                    <span className="font-semibold">{streak}</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            {/* Right side actions */}
-            <div className="flex items-center gap-2">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <KeyboardShortcutsHelp />
-              <Button
-                variant="ghost"
-                size="sm"
+              <IconButton
+                aria-label="Reset"
+                size="small"
                 onClick={handleReset}
-                className="text-muted-foreground hover:text-foreground"
+                sx={{ color: "text.secondary", "&:hover": { color: "text.primary" } }}
               >
-                <RotateCcw className="w-4 h-4" />
-                <span className="sr-only">Reset</span>
-              </Button>
-            </div>
-          </div>
-        </div>
+                <Box component={RotateCcw} sx={{ width: 16, height: 16 }} />
+              </IconButton>
+            </Box>
+          </Box>
+        </Box>
       }
       actions={
         <QuizNavControls
           session={session}
-          nextIcon={<Zap className="w-4 h-4" />}
+          nextIcon={<Box component={Zap} sx={{ width: 16, height: 16 }} />}
           sx={{ mt: 5 }}
         />
       }
