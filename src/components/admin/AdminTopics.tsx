@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { queryKeys } from "@/services/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -27,7 +28,7 @@ export function AdminTopics() {
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
 
   const { data: topics = [], isLoading } = useQuery({
-    queryKey: ["admin-topics"],
+    queryKey: queryKeys.topics.admin(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("topics")
@@ -83,8 +84,8 @@ export function AdminTopics() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-topics"] });
-      queryClient.invalidateQueries({ queryKey: ["topics"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.admin() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.all() });
       setIsAddDialogOpen(false);
       toast.success("Topic created successfully");
     },

@@ -162,9 +162,9 @@ Wrap up the topic with a brief summary of what was covered.
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["topic", topicSlug] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.detail(topicSlug) });
       queryClient.invalidateQueries({ queryKey: queryKeys.topics.admin() });
-      queryClient.invalidateQueries({ queryKey: ["topics"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.all() });
       queryClient.invalidateQueries({
         queryKey: queryKeys.topics.adminDetail(topicId),
       });
