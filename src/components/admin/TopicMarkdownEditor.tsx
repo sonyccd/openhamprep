@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
+import { queryKeys } from "@/services/queryKeys";
 
 interface TopicMarkdownEditorProps {
   topicId: string;
@@ -161,11 +162,11 @@ Wrap up the topic with a brief summary of what was covered.
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["topic", topicSlug] });
-      queryClient.invalidateQueries({ queryKey: ["admin-topics"] });
-      queryClient.invalidateQueries({ queryKey: ["topics"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.detail(topicSlug) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.admin() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.topics.all() });
       queryClient.invalidateQueries({
-        queryKey: ["admin-topic-detail", topicId],
+        queryKey: queryKeys.topics.adminDetail(topicId),
       });
       setHasChanges(false);
       setSavedContent(content);

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { queryKeys } from "@/services/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import type { Topic } from "@/hooks/useTopics";
 import type { EditHistoryEntry } from "../EditHistoryViewer";
@@ -27,7 +28,7 @@ export function useTopicEditor({ topic, settings, onSaved, onDeleted }: UseTopic
   const { user } = useAuth();
 
   const { data: freshTopic } = useQuery({
-    queryKey: ["admin-topic-detail", topic.id],
+    queryKey: queryKeys.topics.adminDetail(topic.id),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("topics")
@@ -41,9 +42,9 @@ export function useTopicEditor({ topic, settings, onSaved, onDeleted }: UseTopic
   });
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["admin-topics"] });
-    queryClient.invalidateQueries({ queryKey: ["admin-topic-detail", topic.id] });
-    queryClient.invalidateQueries({ queryKey: ["topics"] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.topics.admin() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.topics.adminDetail(topic.id) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.topics.all() });
   };
 
   const updateSettingsMutation = useMutation({
