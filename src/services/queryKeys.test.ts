@@ -190,4 +190,31 @@ describe('queryKeys', () => {
       expect(key).toEqual(['questions', 'technician']);
     });
   });
+
+  describe('progress', () => {
+    /**
+     * TanStack invalidates by prefix: a query is cleared when its key starts
+     * with the invalidated one. useProgress clears testResults(userId) after
+     * every saved test, so the recent-results key has to sit under it — the
+     * old ['test-history', ...] key did not, and the start screen kept
+     * showing the previous list for its whole staleTime.
+     */
+    it('.recentTestResults() is a child of .testResults(), so a save clears it', () => {
+      const recent = queryKeys.progress.recentTestResults('u1', 'technician');
+      const byUser = queryKeys.progress.testResults('u1');
+      const byType = queryKeys.progress.testResults('u1', 'technician');
+
+      const startsWith = (key: readonly unknown[], prefix: readonly unknown[]) =>
+        prefix.every((part, i) => key[i] === part);
+
+      expect(startsWith(recent, byUser)).toBe(true);
+      expect(startsWith(recent, byType)).toBe(true);
+    });
+
+    it('.recentTestResults() never collides with .testResults() itself', () => {
+      expect(queryKeys.progress.recentTestResults('u1', 'general')).not.toEqual(
+        queryKeys.progress.testResults('u1', 'general')
+      );
+    });
+  });
 });
