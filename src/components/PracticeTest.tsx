@@ -194,7 +194,7 @@ export function PracticeTest({
                 color: "text.secondary",
               }}
             >
-              <span>Progress</span>
+              <Box component="span">Progress</Box>
               <Box component="span" sx={{ fontFamily: "monospace" }}>
                 {answeredCount} / {questions.length}
               </Box>

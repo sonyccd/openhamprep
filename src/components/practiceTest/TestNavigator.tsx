@@ -19,9 +19,10 @@ interface TestNavigatorProps {
  * Previous / Next / Finish, with the numbered jump-to grid between them.
  *
  * Unlike the drill modes this is index-driven with no session history, so it
- * does not use QuizNavControls. The grid is hidden below md, where 35 tiles
- * would not fit; each tile's name says whether it is answered and current so
- * the colour is not the only signal.
+ * does not use QuizNavControls. The grid is hidden below md (768px, the
+ * theme's Tailwind-aligned value), where 35 to 50 tiles would not fit; each
+ * tile's name says whether it is answered and current so the colour is not
+ * the only signal.
  */
 export function TestNavigator({
   questions,
