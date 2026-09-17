@@ -1,21 +1,24 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useKeyboardShortcuts, KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
-import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
-import { AlertTriangle, CheckCircle, ArrowLeft, ChevronLeft, ChevronRight, Dices, Flame } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { motion } from "framer-motion";
+import { CheckCircle, ChevronLeft, ChevronRight, Dices } from "lucide-react";
+import { MotionBox } from "@/components/ohp/MotionBox";
 import { TestType } from "@/types/navigation";
 import { PageContainer } from "@/components/ohp/PageContainer";
 import { QuizShell, QuizShellPending } from "@/components/QuizShell";
+import { WeakQuestionHeader } from "./weakQuestions/WeakQuestionHeader";
+import { WeakQuestionList } from "./weakQuestions/WeakQuestionList";
 
 // Number of correct answers in a row needed to clear a weak question
 const STREAK_TO_CLEAR = 3;
@@ -231,20 +234,26 @@ export function WeakQuestionsReview({
     const allCleared = clearedQuestions.size > 0 && weakQuestions.length > 0;
     return (
       <PageContainer width="standard" mobileNavPadding>
-        <Card>
-          <CardContent className="pt-6">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-8">
-              <CheckCircle className="w-12 h-12 text-success mx-auto mb-4" />
-              <p className="text-foreground font-medium mb-2">
+        <Card variant="outlined">
+          <CardContent sx={{ pt: 3 }}>
+            <MotionBox initial={{ opacity: 0 }} animate={{ opacity: 1 }} sx={{ textAlign: "center", py: 4 }}>
+              <Box
+                component={CheckCircle}
+                aria-hidden="true"
+                sx={{ width: 48, height: 48, color: "success.main", mx: "auto", mb: 2, display: "block" }}
+              />
+              <Typography sx={{ fontWeight: 500, mb: 1 }}>
                 {allCleared ? "All weak questions cleared!" : "No weak questions!"}
-              </p>
-              <p className="text-muted-foreground mb-4">
+              </Typography>
+              <Typography sx={{ color: "text.secondary", mb: 2 }}>
                 {allCleared
                   ? `You cleared ${clearedQuestions.size} question${clearedQuestions.size !== 1 ? 's' : ''} this session!`
                   : "You're doing great. Keep practicing!"}
-              </p>
-              <Button onClick={onBack}>Go Back</Button>
-            </motion.div>
+              </Typography>
+              <Button variant="contained" onClick={onBack}>
+                Go Back
+              </Button>
+            </MotionBox>
           </CardContent>
         </Card>
       </PageContainer>
@@ -260,105 +269,47 @@ export function WeakQuestionsReview({
     return (
       <QuizShell
         header={
-            <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <Button variant="ghost" onClick={handleBackToList} className="gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                Back to Weak Questions
-              </Button>
-              <div className="flex items-center gap-2">
-                <KeyboardShortcutsHelp />
-                {isJustCleared ? (
-                  <div className="flex items-center gap-2 text-success">
-                    <CheckCircle className="w-5 h-5" />
-                    <span className="font-mono font-semibold">Cleared!</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 text-destructive">
-                    <AlertTriangle className="w-5 h-5" />
-                    <span className="font-mono font-semibold">Weak Area</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Cleared banner */}
-            {isJustCleared && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-success/10 border border-success/30 rounded-lg p-4 mb-4"
-              >
-                <div className="flex items-center gap-2 text-success">
-                  <CheckCircle className="w-5 h-5" />
-                  <span className="font-medium">Question cleared from weak areas!</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Take your time to review the explanation. Click Next to continue.
-                </p>
-              </motion.div>
-            )}
-
-            {/* Streak Progress - only shown when streak mode is enabled and not just cleared */}
-            {streakModeEnabled && !isJustCleared && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-card border border-border rounded-lg p-4 mb-4"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Flame className="w-4 h-4 text-warning" />
-                    <span className="text-sm text-muted-foreground">Streak to clear ({STREAK_TO_CLEAR} correct in a row)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {Array.from({ length: STREAK_TO_CLEAR }, (_, i) => (
-                      <div
-                        key={i}
-                        className={`w-3 h-3 rounded-full transition-colors ${
-                          i < currentStreak ? 'bg-success' : 'bg-muted'
-                        }`}
-                      />
-                    ))}
-                    <span className="text-sm font-mono text-primary ml-2">{currentStreak}/{STREAK_TO_CLEAR}</span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-          </div>
+          <WeakQuestionHeader
+            isJustCleared={isJustCleared}
+            streakModeEnabled={streakModeEnabled}
+            currentStreak={currentStreak}
+            streakToClear={STREAK_TO_CLEAR}
+            onBack={handleBackToList}
+          />
         }
         actions={
-          <div className="mt-8 flex justify-center gap-4">
-            <Button variant="outline" onClick={handlePrevQuestion} disabled={!canGoPrev || isJustCleared} className="gap-2">
-              <ChevronLeft className="w-4 h-4" />
+          <Box sx={{ mt: 4, display: "flex", justifyContent: "center", gap: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={handlePrevQuestion}
+              disabled={!canGoPrev || isJustCleared}
+              startIcon={<Box component={ChevronLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+            >
               Previous
             </Button>
-            <Button
-              variant="outline"
+            <IconButton
               onClick={handleRandomize}
               disabled={activeWeakQuestions.length <= 1 || isJustCleared}
-              className="gap-2"
               title="Random question"
               aria-label="Jump to random question"
+              sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1 }}
             >
-              <Dices className="w-4 h-4" />
-            </Button>
+              <Box component={Dices} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+            </IconButton>
             {showResult && !isJustCleared && (
-              <Button onClick={handleTryAgain} variant="outline">
+              <Button variant="outlined" onClick={handleTryAgain}>
                 Try Again
               </Button>
             )}
             <Button
-              variant={showResult ? "default" : "outline"}
+              variant={showResult ? "contained" : "outlined"}
               onClick={handleNextQuestion}
               disabled={!isJustCleared && !canGoNext}
-              className="gap-2"
+              endIcon={<Box component={ChevronRight} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
             >
               {isJustCleared && !hasMoreQuestions ? 'Done' : 'Next'}
-              <ChevronRight className="w-4 h-4" />
             </Button>
-          </div>
+          </Box>
         }
         footer={
           (activeWeakQuestions.length > 1 || isJustCleared) && (
@@ -371,7 +322,9 @@ export function WeakQuestionsReview({
                   `Question ${(currentIndex || 0) + 1} of ${activeWeakQuestions.length}`
                 )}
                 {clearedQuestions.size > 0 && (
-                  <span className="text-success ml-2">({clearedQuestions.size} cleared)</span>
+                  <Box component="span" sx={{ color: "success.main", ml: 1 }}>
+                    ({clearedQuestions.size} cleared)
+                  </Box>
                 )}
             </>
           )
@@ -382,79 +335,15 @@ export function WeakQuestionsReview({
     );
   }
 
-  // List view - show all weak questions
   return (
-    <PageContainer width="standard" mobileNavPadding>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-        <div className="flex flex-col gap-4 mb-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
-              Weak Questions
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {activeWeakQuestions.length} question{activeWeakQuestions.length !== 1 ? 's' : ''} to review
-              {clearedQuestions.size > 0 && (
-                <span className="text-success ml-1">({clearedQuestions.size} cleared)</span>
-              )}
-            </p>
-          </div>
-          <div className="flex items-center justify-between py-2">
-            <div className="flex items-center gap-2">
-              <Flame className={`w-4 h-4 ${streakModeEnabled ? 'text-warning' : 'text-muted-foreground'}`} />
-              <Label htmlFor="streak-mode" className="text-sm cursor-pointer">
-                Streak mode
-              </Label>
-              <span className="text-xs text-muted-foreground">
-                ({streakModeEnabled ? '3x to clear' : '1x to clear'})
-              </span>
-            </div>
-            <Switch
-              id="streak-mode"
-              checked={streakModeEnabled}
-              onCheckedChange={setStreakModeEnabled}
-            />
-          </div>
-        </div>
-        {activeWeakQuestions.map((question, index) => {
-          const questionStreak = streaks[question.id] || 0;
-          return (
-            <div key={question.id} className="bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
-              <button onClick={() => setCurrentIndex(index)} className="w-full text-left">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-                      {question.displayName}
-                    </span>
-                    <span className="text-xs text-destructive">Needs practice</span>
-                  </div>
-                  {/* Streak indicator - only shown when streak mode is enabled */}
-                  {streakModeEnabled && (
-                    <div
-                      className="flex items-center gap-1"
-                      role="img"
-                      aria-label={`${questionStreak} of ${STREAK_TO_CLEAR} correct in a row`}
-                    >
-                      {Array.from({ length: STREAK_TO_CLEAR }, (_, i) => (
-                        <div
-                          key={i}
-                          aria-hidden="true"
-                          className={`w-2 h-2 rounded-full ${
-                            i < questionStreak ? 'bg-success' : 'bg-muted'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm text-foreground line-clamp-2">
-                  {question.question}
-                </p>
-              </button>
-            </div>
-          );
-        })}
-      </motion.div>
-    </PageContainer>
+    <WeakQuestionList
+      questions={activeWeakQuestions}
+      streaks={streaks}
+      streakToClear={STREAK_TO_CLEAR}
+      clearedCount={clearedQuestions.size}
+      streakModeEnabled={streakModeEnabled}
+      onStreakModeChange={setStreakModeEnabled}
+      onSelect={setCurrentIndex}
+    />
   );
 }
