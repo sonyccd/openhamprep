@@ -1,8 +1,10 @@
-import { motion } from "framer-motion";
+import Box from "@mui/material/Box";
+import type { Theme } from "@mui/material/styles";
+import { visuallyHidden } from "@mui/utils";
 import { Check, ChevronRight, Lock, Zap } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { MotionBox } from "@/components/ohp/MotionBox";
+import { tokenAlpha } from "@/theme/muiTheme";
 import { LessonTopic } from "@/types/lessons";
-import { cn } from "@/lib/utils";
 
 interface TopicProgress {
   topic_id: string;
@@ -16,6 +18,22 @@ interface LessonPathProps {
   onTopicClick: (slug: string) => void;
 }
 
+type NodeState = "completed" | "current" | "locked" | "upcoming";
+
+/**
+ * Per-state styling, keyed once rather than repeated as four cn() branches per
+ * element. `tone` is the palette key the state draws on; "upcoming" has none
+ * and takes neutral surfaces.
+ */
+const TONE: Record<Exclude<NodeState, "upcoming">, "success" | "primary"> = {
+  completed: "success",
+  current: "primary",
+  locked: "primary", // unused for locked; it is styled neutrally below
+};
+
+const glow = (t: Theme, key: "success" | "primary", px: number, pct: number) =>
+  `0 0 ${px}px ${tokenAlpha(t.vars.palette[key].main, pct)}`;
+
 export function LessonPath({
   topics,
   topicProgress,
@@ -26,7 +44,7 @@ export function LessonPath({
     topicProgress?.some((p) => p.topic_id === topicId && p.is_completed) ?? false;
 
   return (
-    <div className="relative">
+    <Box sx={{ position: "relative" }}>
       {topics.map((lessonTopic, index) => {
         const topic = lessonTopic.topic;
         if (!topic) return null;
@@ -35,210 +53,376 @@ export function LessonPath({
         const isCurrent = index === currentTopicIndex;
         const isLocked = !completed && index > currentTopicIndex;
         const isLast = index === topics.length - 1;
+        const state: NodeState = completed
+          ? "completed"
+          : isCurrent
+            ? "current"
+            : isLocked
+              ? "locked"
+              : "upcoming";
+        const tone = state === "completed" || state === "current" ? TONE[state] : null;
 
         return (
-          <motion.div
+          <MotionBox
             key={lessonTopic.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{
-              delay: index * 0.08,
-              duration: 0.4,
-              ease: [0.25, 0.46, 0.45, 0.94]
-            }}
-            className="relative"
+            transition={{ delay: index * 0.08, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+            sx={{ position: "relative" }}
           >
-            {/* Connecting track - continuous line behind nodes */}
+            {/* Connecting track behind the nodes */}
             {!isLast && (
-              <div className="absolute left-[22px] top-[48px] w-[4px] h-[calc(100%)] z-0">
-                {/* Background track */}
-                <div className="absolute inset-0 bg-border/50 rounded-full" />
-                {/* Progress fill */}
-                <motion.div
-                  className={cn(
-                    "absolute top-0 left-0 w-full rounded-full",
-                    completed ? "bg-success" : "bg-border/30"
-                  )}
+              <Box sx={{ position: "absolute", left: 22, top: 48, width: 4, height: "100%", zIndex: 0 }}>
+                <Box
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: "9999px",
+                    bgcolor: (t) => tokenAlpha(t.vars.palette.divider, 50),
+                  }}
+                />
+                <MotionBox
                   initial={{ height: 0 }}
                   animate={{ height: completed ? "100%" : "0%" }}
                   transition={{ delay: index * 0.1 + 0.3, duration: 0.5 }}
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    borderRadius: "9999px",
+                    bgcolor: completed
+                      ? "success.main"
+                      : (t) => tokenAlpha(t.vars.palette.divider, 30),
+                  }}
                 />
-              </div>
+              </Box>
             )}
 
-            {/* Topic card */}
-            <button
+            {/* The whole row is the button. Everything inside is a span: a
+                <button> takes phrasing content only, and the old markup nested
+                divs, an <h3> and a <p> in it. */}
+            <Box
+              component="button"
+              type="button"
               onClick={() => !isLocked && onTopicClick(topic.slug)}
               disabled={isLocked}
               aria-current={isCurrent ? "step" : undefined}
-              className={cn(
-                "relative z-10 flex items-start gap-4 w-full text-left py-4 pr-4 transition-all group",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-lg",
-                !isLocked && "cursor-pointer"
-              )}
+              sx={{
+                position: "relative",
+                zIndex: 1,
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 2,
+                width: "100%",
+                textAlign: "left",
+                py: 2,
+                pr: 2,
+                pl: 0,
+                bgcolor: "transparent",
+                border: 0,
+                borderRadius: "8px",
+                color: "inherit",
+                font: "inherit",
+                cursor: isLocked ? "default" : "pointer",
+                "&:focus-visible": {
+                  outline: "2px solid",
+                  outlineColor: (t) => tokenAlpha(t.vars.palette.primary.main, 50),
+                  outlineOffset: 2,
+                },
+                "&:hover .LessonPath-title": state === "upcoming" ? { color: "primary.main" } : {},
+                "&:hover .LessonPath-node": state === "upcoming"
+                  ? { borderColor: (t) => tokenAlpha(t.vars.palette.primary.main, 50), boxShadow: (t) => glow(t, "primary", 15, 20) }
+                  : {},
+                "&:hover .LessonPath-arrow": {
+                  ...(tone && { bgcolor: (t) => tokenAlpha(t.vars.palette[tone].main, 10) }),
+                  ...(state === "upcoming" && { color: "primary.main", bgcolor: (t) => tokenAlpha(t.vars.palette.primary.main, 10) }),
+                },
+              }}
             >
-              {/* Node indicator */}
-              <div className="relative shrink-0">
-                {/* Outer glow ring for current */}
+              {/* Node */}
+              <Box component="span" sx={{ position: "relative", flexShrink: 0, display: "block" }}>
                 {isCurrent && (
-                  <motion.div
-                    className="absolute -inset-2 rounded-full bg-primary/20"
-                    animate={{
-                      scale: [1, 1.2, 1],
-                      opacity: [0.5, 0.2, 0.5]
-                    }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 2.5,
-                      ease: "easeInOut"
+                  <MotionBox
+                    component="span"
+                    aria-hidden="true"
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.2, 0.5] }}
+                    transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+                    sx={{
+                      position: "absolute",
+                      inset: -8,
+                      borderRadius: "50%",
+                      display: "block",
+                      bgcolor: (t) => tokenAlpha(t.vars.palette.primary.main, 20),
                     }}
                   />
                 )}
 
-                {/* Main node */}
-                <motion.div
-                  className={cn(
-                    "relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300",
-                    "border-2",
-                    completed && "bg-success border-success text-success-foreground shadow-[0_0_20px_hsl(var(--success)/0.4)]",
-                    isCurrent && "bg-primary border-primary text-primary-foreground shadow-[0_0_25px_hsl(var(--primary)/0.5)]",
-                    isLocked && "bg-muted/50 border-border text-muted-foreground",
-                    !completed && !isCurrent && !isLocked && "bg-card border-border text-foreground hover:border-primary/50 hover:shadow-[0_0_15px_hsl(var(--primary)/0.2)]"
-                  )}
+                <MotionBox
+                  component="span"
+                  className="LessonPath-node"
                   whileHover={!isLocked ? { scale: 1.05 } : undefined}
                   whileTap={!isLocked ? { scale: 0.98 } : undefined}
+                  sx={{
+                    position: "relative",
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "2px solid",
+                    transition: "border-color 300ms, box-shadow 300ms, background-color 300ms",
+                    ...(state === "completed" && {
+                      bgcolor: "success.main",
+                      borderColor: "success.main",
+                      color: "success.contrastText",
+                      boxShadow: (t) => glow(t, "success", 20, 40),
+                    }),
+                    ...(state === "current" && {
+                      bgcolor: "primary.main",
+                      borderColor: "primary.main",
+                      color: "primary.contrastText",
+                      boxShadow: (t) => glow(t, "primary", 25, 50),
+                    }),
+                    ...(state === "locked" && {
+                      bgcolor: (t) => tokenAlpha(t.vars.palette.muted, 50),
+                      borderColor: "divider",
+                      color: "text.secondary",
+                    }),
+                    ...(state === "upcoming" && {
+                      bgcolor: "background.paper",
+                      borderColor: "divider",
+                      color: "text.primary",
+                    }),
+                  }}
                 >
                   {completed ? (
-                    <motion.div
+                    <MotionBox
+                      component="span"
                       initial={{ scale: 0, rotate: -180 }}
                       animate={{ scale: 1, rotate: 0 }}
                       transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      sx={{ display: "flex" }}
                     >
-                      <Check className="w-5 h-5 stroke-[3]" />
-                    </motion.div>
+                      <Box component={Check} aria-hidden="true" sx={{ width: 20, height: 20, strokeWidth: 3 }} />
+                    </MotionBox>
                   ) : isCurrent ? (
-                    <Zap className="w-5 h-5 fill-current" />
+                    <Box component={Zap} aria-hidden="true" sx={{ width: 20, height: 20, fill: "currentColor" }} />
                   ) : isLocked ? (
-                    <Lock className="w-4 h-4" />
+                    <Box component={Lock} aria-hidden="true" sx={{ width: 16, height: 16 }} />
                   ) : (
-                    <span className="font-mono font-bold text-sm">{index + 1}</span>
+                    <Box component="span" sx={{ fontFamily: "monospace", fontWeight: 700, fontSize: "0.875rem" }}>
+                      {index + 1}
+                    </Box>
                   )}
-                </motion.div>
+                </MotionBox>
 
-                {/* Step number badge for completed */}
                 {completed && (
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-card border border-success flex items-center justify-center">
-                    <span className="text-[10px] font-mono font-bold text-success">{index + 1}</span>
-                  </div>
+                  <Box
+                    component="span"
+                    sx={{
+                      position: "absolute",
+                      bottom: -4,
+                      right: -4,
+                      width: 20,
+                      height: 20,
+                      borderRadius: "50%",
+                      bgcolor: "background.paper",
+                      border: "1px solid",
+                      borderColor: "success.main",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "10px",
+                      fontFamily: "monospace",
+                      fontWeight: 700,
+                      color: "success.main",
+                    }}
+                  >
+                    {index + 1}
+                  </Box>
                 )}
-              </div>
+              </Box>
 
               {/* Content */}
-              <div className={cn(
-                "flex-1 min-w-0 py-0.5 transition-all duration-300",
-                isLocked && "opacity-50"
-              )}>
-                {/* Title row */}
-                <div className="flex items-center gap-2 mb-1">
-                  <h3
-                    className={cn(
-                      "font-mono font-semibold text-base tracking-tight transition-colors",
-                      completed && "text-success",
-                      isCurrent && "text-primary",
-                      isLocked && "text-muted-foreground",
-                      !completed && !isCurrent && !isLocked && "text-foreground group-hover:text-primary"
-                    )}
+              <Box
+                component="span"
+                sx={{ flex: 1, minWidth: 0, py: 0.25, display: "block", transition: "opacity 300ms", opacity: isLocked ? 0.5 : 1 }}
+              >
+                <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+                  <Box
+                    component="span"
+                    className="LessonPath-title"
+                    sx={{
+                      fontFamily: "monospace",
+                      fontWeight: 600,
+                      fontSize: "1rem",
+                      letterSpacing: "-0.025em",
+                      transition: "color 150ms",
+                      color:
+                        state === "completed" ? "success.main"
+                        : state === "current" ? "primary.main"
+                        : state === "locked" ? "text.secondary"
+                        : "text.primary",
+                    }}
                   >
                     {topic.title}
-                  </h3>
+                  </Box>
                   {isCurrent && (
-                    <Badge
-                      variant="outline"
-                      className="border-primary/50 text-primary bg-primary/10 text-[10px] px-1.5 py-0 h-5 uppercase tracking-wider font-medium"
+                    <Box
+                      component="span"
+                      sx={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        height: 20,
+                        px: 0.75,
+                        borderRadius: "4px",
+                        border: "1px solid",
+                        borderColor: (t) => tokenAlpha(t.vars.palette.primary.main, 50),
+                        bgcolor: (t) => tokenAlpha(t.vars.palette.primary.main, 10),
+                        color: "primary.main",
+                        fontSize: "10px",
+                        fontWeight: 500,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                      }}
                     >
                       Next
-                    </Badge>
+                    </Box>
                   )}
-                </div>
+                </Box>
 
-                {/* Description */}
                 {topic.description && (
-                  <p className={cn(
-                    "text-sm leading-relaxed mb-2.5 line-clamp-2",
-                    completed ? "text-success/70" : "text-muted-foreground"
-                  )}>
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "-webkit-box",
+                      WebkitBoxOrient: "vertical",
+                      WebkitLineClamp: 2,
+                      overflow: "hidden",
+                      fontSize: "0.875rem",
+                      lineHeight: 1.625,
+                      mb: 1.25,
+                      color: completed ? (t) => tokenAlpha(t.vars.palette.success.main, 70) : "text.secondary",
+                    }}
+                  >
                     {topic.description}
-                  </p>
+                  </Box>
                 )}
 
-                {/* Subelement badges */}
                 {topic.subelements && topic.subelements.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
+                  <Box component="span" sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
                     {topic.subelements.slice(0, 4).map((sub) => (
-                      <span
+                      <Box
                         key={sub.id}
-                        className={cn(
-                          "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium tracking-wide transition-colors",
-                          completed && "bg-success/15 text-success border border-success/30",
-                          isCurrent && "bg-primary/15 text-primary border border-primary/30",
-                          !completed && !isCurrent && "bg-muted text-muted-foreground border border-border"
-                        )}
+                        component="span"
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          px: 1,
+                          py: 0.25,
+                          borderRadius: "4px",
+                          fontSize: "11px",
+                          fontFamily: "monospace",
+                          fontWeight: 500,
+                          letterSpacing: "0.025em",
+                          border: "1px solid",
+                          transition: "color 150ms, background-color 150ms",
+                          ...(tone
+                            ? {
+                                bgcolor: (t) => tokenAlpha(t.vars.palette[tone].main, 15),
+                                borderColor: (t) => tokenAlpha(t.vars.palette[tone].main, 30),
+                                color: `${tone}.main`,
+                              }
+                            : { bgcolor: "muted", borderColor: "divider", color: "text.secondary" }),
+                        }}
                       >
                         {sub.subelement}
-                      </span>
+                      </Box>
                     ))}
                     {topic.subelements.length > 4 && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono text-muted-foreground bg-muted border border-border">
+                      <Box
+                        component="span"
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          px: 1,
+                          py: 0.25,
+                          borderRadius: "4px",
+                          fontSize: "11px",
+                          fontFamily: "monospace",
+                          color: "text.secondary",
+                          bgcolor: "muted",
+                          border: "1px solid",
+                          borderColor: "divider",
+                        }}
+                      >
                         +{topic.subelements.length - 4}
-                      </span>
+                      </Box>
                     )}
-                  </div>
+                  </Box>
                 )}
-              </div>
+              </Box>
 
               {/* Action indicator */}
-              <div className={cn(
-                "shrink-0 self-center transition-all duration-300",
-                isLocked ? "opacity-0" : "opacity-100"
-              )}>
-                <motion.div
-                  className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
-                    completed && "text-success group-hover:bg-success/10",
-                    isCurrent && "text-primary group-hover:bg-primary/10",
-                    !completed && !isCurrent && !isLocked && "text-muted-foreground group-hover:text-primary group-hover:bg-primary/10"
-                  )}
+              <Box component="span" sx={{ flexShrink: 0, alignSelf: "center", transition: "opacity 300ms", opacity: isLocked ? 0 : 1 }}>
+                <MotionBox
+                  component="span"
+                  className="LessonPath-arrow"
                   whileHover={{ x: 3 }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "color 150ms, background-color 150ms",
+                    color: tone ? `${tone}.main` : "text.secondary",
+                  }}
                 >
-                  <ChevronRight className="w-5 h-5" />
-                </motion.div>
-              </div>
+                  <Box component={ChevronRight} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+                </MotionBox>
+              </Box>
 
               {/* Appends to the button's content-derived name rather than
                   overriding it, so the title, description and badges survive. */}
-              {completed && <span className="sr-only">(completed)</span>}
-            </button>
+              {completed && (
+                <Box component="span" sx={visuallyHidden}>
+                  (completed)
+                </Box>
+              )}
+            </Box>
 
-            {/* Spacer between items */}
-            {!isLast && <div className="h-2" />}
-          </motion.div>
+            {!isLast && <Box sx={{ height: 8 }} />}
+          </MotionBox>
         );
       })}
 
-      {/* Empty state */}
       {topics.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-16"
-        >
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/50 flex items-center justify-center">
-            <Zap className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <p className="text-muted-foreground font-medium">No topics have been added to this lesson yet.</p>
-        </motion.div>
+        <MotionBox initial={{ opacity: 0 }} animate={{ opacity: 1 }} sx={{ textAlign: "center", py: 8 }}>
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              mx: "auto",
+              mb: 2,
+              borderRadius: "50%",
+              bgcolor: (t) => tokenAlpha(t.vars.palette.muted, 50),
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Box component={Zap} aria-hidden="true" sx={{ width: 32, height: 32, color: "text.secondary" }} />
+          </Box>
+          <Box sx={{ color: "text.secondary", fontWeight: 500 }}>
+            No topics have been added to this lesson yet.
+          </Box>
+        </MotionBox>
       )}
-    </div>
+    </Box>
   );
 }
