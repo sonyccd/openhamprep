@@ -109,6 +109,16 @@ export const queryKeys = {
         ? ['test-results', userId, testType] as const
         : ['test-results', userId] as const,
 
+    /**
+     * The last few results, for the practice-test start screen. Deliberately
+     * a child of testResults(userId, testType): useProgress invalidates the
+     * testResults prefix after every save, and a key under it is refreshed by
+     * that for free. The old ['test-history', ...] key was not, so the list
+     * stayed stale for its whole staleTime after finishing a test.
+     */
+    recentTestResults: (userId: string, testType: TestType) =>
+      ['test-results', userId, testType, 'recent'] as const,
+
     /** Profile stats (aggregate counts) */
     profileStats: (userId: string) => ['profile-stats', userId] as const,
 
