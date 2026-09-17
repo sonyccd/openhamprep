@@ -1,6 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
@@ -8,6 +6,7 @@ import Typography from "@mui/material/Typography";
 import confetti from "canvas-confetti";
 import { RotateCcw, Home } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { GuestPrompt } from "@/components/ohp/GuestPrompt";
 import { MotionBox } from "@/components/ohp/MotionBox";
 import { PageContainer } from "@/components/ohp/PageContainer";
 import { AnswerReviewDetail } from "@/components/results/AnswerReviewDetail";
@@ -101,47 +100,12 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
       </ScoreBanner>
 
       {!user && !saveCardDismissed && (
-        /*
-          A save-moment prompt, so an Alert — but severity="info" with the icon
-          off and an outlined surface, which keeps the understated look the
-          guest-mode spec asks for. role="status" rather than Alert's default
-          "alert": this appears with the results rather than interrupting, and
-          it must never read as gating the content behind it.
-        */
-        <Alert
-          severity="info"
-          variant="outlined"
-          icon={false}
-          role="status"
-          sx={{ mb: 3, borderColor: "divider", bgcolor: "background.paper" }}
-        >
-          <Typography sx={{ fontSize: "0.875rem", color: "text.secondary", mb: 1.5 }}>
-            Test results require an account to save — there's nowhere to put them without one.
-          </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box
-              component={Link}
-              to="/auth?returnTo=/dashboard"
-              sx={{
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                color: "primary.main",
-                textDecoration: "none",
-                "&:hover": { textDecoration: "underline" },
-              }}
-            >
-              Create free account
-            </Box>
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => setSaveCardDismissed(true)}
-              sx={{ fontSize: "0.875rem", color: "text.secondary", minWidth: 0, p: 0 }}
-            >
-              Continue without saving
-            </Button>
-          </Box>
-        </Alert>
+        <GuestPrompt
+          message="Test results require an account to save — there's nowhere to put them without one."
+          dismissLabel="Continue without saving"
+          onDismiss={() => setSaveCardDismissed(true)}
+          sx={{ mb: 3 }}
+        />
       )}
 
       <MotionBox

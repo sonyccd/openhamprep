@@ -8,6 +8,7 @@ import { TopicResourcePanel } from "./TopicResourcePanel";
 import { TopicQuestionsPanel } from "./TopicQuestionsPanel";
 import { TopicProgressButton } from "./TopicProgressButton";
 import { TopicQuiz } from "./TopicQuiz";
+import { GuestPrompt } from "@/components/ohp/GuestPrompt";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -241,6 +242,20 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
             className="min-w-0"
           >
             <TopicContent content={displayContent} />
+
+            {/*
+              A guest reaches here from a lesson whose later topics show as
+              locked, and nothing said what would unlock them: the quiz CTA
+              below is gated on `user`, so they saw neither the quiz nor a
+              reason. The prompt names the mechanism — a quiz score is what
+              marks a topic complete — per the guest-mode copy rule.
+            */}
+            {!user && questionCount > 0 && (
+              <GuestPrompt
+                message={`This topic has a ${questionCount}-question quiz. Scoring 80% marks the topic complete and unlocks the next one — that needs an account, since the score has to be saved somewhere.`}
+                sx={{ mt: 5 }}
+              />
+            )}
 
             {/* Take Quiz CTA after content */}
             {user && questionCount > 0 && (
