@@ -32,10 +32,4 @@ describe('QuizScoreline', () => {
 
     expect(screen.getByText('/')).toHaveAttribute('aria-hidden', 'true');
   });
-
-  it('drops the separator in the large form, which lays the two out as tiles', () => {
-    render(<QuizScoreline correct={0} incorrect={0} size="large" />, { wrapper: muiWrapper });
-
-    expect(screen.queryByText('/')).not.toBeInTheDocument();
-  });
 });

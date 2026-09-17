@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/button";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useQuestions } from "@/hooks/useQuestions";
 import { useProgress } from "@/hooks/useProgress";
@@ -9,8 +12,11 @@ import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useQuizSession } from "@/hooks/useQuizSession";
 import { QuestionListView } from "@/components/QuestionListView";
 import { useArrlChaptersWithCounts } from "@/hooks/useArrlChapters";
-import { RotateCcw, ChevronRight, CheckCircle, ArrowLeft, Book } from "lucide-react";
-import { motion } from "framer-motion";
+import { RotateCcw, ArrowLeft, Book } from "lucide-react";
+import { MotionBox } from "@/components/ohp/MotionBox";
+import { ChoiceRow } from "@/components/ChoiceRow";
+import { QuizProgress } from "@/components/QuizProgress";
+import { tokenAlpha } from "@/theme/muiTheme";
 import { TestType } from "@/types/navigation";
 import { PageContainer } from "@/components/ohp/PageContainer";
 import { QuizShell, QuizShellPending, QuizShellError, QuizNavControls } from "@/components/QuizShell";
@@ -29,6 +35,29 @@ const TEST_TYPE_TO_LICENSE: Record<TestType, LicenseType> = {
   general: 'G',
   extra: 'E',
 };
+
+/** One of the three large figures in the chapter practice header. */
+const StatTile = ({
+  value,
+  label,
+  color,
+}: {
+  value: number | string;
+  label: string;
+  color: string;
+}) => (
+  <Box sx={{ textAlign: "center" }}>
+    <Typography
+      component="p"
+      sx={{ fontSize: "1.5rem", fontFamily: "monospace", fontWeight: 700, color }}
+    >
+      {value}
+    </Typography>
+    <Typography component="p" sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
+      {label}
+    </Typography>
+  </Box>
+);
 
 export function ChapterPractice({
   onBack,
@@ -124,79 +153,75 @@ export function ChapterPractice({
 
     return (
       <PageContainer width="standard" mobileNavPadding>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
-        >
-          <h1 className="text-2xl font-mono font-bold text-foreground mb-2">
+        <MotionBox initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} sx={{ mb: 3 }}>
+          <Typography
+            variant="h5"
+            component="h1"
+            sx={{ fontFamily: "monospace", fontWeight: 700, mb: 1 }}
+          >
             Study by Chapter
-          </h1>
-          <p className="text-muted-foreground">
+          </Typography>
+          <Typography sx={{ color: "text.secondary" }}>
             Practice questions organized by ARRL textbook chapters
-          </p>
-        </motion.div>
+          </Typography>
+        </MotionBox>
 
         {chaptersWithQuestions.length === 0 && emptyChapters.length === 0 ? (
-          <div className="text-center py-12">
-            <Book className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground">
-              No chapters have been defined yet.
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
+          <Box sx={{ textAlign: "center", py: 6 }}>
+            <Box
+              component={Book}
+              aria-hidden="true"
+              sx={{ width: 48, height: 48, mx: "auto", mb: 2, color: "text.secondary", opacity: 0.5, display: "block" }}
+            />
+            <Typography sx={{ color: "text.secondary" }}>No chapters have been defined yet.</Typography>
+            <Typography sx={{ fontSize: "0.875rem", color: "text.secondary", mt: 1 }}>
               Ask an admin to add ARRL textbook chapters.
-            </p>
-          </div>
+            </Typography>
+          </Box>
         ) : (
-          <div className="space-y-6">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {chaptersWithQuestions.length > 0 && (
-              <div className="grid gap-3">
+              <Box sx={{ display: "grid", gap: 1.5 }}>
                 {chaptersWithQuestions.map((chapter, index) => (
-                  <motion.button
+                  <ChoiceRow
                     key={chapter.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
+                    index={index}
+                    badge={chapter.chapterNumber}
+                    title={chapter.title}
                     onClick={() => handleSelectChapter(chapter)}
-                    className="w-full p-4 rounded-xl border bg-card text-left hover:bg-secondary hover:border-foreground/20 hover:shadow-lg transition-all duration-200 group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center font-mono font-bold text-foreground">
-                          {chapter.chapterNumber}
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-foreground">
-                            {chapter.title}
-                          </h3>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                    </div>
-                  </motion.button>
+                  />
                 ))}
-              </div>
+              </Box>
             )}
 
             {emptyChapters.length > 0 && (
-              <div className="mt-8">
-                <p className="text-sm text-muted-foreground mb-3">
+              <Box sx={{ mt: 4 }}>
+                <Typography sx={{ fontSize: "0.875rem", color: "text.secondary", mb: 1.5 }}>
                   Chapters without questions:
-                </p>
-                <div className="grid gap-2">
+                </Typography>
+                <Box sx={{ display: "grid", gap: 1 }}>
                   {emptyChapters.map((chapter) => (
-                    <div
+                    <Box
                       key={chapter.id}
-                      className="p-3 rounded-lg border border-dashed bg-muted/30 text-muted-foreground"
+                      sx={{
+                        p: 1.5,
+                        borderRadius: "8px",
+                        border: "1px dashed",
+                        borderColor: "divider",
+                        bgcolor: (t) => tokenAlpha(t.vars.palette.muted, 30),
+                        color: "text.secondary",
+                      }}
                     >
-                      <span className="font-mono mr-2">Ch. {chapter.chapterNumber}:</span>
+                      <Box component="span" sx={{ fontFamily: "monospace", mr: 1 }}>
+                        Ch. {chapter.chapterNumber}:
+                      </Box>
                       {chapter.title}
-                    </div>
+                    </Box>
                   ))}
-                </div>
-              </div>
+                </Box>
+              </Box>
             )}
-          </div>
+          </Box>
         )}
       </PageContainer>
     );
@@ -221,71 +246,62 @@ export function ChapterPractice({
   if (!question) return <QuizShellPending />;
 
   const percentage = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
-  const progress = Math.round(session.askedIds.length / currentQuestions.length * 100);
 
   return (
     <QuizShell
       header={
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <Button variant="ghost" onClick={handleBackToQuestions} className="gap-2">
-              <ArrowLeft className="w-4 h-4" />
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+            <Button
+              variant="text"
+              onClick={handleBackToQuestions}
+              startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+              sx={{ color: "text.primary" }}
+            >
               Question List
             </Button>
-            <div className="flex items-center gap-2">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <KeyboardShortcutsHelp />
-              <div className="flex items-center gap-2 text-primary">
-                <Book className="w-4 h-4" />
-                <span className="font-mono font-bold">Ch. {selectedChapter?.chapterNumber}</span>
-              </div>
-            </div>
-          </div>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "primary.main" }}>
+                <Box component={Book} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                <Box component="span" sx={{ fontFamily: "monospace", fontWeight: 700 }}>
+                  Ch. {selectedChapter?.chapterNumber}
+                </Box>
+              </Box>
+            </Box>
+          </Box>
 
-          {/* Progress & Stats Bar */}
-          <motion.div
+          <Paper
+            component={MotionBox}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-card border border-border rounded-lg p-4"
+            variant="outlined"
+            sx={{ p: 2, borderRadius: "8px" }}
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-6">
-                <div className="text-center">
-                  <p className="text-2xl font-mono font-bold text-success">{stats.correct}</p>
-                  <p className="text-xs text-muted-foreground">Correct</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-mono font-bold text-destructive">{stats.total - stats.correct}</p>
-                  <p className="text-xs text-muted-foreground">Incorrect</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-mono font-bold text-primary">{percentage}%</p>
-                  <p className="text-xs text-muted-foreground">Score</p>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" onClick={session.reset} className="gap-2">
-                <RotateCcw className="w-4 h-4" />
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+                <StatTile value={stats.correct} label="Correct" color="success.main" />
+                <StatTile value={stats.total - stats.correct} label="Incorrect" color="error.main" />
+                <StatTile value={`${percentage}%`} label="Score" color="primary.main" />
+              </Box>
+              <Button
+                variant="text"
+                size="small"
+                onClick={session.reset}
+                startIcon={<Box component={RotateCcw} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+              >
                 Reset
               </Button>
-            </div>
+            </Box>
 
-            {/* Chapter progress bar */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  className="h-full bg-primary rounded-full"
-                />
-              </div>
-              <span className="text-xs text-muted-foreground font-mono">
-                {session.askedIds.length}/{currentQuestions.length}
-              </span>
-              {session.askedIds.length === currentQuestions.length && (
-                <CheckCircle className="w-4 h-4 text-success" />
-              )}
-            </div>
-          </motion.div>
-        </div>
+            <QuizProgress
+              variant="labelled"
+              height={8}
+              asked={session.askedIds.length}
+              total={currentQuestions.length}
+            />
+          </Paper>
+        </Box>
       }
       actions={<QuizNavControls session={session} />}
       footer={

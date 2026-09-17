@@ -304,11 +304,12 @@ describe('SubelementPractice Stats', () => {
     // Start practice (click "Practice All Questions")
     fireEvent.click(screen.getByRole('button', { name: /practice all questions/i }));
 
+    // The counts used to be bare numbers told apart by colour; each now
+    // carries a hidden label, and the pair is a named group.
     await waitFor(() => {
-      // Stats are now displayed inline as numbers without labels
-      // Look for the correct/incorrect count display (0 / 0 format)
-      const statsContainer = screen.getByText('0', { selector: '.text-success' });
-      expect(statsContainer).toBeInTheDocument();
+      const score = screen.getByRole('group', { name: 'Score' });
+      expect(score).toHaveTextContent('0 correct');
+      expect(score).toHaveTextContent('0 incorrect');
     });
   });
 
@@ -339,7 +340,7 @@ describe('SubelementPractice Stats', () => {
     await waitFor(() => expect(screen.getByText('A1')).toBeInTheDocument());
     fireEvent.click(screen.getByRole('radio', { name: /A1/ }));
     await waitFor(() =>
-      expect(screen.getByText('1', { selector: '.text-success' })).toBeInTheDocument()
+      expect(screen.getByRole('group', { name: 'Score' })).toHaveTextContent('1 correct')
     );
 
     // Out to the question list and straight back in.
@@ -351,7 +352,7 @@ describe('SubelementPractice Stats', () => {
     // This regressed when the back handler dropped the whole session instead of
     // just the question history.
     await waitFor(() =>
-      expect(screen.getByText('1', { selector: '.text-success' })).toBeInTheDocument()
+      expect(screen.getByRole('group', { name: 'Score' })).toHaveTextContent('1 correct')
     );
 
     random.mockRestore();
