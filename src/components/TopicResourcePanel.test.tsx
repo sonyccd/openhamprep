@@ -312,22 +312,21 @@ describe('TopicResourcePanel', () => {
    */
   it('does not reorder the array it was given', () => {
     const resources = [
-      { id: 'r2', topic_id: 't', resource_type: 'link', title: 'Second', url: 'https://b.example', storage_path: null, description: null, display_order: 2, created_at: '' },
-      { id: 'r1', topic_id: 't', resource_type: 'link', title: 'First', url: 'https://a.example', storage_path: null, description: null, display_order: 1, created_at: '' },
-    ] as never[];
-    const before = resources.map((r: { id: string }) => r.id);
+      createResource({ id: 'r2', title: 'Second', display_order: 2 }),
+      createResource({ id: 'r1', title: 'First', display_order: 1 }),
+    ];
+    const before = resources.map((r) => r.id);
 
     render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
-    expect(resources.map((r: { id: string }) => r.id)).toEqual(before);
+    expect(resources.map((r) => r.id)).toEqual(before);
   });
 
   /** On a phone the whole panel folds into a card; that fold has to be a button. */
   it('makes the mobile fold a real button', () => {
-    const resources = [
-      { id: 'r1', topic_id: 't', resource_type: 'link', title: 'ARRL', url: 'https://arrl.org', storage_path: null, description: null, display_order: 1, created_at: '' },
-    ] as never[];
-    render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
+    render(<TopicResourcePanel resources={[createResource({ resource_type: 'link' })]} />, {
+      wrapper: muiWrapper,
+    });
 
     // happy-dom's default viewport is 1024px — the lg breakpoint — so the
     // mobile card is display:none here and excluded from the default query.

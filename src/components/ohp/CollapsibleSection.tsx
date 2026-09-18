@@ -8,19 +8,25 @@ import Collapse from "@mui/material/Collapse";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { tokenAlpha } from "@/theme/muiTheme";
 
-interface CollapsibleSectionProps {
+interface CollapsibleSectionBaseProps {
   /** The heading text. */
   title: string;
   icon?: ReactNode;
   /** A count beside the title. */
   count?: number;
-  /** "plain" is a rule under the heading; "card" wraps everything in a Card. */
-  variant?: "plain" | "card";
   defaultOpen?: boolean;
-  /** Always open, with a static heading instead of a toggle. */
-  static?: boolean;
   children: ReactNode;
 }
+
+/**
+ * "plain" is a rule under the heading; "card" wraps everything in a Card.
+ * `static` — always open, with a heading instead of a toggle — is only
+ * offered on the plain variant: a card that cannot fold is just a Card, and
+ * nothing renders that combination, so the type rules it out rather than
+ * leaving its styling untested.
+ */
+type CollapsibleSectionProps = CollapsibleSectionBaseProps &
+  ({ variant?: "plain"; static?: boolean } | { variant: "card"; static?: never });
 
 /**
  * A disclosure: a heading that opens and closes what is under it.
