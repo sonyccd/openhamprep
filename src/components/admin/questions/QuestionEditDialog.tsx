@@ -298,6 +298,7 @@ export function QuestionEditDialog({
                 <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1, mt: 1 }}>
                   {linkedTopicNames.map((name, index) => (
                     <Chip
+                      color="secondary"
                       key={index}
                       size="small"
                       icon={<BookOpen className="w-3 h-3" aria-hidden="true" />}

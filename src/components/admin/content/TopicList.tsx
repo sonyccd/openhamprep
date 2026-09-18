@@ -54,6 +54,7 @@ export function TopicList({ topics: filteredTopics, onSelect }: TopicListProps) 
                 />
               ) : (
                 <Chip
+                  color="secondary"
                   size="small"
                   icon={<Box component={EyeOff} sx={{ width: 12, height: 12 }} />}
                   label="Draft"
@@ -79,6 +80,7 @@ export function TopicList({ topics: filteredTopics, onSelect }: TopicListProps) 
               ))}
               {topic.resources && topic.resources.length > 0 && (
                 <Chip
+                  color="secondary"
                   size="small"
                   label={`${topic.resources.length} resources`}
                   sx={{ fontSize: "0.75rem" }}

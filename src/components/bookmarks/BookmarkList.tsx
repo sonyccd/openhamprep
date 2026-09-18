@@ -112,9 +112,10 @@ export function BookmarkList({
                 >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                     <Chip
+                      color="secondary"
                       label={question.displayName}
                       size="small"
-                      sx={{ fontFamily: "monospace", fontSize: "0.75rem", height: 20 }}
+                      sx={{ fontFamily: "monospace", fontSize: "0.75rem", height: 20, color: "text.secondary" }}
                     />
                     {note && (
                       <Chip

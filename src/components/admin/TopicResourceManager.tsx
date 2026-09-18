@@ -78,7 +78,7 @@ export function TopicResourceManager({ topicId, resources }: TopicResourceManage
           <Typography variant="h6" component="h3" sx={{ fontSize: "1rem", fontWeight: 600 }}>
             Resources
           </Typography>
-          <Chip size="small" label={resources.length} />
+          <Chip color="secondary" size="small" label={resources.length} />
         </Box>
         <Button
           size="small"
