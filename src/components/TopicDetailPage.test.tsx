@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { TopicDetailPage } from './TopicDetailPage';
+import { muiWrapper } from '@/test/utils/testWrappers';
 import { Topic } from '@/hooks/useTopics';
 import { AppNavigationProvider } from '@/hooks/useAppNavigation';
 
@@ -113,7 +114,8 @@ describe('TopicDetailPage', () => {
             <TopicDetailPage slug={slug} onBack={mockOnBack} />
           </AppNavigationProvider>
         </QueryClientProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
+      { wrapper: muiWrapper }
     );
   };
 
@@ -406,6 +408,43 @@ describe('TopicDetailPage', () => {
       expect(
         screen.getByRole('button', { name: 'Show Questions & Resources' })
       ).not.toHaveFocus();
+    });
+  });
+
+  /**
+   * A guest arriving from a lesson sees its later topics locked. The quiz CTA
+   * is gated on `user`, so before this they saw neither the quiz nor any
+   * reason the topics were locked. The prompt names the mechanism.
+   */
+  describe('guest quiz prompt', () => {
+    it('tells a guest what completing the topic takes, and where the account comes in', () => {
+      mockTopicQuestions = [{ id: 'T1A01' }, { id: 'T1A02' }, { id: 'T1A03' }];
+      renderComponent();
+
+      const prompt = screen.getByRole('status');
+      expect(prompt).toHaveTextContent('3-question quiz');
+      expect(prompt).toHaveTextContent('Scoring 80% marks the topic complete and unlocks the next one');
+      expect(prompt).toHaveTextContent('needs an account');
+      expect(screen.getByRole('link', { name: 'Create free account' })).toHaveAttribute(
+        'href',
+        '/auth?returnTo=/dashboard'
+      );
+    });
+
+    /** No quiz to be had, so nothing to explain. */
+    it('says nothing when the topic has no questions', () => {
+      mockTopicQuestions = [];
+      renderComponent();
+
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+
+    /** It is a status note beside the content, never something that gates it. */
+    it('does not use the interrupting alert role', () => {
+      mockTopicQuestions = [{ id: 'T1A01' }];
+      renderComponent();
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
   });
 });
