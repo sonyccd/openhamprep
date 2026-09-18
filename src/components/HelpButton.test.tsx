@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HelpButton } from './HelpButton';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { ThemeProvider } from '@mui/material/styles';
+import { muiTheme } from '@/theme/muiTheme';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 vi.mock('@/hooks/use-mobile', () => ({
@@ -17,16 +18,16 @@ describe('HelpButton', () => {
 
   const renderHelpButton = () => {
     return render(
-      <TooltipProvider>
+      <ThemeProvider theme={muiTheme}>
         <HelpButton />
-      </TooltipProvider>
+      </ThemeProvider>
     );
   };
 
-  // Both the mobile (top-right) and desktop (floating) triggers live in the DOM;
-  // CSS (md:hidden / hidden md:flex) decides which is visible. jsdom doesn't apply
-  // those classes, so both are queryable — the mobile trigger is rendered first.
-  const getHelpButton = () => screen.getAllByRole('button', { name: /open help dialog/i })[0];
+  // Both the mobile (top-right) and desktop (floating) triggers live in the DOM
+  // and CSS picks one. happy-dom evaluates the sx media queries at 1024px, so
+  // only the desktop Fab is accessible here; the mobile one is display: none.
+  const getHelpButton = () => screen.getByRole('button', { name: /open help dialog/i });
 
   describe('Button Rendering', () => {
     it('renders the help button', () => {
@@ -39,6 +40,25 @@ describe('HelpButton', () => {
       renderHelpButton();
 
       expect(getHelpButton()).toHaveAttribute('aria-label', 'Open help dialog');
+    });
+  });
+
+  describe('Triggers', () => {
+    it('shows one trigger at a time, the Fab at desktop width', () => {
+      renderHelpButton();
+
+      const all = screen.getAllByRole('button', { name: /open help dialog/i, hidden: true });
+      expect(all).toHaveLength(2);
+      expect(getHelpButton()).toHaveClass('MuiFab-root');
+    });
+
+    /** The same layer as the hamburger: over the page, under the drawer and dialogs. */
+    it('floats below the drawer', () => {
+      renderHelpButton();
+
+      const z = Number(getComputedStyle(getHelpButton()).zIndex);
+      expect(z).toBeGreaterThan(0);
+      expect(z).toBeLessThan(muiTheme.zIndex.drawer);
     });
   });
 
@@ -185,7 +205,44 @@ describe('HelpButton', () => {
     });
   });
 
+  describe('Tab wiring', () => {
+    it('labels the panel by the selected tab', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+      await user.click(getHelpButton());
+
+      const feedbackTab = await screen.findByRole('tab', { name: /feedback/i, selected: true });
+      const panel = screen.getByRole('tabpanel');
+      expect(panel).toHaveAttribute('aria-labelledby', feedbackTab.id);
+      expect(feedbackTab).toHaveAttribute('aria-controls', panel.id);
+
+      await user.click(screen.getByRole('tab', { name: /shortcuts/i }));
+
+      const shortcutsTab = screen.getByRole('tab', { name: /shortcuts/i, selected: true });
+      expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', shortcutsTab.id);
+    });
+
+    it('names and describes the dialog from its own text', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+      await user.click(getHelpButton());
+
+      const dialog = await screen.findByRole('dialog');
+      expect(dialog).toHaveAccessibleName('Help & Support');
+      expect(dialog).toHaveAccessibleDescription('Help resources and feedback options');
+    });
+  });
+
   describe('Feedback Options', () => {
+    it('tells screen readers the status link opens a new window', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+      await user.click(getHelpButton());
+
+      const link = await screen.findByRole('link', { name: /system status/i });
+      expect(link).toHaveAccessibleName(/opens in new window/);
+    });
+
     it('shows Report a Bug button', async () => {
       const user = userEvent.setup();
       renderHelpButton();
@@ -471,10 +528,13 @@ describe('HelpButton', () => {
       await user.type(screen.getByLabelText(/title/i), 'Test title');
       await user.type(screen.getByLabelText(/description/i), 'Test description');
 
-      // Close dialog by clicking outside or pressing escape
       await user.keyboard('{Escape}');
+      // The dialog stays mounted through its exit transition, with the rest of
+      // the page aria-hidden until it is gone.
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
 
-      // Re-open dialog
       await user.click(getHelpButton());
 
       // Should show options view, not the form
@@ -482,6 +542,29 @@ describe('HelpButton', () => {
         expect(screen.getByRole('button', { name: /report a bug/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /give feedback/i })).toBeInTheDocument();
       });
+
+      // ...and the fields themselves are empty, not just hidden behind the options.
+      await user.click(screen.getByRole('button', { name: /report a bug/i }));
+      expect(await screen.findByLabelText(/title/i)).toHaveValue('');
+      expect(screen.getByLabelText(/description/i)).toHaveValue('');
+    });
+
+    /** Each form keeps its own draft while the dialog stays open. */
+    it('keeps a bug draft while looking at the feedback form', async () => {
+      const user = userEvent.setup();
+      renderHelpButton();
+      await user.click(getHelpButton());
+
+      await user.click(await screen.findByRole('button', { name: /report a bug/i }));
+      await user.type(await screen.findByLabelText(/title/i), 'Radio silence');
+      await user.click(screen.getByRole('button', { name: /back to options/i }));
+
+      await user.click(screen.getByRole('button', { name: /give feedback/i }));
+      expect(await screen.findByLabelText(/title/i)).toHaveValue('');
+      await user.click(screen.getByRole('button', { name: /back to options/i }));
+
+      await user.click(screen.getByRole('button', { name: /report a bug/i }));
+      expect(await screen.findByLabelText(/title/i)).toHaveValue('Radio silence');
     });
   });
 

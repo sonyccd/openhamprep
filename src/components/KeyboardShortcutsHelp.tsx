@@ -9,6 +9,7 @@ import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import { Kbd } from '@/components/ohp/Kbd';
 
 interface ShortcutItem {
   keys: string[];
@@ -47,22 +48,6 @@ const shortcutGroups: ShortcutGroup[] = [
   },
 ];
 
-// The <kbd> chrome, shared by the list and the footer hint.
-const kbd = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  minWidth: 24,
-  height: 24,
-  px: 1,
-  fontFamily: 'monospace',
-  fontSize: '0.75rem',
-  fontWeight: 500,
-  bgcolor: 'muted',
-  border: '1px solid',
-  borderColor: 'divider',
-  borderRadius: 1,
-} as const;
 
 interface KeyboardShortcutsHelpProps {
   open?: boolean;
@@ -163,9 +148,9 @@ export function KeyboardShortcutsHelp({
                       <Typography variant="body2">{shortcut.description}</Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         {shortcut.keys.map((key, keyIndex) => (
-                          <Box component="kbd" key={keyIndex} sx={kbd}>
+                          <Kbd key={keyIndex}>
                             {key}
-                          </Box>
+                          </Kbd>
                         ))}
                       </Box>
                     </Box>
@@ -186,9 +171,9 @@ export function KeyboardShortcutsHelp({
             }}
           >
             Press{' '}
-            <Box component="kbd" sx={{ ...kbd, minWidth: 'auto', height: 'auto', py: 0.25 }}>
+            <Kbd sx={{ minWidth: 'auto', height: 'auto', py: 0.25 }}>
               ?
-            </Box>{' '}
+            </Kbd>{' '}
             anytime to show this help
           </Box>
         </DialogContent>
