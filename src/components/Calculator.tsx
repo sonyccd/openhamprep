@@ -204,7 +204,8 @@ export function Calculator() {
             justifyContent: { xs: "center", sm: "flex-start" },
             color: "text.secondary",
             "&:hover": { bgcolor: "muted", color: "text.primary" },
-            "& .MuiButton-startIcon": { m: { xs: 0, sm: undefined } },
+            // Icon-only below sm; the label's 8px gap comes back with it.
+            "& .MuiButton-startIcon": { ml: 0, mr: { xs: 0, sm: 1 } },
           }}
         >
           <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
@@ -223,7 +224,10 @@ export function Calculator() {
             transform: "translateX(calc(100% + 0.5rem))",
             p: 1.5,
             width: 224,
-            zIndex: (t) => t.zIndex.modal,
+            // Above page content, below the hamburger (appBar), the drawer and
+            // any dialog — so a modal opened over an open calculator wins by
+            // design, not by DOM order.
+            zIndex: (t) => t.zIndex.fab,
             boxShadow: 6,
             borderRadius: "8px",
           }}
