@@ -1,378 +1,134 @@
-import { useState } from 'react';
-import { HelpCircle, Keyboard, Lightbulb, ExternalLink, Activity, Bug, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
+import { useState } from "react";
+import Box from "@mui/material/Box";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+import { visuallyHidden } from "@mui/utils";
+import { HelpCircle, Keyboard, Lightbulb } from "lucide-react";
+import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { FeedbackOptions } from "./help/FeedbackOptions";
+import { ForumReportForm } from "./help/ForumReportForm";
+import { HelpTriggers } from "./help/HelpTriggers";
+import { ShortcutsPanel } from "./help/ShortcutsPanel";
+import { buildForumUrl, REPORT_COPY } from "./help/helpForumUrl";
+import type { ReportKind } from "./help/helpForumUrl";
 
-import { useIsMobile } from '@/hooks/use-mobile';
+type HelpTab = "feedback" | "shortcuts";
 
-interface ShortcutItem {
-  keys: string[];
-  description: string;
-}
-interface ShortcutGroup {
-  title: string;
-  shortcuts: ShortcutItem[];
-}
-const shortcutGroups: ShortcutGroup[] = [{
-  title: 'Navigation',
-  shortcuts: [{
-    keys: ['→'],
-    description: 'Next question'
-  }, {
-    keys: ['←'],
-    description: 'Previous question'
-  }, {
-    keys: ['S'],
-    description: 'Skip question'
-  }, {
-    keys: ['Esc'],
-    description: 'Go back / Close'
-  }, {
-    keys: ['?'],
-    description: 'Show help'
-  }]
-}];
-
-// Answer keys shown separately in a compact grid
-const answerKeys = ['A', 'B', 'C', 'D'];
-type FormType = 'bug' | 'feedback' | null;
-
-const MAX_TITLE_LENGTH = 200;
-const MAX_DESCRIPTION_LENGTH = 5000;
-
-const buildForumUrl = (type: 'bug' | 'feature', title: string, description: string) => {
-  const tag = type === 'bug' ? 'bug' : 'feature';
-  const truncatedTitle = title.slice(0, MAX_TITLE_LENGTH);
-  const truncatedDescription = description.slice(0, MAX_DESCRIPTION_LENGTH);
-  const bodyTemplate = type === 'bug'
-    ? `**Issue Description:**\n${truncatedDescription}\n\n**Steps to Reproduce:**\n1. \n2. \n3. \n\n**Expected Behavior:**\n\n**Actual Behavior:**\n`
-    : `**Feedback:**\n${truncatedDescription}\n\n**Why this would help:**\n`;
-
-  const params = new URLSearchParams({
-    category: 'feedback',
-    title: truncatedTitle,
-    tags: tag,
-    body: bodyTemplate
-  });
-
-  return `https://forum.openhamprep.com/new-topic?${params.toString()}`;
-};
+const EMPTY_REPORT = { title: "", description: "" };
 
 export function HelpButton() {
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
-  const [activeForm, setActiveForm] = useState<FormType>(null);
-  const [bugTitle, setBugTitle] = useState('');
-  const [bugDescription, setBugDescription] = useState('');
-  const [feedbackTitle, setFeedbackTitle] = useState('');
-  const [feedbackDescription, setFeedbackDescription] = useState('');
+  const [tab, setTab] = useState<HelpTab>("feedback");
+  const [activeForm, setActiveForm] = useState<ReportKind | null>(null);
+  const [reports, setReports] = useState<Record<ReportKind, { title: string; description: string }>>({
+    bug: EMPTY_REPORT,
+    feedback: EMPTY_REPORT,
+  });
 
   const resetForms = () => {
     setActiveForm(null);
-    setBugTitle('');
-    setBugDescription('');
-    setFeedbackTitle('');
-    setFeedbackDescription('');
+    setReports({ bug: EMPTY_REPORT, feedback: EMPTY_REPORT });
   };
 
-  const handleDialogChange = (isOpen: boolean) => {
-    setOpen(isOpen);
-    if (!isOpen) {
-      resetForms();
-    }
-  };
-
-  const handleSubmitBug = () => {
-    const url = buildForumUrl('bug', bugTitle, bugDescription);
-    window.open(url, '_blank', 'noopener,noreferrer');
-    toast('Opening forum', {
-      description: 'Complete your bug report in the new tab.',
-    });
+  const handleClose = () => {
+    setOpen(false);
     resetForms();
   };
 
-  const handleSubmitFeedback = () => {
-    const url = buildForumUrl('feature', feedbackTitle, feedbackDescription);
-    window.open(url, '_blank', 'noopener,noreferrer');
-    toast('Opening forum', {
-      description: 'Complete your feedback in the new tab.',
-    });
+  const updateReport = (kind: ReportKind, field: "title" | "description") => (value: string) =>
+    setReports((prev) => ({ ...prev, [kind]: { ...prev[kind], [field]: value } }));
+
+  const handleSubmit = (kind: ReportKind) => {
+    const { title, description } = reports[kind];
+    window.open(buildForumUrl(kind, title, description), "_blank", "noopener,noreferrer");
+    toast("Opening forum", { description: REPORT_COPY[kind].toast });
     resetForms();
   };
 
-  return <>
-      {/* Mobile: square icon button in the top-right, mirroring the hamburger
-          menu (DashboardSidebar) so the two corners pair up. Visibility is
-          CSS-only (`md:hidden`) so the correct button paints on first render —
-          no flash from a JS hook resolving after mount. */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="outline" size="icon" className="md:hidden fixed right-4 top-safe-top z-50 bg-card border-border shadow-lg" onClick={() => setOpen(true)} aria-label="Open help dialog">
-            <HelpCircle className="w-5 h-5" aria-hidden="true" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">
-          <p>Help & Shortcuts (?)</p>
-        </TooltipContent>
-      </Tooltip>
+  // Keyboard shortcuts are irrelevant on touch devices, so on mobile the tab
+  // bar goes and the feedback options show directly.
+  const showTabs = !isMobile;
+  const panel = showTabs ? tab : "feedback";
 
-      {/* Desktop: floating circular button, bottom-right. Hidden below md. */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="default" size="icon" className="hidden md:flex fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg z-50 [&_svg]:size-8" onClick={() => setOpen(true)} aria-label="Open help dialog">
-            <HelpCircle aria-hidden="true" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="left">
-          <p>Help & Shortcuts (?)</p>
-        </TooltipContent>
-      </Tooltip>
+  return (
+    <>
+      <HelpTriggers onOpen={() => setOpen(true)} />
 
-      <Dialog open={open} onOpenChange={handleDialogChange}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <HelpCircle className="h-5 w-5" aria-hidden="true" />
-              Help & Support
-            </DialogTitle>
-            {/* Visually hidden: gives screen readers context without showing a subtitle */}
-            <DialogDescription className="sr-only">
-              Help resources and feedback options
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="sm"
+        fullWidth
+        aria-labelledby="help-dialog-title"
+        aria-describedby="help-dialog-description"
+      >
+        <DialogTitle id="help-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box component={HelpCircle} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+          Help & Support
+        </DialogTitle>
+        <DialogContent>
+          {/* Gives screen readers context without showing a subtitle. */}
+          <DialogContentText id="help-dialog-description" sx={visuallyHidden}>
+            Help resources and feedback options
+          </DialogContentText>
 
-          <Tabs defaultValue="feedback" className="mt-2">
-            {/* Keyboard shortcuts are irrelevant on touch devices, so on mobile
-                we drop the tab bar entirely and show feedback options directly. */}
-            {!isMobile && (
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="feedback" className="flex items-center gap-2">
-                  <Lightbulb className="h-4 w-4" aria-hidden="true" />
-                  Feedback
-                </TabsTrigger>
-                <TabsTrigger value="shortcuts" className="flex items-center gap-2">
-                  <Keyboard className="h-4 w-4" aria-hidden="true" />
-                  Shortcuts
-                </TabsTrigger>
-              </TabsList>
+          {showTabs && (
+            <Tabs
+              value={tab}
+              onChange={(_e, value: HelpTab) => setTab(value)}
+              variant="fullWidth"
+              aria-label="Help sections"
+              sx={{ mt: 1 }}
+            >
+              <Tab
+                value="feedback"
+                id="help-tab-feedback"
+                aria-controls="help-panel-feedback"
+                label="Feedback"
+                icon={<Box component={Lightbulb} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+                iconPosition="start"
+              />
+              <Tab
+                value="shortcuts"
+                id="help-tab-shortcuts"
+                aria-controls="help-panel-shortcuts"
+                label="Shortcuts"
+                icon={<Box component={Keyboard} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+                iconPosition="start"
+              />
+            </Tabs>
+          )}
+
+          <Box
+            role={showTabs ? "tabpanel" : undefined}
+            id={showTabs ? `help-panel-${panel}` : undefined}
+            aria-labelledby={showTabs ? `help-tab-${panel}` : undefined}
+            sx={{ mt: 2, height: 340, overflowY: "auto" }}
+          >
+            {panel === "shortcuts" ? (
+              <ShortcutsPanel />
+            ) : activeForm === null ? (
+              <FeedbackOptions onPick={setActiveForm} />
+            ) : (
+              <ForumReportForm
+                kind={activeForm}
+                title={reports[activeForm].title}
+                description={reports[activeForm].description}
+                onTitleChange={updateReport(activeForm, "title")}
+                onDescriptionChange={updateReport(activeForm, "description")}
+                onBack={() => setActiveForm(null)}
+                onSubmit={() => handleSubmit(activeForm)}
+              />
             )}
-
-            {!isMobile && (
-              <TabsContent value="shortcuts" className="mt-4 space-y-4 h-[340px]">
-                {/* Answer keys in compact grid */}
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                    Answer Selection
-                  </h3>
-                  <div className="flex gap-2">
-                    {answerKeys.map(key => (
-                      <div key={key} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted/50">
-                        <kbd className="inline-flex items-center justify-center w-6 h-6 text-xs font-mono font-medium bg-background border border-border rounded">
-                          {key}
-                        </kbd>
-                        <span className="text-sm text-muted-foreground">Answer {key}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Navigation shortcuts */}
-                {shortcutGroups.map(group => (
-                  <div key={group.title}>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                      {group.title}
-                    </h3>
-                    <div className="space-y-1">
-                      {group.shortcuts.map((shortcut, index) => (
-                        <div key={index} className="flex items-center justify-between py-0.5">
-                          <span className="text-sm text-foreground">
-                            {shortcut.description}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            {shortcut.keys.map((key, keyIndex) => (
-                              <kbd key={keyIndex} className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 text-xs font-mono font-medium bg-muted border border-border rounded">
-                                {key}
-                              </kbd>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </TabsContent>
-            )}
-
-              <TabsContent value="feedback" className="mt-4 h-[340px]">
-                {activeForm === null ? (
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Found a bug or have an idea to improve the app? Let us know on our community forum!
-                    </p>
-
-                    <div className="space-y-3">
-                      <button
-                        type="button"
-                        onClick={() => setActiveForm('bug')}
-                        className="w-full flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors text-left"
-                      >
-                        <div className="flex items-center justify-center h-10 w-10 rounded-full bg-destructive/10 text-destructive">
-                          <Bug className="h-5 w-5" aria-hidden="true" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-foreground">Report a Bug</div>
-                          <div className="text-sm text-muted-foreground">
-                            Something not working? Let us know
-                          </div>
-                        </div>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setActiveForm('feedback')}
-                        className="w-full flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors text-left"
-                      >
-                        <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 text-primary">
-                          <Lightbulb className="h-5 w-5" aria-hidden="true" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-foreground">Give Feedback</div>
-                          <div className="text-sm text-muted-foreground">
-                            Share ideas or suggest features
-                          </div>
-                        </div>
-                      </button>
-
-                      <a href="https://status.openhamprep.com/status/openhamprep" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted transition-colors">
-                        <div className="flex items-center justify-center h-10 w-10 rounded-full bg-success/10 text-success">
-                          <Activity className="h-5 w-5" aria-hidden="true" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-foreground">System Status</div>
-                          <div className="text-sm text-muted-foreground">
-                            Check if services are running smoothly
-                          </div>
-                        </div>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                        <span className="sr-only">(opens in new window)</span>
-                      </a>
-                    </div>
-                  </div>
-                ) : activeForm === 'bug' ? (
-                  <div className="space-y-4">
-                    <button
-                      type="button"
-                      onClick={() => setActiveForm(null)}
-                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                      Back to options
-                    </button>
-
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center justify-center h-8 w-8 rounded-full bg-destructive/10 text-destructive">
-                        <Bug className="h-4 w-4" aria-hidden="true" />
-                      </div>
-                      <h3 className="font-medium text-foreground">Report a Bug</h3>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="bug-title">Title</Label>
-                        <Input
-                          id="bug-title"
-                          placeholder="Brief summary of the issue"
-                          value={bugTitle}
-                          onChange={(e) => setBugTitle(e.target.value)}
-                          maxLength={MAX_TITLE_LENGTH}
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label htmlFor="bug-description">Description</Label>
-                        <Textarea
-                          id="bug-description"
-                          placeholder="What happened? What were you trying to do?"
-                          rows={4}
-                          value={bugDescription}
-                          onChange={(e) => setBugDescription(e.target.value)}
-                          maxLength={MAX_DESCRIPTION_LENGTH}
-                        />
-                      </div>
-
-                      <Button
-                        onClick={handleSubmitBug}
-                        disabled={!bugTitle.trim() || !bugDescription.trim()}
-                        variant="destructive"
-                        className="w-full"
-                      >
-                        Submit to Forum
-                        <ExternalLink className="h-4 w-4 ml-2" aria-hidden="true" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <button
-                      type="button"
-                      onClick={() => setActiveForm(null)}
-                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                      Back to options
-                    </button>
-
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 text-primary">
-                        <Lightbulb className="h-4 w-4" aria-hidden="true" />
-                      </div>
-                      <h3 className="font-medium text-foreground">Give Feedback</h3>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="feedback-title">Title</Label>
-                        <Input
-                          id="feedback-title"
-                          placeholder="Brief summary of your idea"
-                          value={feedbackTitle}
-                          onChange={(e) => setFeedbackTitle(e.target.value)}
-                          maxLength={MAX_TITLE_LENGTH}
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label htmlFor="feedback-description">Description</Label>
-                        <Textarea
-                          id="feedback-description"
-                          placeholder="Tell us more about your idea or suggestion"
-                          rows={4}
-                          value={feedbackDescription}
-                          onChange={(e) => setFeedbackDescription(e.target.value)}
-                          maxLength={MAX_DESCRIPTION_LENGTH}
-                        />
-                      </div>
-
-                      <Button
-                        onClick={handleSubmitFeedback}
-                        disabled={!feedbackTitle.trim() || !feedbackDescription.trim()}
-                        className="w-full"
-                      >
-                        Submit to Forum
-                        <ExternalLink className="h-4 w-4 ml-2" aria-hidden="true" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-          </Tabs>
+          </Box>
         </DialogContent>
       </Dialog>
-    </>;
+    </>
+  );
 }
