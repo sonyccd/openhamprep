@@ -1,183 +1,149 @@
-import { useEffect, useCallback, useRef } from 'react';
-import { usePWAInstall } from '@/hooks/usePWAInstall';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Download, X, Share, Plus } from 'lucide-react';
+import { useEffect, useRef } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import Slide from "@mui/material/Slide";
+import type { SlideProps } from "@mui/material/Slide";
+import Snackbar from "@mui/material/Snackbar";
+import type { SnackbarCloseReason } from "@mui/material/Snackbar";
+import Typography from "@mui/material/Typography";
+import { Download, X } from "lucide-react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
+import { tokenAlpha } from "@/theme/muiTheme";
+import { IOSInstallDialog } from "./pwa/IOSInstallDialog";
 
+/** Slide's props are not part of the Snackbar transition slot's type; bind here. */
+const SlideUp = (props: SlideProps) => <Slide {...props} direction="up" />;
+
+/**
+ * Offers to install the app once the browser says it can.
+ *
+ * The banner is a Snackbar holding an alertdialog: anchored above the mobile
+ * nav, slid in, dismissed by Escape. It is not modal — the page stays usable
+ * behind it — but focus moves into it on arrival so a keyboard user hears
+ * the offer, and goes back to where it was once the banner is dismissed.
+ */
 export function PWAInstallBanner() {
   const { showPrompt, isIOS, triggerInstall, dismissPrompt } = usePWAInstall();
   const bannerRef = useRef<HTMLDivElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
 
-  // Handle Escape key to dismiss
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showPrompt) {
-        dismissPrompt();
-      }
-    },
-    [showPrompt, dismissPrompt]
-  );
-
+  // Dismissing does not unmount this component (App renders it always), so
+  // the restore has to run when showPrompt turns off, not on unmount.
   useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+    if (!showPrompt || isIOS) return;
 
-  // Focus management: move focus to banner when it appears, restore when dismissed
-  useEffect(() => {
-    if (showPrompt && bannerRef.current && !isIOS) {
-      previousFocusRef.current = document.activeElement as HTMLElement;
-      // Small delay to ensure animation has started
-      const timer = setTimeout(() => {
-        bannerRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [showPrompt, isIOS]);
+    const previous = document.activeElement;
+    // Let the slide begin before focus lands, so the browser does not scroll
+    // to a banner that is still off screen.
+    const timer = setTimeout(() => bannerRef.current?.focus(), 100);
 
-  // Restore focus when banner is dismissed
-  useEffect(() => {
     return () => {
-      if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
-        previousFocusRef.current.focus();
+      clearTimeout(timer);
+      // Only give focus back if the banner still had it; a user who moved on
+      // to a form field before dismissing keeps their place.
+      const focusIsLoose =
+        document.activeElement === document.body || document.activeElement === null;
+      if (focusIsLoose && previous instanceof HTMLElement && previous.isConnected) {
+        previous.focus();
       }
     };
-  }, []);
+  }, [showPrompt, isIOS]);
 
   if (!showPrompt) return null;
 
-  // iOS needs manual instructions via dialog
   if (isIOS) {
     return <IOSInstallDialog onDismiss={dismissPrompt} />;
   }
 
-  // Standard install banner for Chrome, Edge, etc.
+  const handleClose = (_event: unknown, reason?: SnackbarCloseReason) => {
+    // Clicking elsewhere on the page must not dismiss an offer the user has
+    // not answered; only Escape and the buttons do.
+    if (reason === "clickaway") return;
+    dismissPrompt();
+  };
+
   return (
-    <div
-      ref={bannerRef}
-      tabIndex={-1}
-      className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-sm z-40
-                 bg-card border border-border rounded-lg shadow-lg p-4
-                 animate-in slide-in-from-bottom-4 fade-in duration-300
-                 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-      role="alertdialog"
-      aria-labelledby="pwa-install-title"
-      aria-describedby="pwa-install-description"
-      aria-modal="false"
+    <Snackbar
+      open
+      onClose={handleClose}
+      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      slots={{ transition: SlideUp }}
+      sx={{
+        // Clear the mobile bottom nav; full width on phones, a card on wider
+        // screens. bottom and right are given per breakpoint because Snackbar
+        // sets its own sm values in a media query, which would otherwise win
+        // over a plain value here.
+        // Below the drawer and any dialog, as the z-40 banner was.
+        zIndex: (t) => t.zIndex.fab,
+        bottom: { xs: 80, sm: 80 },
+        right: { xs: 16, sm: 16 },
+        left: { xs: 16, sm: "auto" },
+        maxWidth: { sm: 384 },
+      }}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Download className="w-5 h-5 text-primary" aria-hidden="true" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3
-            id="pwa-install-title"
-            className="font-medium text-foreground text-sm"
+      <Paper
+        ref={bannerRef}
+        tabIndex={-1}
+        role="alertdialog"
+        aria-labelledby="pwa-install-title"
+        aria-describedby="pwa-install-description"
+        aria-modal="false"
+        variant="outlined"
+        sx={{
+          width: "100%",
+          p: 2,
+          borderRadius: "8px",
+          boxShadow: 6,
+          outline: "none",
+          "&:focus-visible": {
+            outline: "2px solid",
+            outlineColor: "primary.main",
+            outlineOffset: 2,
+          },
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+          <Box
+            sx={{
+              flexShrink: 0,
+              width: 40,
+              height: 40,
+              borderRadius: "8px",
+              bgcolor: (t) => tokenAlpha(t.vars.palette.primary.main, 10),
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
           >
-            Install Open Ham Prep
-          </h3>
-          <p
-            id="pwa-install-description"
-            className="text-sm text-muted-foreground mt-0.5"
+            <Box component={Download} aria-hidden="true" sx={{ width: 20, height: 20, color: "primary.main" }} />
+          </Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography component="h3" id="pwa-install-title" sx={{ fontWeight: 500, fontSize: "0.875rem" }}>
+              Install Open Ham Prep
+            </Typography>
+            <Typography id="pwa-install-description" sx={{ fontSize: "0.875rem", color: "text.secondary", mt: 0.25 }}>
+              Quick access from your home screen
+            </Typography>
+          </Box>
+          <IconButton
+            size="small"
+            onClick={dismissPrompt}
+            aria-label="Dismiss install prompt"
+            sx={{ flexShrink: 0, color: "text.secondary", "&:hover": { color: "text.primary" } }}
           >
-            Quick access from your home screen
-          </p>
-        </div>
-        <button
-          onClick={dismissPrompt}
-          className="flex-shrink-0 p-1 text-muted-foreground hover:text-foreground rounded transition-colors"
-          aria-label="Dismiss install prompt"
-        >
-          <X className="w-4 h-4" aria-hidden="true" />
-        </button>
-      </div>
-      <div className="flex gap-2 mt-3 justify-end">
-        <Button variant="ghost" size="sm" onClick={dismissPrompt}>
-          Not now
-        </Button>
-        <Button size="sm" onClick={triggerInstall}>
-          Install
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-interface IOSInstallDialogProps {
-  onDismiss: () => void;
-}
-
-function IOSInstallDialog({ onDismiss }: IOSInstallDialogProps) {
-  return (
-    <Dialog open onOpenChange={(open) => !open && onDismiss()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Download className="w-5 h-5 text-primary" aria-hidden="true" />
-            Install Open Ham Prep
-          </DialogTitle>
-          <DialogDescription>
-            Add this app to your home screen for quick access
-          </DialogDescription>
-        </DialogHeader>
-
-        <ol className="space-y-4 py-4 list-none" aria-label="Installation steps">
-          <li className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium" aria-hidden="true">
-              1
-            </div>
-            <div className="flex-1">
-              <p className="text-sm text-foreground">
-                Tap the{' '}
-                <span className="inline-flex items-center gap-1 font-medium">
-                  Share
-                  <Share className="w-4 h-4" aria-hidden="true" />
-                </span>{' '}
-                button in Safari
-              </p>
-            </div>
-          </li>
-
-          <li className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium" aria-hidden="true">
-              2
-            </div>
-            <div className="flex-1">
-              <p className="text-sm text-foreground">
-                Scroll down and tap{' '}
-                <span className="inline-flex items-center gap-1 font-medium">
-                  Add to Home Screen
-                  <Plus className="w-4 h-4" aria-hidden="true" />
-                </span>
-              </p>
-            </div>
-          </li>
-
-          <li className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium" aria-hidden="true">
-              3
-            </div>
-            <div className="flex-1">
-              <p className="text-sm text-foreground">
-                Tap <span className="font-medium">Add</span> to confirm
-              </p>
-            </div>
-          </li>
-        </ol>
-
-        <div className="flex justify-end">
-          <Button variant="ghost" onClick={onDismiss}>
-            Got it
+            <Box component={X} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+          </IconButton>
+        </Box>
+        <Box sx={{ display: "flex", gap: 1, mt: 1.5, justifyContent: "flex-end" }}>
+          <Button variant="text" color="inherit" size="small" onClick={dismissPrompt}>
+            Not now
           </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          <Button variant="contained" size="small" onClick={triggerInstall}>
+            Install
+          </Button>
+        </Box>
+      </Paper>
+    </Snackbar>
   );
 }
