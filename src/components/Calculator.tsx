@@ -192,6 +192,7 @@ export function Calculator() {
       <Tooltip title={isOpen ? "Close calculator" : "Open calculator for calculations"}>
         <Button
           variant="text"
+          color="inherit"
           size="small"
           onClick={() => setIsOpen(!isOpen)}
           aria-label={isOpen ? "Close calculator" : "Open calculator"}
@@ -202,8 +203,7 @@ export function Calculator() {
             width: { xs: 32, sm: 112 },
             px: { xs: 0, sm: 1.5 },
             justifyContent: { xs: "center", sm: "flex-start" },
-            color: "text.secondary",
-            "&:hover": { bgcolor: "muted", color: "text.primary" },
+            "&:hover": { bgcolor: "muted" },
             // Icon-only below sm; the label's 8px gap comes back with it.
             "& .MuiButton-startIcon": { ml: 0, mr: { xs: 0, sm: 1 } },
           }}

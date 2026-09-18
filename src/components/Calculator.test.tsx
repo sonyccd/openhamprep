@@ -218,7 +218,8 @@ describe('Calculator', () => {
      * show the desktop value and could not catch a missing breakpoint rule.
      */
     const rulesFor = (el: HTMLElement, needle: string) => {
-      const cls = [...el.classList].find((c) => c.startsWith('css-'))!;
+      const cls = [...el.classList].find((c) => c.startsWith('css-'));
+      if (!cls) throw new Error(`no emotion class on <${el.tagName.toLowerCase()}>: ${el.className}`);
       const out: string[] = [];
       for (const sheet of Array.from(document.styleSheets)) {
         for (const rule of Array.from(sheet.cssRules)) {
@@ -235,6 +236,15 @@ describe('Calculator', () => {
       expect(css).toMatch(/min-width:0px[^}]*startIcon[^}]*margin-right: 0px/);
       // One spacing unit; the theme emits it as a CSS variable, not a literal.
       expect(css).toMatch(/min-width:640px[^}]*startIcon[^}]*margin-right: var\(--mui-spacing\)/);
+    });
+
+    /** The ghost button it replaced took the card's text colour; so does this. */
+    it('inherits its idle colour rather than picking one', () => {
+      renderCalculator();
+      const toggle = screen.getByRole('button', { name: /open calculator/i });
+
+      expect(toggle).toHaveClass('MuiButton-colorInherit');
+      expect(rulesFor(toggle, 'color: inherit')).not.toBe('');
     });
 
     it('sits below dialogs and the drawer', async () => {
