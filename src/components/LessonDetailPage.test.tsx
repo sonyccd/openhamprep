@@ -226,7 +226,7 @@ describe('LessonDetailPage', () => {
       expect(screen.getByTestId('lesson-path')).toBeInTheDocument();
     });
 
-    it('should render CircularProgress component', () => {
+    it('should render the progress ring as a named meter', () => {
       renderComponent();
       expect(screen.getByRole('meter', { name: 'Lesson progress' })).toBeInTheDocument();
     });
@@ -269,6 +269,11 @@ describe('LessonDetailPage', () => {
       // descendant rule that outranks Gauge's own default on the arc class.
       // Emotion's style tags also accumulate across this file's tests, so the
       // lookup is scoped to this render's layer class, not the first match.
+      //
+      // This is coupled to MUI X Gauge's class names and to how Emotion
+      // serialises sx. If it starts returning null after a dependency bump,
+      // the likely fix is re-deriving the selector (probe the DOM for where
+      // the fill rule now lands), not a real regression in the ring's colour.
       const layer = document.querySelector('.MuiChartsSvgLayer-root');
       const own = Array.from(layer?.classList ?? []).find((c) => c.startsWith('css-'));
       const css = Array.from(document.querySelectorAll('style'))
