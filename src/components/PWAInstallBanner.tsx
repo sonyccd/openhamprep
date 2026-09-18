@@ -22,30 +22,33 @@ const SlideUp = (props: SlideProps) => <Slide {...props} direction="up" />;
  * The banner is a Snackbar holding an alertdialog: anchored above the mobile
  * nav, slid in, dismissed by Escape. It is not modal — the page stays usable
  * behind it — but focus moves into it on arrival so a keyboard user hears
- * the offer, and returns to where it was when the banner goes.
+ * the offer, and goes back to where it was once the banner is dismissed.
  */
 export function PWAInstallBanner() {
   const { showPrompt, isIOS, triggerInstall, dismissPrompt } = usePWAInstall();
   const bannerRef = useRef<HTMLDivElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
 
+  // Dismissing does not unmount this component (App renders it always), so
+  // the restore has to run when showPrompt turns off, not on unmount.
   useEffect(() => {
-    if (showPrompt && !isIOS) {
-      previousFocusRef.current = document.activeElement as HTMLElement;
-      // Let the slide begin before focus lands, so the browser does not scroll
-      // to a banner that is still off screen.
-      const timer = setTimeout(() => bannerRef.current?.focus(), 100);
-      return () => clearTimeout(timer);
-    }
-  }, [showPrompt, isIOS]);
+    if (!showPrompt || isIOS) return;
 
-  useEffect(() => {
+    const previous = document.activeElement;
+    // Let the slide begin before focus lands, so the browser does not scroll
+    // to a banner that is still off screen.
+    const timer = setTimeout(() => bannerRef.current?.focus(), 100);
+
     return () => {
-      if (typeof previousFocusRef.current?.focus === "function") {
-        previousFocusRef.current.focus();
+      clearTimeout(timer);
+      // Only give focus back if the banner still had it; a user who moved on
+      // to a form field before dismissing keeps their place.
+      const focusIsLoose =
+        document.activeElement === document.body || document.activeElement === null;
+      if (focusIsLoose && previous instanceof HTMLElement && previous.isConnected) {
+        previous.focus();
       }
     };
-  }, []);
+  }, [showPrompt, isIOS]);
 
   if (!showPrompt) return null;
 

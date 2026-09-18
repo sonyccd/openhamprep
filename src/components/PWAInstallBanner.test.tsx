@@ -80,6 +80,74 @@ describe('PWAInstallBanner', () => {
       }
     });
 
+    /**
+     * App always renders the banner, so dismissing hides it without an
+     * unmount; the restore must not depend on one.
+     */
+    it('gives focus back to where it was once dismissed', () => {
+      vi.useFakeTimers();
+      try {
+        mockPrompt({ showPrompt: false });
+        const view = render(
+          <ThemeProvider theme={muiTheme}>
+            <button type="button">Somewhere on the page</button>
+            <PWAInstallBanner />
+          </ThemeProvider>
+        );
+        const origin = screen.getByRole('button', { name: 'Somewhere on the page' });
+        origin.focus();
+
+        mockPrompt();
+        view.rerender(
+          <ThemeProvider theme={muiTheme}>
+            <button type="button">Somewhere on the page</button>
+            <PWAInstallBanner />
+          </ThemeProvider>
+        );
+        act(() => {
+          vi.advanceTimersByTime(100);
+        });
+        expect(screen.getByRole('alertdialog')).toHaveFocus();
+
+        mockPrompt({ showPrompt: false });
+        view.rerender(
+          <ThemeProvider theme={muiTheme}>
+            <button type="button">Somewhere on the page</button>
+            <PWAInstallBanner />
+          </ThemeProvider>
+        );
+
+        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+        expect(origin).toHaveFocus();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('leaves focus alone if the user had already moved on', () => {
+      const view = render(
+        <ThemeProvider theme={muiTheme}>
+          <button type="button">Origin</button>
+          <input aria-label="Callsign" />
+          <PWAInstallBanner />
+        </ThemeProvider>
+      );
+      screen.getByRole('button', { name: 'Origin' }).focus();
+      const field = screen.getByRole('textbox', { name: 'Callsign' });
+      field.focus();
+
+      mockPrompt({ showPrompt: false });
+      view.rerender(
+        <ThemeProvider theme={muiTheme}>
+          <button type="button">Origin</button>
+          <input aria-label="Callsign" />
+          <PWAInstallBanner />
+        </ThemeProvider>
+      );
+
+      expect(field).toHaveFocus();
+    });
+
     it('installs on Install', async () => {
       const user = userEvent.setup();
       renderBanner();
