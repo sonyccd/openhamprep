@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { LessonPath } from './LessonPath';
+import { muiWrapper } from '@/test/utils/testWrappers';
 import { LessonTopic } from '@/types/lessons';
 
 // Sample lesson topic data
@@ -79,7 +80,7 @@ describe('LessonPath', () => {
           currentTopicIndex={1}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       expect(screen.getByText('Introduction to Circuits')).toBeInTheDocument();
       expect(screen.getByText("Ohm's Law")).toBeInTheDocument();
       expect(screen.getByText('Power Calculations')).toBeInTheDocument();
@@ -93,7 +94,7 @@ describe('LessonPath', () => {
           currentTopicIndex={1}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       expect(screen.getByText('Learn the basics of electrical circuits')).toBeInTheDocument();
       expect(screen.getByText('Understanding voltage, current, and resistance')).toBeInTheDocument();
     });
@@ -106,7 +107,7 @@ describe('LessonPath', () => {
           currentTopicIndex={1}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       expect(screen.getByText('T1A')).toBeInTheDocument();
       expect(screen.getByText('T1B')).toBeInTheDocument();
     });
@@ -119,7 +120,7 @@ describe('LessonPath', () => {
           currentTopicIndex={0}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       expect(screen.getByText('No topics have been added to this lesson yet.')).toBeInTheDocument();
     });
   });
@@ -133,7 +134,7 @@ describe('LessonPath', () => {
           currentTopicIndex={1}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       expect(screen.getByRole('button', { name: /\(completed\)$/ })).toBeInTheDocument();
     });
 
@@ -145,7 +146,7 @@ describe('LessonPath', () => {
           currentTopicIndex={1}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       expect(screen.getByText('Next')).toBeInTheDocument();
     });
 
@@ -157,7 +158,7 @@ describe('LessonPath', () => {
           currentTopicIndex={1}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       expect(screen.getByRole('button', { current: 'step' })).toBeInTheDocument();
     });
 
@@ -169,7 +170,7 @@ describe('LessonPath', () => {
           currentTopicIndex={1}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       // Topic 3 (index 2) is locked: current is 1 and it is not completed.
       expect(screen.getByRole('button', { name: /Power Calculations/ })).toBeDisabled();
     });
@@ -182,7 +183,7 @@ describe('LessonPath', () => {
           currentTopicIndex={1}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       // Completed topic should have its step number as a small badge
       const stepBadge = screen.getByText('1');
       expect(stepBadge).toBeInTheDocument();
@@ -198,7 +199,7 @@ describe('LessonPath', () => {
           currentTopicIndex={1}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       fireEvent.click(screen.getByText('Introduction to Circuits'));
       expect(mockOnTopicClick).toHaveBeenCalledWith('intro-to-circuits');
     });
@@ -211,7 +212,7 @@ describe('LessonPath', () => {
           currentTopicIndex={1}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       fireEvent.click(screen.getByText("Ohm's Law"));
       expect(mockOnTopicClick).toHaveBeenCalledWith('ohms-law');
     });
@@ -224,7 +225,7 @@ describe('LessonPath', () => {
           currentTopicIndex={1}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       fireEvent.click(screen.getByText('Power Calculations'));
       expect(mockOnTopicClick).not.toHaveBeenCalled();
     });
@@ -237,7 +238,7 @@ describe('LessonPath', () => {
           currentTopicIndex={1}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       // Find the button containing the locked topic title
       const lockedButton = screen.getByText('Power Calculations').closest('button');
       expect(lockedButton).toBeDisabled();
@@ -253,7 +254,7 @@ describe('LessonPath', () => {
           currentTopicIndex={0}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       // First topic should be current (not locked)
       expect(screen.getByText('Next')).toBeInTheDocument();
     });
@@ -271,7 +272,7 @@ describe('LessonPath', () => {
           currentTopicIndex={3}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       expect(screen.getAllByRole('button', { name: /\(completed\)$/ })).toHaveLength(3);
     });
 
@@ -283,7 +284,7 @@ describe('LessonPath', () => {
           currentTopicIndex={0}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
       // Should render without errors
       expect(screen.getByText('Introduction to Circuits')).toBeInTheDocument();
     });
@@ -324,7 +325,7 @@ describe('LessonPath', () => {
           currentTopicIndex={0}
           onTopicClick={mockOnTopicClick}
         />
-      );
+      , { wrapper: muiWrapper });
 
       expect(screen.getByText('T1A')).toBeInTheDocument();
       expect(screen.getByText('T1B')).toBeInTheDocument();

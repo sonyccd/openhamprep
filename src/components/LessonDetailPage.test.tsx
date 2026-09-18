@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { LessonDetailPage } from './LessonDetailPage';
+import { muiWrapper } from '@/test/utils/testWrappers';
 import { Lesson, LessonTopic } from '@/types/lessons';
 import { TopicProgress } from '@/hooks/useTopics';
 import { AppNavigationProvider } from '@/hooks/useAppNavigation';
@@ -20,15 +21,6 @@ vi.mock('./LessonPath', () => ({
       <span>Topics: {topics.length}</span>
       <span>Current: {currentTopicIndex}</span>
       <button onClick={() => onTopicClick('test-topic')}>Navigate</button>
-    </div>
-  ),
-}));
-
-// Mock CircularProgress component
-vi.mock('@/components/ui/circular-progress', () => ({
-  CircularProgress: ({ value, children }: { value: number; children: React.ReactNode }) => (
-    <div data-testid="circular-progress" data-value={value}>
-      {children}
     </div>
   ),
 }));
@@ -149,7 +141,8 @@ describe('LessonDetailPage', () => {
             <LessonDetailPage slug={slug} onBack={mockOnBack} />
           </AppNavigationProvider>
         </QueryClientProvider>
-      </BrowserRouter>
+      </BrowserRouter>,
+      { wrapper: muiWrapper }
     );
   };
 
@@ -166,7 +159,7 @@ describe('LessonDetailPage', () => {
       mockLessonLoading = true;
       renderComponent();
 
-      const skeletons = screen.getAllByTestId('skeleton');
+      const skeletons = document.querySelectorAll('.MuiSkeleton-root');
       expect(skeletons.length).toBeGreaterThan(0);
     });
 
@@ -175,7 +168,7 @@ describe('LessonDetailPage', () => {
       renderComponent();
 
       // Title, description, progress and topic items each get a skeleton.
-      const skeletons = screen.getAllByTestId('skeleton');
+      const skeletons = document.querySelectorAll('.MuiSkeleton-root');
       expect(skeletons.length).toBeGreaterThan(0);
     });
   });
@@ -233,9 +226,9 @@ describe('LessonDetailPage', () => {
       expect(screen.getByTestId('lesson-path')).toBeInTheDocument();
     });
 
-    it('should render CircularProgress component', () => {
+    it('should render the progress ring as a named meter', () => {
       renderComponent();
-      expect(screen.getByTestId('circular-progress')).toBeInTheDocument();
+      expect(screen.getByRole('meter', { name: 'Lesson progress' })).toBeInTheDocument();
     });
 
     it('should pass correct topic count to LessonPath', () => {
@@ -248,17 +241,64 @@ describe('LessonDetailPage', () => {
     it('should calculate completion percentage correctly', () => {
       renderComponent();
 
-      const progress = screen.getByTestId('circular-progress');
       // 1 of 2 topics completed = 50%
-      expect(progress.getAttribute('data-value')).toBe('50');
+      const meter = screen.getByRole('meter', { name: 'Lesson progress' });
+      expect(meter).toHaveAttribute('aria-valuenow', '50');
+      expect(meter).toHaveAttribute('aria-valuetext', '1 of 2 topics completed');
     });
 
     it('should show 0% when no topics completed', () => {
       mockProgressData = [];
       renderComponent();
 
-      const progress = screen.getByTestId('circular-progress');
-      expect(progress.getAttribute('data-value')).toBe('0');
+      expect(screen.getByRole('meter', { name: 'Lesson progress' })).toHaveAttribute(
+        'aria-valuenow',
+        '0'
+      );
+    });
+
+    /**
+     * #296. The old ring took its arc colour from a progressClassName prop, and
+     * this page passed className instead — which landed on the wrapper and
+     * never reached the arc, so the ring stayed amber at 100%. ScoreRing's
+     * colour is a theme callback applied to the arc's fill; this reads the
+     * rule it emits rather than trusting the prop.
+     */
+    const valueArcFill = () => {
+      // ScoreRing sets the fill through sx on the chart's SvgLayer, as a
+      // descendant rule that outranks Gauge's own default on the arc class.
+      // Emotion's style tags also accumulate across this file's tests, so the
+      // lookup is scoped to this render's layer class, not the first match.
+      //
+      // This is coupled to MUI X Gauge's class names and to how Emotion
+      // serialises sx. If it starts returning null after a dependency bump,
+      // the likely fix is re-deriving the selector (probe the DOM for where
+      // the fill rule now lands), not a real regression in the ring's colour.
+      const layer = document.querySelector('.MuiChartsSvgLayer-root');
+      const own = Array.from(layer?.classList ?? []).find((c) => c.startsWith('css-'));
+      const css = Array.from(document.querySelectorAll('style'))
+        .map((tag) => tag.textContent ?? '')
+        .join('\n');
+      const rule = css
+        .split('}')
+        .find((r) => own && r.includes(`.${own}`) && r.includes('MuiGauge-valueArc') && r.includes('fill:'));
+      return rule?.match(/fill:([^;]+)/)?.[1] ?? null;
+    };
+
+    it('draws the ring in the primary colour while incomplete', () => {
+      renderComponent();
+
+      expect(valueArcFill()).toContain('--mui-palette-primary-main');
+    });
+
+    it('turns the ring green once every topic is complete', () => {
+      mockProgressData = [
+        { topic_id: 'topic-1', is_completed: true },
+        { topic_id: 'topic-2', is_completed: true },
+      ];
+      renderComponent();
+
+      expect(valueArcFill()).toContain('--mui-palette-success-main');
     });
 
     it('should show 100% when all topics completed', () => {
@@ -268,8 +308,10 @@ describe('LessonDetailPage', () => {
       ];
       renderComponent();
 
-      const progress = screen.getByTestId('circular-progress');
-      expect(progress.getAttribute('data-value')).toBe('100');
+      expect(screen.getByRole('meter', { name: 'Lesson progress' })).toHaveAttribute(
+        'aria-valuenow',
+        '100'
+      );
     });
 
     it('should display completed count in progress text', () => {
@@ -347,8 +389,10 @@ describe('LessonDetailPage', () => {
       mockLessonData = { ...mockLesson, topics: [] };
       renderComponent();
 
-      const progress = screen.getByTestId('circular-progress');
-      expect(progress.getAttribute('data-value')).toBe('0');
+      expect(screen.getByRole('meter', { name: 'Lesson progress' })).toHaveAttribute(
+        'aria-valuenow',
+        '0'
+      );
     });
 
     it('should not show completion celebration when no topics', () => {
@@ -365,8 +409,10 @@ describe('LessonDetailPage', () => {
       renderComponent();
 
       // Should show 0% progress
-      const progress = screen.getByTestId('circular-progress');
-      expect(progress.getAttribute('data-value')).toBe('0');
+      expect(screen.getByRole('meter', { name: 'Lesson progress' })).toHaveAttribute(
+        'aria-valuenow',
+        '0'
+      );
     });
   });
 });
