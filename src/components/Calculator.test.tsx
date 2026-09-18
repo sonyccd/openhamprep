@@ -2,7 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Calculator } from './Calculator';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { ThemeProvider } from '@mui/material/styles';
+import { muiTheme } from '@/theme/muiTheme';
 
 // Mock Pendo
 vi.mock('@/hooks/usePendo', () => ({
@@ -19,9 +20,9 @@ vi.mock('@/hooks/usePendo', () => ({
 describe('Calculator', () => {
   const renderCalculator = () => {
     return render(
-      <TooltipProvider>
+      <ThemeProvider theme={muiTheme}>
         <Calculator />
-      </TooltipProvider>
+      </ThemeProvider>
     );
   };
 
@@ -210,19 +211,51 @@ describe('Calculator', () => {
     });
   });
 
-  describe('className prop', () => {
-    it('applies custom className', () => {
-      render(
-        <TooltipProvider>
-          <Calculator className="custom-class" />
-        </TooltipProvider>
-      );
+  describe('layering and layout', () => {
+    /**
+     * Read the emitted stylesheet rather than computed style: happy-dom
+     * evaluates media queries at 1024px, so a computed margin would only
+     * show the desktop value and could not catch a missing breakpoint rule.
+     */
+    const rulesFor = (el: HTMLElement, needle: string) => {
+      const cls = [...el.classList].find((c) => c.startsWith('css-'));
+      if (!cls) throw new Error(`no emotion class on <${el.tagName.toLowerCase()}>: ${el.className}`);
+      const out: string[] = [];
+      for (const sheet of Array.from(document.styleSheets)) {
+        for (const rule of Array.from(sheet.cssRules)) {
+          if (rule.cssText.includes(cls) && rule.cssText.includes(needle)) out.push(rule.cssText);
+        }
+      }
+      return out.join('\n');
+    };
 
-      // Kept as a class assertion on purpose: this checks that a caller-supplied
-      // className is forwarded, which is part of the component's API rather than
-      // its internal styling, and survives a restyle.
-      const wrapper = screen.getByRole('button').parentElement;
-      expect(wrapper).toHaveClass('custom-class');
+    it('restores the icon-to-label gap at sm and up', () => {
+      renderCalculator();
+      const css = rulesFor(screen.getByRole('button', { name: /open calculator/i }), 'startIcon');
+
+      expect(css).toMatch(/min-width:0px[^}]*startIcon[^}]*margin-right: 0px/);
+      // One spacing unit; the theme emits it as a CSS variable, not a literal.
+      expect(css).toMatch(/min-width:640px[^}]*startIcon[^}]*margin-right: var\(--mui-spacing\)/);
+    });
+
+    /** The ghost button it replaced took the card's text colour; so does this. */
+    it('inherits its idle colour rather than picking one', () => {
+      renderCalculator();
+      const toggle = screen.getByRole('button', { name: /open calculator/i });
+
+      expect(toggle).toHaveClass('MuiButton-colorInherit');
+      expect(rulesFor(toggle, 'color: inherit')).not.toBe('');
+    });
+
+    it('sits below dialogs and the drawer', async () => {
+      const user = userEvent.setup();
+      renderCalculator();
+      await user.click(screen.getByRole('button', { name: /open calculator/i }));
+
+      const panel = screen.getByRole('status').parentElement!;
+      const z = Number(getComputedStyle(panel).zIndex);
+      expect(z).toBeGreaterThan(0);
+      expect(z).toBeLessThan(muiTheme.zIndex.appBar);
     });
   });
 });

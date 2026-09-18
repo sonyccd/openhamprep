@@ -1,14 +1,20 @@
 import { useState, useEffect, useCallback } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Tooltip from "@mui/material/Tooltip";
 import { Calculator as CalculatorIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
 
-interface CalculatorProps {
-  className?: string;
-}
+const OPERATORS = ["+", "-", "×", "÷", "=", "C"];
 
-export function Calculator({ className }: CalculatorProps) {
+/**
+ * A pocket calculator that drops out beside the question actions.
+ *
+ * The panel is positioned, not portalled: it lives in the same stacking
+ * context as the button that opens it and closes with it, which is how it
+ * behaved before the port. No className prop any more — nothing passed one.
+ */
+export function Calculator() {
   const [isOpen, setIsOpen] = useState(false);
   const [display, setDisplay] = useState("0");
   const [previousValue, setPreviousValue] = useState<number | null>(null);
@@ -182,67 +188,95 @@ export function Calculator({ className }: CalculatorProps) {
   }, [isOpen, handleButtonClick]);
 
   return (
-    <div className={cn("relative", className)}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsOpen(!isOpen)}
-            className="gap-2 w-8 px-0 sm:w-28 sm:px-3 justify-center sm:justify-start hover:bg-muted hover:text-foreground"
-            aria-label={isOpen ? "Close calculator" : "Open calculator"}
-            aria-expanded={isOpen}
-          >
-            <CalculatorIcon className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
-            <span className="hidden sm:inline">{isOpen ? "Close" : "Calculator"}</span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{isOpen ? "Close calculator" : "Open calculator for calculations"}</p>
-        </TooltipContent>
+    <Box sx={{ position: "relative" }}>
+      <Tooltip title={isOpen ? "Close calculator" : "Open calculator for calculations"}>
+        <Button
+          variant="text"
+          color="inherit"
+          size="small"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label={isOpen ? "Close calculator" : "Open calculator"}
+          aria-expanded={isOpen}
+          startIcon={<Box component={CalculatorIcon} aria-hidden="true" sx={{ width: 16, height: 16, flexShrink: 0 }} />}
+          sx={{
+            minWidth: 0,
+            width: { xs: 32, sm: 112 },
+            px: { xs: 0, sm: 1.5 },
+            justifyContent: { xs: "center", sm: "flex-start" },
+            "&:hover": { bgcolor: "muted" },
+            // Icon-only below sm; the label's 8px gap comes back with it.
+            "& .MuiButton-startIcon": { ml: 0, mr: { xs: 0, sm: 1 } },
+          }}
+        >
+          <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
+            {isOpen ? "Close" : "Calculator"}
+          </Box>
+        </Button>
       </Tooltip>
 
       {isOpen && (
-        <div className="absolute right-0 top-0 translate-x-[calc(100%+0.5rem)] bg-card border border-border rounded-lg p-3 shadow-lg w-56 z-50">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-muted-foreground">Calculator</span>
-          </div>
+        <Paper
+          variant="outlined"
+          sx={{
+            position: "absolute",
+            right: 0,
+            top: 0,
+            transform: "translateX(calc(100% + 0.5rem))",
+            p: 1.5,
+            width: 224,
+            // Above page content, below the hamburger (appBar), the drawer and
+            // any dialog — so a modal opened over an open calculator wins by
+            // design, not by DOM order.
+            zIndex: (t) => t.zIndex.fab,
+            boxShadow: 6,
+            borderRadius: "8px",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+            <Box component="span" sx={{ fontSize: "0.75rem", fontWeight: 500, color: "text.secondary" }}>
+              Calculator
+            </Box>
+          </Box>
 
-          <div
-            className="bg-secondary rounded-md p-3 mb-2 text-right"
+          <Box
             role="status"
             aria-live="polite"
             aria-label="Calculator display"
+            sx={{ bgcolor: "secondary.main", borderRadius: "6px", p: 1.5, mb: 1, textAlign: "right" }}
           >
-            <span className="font-mono text-xl text-foreground">
+            <Box component="span" sx={{ fontFamily: "monospace", fontSize: "1.25rem" }}>
               {display.length > 12 ? parseFloat(display).toExponential(6) : display}
-            </span>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="grid gap-1">
+          <Box sx={{ display: "grid", gap: 0.5 }}>
             {buttons.map((row, rowIndex) => (
-              <div key={rowIndex} className="grid grid-cols-4 gap-1">
+              <Box key={rowIndex} sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 0.5 }}>
                 {row.map((btn) => (
                   <Button
                     key={btn}
-                    variant={["+", "-", "×", "÷", "=", "C"].includes(btn) ? "secondary" : "outline"}
-                    size="sm"
-                    className={cn(
-                      "h-9 font-mono text-sm",
-                      btn === "0" && "col-span-2",
-                      btn === "C" && "col-span-3"
-                    )}
+                    variant={OPERATORS.includes(btn) ? "contained" : "outlined"}
+                    {...(OPERATORS.includes(btn) && { color: "secondary" })}
+                    size="small"
                     onClick={() => handleButtonClick(btn)}
                     aria-label={buttonLabels[btn] || btn}
+                    sx={{
+                      height: 36,
+                      minWidth: 0,
+                      fontFamily: "monospace",
+                      fontSize: "0.875rem",
+                      ...(btn === "0" && { gridColumn: "span 2" }),
+                      ...(btn === "C" && { gridColumn: "span 3" }),
+                    }}
                   >
                     {btn}
                   </Button>
                 ))}
-              </div>
+              </Box>
             ))}
-          </div>
-        </div>
+          </Box>
+        </Paper>
       )}
-    </div>
+    </Box>
   );
 }
