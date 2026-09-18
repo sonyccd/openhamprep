@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { TOPIC_CONTENT_BUCKET } from "@/lib/storageUrl";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Save, Loader2, FileText, ImagePlus } from "lucide-react";
@@ -97,7 +98,7 @@ Wrap up the topic with a brief summary of what was covered.
       const filePath = `topic-images/${fileName}`;
 
       const { error } = await supabase.storage
-        .from("topic-content")
+        .from(TOPIC_CONTENT_BUCKET)
         .upload(filePath, file, {
           contentType: file.type,
           upsert: false,
@@ -110,7 +111,7 @@ Wrap up the topic with a brief summary of what was covered.
 
       const {
         data: { publicUrl },
-      } = supabase.storage.from("topic-content").getPublicUrl(filePath);
+      } = supabase.storage.from(TOPIC_CONTENT_BUCKET).getPublicUrl(filePath);
 
       // Insert markdown image syntax at cursor position
       const textarea = textareaRef.current;
