@@ -5,7 +5,8 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { DashboardSidebar } from './DashboardSidebar';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { ThemeProvider } from '@mui/material/styles';
+import { muiTheme } from '@/theme/muiTheme';
 import { muiWrapper } from '@/test/utils';
 
 // Mock hooks
@@ -35,10 +36,10 @@ function createWrapper() {
   return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <TooltipProvider>
+        <ThemeProvider theme={muiTheme}>
           {/* LicenseSelectModal reads palette tokens, so it needs the real theme. */}
           {muiWrapper({ children })}
-        </TooltipProvider>
+        </ThemeProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );

@@ -1,6 +1,5 @@
 import { Suspense, lazy } from "react";
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ohp/Toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -95,9 +94,7 @@ const App = () => (
             <PendoProvider>
               <AmplitudeProvider>
                 <AppNavigationProvider>
-                  <TooltipProvider>
-                    <AppContent />
-                  </TooltipProvider>
+                  <AppContent />
                 </AppNavigationProvider>
               </AmplitudeProvider>
             </PendoProvider>

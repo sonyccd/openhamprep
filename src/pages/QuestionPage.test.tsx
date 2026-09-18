@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { ThemeProvider } from '@mui/material/styles';
+import { muiTheme } from '@/theme/muiTheme';
 import QuestionPage from './QuestionPage';
 
 // Mock react-router-dom navigate
@@ -91,9 +92,9 @@ const createWrapper = () => {
 
   return ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
+      <ThemeProvider theme={muiTheme}>
         {children}
-      </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };

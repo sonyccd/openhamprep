@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { ThemeProvider } from '@mui/material/styles';
+import { muiTheme } from '@/theme/muiTheme';
 import Dashboard from './Dashboard';
 
 // Import the supabase mock
@@ -175,9 +176,9 @@ const renderDashboard = (initialView = 'dashboard') => {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <TooltipProvider>
+        <ThemeProvider theme={muiTheme}>
           <Dashboard />
-        </TooltipProvider>
+        </ThemeProvider>
       </MemoryRouter>
     </QueryClientProvider>,
     // Dashboard can route to the lesson and topic galleries, which are ported
