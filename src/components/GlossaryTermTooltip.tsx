@@ -1,16 +1,9 @@
 import { createContext, useContext, useState, Dispatch, SetStateAction, ReactNode } from "react";
+import Box from "@mui/material/Box";
+import ClickAwayListener from "@mui/material/ClickAwayListener";
+import Tooltip from "@mui/material/Tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { GlossaryTerm } from "@/hooks/useGlossaryTerms";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 
 // Context to ensure only one glossary term popover is open at a time on mobile
 interface GlossaryTermContextValue {
@@ -33,8 +26,8 @@ export function nextOpenTermId(
     return termId;
   }
   // Only clear if this term is still the active one - a stale close (e.g.
-  // from Popover A's outside-click dismiss firing after Popover B has
-  // already become active) must not clobber B's open state.
+  // from term A's click-away firing after term B has already become active)
+  // must not clobber B's open state.
   return current === termId ? null : current;
 }
 
@@ -52,61 +45,84 @@ export function GlossaryTermProvider({ children }: GlossaryTermProviderProps) {
   );
 }
 
-// Shared content component for consistent styling between Tooltip and Popover
-function GlossaryTermContentInner({ term }: { term: GlossaryTerm }) {
+/** The definition card, shared by both trigger modes. */
+function GlossaryTermContent({ term }: { term: GlossaryTerm }) {
   return (
     <>
-      <p className="font-semibold text-primary mb-1">{term.term}</p>
-      <p className="text-popover-foreground">{term.definition}</p>
+      <Box component="p" sx={{ m: 0, mb: 0.5, fontWeight: 600, color: "primary.main" }}>
+        {term.term}
+      </Box>
+      <Box component="p" sx={{ m: 0 }}>
+        {term.definition}
+      </Box>
     </>
   );
 }
 
 interface GlossaryTermTooltipProps {
   term: GlossaryTerm;
-  children: ReactNode;
+  /** Must accept a ref and event props — an element, not a fragment. */
+  children: React.ReactElement;
 }
 
+/**
+ * A glossary definition on a term in running text.
+ *
+ * One MUI Tooltip in two trigger modes, which is how MUI documents a
+ * click-to-open tooltip: on desktop it opens on hover and on focus; on mobile
+ * it is controlled, toggled by tap, and closed by tapping elsewhere. The old
+ * version reached for a separate Popover on mobile to get tap-to-show.
+ *
+ * describeChild: the definition is the trigger's *description*, so the word
+ * stays the accessible name and the sentence still reads as a sentence. The
+ * old markup put "Antenna: A device that…" in an aria-label, which replaced
+ * the word with the whole definition mid-sentence.
+ *
+ * Note: useIsMobile returns false during SSR/initial render, then updates
+ * after hydration, so mobile users briefly get hover behaviour before tap
+ * takes over. Acceptable — the content is reachable either way.
+ */
 export function GlossaryTermTooltip({ term, children }: GlossaryTermTooltipProps) {
-  // Note: useIsMobile returns false during SSR/initial render, then updates after hydration.
-  // This means mobile users briefly see Tooltip (hover) behavior before Popover activates.
-  // This is acceptable UX since the content is still visible and accessible.
   const isMobile = useIsMobile();
   const context = useContext(GlossaryTermContext);
 
-  // On mobile, use Popover with tap-to-show behavior
+  const tooltipSx = { maxWidth: 320, fontSize: "0.875rem" };
+
   if (isMobile) {
     const isOpen = context?.openTermId === term.id;
-
-    const handleOpenChange = (open: boolean) => {
+    const setOpen = (open: boolean) =>
       context?.setOpenTermId((current) => nextOpenTermId(current, term.id, open));
-    };
 
     return (
-      <Popover open={isOpen} onOpenChange={handleOpenChange}>
-        <PopoverTrigger asChild>
-          {children}
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-auto max-w-xs px-3 py-1.5 text-sm"
-          side="top"
-          sideOffset={4}
+      <ClickAwayListener onClickAway={() => setOpen(false)}>
+        <Tooltip
+          title={<GlossaryTermContent term={term} />}
+          describeChild
+          placement="top"
+          open={isOpen}
+          onClose={() => setOpen(false)}
+          disableHoverListener
+          disableFocusListener
+          disableTouchListener
+          slotProps={{ tooltip: { sx: tooltipSx } }}
         >
-          <GlossaryTermContentInner term={term} />
-        </PopoverContent>
-      </Popover>
+          <Box component="span" onClick={() => setOpen(!isOpen)} sx={{ display: "inline" }}>
+            {children}
+          </Box>
+        </Tooltip>
+      </ClickAwayListener>
     );
   }
 
-  // On desktop, use Tooltip with hover behavior (unchanged from before)
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        {children}
-      </TooltipTrigger>
-      <TooltipContent className="max-w-xs text-sm" side="top">
-        <GlossaryTermContentInner term={term} />
-      </TooltipContent>
+    <Tooltip
+      title={<GlossaryTermContent term={term} />}
+      describeChild
+      placement="top"
+      enterDelay={200}
+      slotProps={{ tooltip: { sx: tooltipSx } }}
+    >
+      {children}
     </Tooltip>
   );
 }
