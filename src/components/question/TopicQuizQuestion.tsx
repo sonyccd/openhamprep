@@ -48,6 +48,7 @@ export function TopicQuizQuestion({
     <Stack spacing={3}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
         <Chip
+          color="secondary"
           label={`${currentIndex + 1} / ${questionCount}`}
           size="small"
           sx={{ fontFamily: "monospace", fontWeight: 600 }}

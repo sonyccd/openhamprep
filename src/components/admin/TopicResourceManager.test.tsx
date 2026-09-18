@@ -115,10 +115,16 @@ describe('TopicResourceManager', () => {
       );
     });
 
-    it('marks which resources came from an upload', () => {
+    /**
+     * The badge this replaced was shadcn's `secondary` variant — the warm
+     * secondary surface, not MUI's neutral default grey. A bare Chip is the
+     * grey; the mapping is color="secondary".
+     */
+    it('marks which resources came from an upload, on the secondary surface', () => {
       renderManager();
 
-      expect(screen.getByText('Uploaded')).toBeInTheDocument();
+      const chip = screen.getByText('Uploaded').closest('.MuiChip-root');
+      expect(chip).toHaveClass('MuiChip-colorSecondary');
     });
 
     it('orders by display_order rather than by the order given', () => {

@@ -79,7 +79,7 @@ export function ChapterEditDialog({
           label={
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               Questions
-              {chapter && <Chip label={chapter.questionCount} size="small" />}
+              {chapter && <Chip color="secondary" label={chapter.questionCount} size="small" />}
             </Box>
           }
           id="chapter-tab-1"
