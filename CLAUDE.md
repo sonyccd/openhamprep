@@ -353,6 +353,7 @@ Detailed docs live in `docs/`. Read these when relevant:
 - `docs/event-system.md` — internal pub/sub events
 - `docs/SUPABASE_MIGRATION.md` — migration workflow
 - `docs/DEPLOYMENT_STEPS.md` — release checklist
+- `docs/RUNBOOK_COLLATION_MISMATCH.md` — the Postgres "collation version mismatch" warning after a Supabase platform upgrade
 - `LOCAL_DEVELOPMENT.md` (repo root) — local Supabase setup details
 - `docs/superpowers/specs/` — feature design specs (e.g. `2026-05-20-guest-mode-design.md`)
 
