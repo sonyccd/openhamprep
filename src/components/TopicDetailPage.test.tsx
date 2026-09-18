@@ -181,10 +181,12 @@ describe('TopicDetailPage', () => {
       expect(screen.getByText('Introduction to amateur radio')).toBeInTheDocument();
     });
 
+    /** These replaced Badge variant="secondary" — the secondary surface, not MUI's grey (#320). */
     it('should render subelement badges', () => {
       renderComponent();
       expect(screen.getByText('T1A')).toBeInTheDocument();
       expect(screen.getByText('T1B')).toBeInTheDocument();
+      expect(screen.getByText('T1A').closest('.MuiChip-root')).toHaveClass('MuiChip-colorSecondary');
     });
 
     it('should render Back to Topics button in header', () => {

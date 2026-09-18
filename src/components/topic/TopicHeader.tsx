@@ -58,7 +58,7 @@ export function TopicHeader({ topic, questionCount, backLabel, onBack }: TopicHe
             {topic.subelements && topic.subelements.length > 0 && (
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5 }}>
                 {topic.subelements.map((sub) => (
-                  <Chip key={sub.id} size="small" label={sub.subelement} />
+                  <Chip key={sub.id} color="secondary" size="small" label={sub.subelement} />
                 ))}
               </Box>
             )}
