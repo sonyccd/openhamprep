@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TopicQuestionsPanel } from './TopicQuestionsPanel';
+import { muiWrapper } from '@/test/utils/testWrappers';
 
 // Mock useTopicQuestions hook
 const mockQuestions = [
@@ -56,7 +57,8 @@ describe('TopicQuestionsPanel', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <TopicQuestionsPanel topicId={topicId} onQuestionClick={mockOnQuestionClick} />
-      </QueryClientProvider>
+      </QueryClientProvider>,
+      { wrapper: muiWrapper }
     );
   };
 
@@ -71,7 +73,7 @@ describe('TopicQuestionsPanel', () => {
       mockIsLoading = true;
       renderComponent();
 
-      expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
+      expect(document.querySelectorAll('.MuiSkeleton-root').length).toBeGreaterThan(0);
     });
   });
 

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TopicResourcePanel } from './TopicResourcePanel';
+import { muiWrapper } from '@/test/utils/testWrappers';
 import { TopicResource } from '@/hooks/useTopics';
 
 // Mock Supabase storage
@@ -36,13 +37,13 @@ describe('TopicResourcePanel', () => {
 
   describe('Empty State', () => {
     it('should render nothing when resources is empty', () => {
-      const { container } = render(<TopicResourcePanel resources={[]} />);
+      const { container } = render(<TopicResourcePanel resources={[]} />, { wrapper: muiWrapper });
       expect(container.firstChild).toBeNull();
     });
 
     it('should render nothing when resources is undefined', () => {
       // @ts-expect-error Testing undefined prop handling
-      const { container } = render(<TopicResourcePanel resources={undefined} />);
+      const { container } = render(<TopicResourcePanel resources={undefined} />, { wrapper: muiWrapper });
       expect(container.firstChild).toBeNull();
     });
   });
@@ -50,7 +51,7 @@ describe('TopicResourcePanel', () => {
   describe('Rendering Resources', () => {
     it('should show "Resources" header', () => {
       const resources = [createResource()];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       // Resources appears in both desktop and mobile views
       expect(screen.getAllByText('Resources').length).toBeGreaterThanOrEqual(1);
@@ -58,7 +59,7 @@ describe('TopicResourcePanel', () => {
 
     it('should show resource count badge', () => {
       const resources = [createResource(), createResource(), createResource()];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       // Count badge appears in both desktop and mobile
       expect(screen.getAllByText('3').length).toBeGreaterThanOrEqual(1);
@@ -66,7 +67,7 @@ describe('TopicResourcePanel', () => {
 
     it('should display resource title after expanding group', () => {
       const resources = [createResource({ resource_type: 'video', title: 'My Video Tutorial' })];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       // Click to expand the Videos group
       const videosButton = screen.getAllByText('Videos')[0];
@@ -84,7 +85,7 @@ describe('TopicResourcePanel', () => {
           description: 'A helpful tutorial for beginners',
         }),
       ];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       // Click to expand the Videos group
       const videosButton = screen.getAllByText('Videos')[0];
@@ -98,35 +99,35 @@ describe('TopicResourcePanel', () => {
   describe('Resource Types', () => {
     it('should show Videos section for video resources', () => {
       const resources = [createResource({ resource_type: 'video', title: 'Video 1' })];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       expect(screen.getAllByText('Videos').length).toBeGreaterThanOrEqual(1);
     });
 
     it('should show Articles section for article resources', () => {
       const resources = [createResource({ resource_type: 'article', title: 'Article 1' })];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       expect(screen.getAllByText('Articles').length).toBeGreaterThanOrEqual(1);
     });
 
     it('should show Links section for link resources', () => {
       const resources = [createResource({ resource_type: 'link', title: 'Link 1' })];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       expect(screen.getAllByText('Links').length).toBeGreaterThanOrEqual(1);
     });
 
     it('should show PDFs section for pdf resources', () => {
       const resources = [createResource({ resource_type: 'pdf', title: 'PDF 1' })];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       expect(screen.getAllByText('PDFs').length).toBeGreaterThanOrEqual(1);
     });
 
     it('should show Images section for image resources', () => {
       const resources = [createResource({ resource_type: 'image', title: 'Image 1' })];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       expect(screen.getAllByText('Images').length).toBeGreaterThanOrEqual(1);
     });
@@ -139,7 +140,7 @@ describe('TopicResourcePanel', () => {
         createResource({ resource_type: 'video', title: 'Video 2' }),
         createResource({ resource_type: 'article', title: 'Article 1' }),
       ];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       // Group headers are always visible
       expect(screen.getAllByText('Videos').length).toBeGreaterThanOrEqual(1);
@@ -162,7 +163,7 @@ describe('TopicResourcePanel', () => {
         createResource({ resource_type: 'video', title: 'Video 1' }),
         createResource({ resource_type: 'video', title: 'Video 2' }),
       ];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       // The group should show count "2" (visible in group header even when collapsed)
       const badges = screen.getAllByText('2');
@@ -179,7 +180,7 @@ describe('TopicResourcePanel', () => {
           title: 'External Resource',
         }),
       ];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       // Click to expand the Videos group
       const videosButton = screen.getAllByText('Videos')[0];
@@ -195,7 +196,7 @@ describe('TopicResourcePanel', () => {
 
     it('should open URL resources in a new tab', () => {
       const resources = [createResource({ resource_type: 'video', url: 'https://example.com' })];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       // Click to expand the Videos group
       const videosButton = screen.getAllByText('Videos')[0];
@@ -214,7 +215,7 @@ describe('TopicResourcePanel', () => {
           title: 'YouTube Video',
         }),
       ];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       // Click to expand the Videos group
       const videosButton = screen.getAllByText('Videos')[0];
@@ -231,7 +232,7 @@ describe('TopicResourcePanel', () => {
           title: 'YouTube Short Link',
         }),
       ];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       // Click to expand the Videos group
       const videosButton = screen.getAllByText('Videos')[0];
@@ -251,7 +252,7 @@ describe('TopicResourcePanel', () => {
           title: 'Uploaded Video',
         }),
       ];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       // Click to expand the Videos group
       const videosButton = screen.getAllByText('Videos')[0];
@@ -268,7 +269,7 @@ describe('TopicResourcePanel', () => {
           url: null,
         }),
       ];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       // Click to expand the Videos group
       const videosButton = screen.getAllByText('Videos')[0];
@@ -286,7 +287,7 @@ describe('TopicResourcePanel', () => {
         createResource({ resource_type: 'video', title: 'Video A', display_order: 1 }),
         createResource({ resource_type: 'video', title: 'Video B', display_order: 2 }),
       ];
-      render(<TopicResourcePanel resources={resources} />);
+      render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
 
       // Click to expand the Videos group
       const videosButton = screen.getAllByText('Videos')[0];
@@ -299,5 +300,43 @@ describe('TopicResourcePanel', () => {
       expect(videos[1]).toHaveTextContent('Video B');
       expect(videos[2]).toHaveTextContent('Video C');
     });
+  });
+
+  /**
+   * ResourceGroup sorts with a copy. The old code sorted in place, which
+   * looked like the prop-mutation bug #305 fixed — but the array it sorted
+   * was the per-type group built fresh by reduce on every render, so the
+   * caller's array was never touched. This pins the contract that was met by
+   * accident, so a future refactor that hands ResourceGroup the prop directly
+   * cannot start mutating it.
+   */
+  it('does not reorder the array it was given', () => {
+    const resources = [
+      { id: 'r2', topic_id: 't', resource_type: 'link', title: 'Second', url: 'https://b.example', storage_path: null, description: null, display_order: 2, created_at: '' },
+      { id: 'r1', topic_id: 't', resource_type: 'link', title: 'First', url: 'https://a.example', storage_path: null, description: null, display_order: 1, created_at: '' },
+    ] as never[];
+    const before = resources.map((r: { id: string }) => r.id);
+
+    render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
+
+    expect(resources.map((r: { id: string }) => r.id)).toEqual(before);
+  });
+
+  /** On a phone the whole panel folds into a card; that fold has to be a button. */
+  it('makes the mobile fold a real button', () => {
+    const resources = [
+      { id: 'r1', topic_id: 't', resource_type: 'link', title: 'ARRL', url: 'https://arrl.org', storage_path: null, description: null, display_order: 1, created_at: '' },
+    ] as never[];
+    render(<TopicResourcePanel resources={resources} />, { wrapper: muiWrapper });
+
+    // happy-dom's default viewport is 1024px — the lg breakpoint — so the
+    // mobile card is display:none here and excluded from the default query.
+    // The contract being pinned (a real, expandable button) does not depend
+    // on viewport, so the query includes hidden elements. Desktop's own
+    // "Resources" heading is static, so this can only be the card's toggle.
+    const toggle = screen.getByRole('button', { name: /^Resources 1$/, hidden: true });
+    expect(toggle.tagName).toBe('BUTTON');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle.closest('.MuiCard-root')).not.toBeNull();
   });
 });
