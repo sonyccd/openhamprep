@@ -1,82 +1,85 @@
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useToggleTopicComplete, useTopicCompleted } from "@/hooks/useTopics";
-import { CheckCircle2, Circle, Loader2, Target } from "lucide-react";
-import { cn } from "@/lib/utils";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
+import type { SxProps, Theme } from "@mui/material/styles";
+import { CheckCircle2, Circle, Target } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useToggleTopicComplete, useTopicCompleted } from "@/hooks/useTopics";
 
 interface TopicProgressButtonProps {
   topicId: string;
   questionCount: number;
-  className?: string;
+  sx?: SxProps<Theme>;
 }
 
-export function TopicProgressButton({
-  topicId,
-  questionCount,
-  className,
-}: TopicProgressButtonProps) {
+/**
+ * A topic's completion state, in the header.
+ *
+ * With questions it is a status only — the quiz decides completion. Without
+ * them it is a manual toggle. Guests see nothing: there is no account to
+ * record completion against.
+ */
+export function TopicProgressButton({ topicId, questionCount, sx }: TopicProgressButtonProps) {
   const { user } = useAuth();
   const isCompleted = useTopicCompleted(topicId);
   const { mutate: toggleComplete, isPending } = useToggleTopicComplete();
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
-  const handleClick = () => {
-    toggleComplete({ topicId, isCompleted: !isCompleted });
-  };
-
-  // Topics with questions: show status badge only (no manual toggle)
   if (questionCount > 0) {
     return (
-      <Badge
-        variant={isCompleted ? "default" : "secondary"}
-        className={cn(
-          "gap-1.5 py-1.5 px-3 text-sm font-medium",
-          isCompleted
-            ? "bg-success text-success-foreground hover:bg-success/90"
-            : "bg-muted text-muted-foreground",
-          className
-        )}
-      >
-        {isCompleted ? (
-          <>
-            <CheckCircle2 className="w-4 h-4" />
-            Completed
-          </>
-        ) : (
-          <>
-            <Target className="w-4 h-4" />
-            Score 80% to complete
-          </>
-        )}
-      </Badge>
+      <Chip
+        icon={
+          <Box
+            component={isCompleted ? CheckCircle2 : Target}
+            aria-hidden="true"
+            sx={{ width: 16, height: 16 }}
+          />
+        }
+        label={isCompleted ? "Completed" : "Score 80% to complete"}
+        sx={[
+          {
+            height: "auto",
+            py: 0.75,
+            px: 0.5,
+            fontSize: "0.875rem",
+            fontWeight: 500,
+            ...(isCompleted
+              ? { bgcolor: "success.main", color: "success.contrastText" }
+              : { bgcolor: "muted", color: "text.secondary" }),
+            "& .MuiChip-icon": { color: "inherit" },
+          },
+          ...(Array.isArray(sx) ? sx : [sx]),
+        ]}
+      />
     );
   }
 
-  // Topics without questions: manual toggle button (existing behavior)
   return (
     <Button
-      variant={isCompleted ? "default" : "outline"}
-      className={cn(
-        "gap-2 transition-all",
-        isCompleted
-          ? "bg-success hover:bg-success/90 text-success-foreground"
-          : "hover:border-success hover:text-success",
-        className
-      )}
-      onClick={handleClick}
+      variant={isCompleted ? "contained" : "outlined"}
+      color={isCompleted ? "success" : "primary"}
+      onClick={() => toggleComplete({ topicId, isCompleted: !isCompleted })}
       disabled={isPending}
+      startIcon={
+        isPending ? (
+          <CircularProgress size={16} color="inherit" />
+        ) : (
+          <Box
+            component={isCompleted ? CheckCircle2 : Circle}
+            aria-hidden="true"
+            sx={{ width: 16, height: 16 }}
+          />
+        )
+      }
+      sx={[
+        !isCompleted && {
+          "&:hover": { borderColor: "success.main", color: "success.main" },
+        },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
     >
-      {isPending ? (
-        <Loader2 className="w-4 h-4 animate-spin" />
-      ) : isCompleted ? (
-        <CheckCircle2 className="w-4 h-4" />
-      ) : (
-        <Circle className="w-4 h-4" />
-      )}
       {isCompleted ? "Completed" : "Mark as Complete"}
     </Button>
   );

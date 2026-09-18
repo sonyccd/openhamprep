@@ -1,31 +1,28 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import { ArrowLeft, FileText } from "lucide-react";
 import { useTopic, useTopicQuestions, useTopicCompleted, useToggleTopicComplete } from "@/hooks/useTopics";
 import { useQuestionsByIds, Question } from "@/hooks/useQuestions";
 import { useAuth } from "@/hooks/useAuth";
 import { useProgress } from "@/hooks/useProgress";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
-import { TopicContent } from "./TopicContent";
-import { TopicResourcePanel } from "./TopicResourcePanel";
-import { TopicQuestionsPanel } from "./TopicQuestionsPanel";
-import { TopicProgressButton } from "./TopicProgressButton";
-import { TopicQuiz } from "./TopicQuiz";
-import { GuestPrompt } from "@/components/ohp/GuestPrompt";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ArrowLeft, FileText, PlayCircle, Loader2, PanelLeftOpen, PanelRightClose } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { trackTopicViewed, trackQuizStarted } from "@/lib/amplitude";
-import { motion } from "framer-motion";
-import { PageContainer } from "@/components/ohp/PageContainer";
-import { cn } from "@/lib/utils";
 import { TOPIC_QUIZ_PASSING_THRESHOLD } from "@/types/navigation";
+import { GuestPrompt } from "@/components/ohp/GuestPrompt";
+import { MotionBox } from "@/components/ohp/MotionBox";
+import { PageContainer } from "@/components/ohp/PageContainer";
+import { TopicContent } from "./TopicContent";
+import { TopicProgressButton } from "./TopicProgressButton";
+import { TopicQuestionsPanel } from "./TopicQuestionsPanel";
+import { TopicResourcePanel } from "./TopicResourcePanel";
+import { TopicDetailSkeleton } from "./topic/TopicDetailSkeleton";
+import { TopicHeader } from "./topic/TopicHeader";
+import { TopicQuizCta } from "./topic/TopicQuizCta";
+import { TopicQuizDialog } from "./topic/TopicQuizDialog";
+import { TopicSidebar } from "./topic/TopicSidebar";
 
 interface TopicDetailPageProps {
   slug: string;
@@ -40,35 +37,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   const { data: topicQuestions } = useTopicQuestions(topic?.id);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const railButtonRef = useRef<HTMLButtonElement>(null);
-  const hideButtonRef = useRef<HTMLButtonElement>(null);
-  // Previous value of sidebarOpen, so the focus effect fires only on an actual
-  // change and never on the initial render — regardless of the default value.
-  const prevSidebarOpenRef = useRef(sidebarOpen);
 
-  // When the sidebar is toggled, move focus to the control that is now visible
-  // so keyboard / screen-reader users don't lose their place when the button
-  // they clicked becomes hidden.
-  useEffect(() => {
-    if (prevSidebarOpenRef.current === sidebarOpen) return;
-    prevSidebarOpenRef.current = sidebarOpen;
-    if (sidebarOpen) {
-      hideButtonRef.current?.focus();
-    } else {
-      railButtonRef.current?.focus();
-    }
-  }, [sidebarOpen]);
-
-  // Collapse the sidebar when navigating to a different topic so every topic
-  // opens at its default. prevSidebarOpenRef is synced here so the focus effect
-  // above treats this as "no change" and doesn't yank focus to the rail on
-  // navigation (the component reconciles in place rather than remounting).
-  useEffect(() => {
-    setSidebarOpen(false);
-    prevSidebarOpenRef.current = false;
-  }, [slug]);
-
-  // Track topic view in Amplitude when slug changes
   useEffect(() => {
     trackTopicViewed(slug);
   }, [slug]);
@@ -76,170 +45,88 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
   const questionCount = topicQuestions?.length || 0;
   const isCompleted = useTopicCompleted(topic?.id);
 
-  // Fetch full question data for quiz
   const questionIds = topicQuestions?.map((q) => q.id) || [];
   const { data: fullQuestions, isLoading: fullQuestionsLoading } = useQuestionsByIds(questionIds);
 
-  // Hook for marking topic complete
   const { mutate: toggleComplete } = useToggleTopicComplete();
-
-  // Hook for saving question attempts
   const { saveQuizAttempts } = useProgress();
+
+  const backLabel = topicSource === "lesson" ? "Back to Lesson" : "Back to Topics";
 
   const handleStartQuiz = () => {
     setIsQuizOpen(true);
     trackQuizStarted({ topic_slug: slug, question_count: questionCount });
   };
 
-  const handleQuizComplete = (passed: boolean, score: number, totalQuestions: number) => {
-    // Auto-mark topic as complete if passed
-    if (passed && topic) {
-      toggleComplete({ topicId: topic.id, isCompleted: true });
-    }
+  const handleQuizComplete = (passed: boolean) => {
+    if (passed && topic) toggleComplete({ topicId: topic.id, isCompleted: true });
   };
 
-  const handleCloseQuiz = () => {
-    setIsQuizOpen(false);
-  };
-
-  const handleSaveAttempts = async (
+  const handleSaveAttempts = (
     attempts: Array<{ question: Question; selectedAnswer: "A" | "B" | "C" | "D" }>
-  ) => {
-    return saveQuizAttempts(attempts, 'topic_quiz');
-  };
+  ) => saveQuizAttempts(attempts, "topic_quiz");
 
-  const handleQuestionClick = (questionId: string) => {
-    navigate(`/questions/${questionId}`);
-  };
+  if (topicLoading) return <TopicDetailSkeleton />;
 
-  // Loading state
-  if (topicLoading) {
-    return (
-      <PageContainer width="full">
-        {/* Header skeleton */}
-        <div className="mb-8">
-          <Skeleton className="h-8 w-48 mb-2" />
-          <Skeleton className="h-10 w-3/4 mb-4" />
-          <div className="flex gap-2">
-            <Skeleton className="h-6 w-16" />
-            <Skeleton className="h-6 w-16" />
-          </div>
-        </div>
-        {/* Content skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_250px] gap-8">
-          <div className="hidden lg:block">
-            <Skeleton className="h-48 w-full" />
-          </div>
-          <div>
-            <Skeleton className="h-6 w-full mb-4" />
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-5/6 mb-4" />
-            <Skeleton className="h-6 w-2/3 mb-4" />
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-4/5" />
-          </div>
-          <div className="hidden lg:block">
-            <Skeleton className="h-64 w-full" />
-          </div>
-        </div>
-      </PageContainer>
-    );
-  }
-
-  // Error state
   if (topicError || !topic) {
     return (
-      <PageContainer width="full" className="flex items-center justify-center">
-        <div className="text-center">
-          <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-lg font-medium text-foreground mb-2">Topic not found</h2>
-          <p className="text-muted-foreground mb-4">
+      <PageContainer
+        width="full"
+        contentSx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        <Box sx={{ textAlign: "center" }}>
+          <Box
+            component={FileText}
+            aria-hidden="true"
+            sx={{ width: 48, height: 48, mx: "auto", mb: 2, color: "text.secondary", display: "block" }}
+          />
+          <Typography variant="h6" component="h2" sx={{ fontSize: "1.125rem", fontWeight: 500, mb: 1 }}>
+            Topic not found
+          </Typography>
+          <Typography sx={{ color: "text.secondary", mb: 2 }}>
             The topic you're looking for doesn't exist or has been removed.
-          </p>
-          <Button onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {topicSource === 'lesson' ? 'Back to Lesson' : 'Back to Topics'}
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={onBack}
+            startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+          >
+            {backLabel}
           </Button>
-        </div>
+        </Box>
       </PageContainer>
     );
   }
 
-  // Default content if no markdown is available
-  const displayContent = topic.content || `# ${topic.title}\n\n${topic.description || "Content coming soon..."}\n\nThis topic is still being developed. Check back later for the full article.`;
+  const displayContent =
+    topic.content ||
+    `# ${topic.title}\n\n${topic.description || "Content coming soon..."}\n\nThis topic is still being developed. Check back later for the full article.`;
 
-  // Only reserve the sidebar column when there's actually something to show in it
+  // Only reserve the sidebar column when there is something to put in it.
   const hasSidebarContent = questionCount > 0 || (topic.resources?.length ?? 0) > 0;
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="border-b border-border bg-card"
-      >
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
-          {/* Back button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {topicSource === 'lesson' ? 'Back to Lesson' : 'Back to Topics'}
-          </Button>
+    <Box sx={{ flex: 1, overflowY: "auto" }}>
+      <TopicHeader topic={topic} questionCount={questionCount} backLabel={backLabel} onBack={onBack} />
 
-          {/* Title and metadata */}
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                {topic.title}
-              </h1>
-              {topic.description && (
-                <p className="text-muted-foreground max-w-2xl">
-                  {topic.description}
-                </p>
-              )}
-              {/* Subelement badges */}
-              {topic.subelements && topic.subelements.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {topic.subelements.map((sub) => (
-                    <Badge key={sub.id} variant="secondary">
-                      {sub.subelement}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Progress button */}
-            <TopicProgressButton topicId={topic.id} questionCount={questionCount} className="shrink-0" />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Main content area - two column layout */}
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
-        <div
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, md: 4 }, py: { xs: 4, md: 6 } }}>
+        <Box
           data-testid="topic-layout-grid"
-          className={cn(
-            "grid grid-cols-1 gap-8",
-            !hasSidebarContent
-              ? ""
-              : sidebarOpen
-                ? "lg:grid-cols-[1fr_280px]"
-                : "lg:grid-cols-[1fr_auto]"
-          )}
+          sx={{
+            display: "grid",
+            gap: 4,
+            gridTemplateColumns: {
+              xs: "1fr",
+              lg: !hasSidebarContent ? "1fr" : sidebarOpen ? "1fr 280px" : "1fr auto",
+            },
+          }}
         >
-          {/* Main content */}
-          <motion.main
+          <MotionBox
+            component="main"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="min-w-0"
+            sx={{ minWidth: 0 }}
           >
             <TopicContent content={displayContent} />
 
@@ -257,113 +144,39 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
               />
             )}
 
-            {/* Take Quiz CTA after content */}
             {user && questionCount > 0 && (
-              <div className="mt-10 pt-8 border-t border-border">
-                <div className="bg-muted/30 rounded-xl p-6 text-center">
-                  <h3 className="text-lg font-semibold text-foreground mb-2">
-                    Ready to test your knowledge?
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {isCompleted
-                      ? "You've already completed this topic. Take the quiz again to reinforce your learning."
-                      : `Answer ${questionCount} question${questionCount !== 1 ? 's' : ''} and score 80% or higher to complete this topic.`
-                    }
-                  </p>
-                  <Button onClick={handleStartQuiz} size="lg" className="gap-2">
-                    <PlayCircle className="w-5 h-5" />
-                    {isCompleted ? "Retake Quiz" : "Take Quiz"}
-                  </Button>
-                </div>
-              </div>
+              <TopicQuizCta questionCount={questionCount} isCompleted={isCompleted} onStart={handleStartQuiz} />
             )}
 
-            {/* Bottom progress button for mobile */}
-            <div className="lg:hidden mt-8 pt-8 border-t border-border">
-              <TopicProgressButton topicId={topic.id} questionCount={questionCount} className="w-full" />
-            </div>
-          </motion.main>
+            {/* The header's progress control again, for mobile, where the header is far above. */}
+            <Box sx={{ display: { lg: "none" }, mt: 4, pt: 4, borderTop: "1px solid", borderColor: "divider" }}>
+              <TopicProgressButton topicId={topic.id} questionCount={questionCount} sx={{ width: "100%" }} />
+            </Box>
+          </MotionBox>
 
-          {/* Right sidebar - Questions and Resources */}
           {hasSidebarContent && (
-            <motion.aside
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              aria-label="Questions and resources"
-            >
-              {/* On mobile the panels are always visible (stacked below the
-                  content); the rail and Hide controls are desktop-only
-                  (hidden lg:flex), so this collapse behavior is intentionally
-                  asymmetric across breakpoints. */}
-              {/* Desktop collapsed rail - click to reopen the sidebar */}
-              {!sidebarOpen && (
-                <button
-                  ref={railButtonRef}
-                  onClick={() => setSidebarOpen(true)}
-                  aria-label="Show Questions & Resources"
-                  aria-expanded={sidebarOpen}
-                  aria-controls="topic-sidebar-panels"
-                  className="hidden lg:flex sticky top-4 w-11 flex-col items-center gap-3 py-3 rounded-lg border border-border bg-card text-muted-foreground hover:text-primary hover:bg-secondary/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  <PanelLeftOpen className="w-4 h-4" aria-hidden="true" />
-                  <span className="text-xs font-medium tracking-wide [writing-mode:vertical-rl] rotate-180">
-                    Questions &amp; Resources
-                  </span>
-                </button>
-              )}
-
-              {/* Panels - always shown on mobile; on desktop only when open */}
-              <div
-                id="topic-sidebar-panels"
-                className={cn(sidebarOpen ? "lg:block" : "lg:hidden")}
-              >
-                <div className="sticky top-4 space-y-0">
-                  {/* Desktop-only collapse toggle */}
-                  <button
-                    ref={hideButtonRef}
-                    onClick={() => setSidebarOpen(false)}
-                    aria-label="Hide Questions & Resources"
-                    aria-expanded={sidebarOpen}
-                    aria-controls="topic-sidebar-panels"
-                    className="hidden lg:flex items-center gap-1 ml-auto mb-2 text-xs font-medium text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-                  >
-                    Hide
-                    <PanelRightClose className="w-4 h-4" aria-hidden="true" />
-                  </button>
-                  <TopicQuestionsPanel
-                    topicId={topic.id}
-                    onQuestionClick={handleQuestionClick}
-                  />
-                  <TopicResourcePanel resources={topic.resources || []} />
-                </div>
-              </div>
-            </motion.aside>
+            <TopicSidebar resetKey={slug} onOpenChange={setSidebarOpen}>
+              <TopicQuestionsPanel
+                topicId={topic.id}
+                onQuestionClick={(questionId) => navigate(`/questions/${questionId}`)}
+              />
+              <TopicResourcePanel resources={topic.resources || []} />
+            </TopicSidebar>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      {/* Quiz Modal */}
-      <Dialog open={isQuizOpen} onOpenChange={setIsQuizOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Quiz: {topic.title}</DialogTitle>
-          </DialogHeader>
-          {fullQuestionsLoading || !fullQuestions ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <TopicQuiz
-              questions={fullQuestions}
-              onComplete={handleQuizComplete}
-              onDone={handleCloseQuiz}
-              onSaveAttempts={handleSaveAttempts}
-              passingThreshold={TOPIC_QUIZ_PASSING_THRESHOLD}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+      <TopicQuizDialog
+        open={isQuizOpen}
+        onClose={() => setIsQuizOpen(false)}
+        title={topic.title}
+        questions={fullQuestions}
+        isLoadingQuestions={fullQuestionsLoading}
+        onComplete={handleQuizComplete}
+        onDone={() => setIsQuizOpen(false)}
+        onSaveAttempts={handleSaveAttempts}
+        passingThreshold={TOPIC_QUIZ_PASSING_THRESHOLD}
+      />
+    </Box>
   );
 }
