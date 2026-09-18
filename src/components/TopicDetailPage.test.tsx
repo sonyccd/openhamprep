@@ -132,7 +132,8 @@ describe('TopicDetailPage', () => {
       mockTopicLoading = true;
       renderComponent();
 
-      const skeletons = screen.getAllByTestId('skeleton');
+      // MUI's Skeleton has no role and no testid; its root class is public API.
+      const skeletons = document.querySelectorAll('.MuiSkeleton-root');
       expect(skeletons.length).toBeGreaterThan(0);
     });
   });
@@ -180,10 +181,12 @@ describe('TopicDetailPage', () => {
       expect(screen.getByText('Introduction to amateur radio')).toBeInTheDocument();
     });
 
+    /** These replaced Badge variant="secondary" — the secondary surface, not MUI's grey (#320). */
     it('should render subelement badges', () => {
       renderComponent();
       expect(screen.getByText('T1A')).toBeInTheDocument();
       expect(screen.getByText('T1B')).toBeInTheDocument();
+      expect(screen.getByText('T1A').closest('.MuiChip-root')).toHaveClass('MuiChip-colorSecondary');
     });
 
     it('should render Back to Topics button in header', () => {
@@ -262,6 +265,25 @@ describe('TopicDetailPage', () => {
   });
 
   describe('Collapsible sidebar', () => {
+    /**
+     * happy-dom does not evaluate media queries, so the desktop column
+     * template is read from the rule the grid emits rather than computed.
+     * The test used to be named for the grid narrowing without asserting it,
+     * which let the sidebar stop reporting its state without a failure.
+     */
+    const desktopColumns = () => {
+      const grid = screen.getByTestId('topic-layout-grid');
+      const own = Array.from(grid.classList).find((c) => c.startsWith('css-'));
+      const css = Array.from(document.querySelectorAll('style'))
+        .map((tag) => tag.textContent ?? '')
+        .join('\n');
+      const rule = css
+        .split('}')
+        .filter((r) => own && r.includes(`.${own}`) && r.includes('grid-template-columns'))
+        .at(-1);
+      return rule?.match(/grid-template-columns:([^;]+)/)?.[1].trim() ?? null;
+    };
+
     it('should be collapsed by default, showing the rail and narrowing the grid', () => {
       renderComponent();
 
@@ -269,7 +291,7 @@ describe('TopicDetailPage', () => {
       const rail = screen.getByRole('button', { name: 'Show Questions & Resources' });
       expect(rail).toBeInTheDocument();
       expect(rail).toHaveAttribute('aria-expanded', 'false');
-
+      expect(desktopColumns()).toBe('1fr auto');
     });
 
     it('should expand to the wide sidebar when the rail is clicked', () => {
@@ -283,7 +305,7 @@ describe('TopicDetailPage', () => {
       ).not.toBeInTheDocument();
       const hide = screen.getByRole('button', { name: 'Hide Questions & Resources' });
       expect(hide).toHaveAttribute('aria-expanded', 'true');
-
+      expect(desktopColumns()).toBe('1fr 280px');
     });
 
     it('should collapse again when the hide control is clicked', () => {

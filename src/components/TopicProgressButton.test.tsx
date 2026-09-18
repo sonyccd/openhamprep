@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TopicProgressButton } from './TopicProgressButton';
+import { muiWrapper } from '@/test/utils/testWrappers';
 
 // Mock useAuth
 const mockUser = { id: 'user-123', email: 'test@example.com' };
@@ -39,7 +40,7 @@ describe('TopicProgressButton', () => {
       <QueryClientProvider client={queryClient}>
         <TopicProgressButton topicId={topicId} />
       </QueryClientProvider>
-    );
+    , { wrapper: muiWrapper });
   };
 
   beforeEach(() => {
@@ -117,7 +118,7 @@ describe('TopicProgressButton', () => {
       expect(button).toBeInTheDocument();
     });
 
-    it('should accept custom className', () => {
+    it('should accept caller styling through sx', () => {
       mockIsCompleted = false;
 
       queryClient = new QueryClient({
@@ -126,13 +127,16 @@ describe('TopicProgressButton', () => {
 
       render(
         <QueryClientProvider client={queryClient}>
-          <TopicProgressButton topicId="topic-123" className="custom-class" />
-        </QueryClientProvider>
+          <TopicProgressButton topicId="topic-123" questionCount={0} sx={{ width: '100%' }} />
+        </QueryClientProvider>,
+        { wrapper: muiWrapper }
       );
 
-      // Kept deliberately: this checks a caller-supplied class is forwarded,
-      // which is the component's API rather than its internal styling.
-      expect(screen.getByRole('button').className).toContain('custom-class');
+      // Kept deliberately: this checks caller-supplied styling reaches the
+      // element, which is the component's API rather than its internal
+      // styling. The prop was className; it is sx now that the callers are
+      // MUI.
+      expect(screen.getByRole('button')).toHaveStyle({ width: '100%' });
     });
   });
 });
