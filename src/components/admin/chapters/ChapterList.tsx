@@ -116,6 +116,7 @@ export function ChapterList({
               )}
               <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
                 <Chip
+                  color="secondary"
                   size="small"
                   icon={<Box component={FileText} sx={{ width: 12, height: 12 }} />}
                   label={`${chapter.questionCount} questions`}

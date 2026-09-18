@@ -69,7 +69,7 @@ export function ChapterAddDialog({
             <Typography component="span" sx={{ fontSize: "0.875rem" }}>
               Adding chapter for:
             </Typography>
-            <Chip label={licenseLabel} size="small" />
+            <Chip color="secondary" label={licenseLabel} size="small" />
           </Box>
           <ChapterFields value={draft} onChange={setDraft} />
         </Stack>

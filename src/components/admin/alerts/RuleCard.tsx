@@ -116,6 +116,7 @@ export function RuleCard({ rule, onToggle, onEdit, onDelete, isToggling }: RuleC
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1 }}>
               {rule.target_functions.map((fn) => (
                 <Chip
+                  color="secondary"
                   key={fn}
                   size="small"
                   label={fn}

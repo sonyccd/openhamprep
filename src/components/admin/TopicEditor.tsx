@@ -114,6 +114,7 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
                 />
               ) : (
                 <Chip
+                  color="secondary"
                   size="small"
                   icon={<Box component={EyeOff} sx={{ width: 12, height: 12 }} />}
                   label="Draft"
@@ -142,7 +143,7 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
           label={
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               Questions
-              {questionCount > 0 && <Chip size="small" label={questionCount} />}
+              {questionCount > 0 && <Chip color="secondary" size="small" label={questionCount} />}
             </Box>
           }
           icon={<Box component={HelpCircle} sx={{ width: 16, height: 16 }} />}
@@ -154,7 +155,7 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
           label={
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               Resources
-              {resourceCount > 0 && <Chip size="small" label={resourceCount} />}
+              {resourceCount > 0 && <Chip color="secondary" size="small" label={resourceCount} />}
             </Box>
           }
           icon={<Box component={LinkIcon} sx={{ width: 16, height: 16 }} />}

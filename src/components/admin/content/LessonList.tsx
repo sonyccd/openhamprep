@@ -101,6 +101,7 @@ export function LessonList({ lessons: filteredLessons, onSelect }: LessonListPro
               )}
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
                 <Chip
+                  color="secondary"
                   size="small"
                   label={`${lesson.topics?.length || 0} topics`}
                   sx={{ fontSize: "0.75rem" }}
