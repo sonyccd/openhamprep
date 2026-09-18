@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { TOPIC_CONTENT_BUCKET } from "@/lib/storageUrl";
 import { TestType } from "@/types/navigation";
 import { queryKeys } from "@/services/queryKeys";
 
@@ -157,7 +158,7 @@ export function useTopicContent(contentPath: string | null | undefined) {
       if (!contentPath) return null;
 
       const { data, error } = await supabase.storage
-        .from('topic-content')
+        .from(TOPIC_CONTENT_BUCKET)
         .download(contentPath);
 
       if (error) {

@@ -2,10 +2,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { queryKeys } from '@/services/queryKeys';
+import { TOPIC_CONTENT_BUCKET as BUCKET, topicContentUrl } from '@/lib/storageUrl';
 import type { TopicResource } from '@/hooks/useTopics';
 import type { ResourceDraft } from './resourceDraft';
 
-const BUCKET = 'topic-content';
 
 /**
  * Add, edit and delete for a topic's resources.
@@ -112,8 +112,7 @@ export function useTopicResources(topicId: string, resources: TopicResource[]) {
     onError: (error) => toast.error('Failed to delete resource: ' + error.message),
   });
 
-  const publicUrl = (storagePath: string) =>
-    supabase.storage.from(BUCKET).getPublicUrl(storagePath).data.publicUrl;
+  const publicUrl = topicContentUrl;
 
   return { addResource, updateResource, deleteResource, publicUrl };
 }

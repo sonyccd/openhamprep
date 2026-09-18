@@ -1,237 +1,172 @@
-import { TopicResource } from "@/hooks/useTopics";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Link as LinkIcon,
-  ExternalLink,
-  Download,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import { Download, ExternalLink, Link as LinkIcon } from "lucide-react";
+import type { TopicResource } from "@/hooks/useTopics";
+import { CollapsibleSection } from "@/components/ohp/CollapsibleSection";
 import { RESOURCE_TYPE_CONFIG } from "@/lib/resourceTypes";
-import { useState } from "react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-
-function getStorageUrl(storagePath: string): string {
-  const { data } = supabase.storage
-    .from("topic-content")
-    .getPublicUrl(storagePath);
-  return data.publicUrl;
-}
+import { topicContentUrl } from "@/lib/storageUrl";
+import { tokenAlpha } from "@/theme/muiTheme";
 
 interface TopicResourcePanelProps {
   resources: TopicResource[];
 }
 
+/** Only exact YouTube hosts; a URL that merely mentions youtube is not one. */
+const isYouTubeUrl = (url: string | null) => {
+  if (!url) return false;
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return ["youtube.com", "www.youtube.com", "youtu.be", "m.youtube.com"].includes(host);
+  } catch {
+    return false;
+  }
+};
+
 function ResourceItem({ resource }: { resource: TopicResource }) {
   const config = RESOURCE_TYPE_CONFIG[resource.resource_type as keyof typeof RESOURCE_TYPE_CONFIG];
   const Icon = config?.icon ?? LinkIcon;
-  const colorClass = config?.colorClass ?? "text-muted-foreground";
-
-  // Generate the proper URL - use storage URL for uploaded files
-  const url = resource.storage_path
-    ? getStorageUrl(resource.storage_path)
-    : resource.url;
-
-  const isUploaded = !!resource.storage_path;
-
-  // Check if it's a YouTube video by parsing the URL and checking the host
-  const isYouTube = (() => {
-    if (!url) return false;
-    try {
-      const parsedUrl = new URL(url);
-      const host = parsedUrl.hostname.toLowerCase();
-      // Only match exact YouTube domains
-      return host === "youtube.com" ||
-             host === "www.youtube.com" ||
-             host === "youtu.be" ||
-             host === "m.youtube.com";
-    } catch {
-      return false;
-    }
-  })();
+  const token = config?.token ?? "text.secondary";
+  const isUploaded = Boolean(resource.storage_path);
+  const url = resource.storage_path ? topicContentUrl(resource.storage_path) : resource.url;
 
   return (
-    <a
+    <Box
+      component="a"
       href={url || "#"}
       target="_blank"
       rel="noopener noreferrer"
       download={isUploaded ? true : undefined}
-      className={cn(
-        "flex items-start gap-3 p-3 rounded-lg transition-colors",
-        "bg-secondary/30 hover:bg-secondary",
-        "border border-transparent hover:border-border"
-      )}
+      sx={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 1.5,
+        p: 1.5,
+        borderRadius: "8px",
+        border: "1px solid transparent",
+        bgcolor: (t) => tokenAlpha(t.vars.palette.secondary.main, 30),
+        color: "inherit",
+        textDecoration: "none",
+        transition: "background-color 150ms, border-color 150ms",
+        "&:hover": { bgcolor: "secondary.main", borderColor: "divider" },
+      }}
     >
-      <div
-        className={cn(
-          "w-8 h-8 rounded-md flex items-center justify-center shrink-0",
-          "bg-background"
-        )}
+      <Box
+        sx={{
+          width: 32,
+          height: 32,
+          borderRadius: "6px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          bgcolor: "background.default",
+        }}
       >
-        <Icon className={cn("w-4 h-4", colorClass)} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground truncate">
+        <Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16, color: token }} />
+      </Box>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box
+            component="span"
+            sx={{ fontSize: "0.875rem", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+          >
             {resource.title}
-          </span>
+          </Box>
           {isUploaded ? (
-            <Download className="w-3 h-3 text-muted-foreground shrink-0" />
+            <Box component={Download} aria-hidden="true" sx={{ width: 12, height: 12, color: "text.secondary", flexShrink: 0 }} />
           ) : url ? (
-            <ExternalLink className="w-3 h-3 text-muted-foreground shrink-0" />
+            <Box component={ExternalLink} aria-hidden="true" sx={{ width: 12, height: 12, color: "text.secondary", flexShrink: 0 }} />
           ) : null}
-        </div>
+        </Box>
         {resource.description && (
-          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+          <Box
+            component="p"
+            sx={{
+              m: 0,
+              mt: 0.5,
+              fontSize: "0.75rem",
+              color: "text.secondary",
+              display: "-webkit-box",
+              WebkitBoxOrient: "vertical",
+              WebkitLineClamp: 2,
+              overflow: "hidden",
+            }}
+          >
             {resource.description}
-          </p>
+          </Box>
         )}
-        {isYouTube && (
-          <Badge variant="secondary" className="mt-1 text-xs">
-            YouTube
-          </Badge>
+        {isYouTubeUrl(url) && (
+          <Chip color="secondary" size="small" label="YouTube" sx={{ mt: 0.5, fontSize: "0.75rem" }} />
         )}
         {isUploaded && (
-          <Badge variant="outline" className="mt-1 text-xs">
-            Download
-          </Badge>
+          <Chip variant="outlined" size="small" label="Download" sx={{ mt: 0.5, fontSize: "0.75rem" }} />
         )}
-      </div>
-    </a>
+      </Box>
+    </Box>
   );
 }
 
-function ResourceGroup({
-  type,
-  resources,
-  defaultOpen = false,
-}: {
-  type: string;
-  resources: TopicResource[];
-  defaultOpen?: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+function ResourceGroup({ type, resources }: { type: string; resources: TopicResource[] }) {
   const config = RESOURCE_TYPE_CONFIG[type as keyof typeof RESOURCE_TYPE_CONFIG];
   const Icon = config?.icon ?? LinkIcon;
-  const colorClass = config?.colorClass ?? "text-muted-foreground";
+  const token = config?.token ?? "text.secondary";
   const label = config?.pluralLabel ?? "Resources";
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger asChild>
-        <button className="w-full flex items-center justify-between py-2 px-1 text-sm font-medium text-foreground hover:text-primary transition-colors">
-          <span className="flex items-center gap-2">
-            <Icon className={cn("w-4 h-4", colorClass)} />
-            {label}
-            <Badge variant="secondary" className="text-xs">
-              {resources.length}
-            </Badge>
-          </span>
-          {isOpen ? (
-            <ChevronUp className="w-4 h-4" />
-          ) : (
-            <ChevronDown className="w-4 h-4" />
-          )}
-        </button>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="space-y-2 pb-3">
-          {resources
-            .sort((a, b) => a.display_order - b.display_order)
-            .map((resource) => (
-              <ResourceItem key={resource.id} resource={resource} />
-            ))}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+    <CollapsibleSection
+      title={label}
+      icon={<Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16, color: token }} />}
+      count={resources.length}
+    >
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, pb: 1.5 }}>
+        {/* Copy before sorting: .sort() is in place. Today this is a per-type
+            group built fresh each render, so it would be harmless — but it is
+            a prop from where this component stands, and the habit is cheap. */}
+        {[...resources]
+          .sort((a, b) => a.display_order - b.display_order)
+          .map((resource) => (
+            <ResourceItem key={resource.id} resource={resource} />
+          ))}
+      </Box>
+    </CollapsibleSection>
   );
 }
 
+const TYPE_ORDER = ["video", "article", "link", "pdf", "image"];
+
+/** A topic's resources, grouped by type, in the topic page's sidebar. */
 export function TopicResourcePanel({ resources }: TopicResourcePanelProps) {
-  if (!resources || resources.length === 0) {
-    return null; // Return null when no resources - the parent handles empty state
-  }
+  // The parent decides whether the sidebar exists at all.
+  if (!resources || resources.length === 0) return null;
 
-  // Group resources by type
-  const grouped = resources.reduce((acc, resource) => {
-    const type = resource.resource_type;
-    if (!acc[type]) {
-      acc[type] = [];
-    }
-    acc[type].push(resource);
+  const grouped = resources.reduce<Record<string, TopicResource[]>>((acc, resource) => {
+    (acc[resource.resource_type] ??= []).push(resource);
     return acc;
-  }, {} as Record<string, TopicResource[]>);
+  }, {});
 
-  // Order of resource types to display
-  const typeOrder = ["video", "article", "link", "pdf", "image"];
+  const groups = (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+      {TYPE_ORDER.map((type) =>
+        grouped[type] ? <ResourceGroup key={type} type={type} resources={grouped[type]} /> : null
+      )}
+    </Box>
+  );
+  const icon = <Box component={LinkIcon} aria-hidden="true" sx={{ width: 16, height: 16, color: "text.secondary" }} />;
 
   return (
-    <div>
-      {/* Desktop view */}
-      <div className="hidden lg:block">
-        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
-          <LinkIcon className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">Resources</span>
-          <Badge variant="secondary" className="ml-auto">
-            {resources.length}
-          </Badge>
-        </div>
-        <div className="space-y-1">
-          {typeOrder.map((type) =>
-            grouped[type] ? (
-              <ResourceGroup
-                key={type}
-                type={type}
-                resources={grouped[type]}
-                defaultOpen={false}
-              />
-            ) : null
-          )}
-        </div>
-      </div>
-
-      {/* Mobile view - collapsible card */}
-      <div className="lg:hidden">
-        <Collapsible defaultOpen={false}>
-          <Card>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-secondary/30 transition-colors py-3">
-                <CardTitle className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2">
-                    <LinkIcon className="w-4 h-4" />
-                    Resources
-                    <Badge variant="secondary">{resources.length}</Badge>
-                  </span>
-                  <ChevronDown className="w-4 h-4" />
-                </CardTitle>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent className="pt-0">
-                <div className="space-y-1">
-                  {typeOrder.map((type) =>
-                    grouped[type] ? (
-                      <ResourceGroup
-                        key={type}
-                        type={type}
-                        resources={grouped[type]}
-                        defaultOpen={false}
-                      />
-                    ) : null
-                  )}
-                </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
-      </div>
-    </div>
+    <Box>
+      {/* Desktop: a static heading over the always-visible groups. */}
+      <Box sx={{ display: { xs: "none", lg: "block" } }}>
+        <CollapsibleSection title="Resources" icon={icon} count={resources.length} static>
+          {groups}
+        </CollapsibleSection>
+      </Box>
+      {/* Mobile: the whole thing folds into a card. */}
+      <Box sx={{ display: { xs: "block", lg: "none" } }}>
+        <CollapsibleSection title="Resources" icon={icon} count={resources.length} variant="card">
+          {groups}
+        </CollapsibleSection>
+      </Box>
+    </Box>
   );
 }

@@ -1,140 +1,113 @@
+import Box from "@mui/material/Box";
+import Skeleton from "@mui/material/Skeleton";
+import { HelpCircle } from "lucide-react";
 import { useTopicQuestions, TopicQuestion } from "@/hooks/useTopics";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  HelpCircle,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useState } from "react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { CollapsibleSection } from "@/components/ohp/CollapsibleSection";
+import { tokenAlpha } from "@/theme/muiTheme";
 
 interface TopicQuestionsPanelProps {
   topicId: string;
   onQuestionClick?: (questionId: string) => void;
 }
 
-function QuestionItem({
-  question,
-  onClick,
-}: {
-  question: TopicQuestion;
-  onClick?: () => void;
-}) {
+function QuestionItem({ question, onClick }: { question: TopicQuestion; onClick?: () => void }) {
   return (
-    <button
+    <Box
+      component="button"
+      type="button"
       onClick={onClick}
-      className={cn(
-        "w-full flex items-start gap-3 p-3 rounded-lg transition-colors text-left",
-        "bg-secondary/30 hover:bg-secondary",
-        "border border-transparent hover:border-border"
-      )}
+      sx={{
+        width: "100%",
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 1.5,
+        p: 1.5,
+        borderRadius: "8px",
+        border: "1px solid transparent",
+        bgcolor: (t) => tokenAlpha(t.vars.palette.secondary.main, 30),
+        color: "inherit",
+        font: "inherit",
+        textAlign: "left",
+        cursor: "pointer",
+        transition: "background-color 150ms, border-color 150ms",
+        "&:hover": { bgcolor: "secondary.main", borderColor: "divider" },
+      }}
     >
-      <span className="font-mono text-xs text-primary bg-primary/10 px-2 py-1 rounded shrink-0">
+      {/* spans: this is inside a <button> */}
+      <Box
+        component="span"
+        sx={{
+          fontFamily: "monospace",
+          fontSize: "0.75rem",
+          color: "primary.main",
+          bgcolor: (t) => tokenAlpha(t.vars.palette.primary.main, 10),
+          px: 1,
+          py: 0.5,
+          borderRadius: "4px",
+          flexShrink: 0,
+        }}
+      >
         {question.displayName}
-      </span>
-      <span className="text-sm text-muted-foreground line-clamp-2 flex-1">
+      </Box>
+      <Box
+        component="span"
+        sx={{
+          flex: 1,
+          fontSize: "0.875rem",
+          color: "text.secondary",
+          display: "-webkit-box",
+          WebkitBoxOrient: "vertical",
+          WebkitLineClamp: 2,
+          overflow: "hidden",
+        }}
+      >
         {question.question}
-      </span>
-    </button>
+      </Box>
+    </Box>
   );
 }
 
-export function TopicQuestionsPanel({
-  topicId,
-  onQuestionClick,
-}: TopicQuestionsPanelProps) {
+/** The questions linked to a topic, in the topic page's sidebar. */
+export function TopicQuestionsPanel({ topicId, onQuestionClick }: TopicQuestionsPanelProps) {
   const { data: questions, isLoading } = useTopicQuestions(topicId);
-  const [isOpen, setIsOpen] = useState(false);
 
   if (isLoading) {
     return (
-      <div className="space-y-2 mb-6">
-        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
-          <Skeleton className="w-4 h-4" />
-          <Skeleton className="w-24 h-4" />
-        </div>
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-16 w-full" />
-      </div>
+      <Box sx={{ mb: 3, display: "flex", flexDirection: "column", gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, pb: 1, borderBottom: "1px solid", borderColor: "divider" }}>
+          <Skeleton variant="rounded" width={16} height={16} />
+          <Skeleton variant="rounded" width={96} height={16} />
+        </Box>
+        <Skeleton variant="rounded" width="100%" height={64} />
+        <Skeleton variant="rounded" width="100%" height={64} />
+      </Box>
     );
   }
 
-  if (!questions || questions.length === 0) {
-    return null; // Don't show the panel if there are no questions
-  }
+  // The parent decides whether the sidebar exists at all; an empty list is nothing to show.
+  if (!questions || questions.length === 0) return null;
+
+  const items = (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      {questions.map((question) => (
+        <QuestionItem key={question.id} question={question} onClick={() => onQuestionClick?.(question.id)} />
+      ))}
+    </Box>
+  );
+  const icon = <Box component={HelpCircle} aria-hidden="true" sx={{ width: 16, height: 16, color: "text.secondary" }} />;
 
   return (
-    <div className="mb-6">
-      {/* Desktop view */}
-      <div className="hidden lg:block">
-        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-          <CollapsibleTrigger asChild>
-            <button className="w-full flex items-center justify-between py-2 px-1 text-sm font-medium text-foreground hover:text-primary transition-colors mb-2 border-b border-border pb-3">
-              <span className="flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-muted-foreground" />
-                Related Questions
-                <Badge variant="secondary" className="ml-1">
-                  {questions.length}
-                </Badge>
-              </span>
-              {isOpen ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="space-y-2">
-              {questions.map((question) => (
-                <QuestionItem
-                  key={question.id}
-                  question={question}
-                  onClick={() => onQuestionClick?.(question.id)}
-                />
-              ))}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </div>
-
-      {/* Mobile view - collapsible card */}
-      <div className="lg:hidden">
-        <Collapsible defaultOpen={false}>
-          <Card>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-secondary/30 transition-colors py-3">
-                <CardTitle className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2">
-                    <HelpCircle className="w-4 h-4" />
-                    Related Questions
-                    <Badge variant="secondary">{questions.length}</Badge>
-                  </span>
-                  <ChevronDown className="w-4 h-4" />
-                </CardTitle>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent className="pt-0 space-y-2">
-                {questions.map((question) => (
-                  <QuestionItem
-                    key={question.id}
-                    question={question}
-                    onClick={() => onQuestionClick?.(question.id)}
-                  />
-                ))}
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
-      </div>
-    </div>
+    <Box sx={{ mb: 3 }}>
+      <Box sx={{ display: { xs: "none", lg: "block" } }}>
+        <CollapsibleSection title="Related Questions" icon={icon} count={questions.length}>
+          {items}
+        </CollapsibleSection>
+      </Box>
+      <Box sx={{ display: { xs: "block", lg: "none" } }}>
+        <CollapsibleSection title="Related Questions" icon={icon} count={questions.length} variant="card">
+          {items}
+        </CollapsibleSection>
+      </Box>
+    </Box>
   );
 }

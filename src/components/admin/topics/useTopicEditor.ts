@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { TOPIC_CONTENT_BUCKET } from "@/lib/storageUrl";
 import { queryKeys } from "@/services/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import type { Topic } from "@/hooks/useTopics";
@@ -114,7 +115,7 @@ export function useTopicEditor({ topic, settings, onSaved, onDeleted }: UseTopic
       const contentPath = freshTopic?.content_path || topic.content_path;
       if (contentPath) {
         const { error: storageError } = await supabase.storage
-          .from("topic-content")
+          .from(TOPIC_CONTENT_BUCKET)
           .remove([contentPath]);
 
         // Log but don't fail if storage deletion fails (file may not exist)
