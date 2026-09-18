@@ -1,6 +1,11 @@
 import { useTheme } from "next-themes";
-import { Toaster as Sonner, toast } from "sonner";
+import { Toaster as Sonner } from "sonner";
 
+/**
+ * sonner is the app's toast system, a deliberate exception to the MUI-only
+ * rule (docs/MUI_MIGRATION_STRATEGY.md §5.3). The class names below are
+ * Tailwind semantic tokens, so toasts follow the theme like everything else.
+ */
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
@@ -24,4 +29,4 @@ const Toaster = ({ ...props }: ToasterProps) => {
   );
 };
 
-export { Toaster, toast };
+export { Toaster };

@@ -60,7 +60,6 @@ The app is wrapped in this order (outermost → innermost):
 5. AuthProvider (Supabase auth — gates user-scoped queries)
 6. PendoProvider → AmplitudeProvider (product analytics)
 7. AppNavigationProvider (global license filter state)
-8. TooltipProvider (Radix)
 
 **Data Hooks Pattern**:
 - `useQuestions()` - Fetches all questions, caches for 1 hour
