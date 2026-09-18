@@ -70,6 +70,7 @@ export function ResourceRow({ resource, fileUrl, onEdit, onDelete }: ResourceRow
           />
           {resource.storage_path && (
             <Chip
+              color="secondary"
               size="small"
               icon={<Box component={Upload} sx={{ width: 12, height: 12 }} />}
               label="Uploaded"
