@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GlossaryTermTooltip, GlossaryTermProvider, nextOpenTermId } from './GlossaryTermTooltip';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -134,9 +134,13 @@ describe('GlossaryTermTooltip', () => {
       await user.click(trigger);
       expect(screen.getByText('Device for transmitting/receiving radio waves')).toBeInTheDocument();
 
-      // Click trigger again to close
+      // Click trigger again to close. MUI keeps the tooltip mounted through
+      // its exit transition, so wait for it to leave rather than assert
+      // synchronously.
       await user.click(trigger);
-      expect(screen.queryByText('Device for transmitting/receiving radio waves')).not.toBeInTheDocument();
+      await waitForElementToBeRemoved(() =>
+        screen.queryByText('Device for transmitting/receiving radio waves')
+      );
     });
 
     it('only shows one popover at a time', async () => {
@@ -159,7 +163,9 @@ describe('GlossaryTermTooltip', () => {
 
       // Click second term - first should close, second should open
       await user.click(screen.getByText('Band'));
-      expect(screen.queryByText('Device for transmitting/receiving radio waves')).not.toBeInTheDocument();
+      await waitForElementToBeRemoved(() =>
+        screen.queryByText('Device for transmitting/receiving radio waves')
+      );
       expect(screen.getByText('A range of frequencies')).toBeInTheDocument();
     });
   });
