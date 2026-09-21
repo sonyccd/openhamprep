@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ChapterPractice } from './ChapterPractice';
-import { ThemeProvider } from '@mui/material/styles';
-import { muiTheme } from '@/theme/muiTheme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import the supabase mock
@@ -180,9 +178,7 @@ const renderChapterPractice = (props = {}) => {
 
   const result = render(
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={muiTheme}>
-        <ChapterPractice onBack={onBack} testType="technician" {...props} />
-      </ThemeProvider>
+      <ChapterPractice onBack={onBack} testType="technician" {...props} />
     </QueryClientProvider>
   ,
       { wrapper: muiWrapper }
@@ -416,9 +412,7 @@ describe('ChapterPractice Practice View', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={muiTheme}>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </ThemeProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -447,9 +441,7 @@ describe('ChapterPractice Practice View', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={muiTheme}>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </ThemeProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -476,9 +468,7 @@ describe('ChapterPractice Practice View', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={muiTheme}>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </ThemeProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -521,9 +511,7 @@ describe('ChapterPractice Question Wraparound', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={muiTheme}>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </ThemeProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -575,9 +563,7 @@ describe('ChapterPractice Answer Flow', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={muiTheme}>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </ThemeProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -609,9 +595,7 @@ describe('ChapterPractice Answer Flow', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={muiTheme}>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </ThemeProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -638,9 +622,7 @@ describe('ChapterPractice Answer Flow', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={muiTheme}>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </ThemeProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -683,9 +665,7 @@ describe('ChapterPractice Navigation', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={muiTheme}>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </ThemeProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -722,9 +702,7 @@ describe('ChapterPractice Navigation', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={muiTheme}>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </ThemeProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -791,9 +769,7 @@ describe('ChapterPractice License Types', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={muiTheme}>
-          <ChapterPractice onBack={vi.fn()} testType="general" />
-        </ThemeProvider>
+        <ChapterPractice onBack={vi.fn()} testType="general" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
