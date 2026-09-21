@@ -25,20 +25,15 @@ interface LinkedChapterQuestionRowProps {
 export function LinkedChapterQuestionRow({ question, onUnlink, onPageChange, isPending }: LinkedChapterQuestionRowProps) {
   const saved = question.arrl_page_reference || "";
   const [pageValue, setPageValue] = useState(saved);
-  const [isEditing, setIsEditing] = useState(false);
 
   const commit = () => {
-    setIsEditing(false);
     const trimmed = pageValue.trim();
     if (trimmed !== saved) onPageChange(trimmed || null);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") e.currentTarget.blur();
-    if (e.key === "Escape") {
-      setPageValue(saved);
-      setIsEditing(false);
-    }
+    if (e.key === "Escape") setPageValue(saved);
   };
 
   return (
@@ -79,15 +74,11 @@ export function LinkedChapterQuestionRow({ question, onUnlink, onPageChange, isP
           label="Page"
           size="small"
           value={pageValue}
-          onChange={(e) => {
-            setPageValue(e.target.value);
-            setIsEditing(true);
-          }}
+          onChange={(e) => setPageValue(e.target.value)}
           onBlur={commit}
           onKeyDown={handleKeyDown}
           placeholder="e.g., 45"
           disabled={isPending}
-          focused={isEditing || undefined}
           sx={{ width: 96 }}
           slotProps={{ htmlInput: { sx: { fontSize: "0.75rem", py: 0.5 } } }}
         />
