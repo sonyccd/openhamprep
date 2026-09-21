@@ -7,7 +7,8 @@ import Typography from "@mui/material/Typography";
 import { AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import type { VerifyResult } from "@/hooks/useDiscourseSyncStatus";
 import { tokenAlpha } from "@/theme/muiTheme";
-import { DiscrepancyRow, DiscrepancySection, QuestionTag, TopicLink } from "./DiscrepancySection";
+import { QuestionIdTag } from "@/components/admin/shared/QuestionIdTag";
+import { DiscrepancyRow, DiscrepancySection, TopicLink } from "./DiscrepancySection";
 import { countDiscrepancies } from "./syncMetrics";
 
 interface VerificationResultsProps {
@@ -85,7 +86,7 @@ export function VerificationResults({ result }: VerificationResultsProps) {
           renderItem={(item) => (
             <DiscrepancyRow tint="warning" split>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <QuestionTag name={item.questionDisplayName} />
+                <QuestionIdTag size="small" name={item.questionDisplayName} />
                 {item.action && (
                   <Chip
                     size="small"
@@ -112,7 +113,7 @@ export function VerificationResults({ result }: VerificationResultsProps) {
           renderItem={(item) => (
             <DiscrepancyRow tint="error">
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <QuestionTag name={item.questionDisplayName} />
+                <QuestionIdTag size="small" name={item.questionDisplayName} />
                 <Typography component="span" sx={{ fontSize: "0.75rem", color: "error.main" }}>
                   {item.error}
                 </Typography>
@@ -132,7 +133,7 @@ export function VerificationResults({ result }: VerificationResultsProps) {
           itemKey={(item) => item.questionId}
           renderItem={(item) => (
             <DiscrepancyRow tint="muted" split>
-              <QuestionTag name={item.questionDisplayName} />
+              <QuestionIdTag size="small" name={item.questionDisplayName} />
               <TopicLink href={item.forumUrl} questionName={item.questionDisplayName} />
             </DiscrepancyRow>
           )}
