@@ -20,13 +20,15 @@ interface QuestionPickRowProps {
   disabled?: boolean;
   /** Anything to show beside the id, such as an "in another chapter" chip. */
   badge?: React.ReactNode;
+  /** Anything to show at the far end, such as an unlink mark. */
+  trailing?: React.ReactNode;
 }
 
 /**
  * One question the admin can pick. The whole row is the control; the
  * checkbox is display only (tabIndex -1), as in MUI's checkbox-list idiom.
  */
-export function QuestionPickRow({ question, checked, onClick, disabled = false, badge }: QuestionPickRowProps) {
+export function QuestionPickRow({ question, checked, onClick, disabled = false, badge, trailing }: QuestionPickRowProps) {
   const labelId = useId();
 
   return (
@@ -71,6 +73,7 @@ export function QuestionPickRow({ question, checked, onClick, disabled = false, 
             {question.question}
           </Typography>
         </Box>
+        {trailing}
       </ListItemButton>
     </ListItem>
   );
