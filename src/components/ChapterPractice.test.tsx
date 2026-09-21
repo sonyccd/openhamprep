@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ChapterPractice } from './ChapterPractice';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import the supabase mock
@@ -179,9 +178,7 @@ const renderChapterPractice = (props = {}) => {
 
   const result = render(
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <ChapterPractice onBack={onBack} testType="technician" {...props} />
-      </TooltipProvider>
+      <ChapterPractice onBack={onBack} testType="technician" {...props} />
     </QueryClientProvider>
   ,
       { wrapper: muiWrapper }
@@ -415,9 +412,7 @@ describe('ChapterPractice Practice View', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </TooltipProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -446,9 +441,7 @@ describe('ChapterPractice Practice View', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </TooltipProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -475,9 +468,7 @@ describe('ChapterPractice Practice View', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </TooltipProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -520,9 +511,7 @@ describe('ChapterPractice Question Wraparound', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </TooltipProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -574,9 +563,7 @@ describe('ChapterPractice Answer Flow', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </TooltipProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -608,9 +595,7 @@ describe('ChapterPractice Answer Flow', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </TooltipProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -637,9 +622,7 @@ describe('ChapterPractice Answer Flow', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </TooltipProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -682,9 +665,7 @@ describe('ChapterPractice Navigation', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </TooltipProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -721,9 +702,7 @@ describe('ChapterPractice Navigation', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ChapterPractice onBack={vi.fn()} testType="technician" />
-        </TooltipProvider>
+        <ChapterPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -790,9 +769,7 @@ describe('ChapterPractice License Types', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ChapterPractice onBack={vi.fn()} testType="general" />
-        </TooltipProvider>
+        <ChapterPractice onBack={vi.fn()} testType="general" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }

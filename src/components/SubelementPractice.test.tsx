@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SubelementPractice } from './SubelementPractice';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import the supabase mock
@@ -133,9 +132,7 @@ const renderSubelementPractice = (props = {}) => {
 
   const result = render(
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <SubelementPractice onBack={onBack} testType="technician" {...props} />
-      </TooltipProvider>
+      <SubelementPractice onBack={onBack} testType="technician" {...props} />
     </QueryClientProvider>
   ,
       { wrapper: muiWrapper }
@@ -285,9 +282,7 @@ describe('SubelementPractice Stats', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <SubelementPractice onBack={vi.fn()} testType="technician" />
-        </TooltipProvider>
+        <SubelementPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -321,9 +316,7 @@ describe('SubelementPractice Stats', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <SubelementPractice onBack={vi.fn()} testType="technician" />
-        </TooltipProvider>
+        <SubelementPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }
@@ -369,9 +362,7 @@ describe('SubelementPractice Question Wraparound', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <SubelementPractice onBack={vi.fn()} testType="technician" />
-        </TooltipProvider>
+        <SubelementPractice onBack={vi.fn()} testType="technician" />
       </QueryClientProvider>
     ,
       { wrapper: muiWrapper }

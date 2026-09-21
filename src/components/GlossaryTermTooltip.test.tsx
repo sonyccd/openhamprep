@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GlossaryTermTooltip, GlossaryTermProvider, nextOpenTermId } from './GlossaryTermTooltip';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { ThemeProvider } from '@mui/material/styles';
+import { muiTheme } from '@/theme/muiTheme';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 // Mock useIsMobile hook
@@ -34,13 +35,13 @@ describe('GlossaryTermTooltip', () => {
 
     it('renders children correctly', () => {
       render(
-        <TooltipProvider>
+        <ThemeProvider theme={muiTheme}>
           <GlossaryTermProvider>
             <GlossaryTermTooltip term={mockTerm}>
               <span>Antenna</span>
             </GlossaryTermTooltip>
           </GlossaryTermProvider>
-        </TooltipProvider>
+        </ThemeProvider>
       );
 
       expect(screen.getByText('Antenna')).toBeInTheDocument();
@@ -48,13 +49,13 @@ describe('GlossaryTermTooltip', () => {
 
     it('uses Tooltip component on desktop', () => {
       render(
-        <TooltipProvider>
+        <ThemeProvider theme={muiTheme}>
           <GlossaryTermProvider>
             <GlossaryTermTooltip term={mockTerm}>
               <span>Antenna</span>
             </GlossaryTermTooltip>
           </GlossaryTermProvider>
-        </TooltipProvider>
+        </ThemeProvider>
       );
 
       // Tooltip trigger should be rendered

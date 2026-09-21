@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BookmarkedQuestions } from './BookmarkedQuestions';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import the supabase mock
@@ -124,9 +123,7 @@ const renderBookmarkedQuestions = (props = {}) => {
 
   const result = render(
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BookmarkedQuestions onBack={onBack} onStartPractice={onStartPractice} testType="technician" {...props} />
-      </TooltipProvider>
+      <BookmarkedQuestions onBack={onBack} onStartPractice={onStartPractice} testType="technician" {...props} />
     </QueryClientProvider>
   ,
       { wrapper: muiWrapper }

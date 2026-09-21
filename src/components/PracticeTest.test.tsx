@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PracticeTest } from './PracticeTest';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import the supabase mock
@@ -109,9 +108,7 @@ const renderPracticeTest = (props = {}) => {
 
   const result = render(
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <PracticeTest onBack={onBack} onTestStateChange={onTestStateChange} testType="technician" {...props} />
-      </TooltipProvider>
+      <PracticeTest onBack={onBack} onTestStateChange={onTestStateChange} testType="technician" {...props} />
     </QueryClientProvider>
   ,
       { wrapper: muiWrapper }

@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QuestionCard } from './QuestionCard';
 import { Question } from '@/hooks/useQuestions';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { muiWrapper } from '@/test/utils';
 
 // Mock dependencies
@@ -81,14 +80,12 @@ const mockQuestion: Question = {
 const renderQuestionCard = (props: Partial<Parameters<typeof QuestionCard>[0]> = {}) => {
   return render(
     <MemoryRouter>
-      <TooltipProvider>
-        <QuestionCard
-          question={mockQuestion}
-          selectedAnswer={null}
-          onSelectAnswer={vi.fn()}
-          {...props}
-        />
-      </TooltipProvider>
+      <QuestionCard
+        question={mockQuestion}
+        selectedAnswer={null}
+        onSelectAnswer={vi.fn()}
+        {...props}
+      />
     </MemoryRouter>,
     // The options read palette tokens, so they need the real theme.
     { wrapper: muiWrapper }
