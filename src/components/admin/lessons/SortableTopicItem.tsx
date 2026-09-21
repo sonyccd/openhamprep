@@ -1,5 +1,4 @@
 import Box from "@mui/material/Box";
-import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
@@ -7,6 +6,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Trash2 } from "lucide-react";
 import type { LessonTopic } from "@/types/lessons";
+import { DraftChip } from "./DraftChip";
 
 interface SortableTopicItemProps {
   lessonTopic: LessonTopic;
@@ -77,9 +77,4 @@ export function SortableTopicItem({ lessonTopic, index, onRemove, isRemoving }: 
       </IconButton>
     </Box>
   );
-}
-
-/** Marks a topic that is not yet published. */
-export function DraftChip() {
-  return <Chip size="small" variant="outlined" label="Draft" color="warning" sx={{ flexShrink: 0 }} />;
 }

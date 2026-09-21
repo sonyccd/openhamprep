@@ -11,7 +11,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { Plus, Search } from "lucide-react";
 import type { Topic } from "@/hooks/useTopics";
-import { DraftChip } from "./SortableTopicItem";
+import { DraftChip } from "./DraftChip";
 
 interface AddTopicDialogProps {
   open: boolean;
