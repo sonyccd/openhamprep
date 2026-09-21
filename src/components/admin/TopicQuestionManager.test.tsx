@@ -630,6 +630,24 @@ describe('TopicQuestionManager', () => {
     });
   });
 
+  describe('Unlink affordance', () => {
+    /** The row is the control, so its hover, not the icon's, colours the mark. */
+    it('turns the unlink mark red when the linked row is hovered', async () => {
+      renderComponent();
+      const row = await screen.findByRole('button', { name: /T1A01/ });
+
+      const svgs = row.querySelectorAll('svg');
+      const mark = svgs[svgs.length - 1];
+      const cls = [...mark.classList].find((c) => c.startsWith('css-'));
+      if (!cls) throw new Error(`no emotion class on the unlink mark: ${mark.getAttribute('class')}`);
+      const hoverRule = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .map((rule) => rule.cssText.replace(/\s+/g, ' '))
+        .find((text) => text.startsWith('.MuiListItemButton-root:hover') && text.includes(cls));
+      expect(hoverRule).toMatch(/color: var\(--mui-palette-error-main\)/);
+    });
+  });
+
   describe('Stats Display', () => {
     it('should display filtered questions count', async () => {
       renderComponent();

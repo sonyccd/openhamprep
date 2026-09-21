@@ -81,7 +81,21 @@ export function TopicQuestionManager({ topicId }: TopicQuestionManagerProps) {
                   checked
                   onClick={() => unlinkQuestion.mutate(q.id)}
                   disabled={unlinkQuestion.isPending}
-                  trailing={<Box component={X} aria-hidden="true" sx={{ width: 16, height: 16, color: "text.secondary", flexShrink: 0, mt: 0.5 }} />}
+                  trailing={
+                    <Box
+                      component={X}
+                      aria-hidden="true"
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        color: "text.secondary",
+                        flexShrink: 0,
+                        mt: 0.5,
+                        // The row is the control, so hovering it is what warns of the unlink.
+                        ".MuiListItemButton-root:hover &": { color: "error.main" },
+                      }}
+                    />
+                  }
                 />
               ))}
             </QuestionSection>

@@ -6,12 +6,16 @@ import { queryKeys } from '@/services/queryKeys';
 
 const mockRange = vi.fn();
 const mockInsert = vi.fn();
+const mockDeleteEq = vi.fn();
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (table: string) =>
       table === 'questions'
         ? { select: () => ({ order: () => ({ range: (...args: unknown[]) => mockRange(...args) }) }) }
-        : { insert: (...args: unknown[]) => mockInsert(...args) },
+        : {
+            insert: (...args: unknown[]) => mockInsert(...args),
+            delete: () => ({ eq: (...a: unknown[]) => ({ eq: (...b: unknown[]) => mockDeleteEq(...a, ...b) }) }),
+          },
   },
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -61,20 +65,39 @@ describe('useAllQuestionsForLinking', () => {
 });
 
 describe('useTopicQuestionLinkMutations', () => {
-  it('refreshes the topic and admin question lists after a link', async () => {
-    mockInsert.mockResolvedValue({ error: null });
+  const setUp = () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const spy = vi.spyOn(client, 'invalidateQueries');
     const w = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
-
     const { result } = renderHook(() => useTopicQuestionLinkMutations('topic-1'), { wrapper: w });
+    return { result, invalidated: () => spy.mock.calls.map((c) => c[0]?.queryKey) };
+  };
+
+  const expectRefreshed = (keys: unknown[]) => {
+    expect(keys).toContainEqual(queryKeys.topics.linkedQuestionIds('topic-1'));
+    expect(keys).toContainEqual(queryKeys.topics.questions('topic-1'));
+    expect(keys).toContainEqual(queryKeys.questions.admin());
+  };
+
+  it('refreshes the topic and admin question lists after a link', async () => {
+    mockInsert.mockResolvedValue({ error: null });
+    const { result, invalidated } = setUp();
+
     result.current.linkQuestion.mutate('q-1');
 
     await waitFor(() => expect(result.current.linkQuestion.isSuccess).toBe(true));
     expect(mockInsert).toHaveBeenCalledWith({ topic_id: 'topic-1', question_id: 'q-1' });
-    const keys = spy.mock.calls.map((c) => c[0]?.queryKey);
-    expect(keys).toContainEqual(queryKeys.topics.linkedQuestionIds('topic-1'));
-    expect(keys).toContainEqual(queryKeys.topics.questions('topic-1'));
-    expect(keys).toContainEqual(queryKeys.questions.admin());
+    expectRefreshed(invalidated());
+  });
+
+  it('refreshes the same lists after an unlink, scoped to the topic and question', async () => {
+    mockDeleteEq.mockResolvedValue({ error: null });
+    const { result, invalidated } = setUp();
+
+    result.current.unlinkQuestion.mutate('q-1');
+
+    await waitFor(() => expect(result.current.unlinkQuestion.isSuccess).toBe(true));
+    expect(mockDeleteEq).toHaveBeenCalledWith('topic_id', 'topic-1', 'question_id', 'q-1');
+    expectRefreshed(invalidated());
   });
 });
