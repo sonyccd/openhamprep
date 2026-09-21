@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Checkbox from "@mui/material/Checkbox";
 import IconButton from "@mui/material/IconButton";
@@ -14,21 +14,34 @@ import { QuestionIdTag } from "@/components/admin/shared/QuestionIdTag";
 interface LinkedChapterQuestionRowProps {
   question: ChapterQuestion;
   onUnlink: () => void;
-  onPageChange: (page: string | null) => void;
+  /** Resolves when saved; rejects when not, so the row can put the old value back. */
+  onPageChange: (page: string | null) => Promise<unknown>;
   isPending: boolean;
 }
 
 /**
  * A question already in this chapter, with its page reference editable in
- * place: Enter or blur saves a changed value, Escape puts the old one back.
+ * place: Enter or blur saves a changed value, Escape puts the old one back,
+ * and so does a save that fails — the field never shows a value the server
+ * does not have.
  */
 export function LinkedChapterQuestionRow({ question, onUnlink, onPageChange, isPending }: LinkedChapterQuestionRowProps) {
   const saved = question.arrl_page_reference || "";
   const [pageValue, setPageValue] = useState(saved);
 
-  const commit = () => {
+  // Follow the server: after a save, or a change made elsewhere, the field
+  // shows what is actually stored.
+  useEffect(() => setPageValue(saved), [saved]);
+
+  const commit = async () => {
     const trimmed = pageValue.trim();
-    if (trimmed !== saved) onPageChange(trimmed || null);
+    if (trimmed === saved) return;
+    try {
+      await onPageChange(trimmed || null);
+    } catch {
+      // Already reported by the mutation; just stop showing the unsaved value.
+      setPageValue(saved);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

@@ -73,7 +73,7 @@ export function ChapterQuestionManager({ chapterId, licenseType }: ChapterQuesti
                   key={q.id}
                   question={q}
                   onUnlink={() => unlinkQuestion.mutate(q.id)}
-                  onPageChange={(page) => updatePageReference.mutate({ questionId: q.id, pageReference: page })}
+                  onPageChange={(page) => updatePageReference.mutateAsync({ questionId: q.id, pageReference: page })}
                   isPending={unlinkQuestion.isPending || updatePageReference.isPending}
                 />
               ))}

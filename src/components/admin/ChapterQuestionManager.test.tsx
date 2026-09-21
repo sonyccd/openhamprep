@@ -638,6 +638,22 @@ describe('ChapterQuestionManager', () => {
       await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith({ arrl_page_reference: '20' }));
     });
 
+    /** A failed save must not leave the field showing a value the server never took. */
+    it('puts the saved value back when the save fails', async () => {
+      const mockUpdate = vi
+        .fn()
+        .mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: { message: 'boom' } }) });
+      mockQuestionsTable(mockUpdate);
+      renderComponent();
+      const input = await screen.findByDisplayValue('15-16');
+
+      fireEvent.change(input, { target: { value: '20' } });
+      fireEvent.blur(input);
+
+      await waitFor(() => expect(mockUpdate).toHaveBeenCalled());
+      await waitFor(() => expect(input).toHaveValue('15-16'));
+    });
+
     it('puts the saved value back on Escape without saving', async () => {
       const mockUpdate = vi.fn();
       mockQuestionsTable(mockUpdate);
