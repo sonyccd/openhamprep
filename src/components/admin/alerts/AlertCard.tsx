@@ -31,7 +31,10 @@ export function AlertCard({ alert, onAcknowledge, onResolve, isAcknowledging, is
 
   const severity = SEVERITY_CONFIG[alert.severity];
   const status = STATUS_CONFIG[alert.status];
-  const hasContext = alert.context && Object.keys(alert.context).length > 0;
+  const hasContext = Object.keys(alert.context).length > 0;
+
+  // Narrowed once here so the sx below can index the palette by it.
+  const tint = status.token;
 
   const handleAcknowledge = (note?: string) => {
     onAcknowledge(alert.id, note);
@@ -45,11 +48,11 @@ export function AlertCard({ alert, onAcknowledge, onResolve, isAcknowledging, is
           borderRadius: "8px",
           border: "1px solid",
           p: 2,
-          ...(status.token === "muted"
+          ...(tint === "muted"
             ? { borderColor: "muted", bgcolor: (t) => tokenAlpha(t.vars.palette.muted, 30) }
             : {
-                borderColor: (t) => tokenAlpha(t.vars.palette[status.token === "warning" ? "warning" : "info"].main, 50),
-                bgcolor: (t) => tokenAlpha(t.vars.palette[status.token === "warning" ? "warning" : "info"].main, 10),
+                borderColor: (t) => tokenAlpha(t.vars.palette[tint].main, 50),
+                bgcolor: (t) => tokenAlpha(t.vars.palette[tint].main, 10),
               }),
         }}
       >
@@ -114,7 +117,7 @@ export function AlertCard({ alert, onAcknowledge, onResolve, isAcknowledging, is
 
             {hasContext && (
               <Collapse in={expanded} unmountOnExit>
-                <AlertContextDetails context={alert.context!} acknowledgmentNote={alert.acknowledgment_note} />
+                <AlertContextDetails context={alert.context} acknowledgmentNote={alert.acknowledgment_note} />
               </Collapse>
             )}
           </Box>

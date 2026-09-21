@@ -8,7 +8,7 @@ const labelSx = { fontSize: "0.75rem", fontWeight: 500 } as const;
 const lineSx = { fontSize: "0.75rem", color: "text.secondary", mb: 1 } as const;
 
 interface AlertContextDetailsProps {
-  context: NonNullable<Alert["context"]>;
+  context: Alert["context"];
   acknowledgmentNote: string | null;
 }
 
