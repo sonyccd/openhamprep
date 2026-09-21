@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TopicMarkdownEditor } from './TopicMarkdownEditor';
+import { muiWrapper } from '@/test/utils';
 
 // Mock Supabase client for database updates and image uploads
 const mockUpdate = vi.fn();
@@ -61,7 +63,8 @@ describe('TopicMarkdownEditor', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <TopicMarkdownEditor {...defaultProps} {...props} />
-      </QueryClientProvider>
+      </QueryClientProvider>,
+      { wrapper: muiWrapper }
     );
   };
 
@@ -164,6 +167,44 @@ describe('TopicMarkdownEditor', () => {
       await waitFor(() => {
         expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Inserting an image', () => {
+    const pickImage = async (file: File, applyAccept = true) => {
+      const user = userEvent.setup({ applyAccept });
+      renderComponent({ initialContent: 'before after' });
+      const textarea = screen.getByPlaceholderText('Enter markdown...') as HTMLTextAreaElement;
+      textarea.focus();
+      textarea.setSelectionRange(7, 7);
+      await user.upload(screen.getByLabelText('Choose an image to insert'), file);
+      return textarea;
+    };
+
+    it('uploads the file and drops a markdown image at the caret', async () => {
+      const textarea = await pickImage(new File(['png'], 'antenna.png', { type: 'image/png' }));
+
+      await waitFor(() => expect(mockUpload).toHaveBeenCalled());
+      const [path, , options] = mockUpload.mock.calls[0];
+      expect(path).toMatch(/^topic-images\/[0-9a-f-]+\.png$/);
+      expect(options).toEqual({ contentType: 'image/png', upsert: false });
+      await waitFor(() => expect(textarea.value).toBe('before ![antenna.png](https://example.com/image.png)after'));
+      expect(toast.success).toHaveBeenCalledWith('Image uploaded successfully');
+    });
+
+    it('refuses a file that is not one of the image types', async () => {
+      await pickImage(new File(['x'], 'notes.txt', { type: 'text/plain' }), false);
+
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringMatching(/^Invalid file type: text\/plain/)));
+      expect(mockUpload).not.toHaveBeenCalled();
+    });
+
+    it('reports a failed upload without touching the text', async () => {
+      mockUpload.mockResolvedValueOnce({ error: { message: 'bucket full' } });
+      const textarea = await pickImage(new File(['png'], 'a.png', { type: 'image/png' }));
+
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Failed to upload image: bucket full'));
+      expect(textarea.value).toBe('before after');
     });
   });
 
