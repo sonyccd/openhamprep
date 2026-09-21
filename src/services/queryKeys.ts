@@ -80,6 +80,9 @@ export const queryKeys = {
 
     /** Admin questions full (all test types) */
     adminFull: () => ['admin-questions-full'] as const,
+
+    /** Every question's id, display name and text, for the admin linking pickers */
+    forLinking: () => ['all-questions-for-linking'] as const,
   },
 
   // ---------------------------------------------------------------------------
@@ -172,6 +175,9 @@ export const queryKeys = {
 
     /** Questions linked to a topic */
     questions: (topicId: string) => ['topic-questions', topicId] as const,
+
+    /** Just the ids of the questions linked to a topic, for the admin picker */
+    linkedQuestionIds: (topicId: string) => ['topic-linked-questions', topicId] as const,
 
     /** Admin topics (includes unpublished) */
     admin: () => ['admin-topics'] as const,

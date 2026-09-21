@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TopicQuestionManager } from './TopicQuestionManager';
+import { muiWrapper } from '@/test/utils';
 
 // Mock Supabase client
 const _mockSelect = vi.fn();
@@ -52,7 +54,8 @@ describe('TopicQuestionManager', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <TopicQuestionManager topicId={topicId} />
-      </QueryClientProvider>
+      </QueryClientProvider>,
+      { wrapper: muiWrapper }
     );
   };
 
@@ -332,14 +335,10 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      // Open the filter dropdown and select Technician
-      const filterTrigger = screen.getByText('All Tests');
-      fireEvent.click(filterTrigger);
-
-      await waitFor(() => {
-        const technicianOption = screen.getByRole('option', { name: 'Technician' });
-        fireEvent.click(technicianOption);
-      });
+      // MUI's Select opens on mousedown, which userEvent raises and fireEvent.click does not.
+      const user = userEvent.setup();
+      await user.click(screen.getByRole('combobox', { name: /filter/i }));
+      await user.click(await screen.findByRole('option', { name: 'Technician' }));
 
       // Should show only T questions
       expect(screen.getByText('T1A01')).toBeInTheDocument();
@@ -355,13 +354,10 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('G1B01')).toBeInTheDocument();
       });
 
-      const filterTrigger = screen.getByText('All Tests');
-      fireEvent.click(filterTrigger);
-
-      await waitFor(() => {
-        const generalOption = screen.getByRole('option', { name: 'General' });
-        fireEvent.click(generalOption);
-      });
+      // MUI's Select opens on mousedown, which userEvent raises and fireEvent.click does not.
+      const user = userEvent.setup();
+      await user.click(screen.getByRole('combobox', { name: /filter/i }));
+      await user.click(await screen.findByRole('option', { name: 'General' }));
 
       expect(screen.getByText('G1B01')).toBeInTheDocument();
       expect(screen.queryByText('T1A01')).not.toBeInTheDocument();
@@ -374,13 +370,10 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('E2A01')).toBeInTheDocument();
       });
 
-      const filterTrigger = screen.getByText('All Tests');
-      fireEvent.click(filterTrigger);
-
-      await waitFor(() => {
-        const extraOption = screen.getByRole('option', { name: 'Extra' });
-        fireEvent.click(extraOption);
-      });
+      // MUI's Select opens on mousedown, which userEvent raises and fireEvent.click does not.
+      const user = userEvent.setup();
+      await user.click(screen.getByRole('combobox', { name: /filter/i }));
+      await user.click(await screen.findByRole('option', { name: 'Extra' }));
 
       expect(screen.getByText('E2A01')).toBeInTheDocument();
       expect(screen.queryByText('T1A01')).not.toBeInTheDocument();
@@ -430,7 +423,7 @@ describe('TopicQuestionManager', () => {
       });
 
       // Click on an unlinked question to link it
-      const questionRow = screen.getByText('What frequencies can Technician use?').closest('button');
+      const questionRow = screen.getByText('What frequencies can Technician use?').closest('[role="button"]');
       fireEvent.click(questionRow!);
 
       await waitFor(() => {
@@ -482,7 +475,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A02')).toBeInTheDocument();
       });
 
-      const questionRow = screen.getByText('What frequencies can Technician use?').closest('button');
+      const questionRow = screen.getByText('What frequencies can Technician use?').closest('[role="button"]');
       fireEvent.click(questionRow!);
 
       await waitFor(() => {
@@ -531,7 +524,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A02')).toBeInTheDocument();
       });
 
-      const questionRow = screen.getByText('What frequencies can Technician use?').closest('button');
+      const questionRow = screen.getByText('What frequencies can Technician use?').closest('[role="button"]');
       fireEvent.click(questionRow!);
 
       await waitFor(() => {
@@ -579,7 +572,7 @@ describe('TopicQuestionManager', () => {
       });
 
       // Click on the linked question to unlink it
-      const questionRow = screen.getByText('What is amateur radio?').closest('button');
+      const questionRow = screen.getByText('What is amateur radio?').closest('[role="button"]');
       fireEvent.click(questionRow!);
 
       await waitFor(() => {
@@ -628,7 +621,7 @@ describe('TopicQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const questionRow = screen.getByText('What is amateur radio?').closest('button');
+      const questionRow = screen.getByText('What is amateur radio?').closest('[role="button"]');
       fireEvent.click(questionRow!);
 
       await waitFor(() => {
@@ -714,7 +707,7 @@ describe('TopicQuestionManager', () => {
       });
 
       // Find the linked question row and check its checkbox
-      const linkedQuestionRow = screen.getByText('What is amateur radio?').closest('button')!;
+      const linkedQuestionRow = screen.getByText('What is amateur radio?').closest('[role="button"]')!;
       expect(within(linkedQuestionRow).getByRole('checkbox')).toBeChecked();
     });
 
@@ -726,7 +719,7 @@ describe('TopicQuestionManager', () => {
       });
 
       // Find an unlinked question row and check its checkbox
-      const unlinkedQuestionRow = screen.getByText('What frequencies can Technician use?').closest('button')!;
+      const unlinkedQuestionRow = screen.getByText('What frequencies can Technician use?').closest('[role="button"]')!;
       expect(within(unlinkedQuestionRow).getByRole('checkbox')).not.toBeChecked();
     });
   });
