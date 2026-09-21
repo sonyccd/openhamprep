@@ -7,26 +7,6 @@ import { tokenAlpha } from "@/theme/muiTheme";
 
 type Tint = "warning" | "error" | "muted";
 
-/** A question's display id, set in monospace on a primary tint. */
-export function QuestionTag({ name }: { name: string }) {
-  return (
-    <Box
-      component="span"
-      sx={{
-        fontFamily: "monospace",
-        fontSize: "0.75rem",
-        color: "primary.main",
-        bgcolor: (t) => tokenAlpha(t.vars.palette.primary.main, 10),
-        px: 1,
-        py: 0.25,
-        borderRadius: "4px",
-      }}
-    >
-      {name}
-    </Box>
-  );
-}
-
 /** Named after its question, so a list of them reads as more than "View Topic" ×n. */
 export function TopicLink({ href, questionName }: { href: string; questionName: string }) {
   return (

@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ChapterQuestionManager } from './ChapterQuestionManager';
+import { muiWrapper } from '@/test/utils';
 
 // Mock Supabase client
 const _mockUpdate = vi.fn();
@@ -74,7 +75,8 @@ describe('ChapterQuestionManager', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <ChapterQuestionManager chapterId={chapterId} licenseType={licenseType} />
-      </QueryClientProvider>
+      </QueryClientProvider>,
+      { wrapper: muiWrapper }
     );
   };
 
@@ -292,7 +294,7 @@ describe('ChapterQuestionManager', () => {
       });
 
       // Click on an unlinked question to link it
-      const questionRow = screen.getByText('What is the purpose of the FCC rules?').closest('button');
+      const questionRow = screen.getByText('What is the purpose of the FCC rules?').closest('[role="button"]');
       fireEvent.click(questionRow!);
 
       await waitFor(() => {
@@ -333,7 +335,7 @@ describe('ChapterQuestionManager', () => {
         expect(screen.getByText('T1B01')).toBeInTheDocument();
       });
 
-      const questionRow = screen.getByText('What is the purpose of the FCC rules?').closest('button');
+      const questionRow = screen.getByText('What is the purpose of the FCC rules?').closest('[role="button"]');
       fireEvent.click(questionRow!);
 
       await waitFor(() => {
@@ -370,7 +372,7 @@ describe('ChapterQuestionManager', () => {
         expect(screen.getByText('T1B01')).toBeInTheDocument();
       });
 
-      const questionRow = screen.getByText('What is the purpose of the FCC rules?').closest('button');
+      const questionRow = screen.getByText('What is the purpose of the FCC rules?').closest('[role="button"]');
       fireEvent.click(questionRow!);
 
       await waitFor(() => {
@@ -410,7 +412,7 @@ describe('ChapterQuestionManager', () => {
       });
 
       // Click on the X button to unlink
-      const unlinkButtons = screen.getAllByTitle('Unlink question');
+      const unlinkButtons = screen.getAllByRole('button', { name: 'Unlink question' });
       fireEvent.click(unlinkButtons[0]);
 
       await waitFor(() => {
@@ -450,7 +452,7 @@ describe('ChapterQuestionManager', () => {
         expect(screen.getByText('T1A01')).toBeInTheDocument();
       });
 
-      const unlinkButtons = screen.getAllByTitle('Unlink question');
+      const unlinkButtons = screen.getAllByRole('button', { name: 'Unlink question' });
       fireEvent.click(unlinkButtons[0]);
 
       await waitFor(() => {
@@ -584,6 +586,89 @@ describe('ChapterQuestionManager', () => {
     });
   });
 
+  describe('Row semantics', () => {
+    it('makes the whole available row the control, labelled by its question', async () => {
+      renderComponent();
+      const row = await screen.findByRole('button', { name: /T1B01.*purpose of the FCC rules/ });
+
+      // The checkbox is display only; the row takes the keyboard.
+      const checkbox = within(row).getByRole('checkbox');
+      expect(checkbox).toHaveAttribute('tabindex', '-1');
+      expect(row).not.toHaveAttribute('tabindex', '-1');
+      expect(row.querySelector('button')).toBeNull();
+    });
+
+    it('keeps the count inside the heading as phrasing content', async () => {
+      renderComponent();
+      const heading = await screen.findByRole('heading', { name: /Available Questions/ });
+
+      expect(heading.querySelector('div')).toBeNull();
+      expect(heading).toHaveTextContent(/Available Questions\s*2/);
+    });
+  });
+
+  describe('Page reference keyboard', () => {
+    const mockQuestionsTable = (update: ReturnType<typeof vi.fn>) =>
+      mockFrom.mockImplementation((table: string) =>
+        table === 'questions'
+          ? {
+              select: vi.fn().mockReturnValue({
+                like: vi.fn().mockReturnValue({
+                  order: vi.fn().mockReturnValue({
+                    range: vi.fn().mockResolvedValue({ data: mockQuestions, error: null }),
+                  }),
+                }),
+              }),
+              update,
+            }
+          : { select: vi.fn() }
+      );
+
+    it('saves on Enter', async () => {
+      const mockUpdate = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
+      mockQuestionsTable(mockUpdate);
+      renderComponent();
+      const input = await screen.findByDisplayValue('15-16');
+
+      fireEvent.change(input, { target: { value: '20' } });
+      // Enter blurs the field; happy-dom needs the blur event to be raised.
+      fireEvent.keyDown(input, { key: 'Enter' });
+      fireEvent.blur(input);
+
+      await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith({ arrl_page_reference: '20' }));
+    });
+
+    /** A failed save must not leave the field showing a value the server never took. */
+    it('puts the saved value back when the save fails', async () => {
+      const mockUpdate = vi
+        .fn()
+        .mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: { message: 'boom' } }) });
+      mockQuestionsTable(mockUpdate);
+      renderComponent();
+      const input = await screen.findByDisplayValue('15-16');
+
+      fireEvent.change(input, { target: { value: '20' } });
+      fireEvent.blur(input);
+
+      await waitFor(() => expect(mockUpdate).toHaveBeenCalled());
+      await waitFor(() => expect(input).toHaveValue('15-16'));
+    });
+
+    it('puts the saved value back on Escape without saving', async () => {
+      const mockUpdate = vi.fn();
+      mockQuestionsTable(mockUpdate);
+      renderComponent();
+      const input = await screen.findByDisplayValue('15-16');
+
+      fireEvent.change(input, { target: { value: '99' } });
+      fireEvent.keyDown(input, { key: 'Escape' });
+
+      expect(input).toHaveValue('15-16');
+      fireEvent.blur(input);
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+  });
+
   describe('Checkbox State', () => {
     it('should show checked checkbox for linked questions', async () => {
       renderComponent();
@@ -603,7 +688,7 @@ describe('ChapterQuestionManager', () => {
       });
 
       // Find an unlinked question row and check its checkbox
-      const unlinkedQuestionRow = screen.getByText('What is the purpose of the FCC rules?').closest('button')!;
+      const unlinkedQuestionRow = screen.getByText('What is the purpose of the FCC rules?').closest('[role="button"]')!;
       expect(within(unlinkedQuestionRow).getByRole('checkbox')).not.toBeChecked();
     });
   });
