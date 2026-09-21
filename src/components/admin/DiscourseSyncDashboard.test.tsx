@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiscourseSyncDashboard } from './DiscourseSyncDashboard';
 import type { VerifyResult } from '@/hooks/useDiscourseSyncStatus';
+import { muiWrapper } from '@/test/utils';
 
 // Mock sonner toast
 vi.mock('sonner', () => ({
@@ -108,9 +109,8 @@ function createWrapper() {
       queries: { retry: false },
     },
   });
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
+  return ({ children }: { children: React.ReactNode }) =>
+    muiWrapper({ children: <QueryClientProvider client={queryClient}>{children}</QueryClientProvider> });
 }
 
 describe('DiscourseSyncDashboard', () => {
@@ -291,7 +291,96 @@ describe('DiscourseSyncDashboard', () => {
     });
   });
 
+  describe('Progress', () => {
+    it('shows the synced share overall and per licence', () => {
+      render(<DiscourseSyncDashboard />, { wrapper: createWrapper() });
+
+      // 820 of 885 overall; 380 of 423 for Technician; 440 of 462 for General.
+      expect(screen.getByRole('progressbar', { name: /synced share of all questions/i }))
+        .toHaveAttribute('aria-valuenow', String((820 / 885) * 100));
+      expect(screen.getByRole('progressbar', { name: /technician synced share/i }))
+        .toHaveAttribute('aria-valuenow', String((380 / 423) * 100));
+    });
+  });
+
+  describe('Discrepancy lists', () => {
+    const verifyWithEverything = () =>
+      mockVerify.mutateAsync.mockResolvedValueOnce(
+        createMockVerifyResult({
+          action: 'repair',
+          repaired: 1,
+          orphanedInDiscourse: [
+            { questionDisplayName: 'T1A05', topicId: 1, topicUrl: 'https://forum.example.com/t/1', action: 'repaired' },
+            { questionDisplayName: 'T1A06', topicId: 2, topicUrl: 'https://forum.example.com/t/2', action: 'skipped' },
+          ],
+          brokenForumUrl: [
+            { questionId: 'q7', questionDisplayName: 'T1A07', forumUrl: 'https://forum.example.com/t/7', error: '404 Not Found' },
+          ],
+          missingStatus: [
+            { questionId: 'q8', questionDisplayName: 'T1A08', forumUrl: 'https://forum.example.com/t/8' },
+          ],
+        })
+      );
+
+    it('lists every kind of problem with its count', async () => {
+      verifyWithEverything();
+      render(<DiscourseSyncDashboard />, { wrapper: createWrapper() });
+
+      fireEvent.click(screen.getByText('Verify Sync Status'));
+
+      expect(await screen.findByRole('heading', { name: /topics in discourse without forum_url \(2\)/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /broken forum urls \(1\)/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /missing sync status \(1\)/i })).toBeInTheDocument();
+      expect(screen.getByText('404 Not Found')).toBeInTheDocument();
+      expect(screen.getByText('Repaired 1 items')).toBeInTheDocument();
+      expect(screen.queryByText('All synced questions are in good shape!')).not.toBeInTheDocument();
+    });
+
+    it('marks what a repair did to each orphaned topic', async () => {
+      verifyWithEverything();
+      render(<DiscourseSyncDashboard />, { wrapper: createWrapper() });
+
+      fireEvent.click(screen.getByText('Verify Sync Status'));
+
+      expect(await screen.findByText('repaired')).toBeInTheDocument();
+      expect(screen.getByText('skipped')).toBeInTheDocument();
+    });
+
+    it('names each topic link after its question', async () => {
+      verifyWithEverything();
+      render(<DiscourseSyncDashboard />, { wrapper: createWrapper() });
+
+      fireEvent.click(screen.getByText('Verify Sync Status'));
+
+      const link = await screen.findByRole('link', { name: 'View topic for T1A08' });
+      expect(link).toHaveAttribute('href', 'https://forum.example.com/t/8');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+      expect(screen.getAllByRole('link', { name: /view topic for/i })).toHaveLength(3);
+    });
+  });
+
   describe('Repair Confirmation Dialog', () => {
+    it('is an alertdialog that says how much it will touch', async () => {
+      mockVerify.mutateAsync.mockResolvedValueOnce(
+        createMockVerifyResult({
+          orphanedInDiscourse: [
+            { questionDisplayName: 'T1A05', topicId: 1, topicUrl: 'https://forum.example.com/t/1' },
+            { questionDisplayName: 'T1A06', topicId: 2, topicUrl: 'https://forum.example.com/t/2' },
+          ],
+          missingStatus: [{ questionId: 'q8', questionDisplayName: 'T1A08', forumUrl: 'https://forum.example.com/t/8' }],
+        })
+      );
+      render(<DiscourseSyncDashboard />, { wrapper: createWrapper() });
+
+      fireEvent.click(screen.getByText('Verify Sync Status'));
+      await waitFor(() => expect(screen.getByText('Repair Missing URLs').closest('button')).not.toBeDisabled());
+      fireEvent.click(screen.getByText('Repair Missing URLs'));
+
+      const dialog = await screen.findByRole('alertdialog');
+      expect(dialog).toHaveAccessibleName('Repair Discourse Sync?');
+      expect(dialog).toHaveAccessibleDescription(/2 missing URLs will be repaired and 1 sync statuses will be updated/);
+    });
+
     it('shows confirmation dialog when repair button is clicked', async () => {
       mockVerify.mutateAsync.mockResolvedValueOnce({
         success: true,
