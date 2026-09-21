@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AdminAlerts } from './AdminAlerts';
+import { muiWrapper } from '@/test/utils';
 
 // Mock the useAlerts hooks
 vi.mock('@/hooks/useAlerts', () => ({
@@ -100,7 +101,8 @@ describe('AdminAlerts', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <AdminAlerts />
-      </QueryClientProvider>
+      </QueryClientProvider>,
+      { wrapper: muiWrapper }
     );
   };
 
@@ -234,6 +236,30 @@ describe('AdminAlerts', () => {
     });
   });
 
+  describe('Tab wiring', () => {
+    it('labels the panel by the selected filter tab', async () => {
+      const user = userEvent.setup();
+      renderComponent();
+
+      const active = screen.getByRole('tab', { name: /active/i, selected: true });
+      expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', active.id);
+
+      await user.click(screen.getByRole('tab', { name: /resolved/i }));
+
+      const resolved = screen.getByRole('tab', { name: /resolved/i, selected: true });
+      expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', resolved.id);
+    });
+
+    it('passes no filter to the hook for "All"', async () => {
+      const user = userEvent.setup();
+      renderComponent();
+
+      await user.click(screen.getByRole('tab', { name: /all/i }));
+
+      expect(useAlerts).toHaveBeenLastCalledWith(undefined);
+    });
+  });
+
   describe('Alert Actions', () => {
     it('should show Acknowledge button for pending alerts', () => {
       renderComponent();
@@ -265,6 +291,34 @@ describe('AdminAlerts', () => {
       expect(mockAcknowledgeMutate).toHaveBeenCalled();
     });
 
+    it('sends the note typed in the dialog along with the acknowledgment', async () => {
+      const user = userEvent.setup({ pointerEventsCheck: 0 });
+      renderComponent();
+
+      await user.click(screen.getByRole('button', { name: /acknowledge/i }));
+      await user.type(await screen.findByLabelText(/note/i), 'Known issue');
+      await user.click(screen.getByRole('button', { name: /^acknowledge$/i }));
+
+      expect(mockAcknowledgeMutate).toHaveBeenCalledWith(
+        { alertId: 'alert-1', note: 'Known issue' },
+        expect.anything()
+      );
+    });
+
+    it('sends no note when the field is left empty', async () => {
+      const user = userEvent.setup({ pointerEventsCheck: 0 });
+      renderComponent();
+
+      await user.click(screen.getByRole('button', { name: /acknowledge/i }));
+      await screen.findByRole('dialog');
+      await user.click(screen.getByRole('button', { name: /^acknowledge$/i }));
+
+      expect(mockAcknowledgeMutate).toHaveBeenCalledWith(
+        { alertId: 'alert-1', note: undefined },
+        expect.anything()
+      );
+    });
+
     it('should call resolve mutation when Resolve clicked', async () => {
       const user = userEvent.setup();
       renderComponent();
@@ -288,6 +342,33 @@ describe('AdminAlerts', () => {
       renderComponent();
 
       expect(screen.getByText('Next:')).toBeInTheDocument();
+    });
+
+    it('says "soon" when the schedule has slipped', () => {
+      vi.mocked(useMonitorRuns).mockReturnValue({
+        data: [{ ...mockMonitorRuns[0], started_at: new Date(Date.now() - 10 * 60 * 1000).toISOString() }],
+      } as ReturnType<typeof useMonitorRuns>);
+
+      renderComponent();
+
+      expect(screen.getByText('Next:').parentElement).toHaveTextContent('Next: soon');
+    });
+
+    /** At the cap the monitor stopped reading, so the count is a floor, not a total. */
+    it('marks the log count when the monitor hit its limit', () => {
+      vi.mocked(useMonitorRuns).mockReturnValue({
+        data: [{ ...mockMonitorRuns[0], logs_analyzed: 500 }],
+      } as ReturnType<typeof useMonitorRuns>);
+
+      renderComponent();
+
+      expect(screen.getByText('Logs:').parentElement).toHaveTextContent('Logs: 500 (limit)');
+    });
+
+    it('does not mark a count under the limit', () => {
+      renderComponent();
+
+      expect(screen.getByText('Logs:').parentElement).toHaveTextContent(/^Logs: 100$/);
     });
 
     it('should show "No runs yet" when no monitor runs', () => {
