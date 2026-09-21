@@ -295,11 +295,12 @@ describe('DiscourseSyncDashboard', () => {
     it('shows the synced share overall and per licence', () => {
       render(<DiscourseSyncDashboard />, { wrapper: createWrapper() });
 
-      // 820 of 885 overall; 380 of 423 for Technician; 440 of 462 for General.
-      expect(screen.getByRole('progressbar', { name: /synced share of all questions/i }))
-        .toHaveAttribute('aria-valuenow', String((820 / 885) * 100));
-      expect(screen.getByRole('progressbar', { name: /technician synced share/i }))
-        .toHaveAttribute('aria-valuenow', String((380 / 423) * 100));
+      // 820 of 885 overall; 380 of 423 for Technician. MUI 9 reports the raw
+      // value; a tolerance of half a point keeps this true if it ever rounds.
+      const valueOf = (name: RegExp) =>
+        Number(screen.getByRole('progressbar', { name }).getAttribute('aria-valuenow'));
+      expect(valueOf(/synced share of all questions/i)).toBeCloseTo((820 / 885) * 100, 0);
+      expect(valueOf(/technician synced share/i)).toBeCloseTo((380 / 423) * 100, 0);
     });
   });
 

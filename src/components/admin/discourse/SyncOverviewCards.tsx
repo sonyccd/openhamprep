@@ -2,13 +2,13 @@ import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
 import Typography from "@mui/material/Typography";
 import type { useDiscourseSyncStatus } from "@/hooks/useDiscourseSyncStatus";
+import { MetricCard } from "./MetricCard";
+import { syncedPercent } from "./syncMetrics";
 
 type SyncTotals = ReturnType<typeof useDiscourseSyncStatus>["totals"];
 
 const bigNumberSx = { fontSize: "1.5rem", fontWeight: 700, lineHeight: 1.25 } as const;
 const captionSx = { fontSize: "0.75rem", color: "text.secondary" } as const;
-import { MetricCard } from "./MetricCard";
-import { syncedPercent } from "./syncMetrics";
 
 interface SyncOverviewCardsProps {
   totals: SyncTotals;
