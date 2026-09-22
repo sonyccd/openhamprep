@@ -22,7 +22,6 @@ const RULES = {
 export function FigureUpload({ questionId, currentFigureUrl, onUpload, onRemove }: FigureUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleFilePicked = async (file: File) => {
     const rejection = rejectImage(file, RULES);
@@ -31,22 +30,19 @@ export function FigureUpload({ questionId, currentFigureUrl, onUpload, onRemove 
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => setPreviewUrl(e.target?.result as string);
-    reader.readAsDataURL(file);
-
     setIsUploading(true);
     try {
       const fileName = storageNameFor(questionId, file.type);
 
-      // A previous upload under a different extension would otherwise linger.
+      const { error } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: "3600", upsert: true });
+      if (error) throw error;
+
+      // Only now: a previous upload under a different extension would linger,
+      // but removing it first would lose the figure if this upload failed.
       if (currentFigureUrl) {
         const previous = storageNameFromUrl(currentFigureUrl);
         if (previous !== fileName) await supabase.storage.from(BUCKET).remove([previous]);
       }
-
-      const { error } = await supabase.storage.from(BUCKET).upload(fileName, file, { cacheControl: "3600", upsert: true });
-      if (error) throw error;
 
       const { publicUrl } = supabase.storage.from(BUCKET).getPublicUrl(fileName).data;
       // Cache-bust, or the browser keeps showing the figure this one replaced.
@@ -55,7 +51,6 @@ export function FigureUpload({ questionId, currentFigureUrl, onUpload, onRemove 
     } catch (error: unknown) {
       toast.error("Failed to upload figure: " + describeStorageError(error));
     } finally {
-      setPreviewUrl(null);
       setIsUploading(false);
     }
   };
@@ -77,7 +72,7 @@ export function FigureUpload({ questionId, currentFigureUrl, onUpload, onRemove 
 
   return (
     <ImageUploadField
-      displayUrl={previewUrl || currentFigureUrl}
+      storedUrl={currentFigureUrl}
       imageAlt={`Figure for ${questionId}`}
       noun="Figure"
       accept={RULES.allowedTypes.join(",")}
@@ -85,7 +80,7 @@ export function FigureUpload({ questionId, currentFigureUrl, onUpload, onRemove 
       isUploading={isUploading}
       isRemoving={isRemoving}
       onFilePicked={handleFilePicked}
-      onRemove={currentFigureUrl && !previewUrl ? handleRemove : undefined}
+      onRemove={currentFigureUrl ? handleRemove : undefined}
     />
   );
 }

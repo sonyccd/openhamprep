@@ -1,5 +1,5 @@
 /** Extension for an image MIME type, so the name does not depend on what the user called the file. */
-export const MIME_TO_EXT: Record<string, string> = {
+const MIME_TO_EXT: Record<string, string> = {
   "image/png": "png",
   "image/jpeg": "jpg",
   "image/gif": "gif",

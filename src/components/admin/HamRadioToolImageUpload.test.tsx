@@ -109,6 +109,39 @@ describe('HamRadioToolImageUpload', () => {
     expect(mockUpload).not.toHaveBeenCalled();
   });
 
+  /** Deleting the old object first would lose the image when the upload fails. */
+  it('keeps the old object when the replacing upload fails', async () => {
+    const user = userEvent.setup();
+    const onUpload = vi.fn();
+    mockUpload.mockResolvedValueOnce({ error: { message: 'quota' } });
+    render(<HamRadioToolImageUpload {...props} currentStoragePath="tool-1.webp" onUpload={onUpload} />);
+
+    await user.upload(screen.getByLabelText('Choose image to upload'), png());
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Failed to upload image: quota'));
+    expect(mockRemove).not.toHaveBeenCalled();
+    expect(onUpload).not.toHaveBeenCalled();
+    // The image the user still has is the one still on screen.
+    expect(screen.getByRole('img', { name: 'Tool image' })).toHaveAttribute('src', 'https://cdn.example.com/tool-1.webp');
+  });
+
+  /** The preview stands in only while the upload runs, whatever its outcome. */
+  it('drops the preview of a file that failed to upload', async () => {
+    const user = userEvent.setup();
+    let failUpload: (r: { error: { message: string } }) => void = () => {};
+    mockUpload.mockReturnValueOnce(new Promise((resolve) => { failUpload = resolve; }));
+    render(<HamRadioToolImageUpload {...props} currentStoragePath="tool-1.webp" />);
+
+    await user.upload(screen.getByLabelText('Choose image to upload'), png());
+    await waitFor(() => expect(screen.getByRole('img', { name: 'Tool image' })).toHaveAttribute('src', expect.stringMatching(/^blob:/)));
+
+    failUpload({ error: { message: 'quota' } });
+
+    await waitFor(() =>
+      expect(screen.getByRole('img', { name: 'Tool image' })).toHaveAttribute('src', 'https://cdn.example.com/tool-1.webp')
+    );
+  });
+
   it('reports a failed upload and tells the caller nothing', async () => {
     const user = userEvent.setup();
     const onUpload = vi.fn();

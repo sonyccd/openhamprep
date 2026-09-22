@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -12,8 +12,8 @@ import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
 const icon = { width: 16, height: 16 } as const;
 
 interface ImageUploadFieldProps {
-  /** What to show: the local preview while uploading, else what is stored. */
-  displayUrl: string | null;
+  /** What is stored. A local preview of a picked file is shown over it while uploading. */
+  storedUrl: string | null;
   imageAlt: string;
   /** The word for what is being uploaded, e.g. "Image" or "Figure". */
   noun: string;
@@ -32,7 +32,7 @@ interface ImageUploadFieldProps {
  * the caller's business; this is the control around it.
  */
 export function ImageUploadField({
-  displayUrl,
+  storedUrl,
   imageAlt,
   noun,
   accept,
@@ -44,6 +44,18 @@ export function ImageUploadField({
 }: ImageUploadFieldProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // The preview lasts exactly as long as the upload. Clearing it when
+  // isUploading goes false covers failure too: a file that never landed must
+  // not keep standing in for the image that is actually stored.
+  useEffect(() => {
+    if (isUploading || !previewUrl) return;
+    URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+  }, [isUploading, previewUrl]);
+
+  const displayUrl = previewUrl ?? storedUrl;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -85,7 +97,10 @@ export function ImageUploadField({
           style={visuallyHidden as CSSProperties}
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) onFilePicked(file);
+            if (file) {
+              setPreviewUrl(URL.createObjectURL(file));
+              onFilePicked(file);
+            }
             // So the same file can be chosen again after a rejection.
             e.target.value = "";
           }}
