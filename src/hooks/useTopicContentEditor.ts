@@ -34,8 +34,9 @@ export function useUploadTopicImage() {
       if (!(TOPIC_IMAGE_TYPES as readonly string[]).includes(file.type)) {
         throw new Error(`Invalid file type: ${file.type}. Allowed types: JPEG, PNG, GIF, WebP, SVG`);
       }
-      const ext = file.name.split(".").pop();
-      const path = `topic-images/${crypto.randomUUID()}.${ext}`;
+      // A name with no extension gets none, rather than a literal ".undefined".
+      const ext = file.name.includes(".") ? file.name.split(".").pop() : "";
+      const path = `topic-images/${crypto.randomUUID()}${ext ? `.${ext}` : ""}`;
       const { error } = await supabase.storage
         .from(TOPIC_CONTENT_BUCKET)
         .upload(path, file, { contentType: file.type, upsert: false });

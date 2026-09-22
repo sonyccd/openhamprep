@@ -51,8 +51,10 @@ export function TopicMarkdownEditor({ topicId, topicSlug, initialContent, onSave
       onSuccess: (publicUrl) => {
         const textarea = textareaRef.current;
         if (!textarea) return;
+        // Read the live value and selection, not what they were when the file
+        // was picked: an upload takes a while and the user may have kept typing.
         const { value, caret } = insertAtSelection(
-          content,
+          textarea.value,
           textarea.selectionStart,
           textarea.selectionEnd,
           `![${file.name}](${publicUrl})`

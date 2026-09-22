@@ -192,6 +192,23 @@ describe('TopicMarkdownEditor', () => {
       expect(toast.success).toHaveBeenCalledWith('Image uploaded successfully');
     });
 
+    /** An upload is slow; whatever was typed while it ran has to survive it. */
+    it('inserts into the text as it stands when the upload finishes, not as it was', async () => {
+      let finishUpload: (result: { error: null }) => void = () => {};
+      mockUpload.mockReturnValueOnce(new Promise((resolve) => { finishUpload = resolve; }));
+      const textarea = await pickImage(new File(['png'], 'a.png', { type: 'image/png' }));
+
+      await waitFor(() => expect(mockUpload).toHaveBeenCalled());
+      // The user keeps typing, and the caret moves, while the upload is in flight.
+      fireEvent.change(textarea, { target: { value: 'before MORE after' } });
+      textarea.setSelectionRange(12, 12);
+      finishUpload({ error: null });
+
+      await waitFor(() =>
+        expect(textarea.value).toBe('before MORE ![a.png](https://example.com/image.png)after')
+      );
+    });
+
     it('refuses a file that is not one of the image types', async () => {
       await pickImage(new File(['x'], 'notes.txt', { type: 'text/plain' }), false);
 
