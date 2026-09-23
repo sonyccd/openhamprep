@@ -29,7 +29,9 @@ const bodyColor = (t: Theme) => tokenAlpha(t.vars.palette.text.primary, 90);
  * HTML elements, so react-markdown's own props (including `node`) pass
  * through them exactly as they did before this was on MUI.
  */
-const H1 = styled("h1")({ fontSize: "1.875rem", fontWeight: 700, marginTop: 32, marginBottom: 16, scrollMarginTop: 16, "&:first-of-type": { marginTop: 0 } });
+const H1 = styled("h1")({ fontSize: "1.875rem", fontWeight: 700, marginTop: 32, marginBottom: 16, scrollMarginTop: 16, // Tailwind's first: is :first-child, not :first-of-type — an h1 that is
+  // not the document's first node keeps its top margin.
+  "&:first-child": { marginTop: 0 } });
 const H2 = styled("h2")({ fontSize: "1.5rem", fontWeight: 600, marginTop: 24, marginBottom: 12, scrollMarginTop: 16 });
 const H3 = styled("h3")({ fontSize: "1.25rem", fontWeight: 600, marginTop: 16, marginBottom: 8, scrollMarginTop: 16 });
 const H4 = styled("h4")({ fontSize: "1.125rem", fontWeight: 600, marginTop: 16, marginBottom: 8, scrollMarginTop: 16 });

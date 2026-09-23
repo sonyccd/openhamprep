@@ -7,6 +7,26 @@ import { TopicContent } from './TopicContent';
 const render = (ui: ReactElement) => rtlRender(ui, { wrapper: muiWrapper });
 
 describe('TopicContent', () => {
+
+  describe('heading spacing', () => {
+    /**
+     * Tailwind's `first:` compiles to :first-child. :first-of-type would zero
+     * the top margin on the first h1 even when something precedes it.
+     */
+    it('only drops the top margin when the heading really is first', () => {
+      const { container } = render(<TopicContent content={'# Leading\n\ntext'} />);
+      const h1 = container.querySelector('h1')!;
+      const cls = [...h1.classList].find((c) => c.startsWith('css-'));
+      if (!cls) throw new Error(`no emotion class on the heading: ${h1.className}`);
+      const rules = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .map((rule) => rule.cssText.replace(/\s+/g, ' '))
+        .filter((text) => text.includes(cls) && text.includes('margin-top: 0'));
+
+      expect(rules.join('\n')).toContain(':first-child');
+      expect(rules.join('\n')).not.toContain(':first-of-type');
+    });
+  });
   describe('Headings', () => {
     it('should render h1 heading with correct ID', () => {
       render(<TopicContent content="# Hello World" />);

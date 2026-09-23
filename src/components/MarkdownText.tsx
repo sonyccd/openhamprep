@@ -58,6 +58,8 @@ export function MarkdownText({ text, sx }: MarkdownTextProps) {
                 href={safeUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                // MUI underlines always by default; this was hover-only.
+                underline="hover"
                 sx={{ display: "inline-flex", alignItems: "center", gap: 0.25 }}
               >
                 {children}
