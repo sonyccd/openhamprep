@@ -105,6 +105,10 @@ export function ImageUploadField({
           type="file"
           accept={rules.allowedTypes.join(",")}
           aria-label={`Choose ${noun.toLowerCase()} to upload`}
+          // visuallyHidden keeps the input in the tab order, unlike the
+          // display:none it replaced, so it has to be disabled in its own
+          // right or a second file could be picked mid-upload.
+          disabled={isUploading || isRemoving}
           style={visuallyHidden as CSSProperties}
           onChange={(e) => {
             const file = e.target.files?.[0];

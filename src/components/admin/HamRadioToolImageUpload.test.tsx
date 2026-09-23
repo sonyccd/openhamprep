@@ -112,6 +112,26 @@ describe('HamRadioToolImageUpload', () => {
     }
   });
 
+  /** visuallyHidden leaves the input focusable, so it needs disabling itself. */
+  it('takes the file input out of reach while busy', async () => {
+    const user = userEvent.setup();
+    let finish: (r: { error: null }) => void = () => {};
+    mockUpload.mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+    render(<HamRadioToolImageUpload {...props} />);
+
+    const input = screen.getByLabelText('Choose image to upload') as HTMLInputElement;
+    expect(input).toBeEnabled();
+
+    await user.upload(input, png());
+    await waitFor(() => expect(input).toBeDisabled());
+    // Even reached directly by keyboard, it cannot start a second upload.
+    input.focus();
+    expect(input).not.toHaveFocus();
+
+    finish({ error: null });
+    await waitFor(() => expect(input).toBeEnabled());
+  });
+
   it('revokes the preview object URL once the upload settles', async () => {
     const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
     try {
