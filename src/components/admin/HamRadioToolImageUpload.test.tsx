@@ -87,6 +87,45 @@ describe('HamRadioToolImageUpload', () => {
     expect(mockRemove).not.toHaveBeenCalled();
   });
 
+  /**
+   * A rejected file must never stand in for the stored image, not even for a
+   * frame. The clearing effect flushes before assertions can see the DOM, so
+   * the check is that no object URL was ever made for it.
+   */
+  it('makes no preview at all for a rejected file', async () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL');
+    try {
+      const user = userEvent.setup({ applyAccept: false });
+      render(<HamRadioToolImageUpload {...props} currentStoragePath="tool-1.png" />);
+
+      await user.upload(screen.getByLabelText('Choose image to upload'), new File(['x'], 'a.svg', { type: 'image/svg+xml' }));
+
+      expect(createObjectURL).not.toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalled();
+      expect(screen.getByRole('img', { name: 'Tool image' })).toHaveAttribute('src', 'https://cdn.example.com/tool-1.png');
+
+      // ...and it does make one for a file it accepts.
+      await user.upload(screen.getByLabelText('Choose image to upload'), png());
+      expect(createObjectURL).toHaveBeenCalledTimes(1);
+    } finally {
+      createObjectURL.mockRestore();
+    }
+  });
+
+  it('revokes the preview object URL once the upload settles', async () => {
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL');
+    try {
+      const user = userEvent.setup();
+      render(<HamRadioToolImageUpload {...props} />);
+
+      await user.upload(screen.getByLabelText('Choose image to upload'), png());
+
+      await waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith(expect.stringMatching(/^blob:/)));
+    } finally {
+      revokeObjectURL.mockRestore();
+    }
+  });
+
   it('rejects a file over 2 MB before uploading anything', async () => {
     const user = userEvent.setup();
     render(<HamRadioToolImageUpload {...props} />);

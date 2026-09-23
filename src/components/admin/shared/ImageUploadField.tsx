@@ -6,6 +6,9 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import { visuallyHidden } from "@mui/utils";
 import { Image as ImageIcon, Trash2, Upload } from "lucide-react";
+import { toast } from "sonner";
+import { rejectImage } from "@/lib/imageUpload";
+import type { ImageFileRules } from "@/lib/imageUpload";
 import { tokenAlpha } from "@/theme/muiTheme";
 import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
 
@@ -17,7 +20,8 @@ interface ImageUploadFieldProps {
   imageAlt: string;
   /** The word for what is being uploaded, e.g. "Image" or "Figure". */
   noun: string;
-  accept: string;
+  /** What this field takes. Drives the accept list and the rejection message. */
+  rules: ImageFileRules;
   hint: string;
   isUploading: boolean;
   isRemoving: boolean;
@@ -35,7 +39,7 @@ export function ImageUploadField({
   storedUrl,
   imageAlt,
   noun,
-  accept,
+  rules,
   hint,
   isUploading,
   isRemoving,
@@ -45,6 +49,13 @@ export function ImageUploadField({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // Revoke whatever is outstanding if this unmounts mid-upload.
+  const previewRef = useRef<string | null>(null);
+  previewRef.current = previewUrl;
+  useEffect(() => () => {
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+  }, []);
 
   // The preview lasts exactly as long as the upload. Clearing it when
   // isUploading goes false covers failure too: a file that never landed must
@@ -92,14 +103,21 @@ export function ImageUploadField({
         <input
           ref={fileInputRef}
           type="file"
-          accept={accept}
+          accept={rules.allowedTypes.join(",")}
           aria-label={`Choose ${noun.toLowerCase()} to upload`}
           style={visuallyHidden as CSSProperties}
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) {
-              setPreviewUrl(URL.createObjectURL(file));
-              onFilePicked(file);
+              // Validate before previewing: a rejected file must never stand
+              // in, even for a frame, for the image that is actually stored.
+              const rejection = rejectImage(file, rules);
+              if (rejection) {
+                toast.error(rejection);
+              } else {
+                setPreviewUrl(URL.createObjectURL(file));
+                onFilePicked(file);
+              }
             }
             // So the same file can be chosen again after a rejection.
             e.target.value = "";

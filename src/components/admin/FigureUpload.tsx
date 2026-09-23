@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { describeStorageError, rejectImage, storageNameFor, storageNameFromUrl } from "@/lib/imageUpload";
+import { describeStorageError, storageNameFor, storageNameFromUrl } from "@/lib/imageUpload";
 import { ImageUploadField } from "./shared/ImageUploadField";
 
 interface FigureUploadProps {
@@ -24,12 +24,6 @@ export function FigureUpload({ questionId, currentFigureUrl, onUpload, onRemove 
   const [isRemoving, setIsRemoving] = useState(false);
 
   const handleFilePicked = async (file: File) => {
-    const rejection = rejectImage(file, RULES);
-    if (rejection) {
-      toast.error(rejection);
-      return;
-    }
-
     setIsUploading(true);
     try {
       const fileName = storageNameFor(questionId, file.type);
@@ -75,7 +69,7 @@ export function FigureUpload({ questionId, currentFigureUrl, onUpload, onRemove 
       storedUrl={currentFigureUrl}
       imageAlt={`Figure for ${questionId}`}
       noun="Figure"
-      accept={RULES.allowedTypes.join(",")}
+      rules={RULES}
       hint="Supported: PNG, JPEG, GIF, WebP, SVG. Max size: 2 MB."
       isUploading={isUploading}
       isRemoving={isRemoving}

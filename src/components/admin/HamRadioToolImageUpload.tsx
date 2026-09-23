@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { describeStorageError, rejectImage, storageNameFor } from "@/lib/imageUpload";
+import { describeStorageError, storageNameFor } from "@/lib/imageUpload";
 import { ImageUploadField } from "./shared/ImageUploadField";
 
 interface HamRadioToolImageUploadProps {
@@ -28,12 +28,6 @@ export function HamRadioToolImageUpload({ toolId, currentStoragePath, onUpload, 
     : null;
 
   const handleFilePicked = async (file: File) => {
-    const rejection = rejectImage(file, RULES);
-    if (rejection) {
-      toast.error(rejection);
-      return;
-    }
-
     setIsUploading(true);
     try {
       const storagePath = storageNameFor(toolId, file.type);
@@ -77,7 +71,7 @@ export function HamRadioToolImageUpload({ toolId, currentStoragePath, onUpload, 
       storedUrl={currentImageUrl}
       imageAlt="Tool image"
       noun="Image"
-      accept={RULES.allowedTypes.join(",")}
+      rules={RULES}
       hint="Supported: PNG, JPEG, GIF, WebP. Max size: 2 MB."
       isUploading={isUploading}
       isRemoving={isRemoving}

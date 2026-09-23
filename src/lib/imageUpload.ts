@@ -26,9 +26,9 @@ export function storageNameFor(ownerId: string, mimeType: string): string {
   return `${ownerId}.${MIME_TO_EXT[mimeType] ?? "png"}`;
 }
 
-/** The object name inside a public storage URL, with any cache-busting query dropped. */
+/** The object name inside a public storage URL. A query such as ?t= is not part of the path. */
 export function storageNameFromUrl(url: string): string {
-  return new URL(url).pathname.split("/").pop()!.split("?")[0];
+  return new URL(url).pathname.split("/").pop()!;
 }
 
 /**
