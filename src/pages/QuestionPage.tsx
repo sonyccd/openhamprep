@@ -1,18 +1,32 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
+import { ArrowLeft, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuestion } from '@/hooks/useQuestions';
 import { useAppNavigation } from '@/hooks/useAppNavigation';
 import { QuestionCard } from '@/components/QuestionCard';
-import { Button } from '@/components/ui/button';
+import { MotionBox } from '@/components/ohp/MotionBox';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ArrowLeft, Loader2, AlertCircle, Zap, UserPlus } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { QuestionPageMessage } from './question/QuestionPageMessage';
+import { SignUpPrompt } from './question/SignUpPrompt';
 
 // Accept either display name format (T1A01) or UUID format
 const isValidDisplayName = (id: string) => /^[TGE]\d[A-Z]\d{2}$/i.test(id);
 const isUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 const isValidQuestionId = (id: string) => isValidDisplayName(id) || isUUID(id);
+
+/** The theme toggle floats in the corner on every state of this page. */
+function CornerThemeToggle() {
+  return (
+    <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+      <ThemeToggle />
+    </Box>
+  );
+}
 
 export default function QuestionPage() {
   const { id } = useParams<{ id: string }>();
@@ -21,13 +35,15 @@ export default function QuestionPage() {
   const { navigateToTopic } = useAppNavigation();
   const { data: question, isLoading, error } = useQuestion(id);
 
-  // Handle topic click - navigate to dashboard with topic state
   const handleTopicClick = (slug: string) => {
     navigateToTopic(slug);
     navigate('/dashboard');
   };
 
-  // Update document title - use displayName if available (for UUID-based URLs)
+  const goHome = () => navigate(user ? '/dashboard' : '/');
+  const homeLabel = user ? 'Back to Dashboard' : 'Back to Home';
+
+  // Title follows the question, using displayName for UUID-based URLs.
   useEffect(() => {
     const prevTitle = document.title;
     const displayId = question?.displayName || (id && isValidDisplayName(id) ? id.toUpperCase() : id);
@@ -37,126 +53,63 @@ export default function QuestionPage() {
     };
   }, [id, question?.displayName]);
 
-  // Validate question ID format
   if (id && !isValidQuestionId(id)) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="absolute top-4 right-4">
-          <ThemeToggle />
-        </div>
-        <div className="flex flex-col items-center justify-center min-h-screen px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center"
-          >
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-              <AlertCircle className="w-8 h-8 text-destructive" />
-            </div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">Invalid Question ID</h1>
-            <p className="text-muted-foreground mb-6">
-              The question ID "{id}" is not a valid format. Question IDs should look like T1A01, G2B03, E3C12, or be a valid UUID.
-            </p>
-            <Button onClick={() => navigate(user ? '/dashboard' : '/')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              {user ? 'Back to Dashboard' : 'Back to Home'}
-            </Button>
-          </motion.div>
-        </div>
-      </div>
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+        <CornerThemeToggle />
+        <QuestionPageMessage title="Invalid Question ID" actionLabel={homeLabel} onAction={goHome}>
+          The question ID "{id}" is not a valid format. Question IDs should look like T1A01, G2B03,
+          E3C12, or be a valid UUID.
+        </QuestionPageMessage>
+      </Box>
     );
   }
 
-  // Show loading while fetching question
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading question...</p>
-        </div>
-      </div>
+      <Box
+        sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Box sx={{ textAlign: 'center' }} role="status" aria-label="Loading question">
+          <CircularProgress size={32} sx={{ mb: 2 }} />
+          <Typography sx={{ color: 'text.secondary' }}>Loading question...</Typography>
+        </Box>
+      </Box>
     );
   }
 
-  // Question not found
   if (error || !question) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="absolute top-4 right-4">
-          <ThemeToggle />
-        </div>
-        <div className="flex flex-col items-center justify-center min-h-screen px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center"
-          >
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-              <AlertCircle className="w-8 h-8 text-destructive" />
-            </div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">Question Not Found</h1>
-            <p className="text-muted-foreground mb-6">
-              We couldn't find question "{id?.toUpperCase()}". It may have been removed or the ID is incorrect.
-            </p>
-            <Button onClick={() => navigate(user ? '/dashboard' : '/')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              {user ? 'Back to Dashboard' : 'Back to Home'}
-            </Button>
-          </motion.div>
-        </div>
-      </div>
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+        <CornerThemeToggle />
+        <QuestionPageMessage title="Question Not Found" actionLabel={homeLabel} onAction={goHome}>
+          We couldn't find question "{id?.toUpperCase()}". It may have been removed or the ID is
+          incorrect.
+        </QuestionPageMessage>
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      <CornerThemeToggle />
 
-      <div className="py-8 px-4 pb-24 md:pb-8">
-        {/* Dashboard button for logged-in users only */}
+      <Box sx={{ py: 4, px: 2, pb: { xs: 12, md: 4 } }}>
         {user && (
-          <div className="max-w-3xl mx-auto mb-6">
-            <Button variant="ghost" onClick={() => navigate('/dashboard')} className="gap-2">
-              <ArrowLeft className="w-4 h-4" />
+          <Box sx={{ maxWidth: 768, mx: 'auto', mb: 3 }}>
+            <Button
+              variant="text"
+              color="inherit"
+              onClick={() => navigate('/dashboard')}
+              startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+            >
               Dashboard
             </Button>
-          </div>
+          </Box>
         )}
 
-        {/* Sign-up CTA for anonymous users - shown at top */}
-        {!user && !authLoading && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-3xl mx-auto mb-6"
-          >
-            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 border border-primary/20 rounded-xl p-5 backdrop-blur-sm" role="region" aria-label="Sign up call to action">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-center sm:text-left">
-                  <p className="font-medium text-foreground">
-                    Want to track your progress?
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Create a free account to bookmark questions & access study tools.
-                  </p>
-                </div>
-                <Button
-                  onClick={() => navigate(`/auth?returnTo=/questions/${id}`)}
-                  className="shrink-0 shadow-md hover:shadow-lg transition-shadow"
-                >
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Create Free Account
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {!user && !authLoading && <SignUpPrompt onSignUp={() => navigate(`/auth?returnTo=/questions/${id}`)} />}
 
-        {/* Question Card - showing result immediately */}
         <QuestionCard
           question={question}
           selectedAnswer={question.correctAnswer}
@@ -166,26 +119,21 @@ export default function QuestionPage() {
           onTopicClick={handleTopicClick}
         />
 
-        {/* Navigation actions */}
-        <motion.div
+        <MotionBox
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="max-w-3xl mx-auto mt-8 flex justify-center"
+          sx={{ maxWidth: 768, mx: 'auto', mt: 4, display: 'flex', justifyContent: 'center' }}
         >
-          {user ? (
-            <Button onClick={() => navigate('/dashboard?view=random-practice')}>
-              <Zap className="w-4 h-4 mr-2" />
-              Practice More Questions
-            </Button>
-          ) : (
-            <Button onClick={() => navigate('/auth?returnTo=/dashboard?view=random-practice')}>
-              <Zap className="w-4 h-4 mr-2" />
-              Start Practicing
-            </Button>
-          )}
-        </motion.div>
-      </div>
-    </div>
+          <Button
+            variant="contained"
+            onClick={() => navigate(user ? '/dashboard?view=random-practice' : '/auth?returnTo=/dashboard?view=random-practice')}
+            startIcon={<Box component={Zap} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+          >
+            {user ? 'Practice More Questions' : 'Start Practicing'}
+          </Button>
+        </MotionBox>
+      </Box>
+    </Box>
   );
 }
