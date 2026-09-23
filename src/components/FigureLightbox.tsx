@@ -1,7 +1,10 @@
+import { useId } from "react";
 import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
+import { visuallyHidden } from "@mui/utils";
 import { X } from "lucide-react";
 import { tokenAlpha } from "@/theme/muiTheme";
 
@@ -17,13 +20,19 @@ interface FigureLightboxProps {
  *
  * Deliberately not a papered Dialog: the image is the surface, so the paper
  * is transparent and unelevated and the backdrop does the dimming.
+ *
+ * The name comes from a hidden DialogTitle, not aria-label: MUI forwards only
+ * aria-labelledby/-describedby to the element carrying role="dialog", so a
+ * bare aria-label lands on the Modal root and names nothing (#283).
  */
 export function FigureLightbox({ isOpen, onClose, figureUrl, questionId }: FigureLightboxProps) {
+  const titleId = useId();
+
   return (
     <Dialog
       open={isOpen}
       onClose={onClose}
-      aria-label={`Figure for question ${questionId}`}
+      aria-labelledby={titleId}
       slotProps={{
         backdrop: { sx: { bgcolor: (t) => tokenAlpha(t.vars.palette.background.default, 95) } },
         paper: {
@@ -43,6 +52,9 @@ export function FigureLightbox({ isOpen, onClose, figureUrl, questionId }: Figur
         },
       }}
     >
+      <DialogTitle id={titleId} sx={visuallyHidden}>
+        Figure for question {questionId}
+      </DialogTitle>
       <Box
         component="img"
         src={figureUrl}

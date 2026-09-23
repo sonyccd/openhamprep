@@ -84,7 +84,7 @@ export function FigureImage({ figureUrl, questionId }: FigureImageProps) {
                 bgcolor: (t) => tokenAlpha(t.vars.palette.muted, 50),
               }}
             >
-              <CircularProgress size={24} />
+              <CircularProgress size={24} aria-label="Loading figure" />
             </Box>
           )}
           <Box

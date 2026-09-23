@@ -82,6 +82,19 @@ describe('FigureLightbox', () => {
       expect(screen.getByLabelText('Close')).toBeInTheDocument();
     });
 
+    /**
+     * MUI forwards only aria-labelledby to the element with role="dialog"; a
+     * bare aria-label lands on the Modal root and leaves the dialog unnamed,
+     * with a generated aria-labelledby pointing at nothing (#283).
+     */
+    it('names the dialog after the question it shows', () => {
+      render(<FigureLightbox {...defaultProps} />);
+
+      const dialog = screen.getByRole('dialog', { name: 'Figure for question E9B05' });
+      const labelledBy = dialog.getAttribute('aria-labelledby')!;
+      expect(document.getElementById(labelledBy)).not.toBeNull();
+    });
+
     it('should have dialog role', () => {
       render(<FigureLightbox {...defaultProps} />);
       expect(screen.getByRole('dialog')).toBeInTheDocument();
