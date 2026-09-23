@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { muiWrapper } from '@/test/utils';
+import { muiTheme } from '@/theme/muiTheme';
 import { SkipLink } from './SkipLink';
 
 /** The emitted rules are the behaviour here: it must be clipped until focus. */
@@ -40,6 +41,19 @@ describe('SkipLink', () => {
     expect(focusRule).toMatch(/height: auto/);
     expect(focusRule).toMatch(/width: auto/);
     expect(focusRule).toMatch(/clip: auto/);
+  });
+
+  /**
+   * zIndex.tooltip puts it above the app bar and drawer when it appears. It
+   * cannot collide with an open dialog: MUI aria-hidden's the rest of the
+   * page and traps focus, so the link is not reachable while one is open.
+   */
+  it('sits above the page chrome when shown', () => {
+    render(<SkipLink />, { wrapper: muiWrapper });
+    const focusRule = rulesFor(screen.getByRole('link')).find((r) => r.includes(':focus'))!;
+
+    const z = Number(focusRule.match(/z-index: (\d+)/)?.[1]);
+    expect(z).toBeGreaterThan(muiTheme.zIndex.drawer);
   });
 
   it('takes focus when tabbed to', async () => {

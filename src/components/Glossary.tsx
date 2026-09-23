@@ -96,7 +96,10 @@ export function Glossary() {
   if (isLoading) {
     return (
       <PageContainer width="wide" sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <CircularProgress size={32} role="status" aria-label="Loading glossary" />
+        {/* The live region wraps the spinner, so it keeps its progressbar role. */}
+        <Box role="status" aria-label="Loading glossary">
+          <CircularProgress size={32} />
+        </Box>
       </PageContainer>
     );
   }
