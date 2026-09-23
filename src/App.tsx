@@ -13,6 +13,7 @@ import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
 import { muiTheme } from "@/theme/muiTheme";
 import { MuiColorSchemeSync } from "@/theme/MuiColorSchemeSync";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
+import { FullPageLoader } from "@/components/ohp/FullPageLoader";
 
 // Lazy load pages for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -25,8 +26,6 @@ const QuestionRedirect = lazy(() => import("./pages/QuestionRedirect"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
-
-import { FullPageLoader } from "@/components/ohp/FullPageLoader";
 
 // Inner component that can use hooks
 const AppContent = () => {
