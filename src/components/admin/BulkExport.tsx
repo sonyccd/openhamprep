@@ -1,12 +1,12 @@
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useState } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import { Download, FileJson, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
+import { downloadFile } from "@/lib/downloadFile";
 
 interface BulkExportProps<T> {
   data: T[];
@@ -16,74 +16,59 @@ interface BulkExportProps<T> {
   itemLabel: string;
 }
 
-export function BulkExport<T>({
-  data,
-  filename,
-  formatCSV,
-  formatJSON,
-  itemLabel,
-}: BulkExportProps<T>) {
-  const downloadFile = (content: string, extension: string, mimeType: string) => {
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${filename}.${extension}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
+const icon = { width: 16, height: 16 } as const;
 
-  const handleExportCSV = () => {
+/** Offers the current list as a CSV or JSON download. */
+export function BulkExport<T>({ data, filename, formatCSV, formatJSON, itemLabel }: BulkExportProps<T>) {
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+
+  const exportAs = (format: "CSV" | "JSON") => {
+    setAnchorEl(null);
     if (data.length === 0) {
       toast.error(`No ${itemLabel} to export`);
       return;
     }
-    const csvContent = formatCSV(data);
-    downloadFile(csvContent, 'csv', 'text/csv');
-    toast.success(`Exported ${data.length} ${itemLabel} as CSV`);
-  };
-
-  const handleExportJSON = () => {
-    if (data.length === 0) {
-      toast.error(`No ${itemLabel} to export`);
-      return;
-    }
-    const jsonContent = JSON.stringify(formatJSON(data), null, 2);
-    downloadFile(jsonContent, 'json', 'application/json');
-    toast.success(`Exported ${data.length} ${itemLabel} as JSON`);
+    const isCsv = format === "CSV";
+    downloadFile(
+      `${filename}.${isCsv ? "csv" : "json"}`,
+      isCsv ? formatCSV(data) : JSON.stringify(formatJSON(data), null, 2),
+      isCsv ? "text/csv" : "application/json"
+    );
+    toast.success(`Exported ${data.length} ${itemLabel} as ${format}`);
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline">
-          <Download className="w-4 h-4 mr-2" />
-          Export
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleExportCSV}>
-          <FileSpreadsheet className="w-4 h-4 mr-2 text-success" />
+    <>
+      <Button
+        variant="outlined"
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        aria-haspopup="menu"
+        aria-expanded={anchorEl !== null}
+        startIcon={<Box component={Download} aria-hidden="true" sx={icon} />}
+      >
+        Export
+      </Button>
+      <Menu
+        open={anchorEl !== null}
+        anchorEl={anchorEl}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem onClick={() => exportAs("CSV")}>
+          <ListItemIcon sx={{ minWidth: 0, mr: 1, color: "success.main" }}>
+            <Box component={FileSpreadsheet} aria-hidden="true" sx={icon} />
+          </ListItemIcon>
           Export as CSV
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleExportJSON}>
-          <FileJson className="w-4 h-4 mr-2 text-info" />
+        </MenuItem>
+        <MenuItem onClick={() => exportAs("JSON")}>
+          <ListItemIcon sx={{ minWidth: 0, mr: 1, color: "info.main" }}>
+            <Box component={FileJson} aria-hidden="true" sx={icon} />
+          </ListItemIcon>
           Export as JSON
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </MenuItem>
+      </Menu>
+    </>
   );
 }
 
-// Helper function to escape CSV fields
-export function escapeCSVField(field: string | null | undefined): string {
-  if (field === null || field === undefined) return '';
-  const str = String(field);
-  // If the field contains comma, newline, or double quotes, wrap it in quotes
-  if (str.includes(',') || str.includes('\n') || str.includes('"')) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
