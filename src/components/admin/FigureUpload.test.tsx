@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render as rtlRender, screen, fireEvent, waitFor } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { muiWrapper } from '@/test/utils';
 import { FigureUpload } from './FigureUpload';
 
 // Mock Supabase client
@@ -28,6 +30,9 @@ vi.mock('sonner', () => ({
 }));
 
 import { toast } from 'sonner';
+
+/** Every render needs the real theme: the field reads palette tokens through sx. */
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: muiWrapper });
 
 describe('FigureUpload', () => {
   const defaultProps = {
@@ -101,13 +106,13 @@ describe('FigureUpload', () => {
   describe('File Selection', () => {
     it('should accept image files', () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
       expect(fileInput).toHaveAttribute('accept', 'image/png,image/jpeg,image/gif,image/webp,image/svg+xml');
     });
 
     it('should trigger file input when upload button is clicked', () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
       const clickSpy = vi.spyOn(fileInput, 'click');
 
       fireEvent.click(screen.getByText('Upload Figure'));
@@ -118,7 +123,7 @@ describe('FigureUpload', () => {
   describe('File Validation', () => {
     it('should reject files larger than 2MB', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
 
       // Create a file larger than 2MB
       const largeFile = new File(['x'.repeat(3 * 1024 * 1024)], 'large.png', { type: 'image/png' });
@@ -137,7 +142,7 @@ describe('FigureUpload', () => {
 
     it('should reject non-image file types', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
 
       const textFile = new File(['test content'], 'test.txt', { type: 'text/plain' });
 
@@ -155,7 +160,7 @@ describe('FigureUpload', () => {
 
     it('should accept PNG files', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
 
       const pngFile = new File(['test'], 'test.png', { type: 'image/png' });
 
@@ -172,7 +177,7 @@ describe('FigureUpload', () => {
 
     it('should accept JPEG files', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
 
       const jpegFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
 
@@ -189,7 +194,7 @@ describe('FigureUpload', () => {
 
     it('should accept GIF files', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
 
       const gifFile = new File(['test'], 'test.gif', { type: 'image/gif' });
 
@@ -206,7 +211,7 @@ describe('FigureUpload', () => {
 
     it('should accept WebP files', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
 
       const webpFile = new File(['test'], 'test.webp', { type: 'image/webp' });
 
@@ -223,7 +228,7 @@ describe('FigureUpload', () => {
 
     it('should accept SVG files', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
 
       const svgFile = new File(['<svg></svg>'], 'test.svg', { type: 'image/svg+xml' });
 
@@ -248,7 +253,7 @@ describe('FigureUpload', () => {
       }));
 
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
 
       const pngFile = new File(['test'], 'test.png', { type: 'image/png' });
       Object.defineProperty(fileInput, 'files', { value: [pngFile] });
@@ -271,7 +276,7 @@ describe('FigureUpload', () => {
     it('should call onUpload with URL on successful upload', async () => {
       const onUpload = vi.fn();
       render(<FigureUpload {...defaultProps} onUpload={onUpload} />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
 
       const pngFile = new File(['test'], 'test.png', { type: 'image/png' });
       Object.defineProperty(fileInput, 'files', { value: [pngFile] });
@@ -287,7 +292,7 @@ describe('FigureUpload', () => {
 
     it('should show success toast on successful upload', async () => {
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
 
       const pngFile = new File(['test'], 'test.png', { type: 'image/png' });
       Object.defineProperty(fileInput, 'files', { value: [pngFile] });
@@ -303,7 +308,7 @@ describe('FigureUpload', () => {
       mockUpload.mockResolvedValue({ error: { message: 'Upload failed' } });
 
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
 
       const pngFile = new File(['test'], 'test.png', { type: 'image/png' });
       Object.defineProperty(fileInput, 'files', { value: [pngFile] });
@@ -317,7 +322,7 @@ describe('FigureUpload', () => {
 
     it('should use question ID as filename', async () => {
       render(<FigureUpload {...defaultProps} questionId="T1A01" />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
 
       const pngFile = new File(['test'], 'original-name.png', { type: 'image/png' });
       Object.defineProperty(fileInput, 'files', { value: [pngFile] });
@@ -436,7 +441,7 @@ describe('FigureUpload', () => {
       }));
 
       render(<FigureUpload {...defaultProps} />);
-      const fileInput = screen.getByTestId('figure-file-input') as HTMLInputElement;
+      const fileInput = screen.getByLabelText('Choose figure to upload') as HTMLInputElement;
 
       const pngFile = new File(['test'], 'test.png', { type: 'image/png' });
       Object.defineProperty(fileInput, 'files', { value: [pngFile] });
