@@ -1,8 +1,10 @@
-import { cn } from '@/lib/utils';
+import Box from '@mui/material/Box';
+import type { SxProps, Theme } from '@mui/material/styles';
 
 interface OHPLogoProps {
   variant?: 'horizontal' | 'icon';
-  className?: string;
+  /** Sized by the caller; defaults to 32px tall. */
+  sx?: SxProps<Theme>;
 }
 
 // Gear path from OHP_Favicon_Orange.svg (viewBox 0 0 78.23 78.23)
@@ -40,37 +42,39 @@ const LETTER_PATHS = [
   'M4004.09,366.89c0-5.12,3.07-8.19,8.19-8.19h122.8c48.1,0,73.68,25.58,73.68,73.68v100.29c0,47.59-25.58,73.17-73.68,73.68l-64.47.51v102.34c0,5.12-2.56,8.18-8.18,8.18l-50.14-.51c-5.12,0-8.19-3.07-8.19-8.19v-341.8ZM4121.77,540.35c13.82,0,20.47-7.68,20.47-20.47v-74.71c0-13.3-6.65-20.47-20.47-20.47l-51.17.51v115.64l51.17-.51Z',
 ];
 
-export function OHPLogo({ variant = 'horizontal', className }: OHPLogoProps) {
+export function OHPLogo({ variant = 'horizontal', sx }: OHPLogoProps) {
   if (variant === 'icon') {
     return (
-      <svg
+      <Box
+        component="svg"
         viewBox="0 0 78.23 78.23"
         xmlns="http://www.w3.org/2000/svg"
         role="img"
         aria-label="Open Ham Prep"
         data-testid="ohp-logo-icon"
-        className={cn('h-8 w-8', className)}
+        sx={[{ height: 32, width: 32 }, ...(Array.isArray(sx) ? sx : [sx])]}
       >
         <title>Open Ham Prep</title>
         <path fill="#FFB36D" d={ICON_GEAR_PATH} />
-      </svg>
+      </Box>
     );
   }
 
   return (
-    <svg
+    <Box
+      component="svg"
       viewBox="0 0 4388.83 1080"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       aria-label="Open Ham Prep"
       data-testid="ohp-logo-horizontal"
-      className={cn('h-8 w-auto text-foreground', className)}
+      sx={[{ height: 32, width: 'auto', color: 'text.primary' }, ...(Array.isArray(sx) ? sx : [sx])]}
     >
       <title>Open Ham Prep</title>
       <path fill="#FFB36D" d={H_GEAR_PATH} />
       {LETTER_PATHS.map((d, i) => (
         <path key={i} fill="currentColor" d={d} />
       ))}
-    </svg>
+    </Box>
   );
 }

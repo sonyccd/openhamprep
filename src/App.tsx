@@ -13,6 +13,7 @@ import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
 import { muiTheme } from "@/theme/muiTheme";
 import { MuiColorSchemeSync } from "@/theme/MuiColorSchemeSync";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
+import { FullPageLoader } from "@/components/ohp/FullPageLoader";
 
 // Lazy load pages for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -25,15 +26,6 @@ const QuestionRedirect = lazy(() => import("./pages/QuestionRedirect"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
-
-import { Loader2 } from "lucide-react";
-
-// Simple loading fallback
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-  </div>
-);
 
 // Inner component that can use hooks
 const AppContent = () => {
@@ -48,7 +40,7 @@ const AppContent = () => {
       <Toaster />
       <PWAInstallBanner />
       <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
+        <Suspense fallback={<FullPageLoader label="Loading page" />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />

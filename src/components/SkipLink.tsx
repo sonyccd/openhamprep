@@ -1,14 +1,44 @@
+import Link from "@mui/material/Link";
+import { visuallyHidden } from "@mui/utils";
+
 /**
- * SkipLink component for keyboard accessibility
- * Allows users to skip navigation and jump directly to main content
+ * Lets a keyboard user jump past the navigation to the main content.
+ *
+ * Hidden until focused, rather than absent: it has to be the first thing in
+ * the tab order, so it is in the DOM from the start and only its presentation
+ * changes. `visuallyHidden` clips it; focus restores it to a real box.
  */
 export function SkipLink() {
   return (
-    <a
+    <Link
       href="#main-content"
-      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+      sx={{
+        ...visuallyHidden,
+        "&:focus": {
+          // Undo the clip, then place it over the top-left of the page.
+          clip: "auto",
+          clipPath: "none",
+          overflow: "visible",
+          height: "auto",
+          width: "auto",
+          margin: 0,
+          position: "absolute",
+          top: 16,
+          left: 16,
+          zIndex: (t) => t.zIndex.tooltip,
+          px: 2,
+          py: 1,
+          borderRadius: "6px",
+          bgcolor: "primary.main",
+          color: "primary.contrastText",
+          textDecoration: "none",
+          outline: "2px solid",
+          outlineColor: "primary.main",
+          outlineOffset: 2,
+        },
+      }}
     >
       Skip to main content
-    </a>
+    </Link>
   );
 }

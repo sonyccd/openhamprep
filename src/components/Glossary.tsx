@@ -95,14 +95,17 @@ export function Glossary() {
 
   if (isLoading) {
     return (
-      <PageContainer width="wide" className="flex items-center justify-center">
-        <CircularProgress size={32} role="status" aria-label="Loading glossary" />
+      <PageContainer width="wide" sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {/* The live region wraps the spinner, so it keeps its progressbar role. */}
+        <Box role="status" aria-label="Loading glossary">
+          <CircularProgress size={32} />
+        </Box>
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer width="wide" className="flex flex-col h-full">
+    <PageContainer width="wide" sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Header */}
       <MotionBox initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} sx={{ mb: 2 }}>
         <Typography
