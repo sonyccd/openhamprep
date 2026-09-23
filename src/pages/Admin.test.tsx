@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import Admin from './Admin';
+import { muiWrapper } from '@/test/utils';
 
 // Mock useAuth
 vi.mock('@/hooks/useAuth', () => ({
@@ -98,7 +99,8 @@ describe('Admin', () => {
     return render(
       <MemoryRouter>
         <Admin />
-      </MemoryRouter>
+      </MemoryRouter>,
+      { wrapper: muiWrapper }
     );
   };
 
