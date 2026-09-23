@@ -69,7 +69,9 @@ const Blockquote = styled("blockquote")(({ theme }) => ({
 const Table = styled("table")(({ theme }) => ({
   minWidth: "100%",
   borderCollapse: "collapse",
-  "& tr + tr": { borderTop: `1px solid ${theme.vars.palette.divider}` },
+  // divide-y draws between a table's *direct children* — the line sits
+  // between thead and tbody, not between body rows.
+  "& > * + *": { borderTop: `1px solid ${theme.vars.palette.divider}` },
 }));
 const Thead = styled("thead")(({ theme }) => ({ backgroundColor: theme.vars.palette.secondary.main }));
 const Th = styled("th")({ padding: "8px 16px", textAlign: "left", fontSize: "0.875rem", fontWeight: 600 });

@@ -23,6 +23,8 @@ export function LinkPreview({ link }: LinkPreviewProps) {
   const TypeIcon = config?.icon;
   const typeLabel = config?.label ?? "Link";
   const token = config?.token ?? "text.secondary";
+  // Each kind of link keeps its own tint, as its bgClass gave it.
+  const tint = config?.tintToken;
 
   const linkTitle = link.title || link.url;
 
@@ -49,6 +51,9 @@ export function LinkPreview({ link }: LinkPreviewProps) {
           borderColor: (t) => tokenAlpha(t.vars.palette.primary.main, 30),
           ".LinkPreview-title, .LinkPreview-open": { color: "primary.main" },
         },
+        // Material's focus tint all but vanishes over this card, and the
+        // anchor had a focus-visible ring before; this restores it.
+        "&.Mui-focusVisible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
       }}
     >
       {link.image && (
@@ -82,7 +87,9 @@ export function LinkPreview({ link }: LinkPreviewProps) {
               fontSize: "0.75rem",
               fontWeight: 500,
               color: token,
-              bgcolor: "secondary.main",
+              bgcolor: tint
+                ? (t) => tokenAlpha(t.vars.palette[tint].main, 10)
+                : "secondary.main",
             }}
           >
             {TypeIcon && <Box component={TypeIcon} aria-hidden="true" sx={{ width: 12, height: 12 }} />}
