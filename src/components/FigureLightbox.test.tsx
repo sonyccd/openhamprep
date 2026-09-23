@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render as rtlRender, screen, fireEvent } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { muiWrapper } from '@/test/utils';
 import { FigureLightbox } from './FigureLightbox';
+
+/** The lightbox reads palette tokens through sx, so it needs the real theme. */
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: muiWrapper });
 
 describe('FigureLightbox', () => {
   const defaultProps = {
@@ -58,7 +63,9 @@ describe('FigureLightbox', () => {
       const onClose = vi.fn();
       render(<FigureLightbox {...defaultProps} onClose={onClose} />);
 
-      fireEvent.keyDown(document, { key: 'Escape' });
+      // MUI's Modal listens on the dialog, and traps focus inside it, so that
+      // is where a real Escape keystroke lands. (Radix listened on document.)
+      fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
       expect(onClose).toHaveBeenCalledTimes(1);
     });
   });
@@ -73,6 +80,19 @@ describe('FigureLightbox', () => {
     it('should have aria-label on close button', () => {
       render(<FigureLightbox {...defaultProps} />);
       expect(screen.getByLabelText('Close')).toBeInTheDocument();
+    });
+
+    /**
+     * MUI forwards only aria-labelledby to the element with role="dialog"; a
+     * bare aria-label lands on the Modal root and leaves the dialog unnamed,
+     * with a generated aria-labelledby pointing at nothing (#283).
+     */
+    it('names the dialog after the question it shows', () => {
+      render(<FigureLightbox {...defaultProps} />);
+
+      const dialog = screen.getByRole('dialog', { name: 'Figure for question E9B05' });
+      const labelledBy = dialog.getAttribute('aria-labelledby')!;
+      expect(document.getElementById(labelledBy)).not.toBeNull();
     });
 
     it('should have dialog role', () => {
