@@ -36,6 +36,8 @@ interface LinkTypeConfig {
   label: string;
   colorClass: string;
   bgClass: string;
+  /** The same colour as an MUI palette token, for ported components. */
+  token: string;
 }
 
 /**
@@ -100,18 +102,21 @@ export const LINK_TYPE_CONFIG: Record<LinkType, LinkTypeConfig> = {
     label: "Video",
     colorClass: "text-destructive",
     bgClass: "bg-destructive/10",
+    token: "error.main",
   },
   article: {
     icon: FileText,
     label: "Article",
     colorClass: "text-info",
     bgClass: "bg-info/10",
+    token: "info.main",
   },
   website: {
     icon: Globe,
     label: "Website",
     colorClass: "text-muted-foreground",
     bgClass: "bg-secondary",
+    token: "text.secondary",
   },
 };
 

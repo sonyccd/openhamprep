@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render as rtlRender, screen } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { muiWrapper } from '@/test/utils';
 import { MarkdownText } from './MarkdownText';
+
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: muiWrapper });
 
 describe('MarkdownText', () => {
   describe('basic formatting', () => {

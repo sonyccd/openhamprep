@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render as rtlRender, screen, fireEvent, cleanup } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { muiWrapper } from '@/test/utils';
 import { LinkPreview } from './LinkPreview';
 import type { LinkData } from '@/hooks/useQuestions';
+
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: muiWrapper });
 
 describe('LinkPreview', () => {
   const createLink = (overrides: Partial<LinkData> = {}): LinkData => ({

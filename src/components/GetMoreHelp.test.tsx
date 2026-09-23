@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render as rtlRender, screen, fireEvent, waitFor } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { muiWrapper } from '@/test/utils';
 import { GetMoreHelp } from './GetMoreHelp';
 import { Question } from '@/hooks/useQuestions';
 
@@ -40,6 +42,8 @@ const baseQuestion: Question = {
     { id: 'topic-2', slug: 'safety', title: 'Safety' },
   ],
 };
+
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: muiWrapper });
 
 describe('GetMoreHelp', () => {
   beforeEach(() => {
