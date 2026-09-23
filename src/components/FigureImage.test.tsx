@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render as rtlRender, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import type { ReactElement } from 'react';
+import { muiWrapper } from '@/test/utils';
 import { FigureImage } from './FigureImage';
 
 // Mock FigureLightbox
@@ -16,6 +19,8 @@ vi.mock('./FigureLightbox', () => ({
     </div>
   ) : null
 }));
+
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: muiWrapper });
 
 describe('FigureImage', () => {
   beforeEach(() => {
@@ -55,14 +60,23 @@ describe('FigureImage', () => {
       expect(img).toHaveAttribute('src', 'https://storage.example.com/figures/E9B05.png');
     });
 
-    it('should render expand button when figureUrl is provided', () => {
+    /**
+     * The thumbnail is one control. The expand mark is decoration inside it,
+     * not a second button: the old markup nested a <button> inside a
+     * role="button" div, which is invalid and gave two tab stops for one action.
+     */
+    it('exposes the thumbnail as a single labelled control', () => {
       render(
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
           questionId="E9B05"
         />
       );
-      expect(screen.getByLabelText('Expand figure')).toBeInTheDocument();
+
+      const control = screen.getByRole('button', { name: /view figure for question E9B05/i });
+      expect(screen.getAllByRole('button')).toHaveLength(1);
+      expect(control.querySelector('button')).toBeNull();
+      expect(screen.queryByLabelText('Expand figure')).not.toBeInTheDocument();
     });
 
     it('should not render for questions that mention "figure" in text but have no URL', () => {
@@ -95,7 +109,7 @@ describe('FigureImage', () => {
       });
     });
 
-    it('should open lightbox when clicking expand button', async () => {
+    it('shows the expand mark on hover and focus of that control', () => {
       render(
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
@@ -103,12 +117,18 @@ describe('FigureImage', () => {
         />
       );
 
-      const expandButton = screen.getByLabelText('Expand figure');
-      fireEvent.click(expandButton);
+      const control = screen.getByRole('button', { name: /view figure/i });
+      const mark = control.querySelector('.FigureImage-expand');
+      expect(mark).not.toBeNull();
+      expect(mark).toHaveAttribute('aria-hidden', 'true');
 
-      await waitFor(() => {
-        expect(screen.getByTestId('lightbox')).toBeInTheDocument();
-      });
+      const cls = [...control.classList].find((c) => c.startsWith('css-'))!;
+      const rules = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .map((rule) => rule.cssText.replace(/\s+/g, ' '))
+        .filter((text) => text.includes(cls) && text.includes('FigureImage-expand'));
+      expect(rules.join('\n')).toMatch(/:hover .*opacity: 1/);
+      expect(rules.join('\n')).toMatch(/Mui-focusVisible .*opacity: 1/);
     });
 
     it('should close lightbox when close button is clicked', async () => {
@@ -120,8 +140,7 @@ describe('FigureImage', () => {
       );
 
       // Open lightbox
-      const expandButton = screen.getByLabelText('Expand figure');
-      fireEvent.click(expandButton);
+      fireEvent.click(screen.getByRole('button', { name: /view figure/i }));
 
       await waitFor(() => {
         expect(screen.getByTestId('lightbox')).toBeInTheDocument();
@@ -143,8 +162,11 @@ describe('FigureImage', () => {
         />
       );
 
-      const imageContainer = screen.getByRole('button', { name: /view figure/i });
-      fireEvent.keyDown(imageContainer, { key: 'Enter' });
+      // A real <button> activates on keypress; fireEvent.keyDown alone does not
+      // dispatch the click, so drive it the way a user would.
+      const user = userEvent.setup();
+      screen.getByRole('button', { name: /view figure/i }).focus();
+      await user.keyboard('{Enter}');
 
       await waitFor(() => {
         expect(screen.getByTestId('lightbox')).toBeInTheDocument();
@@ -159,8 +181,9 @@ describe('FigureImage', () => {
         />
       );
 
-      const imageContainer = screen.getByRole('button', { name: /view figure/i });
-      fireEvent.keyDown(imageContainer, { key: ' ' });
+      const user = userEvent.setup();
+      screen.getByRole('button', { name: /view figure/i }).focus();
+      await user.keyboard(' ');
 
       await waitFor(() => {
         expect(screen.getByTestId('lightbox')).toBeInTheDocument();
@@ -228,7 +251,7 @@ describe('FigureImage', () => {
       expect(img).toBeInTheDocument();
     });
 
-    it('should have proper aria-label on expand button', () => {
+    it('names the control after the question it shows', () => {
       render(
         <FigureImage
           figureUrl="https://storage.example.com/figures/E9B05.png"
@@ -236,7 +259,9 @@ describe('FigureImage', () => {
         />
       );
 
-      expect(screen.getByLabelText('Expand figure')).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'View figure for question E9B05 in full size' })
+      ).toBeInTheDocument();
     });
 
     it('should be keyboard accessible', () => {
@@ -247,8 +272,12 @@ describe('FigureImage', () => {
         />
       );
 
-      const imageContainer = screen.getByRole('button', { name: /view figure/i });
-      expect(imageContainer).toHaveAttribute('tabIndex', '0');
+      const control = screen.getByRole('button', { name: /view figure/i });
+      // A real <button> is in the tab order without a tabindex of its own.
+      expect(control.tagName).toBe('BUTTON');
+      expect(control).not.toHaveAttribute('tabindex', '-1');
+      control.focus();
+      expect(control).toHaveFocus();
     });
   });
 

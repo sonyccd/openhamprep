@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render as rtlRender, screen, fireEvent } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { muiWrapper } from '@/test/utils';
 import { FigureLightbox } from './FigureLightbox';
+
+/** The lightbox reads palette tokens through sx, so it needs the real theme. */
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: muiWrapper });
 
 describe('FigureLightbox', () => {
   const defaultProps = {
@@ -58,7 +63,9 @@ describe('FigureLightbox', () => {
       const onClose = vi.fn();
       render(<FigureLightbox {...defaultProps} onClose={onClose} />);
 
-      fireEvent.keyDown(document, { key: 'Escape' });
+      // MUI's Modal listens on the dialog, and traps focus inside it, so that
+      // is where a real Escape keystroke lands. (Radix listened on document.)
+      fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
       expect(onClose).toHaveBeenCalledTimes(1);
     });
   });
