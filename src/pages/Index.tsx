@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2 } from 'lucide-react';
+import { FullPageLoader } from '@/components/ohp/FullPageLoader';
 
 /**
  * Index page - redirects users based on authentication status
@@ -25,11 +25,7 @@ const Index = () => {
   }, [user, loading, navigate]);
 
   // Show loading while determining auth state and redirecting
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label="Loading">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-    </div>
-  );
+  return <FullPageLoader />;
 };
 
 export default Index;

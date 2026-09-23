@@ -105,7 +105,7 @@ export default function Auth() {
     <AuthShell>
       <Box sx={{ textAlign: "center", mb: 4 }}>
         <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
-          <OHPLogo variant="horizontal" className="h-10 w-auto" />
+          <OHPLogo variant="horizontal" sx={{ height: 40 }} />
         </Box>
         <Typography sx={{ color: "text.secondary" }}>
           {form.isLogin ? "Sign in to track your progress" : "Create an account to get started"}

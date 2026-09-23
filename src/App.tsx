@@ -26,14 +26,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
-import { Loader2 } from "lucide-react";
-
-// Simple loading fallback
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-  </div>
-);
+import { FullPageLoader } from "@/components/ohp/FullPageLoader";
 
 // Inner component that can use hooks
 const AppContent = () => {
@@ -48,7 +41,7 @@ const AppContent = () => {
       <Toaster />
       <PWAInstallBanner />
       <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
+        <Suspense fallback={<FullPageLoader label="Loading page" />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />

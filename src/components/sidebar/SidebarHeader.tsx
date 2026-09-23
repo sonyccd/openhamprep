@@ -31,8 +31,7 @@ export const SidebarHeader = ({
     >
       {(isMobile || !isCollapsed) && (
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {/* OHPLogo is not in C3's scope, so it keeps its className API. */}
-          <OHPLogo variant="horizontal" className="h-9 w-auto" />
+          <OHPLogo variant="horizontal" sx={{ height: 36 }} />
         </Box>
       )}
       {!isMobile && (
