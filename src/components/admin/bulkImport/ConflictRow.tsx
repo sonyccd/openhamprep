@@ -144,7 +144,7 @@ function PanelHeading({ icon, children }: { icon: typeof Database; children: Rea
         color: "text.secondary",
       }}
     >
-      <Box component={icon} aria-hidden="true" sx={{ width: 12, height: 12 }} />
+      <Icon icon={icon} size={12} />
       {children}
     </Box>
   );

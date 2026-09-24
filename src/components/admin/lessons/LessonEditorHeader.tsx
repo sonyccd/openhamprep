@@ -64,7 +64,7 @@ export function LessonEditorHeader({
           onClick={onTogglePublish}
           disabled={isSaving}
           startIcon={
-            <Box component={isPublished ? EyeOff : Eye} sx={{ width: 16, height: 16 }} />
+            <Icon icon={isPublished ? EyeOff : Eye} size={16} />
           }
         >
           {isPublished ? "Unpublish" : "Publish"}

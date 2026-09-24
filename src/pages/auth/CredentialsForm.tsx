@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -16,11 +17,7 @@ interface CredentialsFormProps {
 const startIcon = (icon: typeof Mail) => ({
   startAdornment: (
     <InputAdornment position="start">
-      <Box
-        component={icon}
-        aria-hidden="true"
-        sx={{ width: 16, height: 16, color: "text.secondary" }}
-      />
+      <Icon icon={icon} size={16} sx={{ color: "text.secondary" }} />
     </InputAdornment>
   ),
 });

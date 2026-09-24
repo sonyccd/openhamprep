@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useId, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import FormControl from "@mui/material/FormControl";
@@ -46,11 +47,7 @@ export function ResourceFields({ value, onChange, urlLabel, children }: Resource
           {RESOURCE_TYPES.map((type) => (
             <MenuItem key={type.value} value={type.value}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Box
-                  component={type.icon}
-                  aria-hidden="true"
-                  sx={{ width: 16, height: 16, color: type.token }}
-                />
+                <Icon icon={type.icon} size={16} sx={{ color: type.token }} />
                 {type.label}
               </Box>
             </MenuItem>

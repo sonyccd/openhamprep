@@ -183,11 +183,7 @@ export function QuestionCardActions({ question }: { question: Question }) {
           aria-pressed={bookmarked}
           sx={{ ...iconSx, ...(bookmarked && { color: "primary.main", opacity: 1 }) }}
         >
-          <Box
-            component={bookmarked ? BookmarkCheck : Bookmark}
-            aria-hidden="true"
-            sx={{ width: 14, height: 14 }}
-          />
+          <Icon icon={bookmarked ? BookmarkCheck : Bookmark} size={14} />
         </IconButton>
       </Tooltip>
       <Tooltip title="Copy shareable link">

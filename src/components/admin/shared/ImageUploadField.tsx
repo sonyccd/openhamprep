@@ -139,7 +139,7 @@ export function ImageUploadField({
             isUploading ? (
               <CircularProgress size={16} color="inherit" />
             ) : (
-              <Box component={displayUrl ? Upload : ImageIcon} aria-hidden="true" sx={icon} />
+              <Icon icon={displayUrl ? Upload : ImageIcon} sx={icon} />
             )
           }
           sx={{ flex: 1, ...(!displayUrl && { borderStyle: "dashed" }) }}

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -31,11 +32,7 @@ export function TopicProgressButton({ topicId, questionCount, sx }: TopicProgres
     return (
       <Chip
         icon={
-          <Box
-            component={isCompleted ? CheckCircle2 : Target}
-            aria-hidden="true"
-            sx={{ width: 16, height: 16 }}
-          />
+          <Icon icon={isCompleted ? CheckCircle2 : Target} size={16} />
         }
         label={isCompleted ? "Completed" : "Score 80% to complete"}
         sx={[
@@ -66,11 +63,7 @@ export function TopicProgressButton({ topicId, questionCount, sx }: TopicProgres
         isPending ? (
           <CircularProgress size={16} color="inherit" />
         ) : (
-          <Box
-            component={isCompleted ? CheckCircle2 : Circle}
-            aria-hidden="true"
-            sx={{ width: 16, height: 16 }}
-          />
+          <Icon icon={isCompleted ? CheckCircle2 : Circle} size={16} />
         )
       }
       sx={[

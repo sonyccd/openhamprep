@@ -21,22 +21,23 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       // lucide-react emits an <svg> with no aria-hidden, role or focusable, so
-      // <Box component={SomeIcon} /> exposes an unnamed graphic unless every
-      // author remembers to hide it — which, across the migration, they did
-      // not (#312: 163 sites). ohp/Icon hides by default and names on request.
+      // putting an icon straight into a Box exposes an unnamed graphic unless
+      // every author remembers to hide it — which, across the migration, they
+      // did not (#312: 163 sites). ohp/Icon hides by default, names on request.
       //
-      // Scoped to a capitalised component whose name is not one of the three
-      // legitimate non-icon polymorphic targets. Deliberately no exemption for
-      // the local `Glyph` bindings this migration introduced: exempting a bare
-      // name would reopen the same blind spot for the next component that
-      // destructures `icon: Glyph` into a Box.
+      // Matches the whole expression container, not an identifier: the first
+      // version of this rule keyed off `value.expression.name`, which only
+      // exists on a bare identifier, so component={icon},
+      // component={severity.icon} and component={cond ? A : B} all slipped
+      // past it — and so did the audit that shared the same assumption.
+      // Anything that is not one of the three polymorphic targets is flagged.
       "no-restricted-syntax": [
         "error",
         {
           selector:
-            "JSXOpeningElement[name.name='Box'] > JSXAttribute[name.name='component'][value.expression.name=/^(?!Link$|RouterLink$|MotionBox$)[A-Z]/]",
+            "JSXOpeningElement[name.name='Box'] > JSXAttribute[name.name='component'] > JSXExpressionContainer > :not(Identifier[name='Link']):not(Identifier[name='RouterLink']):not(Identifier[name='MotionBox'])",
           message:
-            "Render lucide icons with <Icon icon={X} size={n} /> from @/components/ohp/Icon — it sets aria-hidden, which a bare Box does not (#312).",
+            "Render icons with <Icon icon={X} size={n} /> from @/components/ohp/Icon — it sets aria-hidden, which a bare Box does not (#312). For a non-icon polymorphic Box, use Link, RouterLink or MotionBox.",
         },
       ],
       // Was "off", which let the MUI migration's sub-component extractions
@@ -51,5 +52,11 @@ export default tseslint.config(
         { args: "none", varsIgnorePattern: "^_", caughtErrors: "none" },
       ],
     },
+  },
+  {
+    // Icon is the one place a Box may take a component expression: it is what
+    // the rule above points everyone at.
+    files: ["src/components/ohp/Icon.tsx"],
+    rules: { "no-restricted-syntax": "off" },
   },
 );

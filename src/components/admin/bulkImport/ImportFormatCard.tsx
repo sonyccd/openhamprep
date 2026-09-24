@@ -42,11 +42,7 @@ export function ImportFormatRow({
 }: ImportFormatRowProps) {
   return (
     <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-      <Box
-        component={icon}
-        aria-hidden="true"
-        sx={{ width: 16, height: 16, mt: 0.25, color: iconColor }}
-      />
+      <Icon icon={icon} size={16} sx={{ mt: 0.25, color: iconColor }} />
       <Box sx={{ flex: 1 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Typography sx={{ fontWeight: 500 }}>{name}</Typography>

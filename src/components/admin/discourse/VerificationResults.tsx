@@ -34,11 +34,7 @@ export function VerificationResults({ result }: VerificationResultsProps) {
         disableTypography
         title={
           <Typography component="h3" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "1rem", fontWeight: 600 }}>
-            <Box
-              component={hasDiscrepancies ? AlertTriangle : CheckCircle}
-              aria-hidden="true"
-              sx={{ width: 20, height: 20, color: hasDiscrepancies ? "warning.main" : "success.main" }}
-            />
+            <Icon icon={hasDiscrepancies ? AlertTriangle : CheckCircle} size={20} sx={{ color: hasDiscrepancies ? "warning.main" : "success.main" }} />
             Verification Results
           </Typography>
         }

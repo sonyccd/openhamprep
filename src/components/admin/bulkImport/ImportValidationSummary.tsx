@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -43,7 +44,7 @@ export function ImportValidationSummary<E extends ImportRowError>({
   ) => (
     <Chip
       size="small"
-      icon={<Box component={icon} sx={{ width: 12, height: 12 }} />}
+      icon={<Icon icon={icon} size={12} />}
       label={label}
       sx={{
         color: `${token}.main`,

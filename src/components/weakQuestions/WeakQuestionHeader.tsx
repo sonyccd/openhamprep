@@ -43,7 +43,7 @@ export function WeakQuestionHeader({
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <KeyboardShortcutsHelp />
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: status.color }}>
-            <Box component={status.icon} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+            <Icon icon={status.icon} size={20} />
             <Box component="span" sx={{ fontFamily: "monospace", fontWeight: 600 }}>
               {status.label}
             </Box>

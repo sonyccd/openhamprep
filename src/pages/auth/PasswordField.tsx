@@ -64,7 +64,7 @@ export function PasswordField({
                 edge="end"
                 size="small"
               >
-                <Box component={visible ? EyeOff : Eye} sx={{ width: 16, height: 16 }} />
+                <Icon icon={visible ? EyeOff : Eye} size={16} />
               </IconButton>
             </InputAdornment>
           ),

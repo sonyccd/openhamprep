@@ -89,7 +89,7 @@ export function ConflictResolutionDialog<T>({
             <Chip
               key={action}
               size="small"
-              icon={<Box component={icon} sx={{ width: 12, height: 12 }} />}
+              icon={<Icon icon={icon} size={12} />}
               label={`${countOf(action)} ${label}`}
               sx={{
                 color: `${tone}.main`,

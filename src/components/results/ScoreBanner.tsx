@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
@@ -105,11 +106,7 @@ export function ScoreBanner({
       {large ? (
         <>
           <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-            <Box
-              component={passed ? Trophy : XCircle}
-              aria-hidden="true"
-              sx={{ width: 64, height: 64, color: `${token}.main` }}
-            />
+            <Icon icon={passed ? Trophy : XCircle} size={64} sx={{ color: `${token}.main` }} />
           </Box>
           <Typography
             component="h1"
@@ -143,11 +140,7 @@ export function ScoreBanner({
       ) : (
         <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box
-              component={passed ? Trophy : XCircle}
-              aria-hidden="true"
-              sx={{ width: 40, height: 40, color: `${token}.main` }}
-            />
+            <Icon icon={passed ? Trophy : XCircle} size={40} sx={{ color: `${token}.main` }} />
             <Typography
               component="h1"
               sx={{

@@ -45,7 +45,7 @@ export function RuleCard({ rule, onToggle, onEdit, onDelete, isToggling }: RuleC
             display: "flex",
           }}
         >
-          <Box component={ruleType.icon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+          <Icon icon={ruleType.icon} size={16} />
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -56,7 +56,7 @@ export function RuleCard({ rule, onToggle, onEdit, onDelete, isToggling }: RuleC
             <Chip size="small" variant="outlined" label={ruleType.label} />
             <Chip
               size="small"
-              icon={<Box component={severity.icon} sx={{ width: 12, height: 12 }} />}
+              icon={<Icon icon={severity.icon} size={12} />}
               label={severity.label}
               sx={{
                 bgcolor: `${severity.token}.main`,

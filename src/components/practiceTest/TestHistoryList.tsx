@@ -16,11 +16,7 @@ interface TestHistoryListProps {
 
 const EmptyState = ({ icon, title, hint }: { icon: typeof History; title: string; hint?: string }) => (
   <Box sx={{ textAlign: "center", py: 4 }}>
-    <Box
-      component={icon}
-      aria-hidden="true"
-      sx={{ width: 40, height: 40, mx: "auto", mb: 1.5, color: "text.secondary", opacity: 0.5, display: "block" }}
-    />
+    <Icon icon={icon} size={40} sx={{ mx: "auto", mb: 1.5, color: "text.secondary", opacity: 0.5, display: "block" }} />
     <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>{title}</Typography>
     {hint && (
       <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", opacity: 0.7, mt: 0.5 }}>
@@ -99,11 +95,7 @@ export function TestHistoryList({ tests, isLoading, error, onReviewTest }: TestH
                 bgcolor: (t) => tokenAlpha(t.vars.palette[tone].main, 10),
               }}
             >
-              <Box
-                component={test.passed ? Trophy : XCircle}
-                aria-hidden="true"
-                sx={{ width: 16, height: 16, color: `${tone}.main` }}
-              />
+              <Icon icon={test.passed ? Trophy : XCircle} size={16} sx={{ color: `${tone}.main` }} />
             </Box>
 
             <Box component="span" sx={{ flex: 1, minWidth: 0, display: "block" }}>

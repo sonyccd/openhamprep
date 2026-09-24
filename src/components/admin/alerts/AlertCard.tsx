@@ -67,7 +67,7 @@ export function AlertCard({ alert, onAcknowledge, onResolve, isAcknowledging, is
               color: `${severity.token}.contrastText`,
             }}
           >
-            <Box component={severity.icon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+            <Icon icon={severity.icon} size={16} />
           </Box>
 
           <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -78,7 +78,7 @@ export function AlertCard({ alert, onAcknowledge, onResolve, isAcknowledging, is
               <Chip
                 size="small"
                 variant="outlined"
-                icon={<Box component={status.icon} aria-hidden="true" sx={smallIcon} />}
+                icon={<Icon icon={status.icon} sx={smallIcon} />}
                 label={status.label}
                 sx={{ fontSize: "0.75rem" }}
               />
@@ -109,7 +109,7 @@ export function AlertCard({ alert, onAcknowledge, onResolve, isAcknowledging, is
                 size="small"
                 onClick={() => setExpanded(!expanded)}
                 aria-expanded={expanded}
-                startIcon={<Box component={expanded ? ChevronUp : ChevronDown} aria-hidden="true" sx={smallIcon} />}
+                startIcon={<Icon icon={expanded ? ChevronUp : ChevronDown} sx={smallIcon} />}
                 sx={{ mt: 1, fontSize: "0.75rem", minWidth: 0, px: 0.5, "&:hover": { textDecoration: "underline" } }}
               >
                 {expanded ? "Hide details" : "Show details"}

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useId } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -27,7 +28,7 @@ interface RuleEditorDialogProps {
 }
 
 const iconFor = (icon: typeof RULE_TYPE_CONFIG.error_rate.icon, color?: string) => (
-  <Box component={icon} aria-hidden="true" sx={{ width: 16, height: 16, color }} />
+  <Icon icon={icon} size={16} sx={{ color }} />
 );
 
 /**

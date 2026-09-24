@@ -128,11 +128,7 @@ export const SidebarStudyGroup = ({
         >
           {group.label}
         </Typography>
-        <Box
-          component={isExpanded ? ChevronDown : ChevronRight}
-          aria-hidden="true"
-          sx={{ width: 16, height: 16 }}
-        />
+        <Icon icon={isExpanded ? ChevronDown : ChevronRight} size={16} />
         {totalBadge > 0 && (
           // The badge bubble is aria-hidden, so the count reaches assistive
           // tech as text here instead. visuallyHidden replaces the sr-only

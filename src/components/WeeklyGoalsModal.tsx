@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -44,7 +45,7 @@ function GoalSlider({ id, icon, label, value, onChange, min, max, step }: GoalSl
           component="label"
           sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
         >
-          <Box component={icon} aria-hidden="true" sx={{ width: 16, height: 16, color: 'primary.main' }} />
+          <Icon icon={icon} size={16} sx={{ color: 'primary.main' }} />
           {label}
         </Typography>
         <Typography

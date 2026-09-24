@@ -101,11 +101,7 @@ export const SidebarLearnGroup = ({
         >
           {group.label}
         </Typography>
-        <Box
-          component={isExpanded ? ChevronDown : ChevronRight}
-          aria-hidden="true"
-          sx={{ width: 16, height: 16 }}
-        />
+        <Icon icon={isExpanded ? ChevronDown : ChevronRight} size={16} />
       </ButtonBase>
 
       {/* Learn items - shown when expanded */}
