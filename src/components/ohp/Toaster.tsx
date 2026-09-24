@@ -11,12 +11,15 @@ type ToasterProps = React.ComponentProps<typeof Sonner>;
  * palette variables. Those are what sonner's stylesheet already reads, so
  * this needs no class names and no overriding of sonner's own rules.
  */
-const Toaster = ({ ...props }: ToasterProps) => {
+const Toaster = ({ style, toastOptions, ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();
 
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
+      // A caller's own style and toastOptions merge over these rather than
+      // replacing them: dropping the palette variables would leave every
+      // toast unstyled, which is the failure this replaced.
       style={
         {
           "--normal-bg": "var(--mui-palette-background-default)",
@@ -34,11 +37,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--info-bg": "var(--mui-palette-background-default)",
           "--info-text": "var(--mui-palette-info-main)",
           "--info-border": "var(--mui-palette-divider)",
-          "--gray": "var(--mui-palette-text-secondary)",
+          ...style,
         } as React.CSSProperties
       }
       toastOptions={{
-        style: { boxShadow: "var(--mui-shadows-8)" },
+        ...toastOptions,
+        style: { boxShadow: "var(--mui-shadows-8)", ...toastOptions?.style },
       }}
       {...props}
     />

@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 import { muiWrapper } from '@/test/utils';
 import { Toaster } from './Toaster';
 
-const showToast = async (fire: () => void) => {
-  const { baseElement } = render(<Toaster />, { wrapper: muiWrapper });
+const showToast = async (fire: () => void, props: Partial<React.ComponentProps<typeof Toaster>> = {}) => {
+  const { baseElement } = render(<Toaster {...props} />, { wrapper: muiWrapper });
   fire();
   await waitFor(() => expect(baseElement.querySelector('[data-sonner-toaster]')).not.toBeNull());
   return baseElement;
@@ -44,6 +44,25 @@ describe('Toaster', () => {
     const item = baseElement.querySelector('[data-sonner-toast]') as HTMLElement;
     expect(root.className).not.toMatch(/toaster|group/);
     expect(item.className).toBe('');
+    expect(item.style.boxShadow).toBe('var(--mui-shadows-8)');
+  });
+
+  /** A caller's own props must not silently drop the theming. */
+  it("merges a caller's style over the palette variables rather than replacing them", async () => {
+    const baseElement = await showToast(() => toast('Hello'), { style: { zIndex: 5 } });
+    const root = baseElement.querySelector('[data-sonner-toaster]') as HTMLElement;
+
+    expect(root.style.zIndex).toBe('5');
+    expect(root.style.getPropertyValue('--normal-bg')).toBe('var(--mui-palette-background-default)');
+  });
+
+  it('keeps its shadow when a caller sets other toast styles', async () => {
+    const baseElement = await showToast(() => toast('Hello'), {
+      toastOptions: { style: { borderRadius: '2px' } },
+    });
+    const item = baseElement.querySelector('[data-sonner-toast]') as HTMLElement;
+
+    expect(item.style.borderRadius).toBe('2px');
     expect(item.style.boxShadow).toBe('var(--mui-shadows-8)');
   });
 

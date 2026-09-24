@@ -106,6 +106,21 @@ function createWrapper() {
 }
 
 describe('AppLayout', () => {
+  const defaultProps = {
+    currentView: 'dashboard' as const,
+    onViewChange: vi.fn(),
+    selectedTest: 'technician' as const,
+    onTestChange: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      user: { id: 'test-user', email: 'test@example.com' },
+      loading: false,
+      signOut: vi.fn(),
+    });
+  });
 
   describe('safe area', () => {
     /**
@@ -128,21 +143,6 @@ describe('AppLayout', () => {
 
       expect(css).toContain(`.${cls}{padding-top:max(4rem, calc(env(safe-area-inset-top, 0px) + 3rem))`);
       expect(css).toMatch(new RegExp(`min-width:768px\\)\\{\\.${cls}\\{padding-top:0`));
-    });
-  });
-  const defaultProps = {
-    currentView: 'dashboard' as const,
-    onViewChange: vi.fn(),
-    selectedTest: 'technician' as const,
-    onTestChange: vi.fn(),
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockUseAuth.mockReturnValue({
-      user: { id: 'test-user', email: 'test@example.com' },
-      loading: false,
-      signOut: vi.fn(),
     });
   });
 
