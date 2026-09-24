@@ -18,7 +18,6 @@
   font-display: swap;
 }
 
-
 :root {
   /* Light theme - warm amber aesthetic matching dark mode */
   --background: 45 25% 97%;
@@ -128,7 +127,6 @@
   --sidebar-ring: 45 90% 55%;
 }
 
-
 /* Accessibility: Font modes
    Note: Excludes code, pre, .mono, and .katex elements to preserve
    monospace fonts for code blocks and math notation readability */
@@ -226,28 +224,11 @@ code, pre, .mono {
   font-family: 'JetBrains Mono', monospace;
 }
 
-
-
-
-
 .radio-wave-bg {
   background-image: 
     radial-gradient(ellipse at 50% 0%, hsl(var(--primary) / 0.1) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 80%, hsl(var(--accent) / 0.05) 0%, transparent 40%);
 }
-
-
-
-
-@keyframes wave {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-/* Refined minimal utilities */
-
-
-
 
 /* Shepherd.js Custom Theme */
 .shepherd-element {

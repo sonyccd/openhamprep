@@ -149,11 +149,24 @@ For a tinted surface use `tokenAlpha(theme.vars.palette.x.main, 10)`, which is
 `color-mix()` under the hood — note that happy-dom drops `color-mix()`, `max()`
 and `env()` from the CSSOM, so tests for those read emotion's raw style text.
 
-**Available Semantic Tokens**:
-- Layout: `background`, `foreground`, `border`
-- Components: `card`, `popover`, `input`, `muted`, `accent`
-- States: `primary`, `secondary`, `destructive`, `success`
-- Sidebar: `sidebar-background`, `sidebar-foreground`, etc.
+**Available palette paths** (as used in `sx`; `src/theme/muiTheme.ts` is the
+source of truth — these are the ones whose names changed from the old Tailwind
+tokens, so don't guess):
+
+| what you want | `sx` path |
+|---|---|
+| page background | `background.default` |
+| card / surface | `background.paper` |
+| body text | `text.primary` |
+| secondary text | `text.secondary` |
+| hairlines, borders | `divider` |
+| subtle surface | `muted` — flat, so `bgcolor: "muted"` |
+| green accent | `accent` — flat, like `muted` |
+| brand | `primary.main`, `secondary.main` |
+| states | `error.main`, `warning.main`, `info.main`, `success.main` |
+
+There is no `destructive` (it is `error`) and no `foreground`/`border`; a flat
+key like `muted` has no `.main`.
 
 Colours live in `src/theme/muiTheme.ts`. `src/index.css` keeps the same HSL
 custom properties for the two hand-written CSS blocks that remain
