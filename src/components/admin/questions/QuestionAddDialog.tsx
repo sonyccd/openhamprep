@@ -1,4 +1,5 @@
-import { Plus, Loader2, Link as LinkIcon, Image } from "lucide-react";
+import { Plus, Link as LinkIcon, Image } from "lucide-react";
+import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -54,7 +55,7 @@ export function QuestionAddDialog({
     <>
       {/* MUI has no DialogTrigger: the trigger is an ordinary button that flips
           the same state the dialog already reads. */}
-      <Button variant="contained" startIcon={<Plus className="w-4 h-4" />} onClick={() => onOpenChange(true)}>
+      <Button variant="contained" startIcon={<Box component={Plus} aria-hidden="true" sx={{ width: 16, height: 16 }} />} onClick={() => onOpenChange(true)}>
         Add Question
       </Button>
 
@@ -124,7 +125,7 @@ export function QuestionAddDialog({
 
             <Stack spacing={1.5}>
               <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Image className="w-4 h-4" aria-hidden="true" />
+                <Box component={Image} aria-hidden="true" sx={{ width: 16, height: 16 }} />
                 Question Figure (Optional)
               </Typography>
               <FigureUpload
@@ -139,7 +140,7 @@ export function QuestionAddDialog({
 
             <Stack spacing={1}>
               <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <LinkIcon className="w-4 h-4" aria-hidden="true" />
+                <Box component={LinkIcon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
                 Learning Resources
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -156,7 +157,7 @@ export function QuestionAddDialog({
               disabled={isPending}
               fullWidth
               startIcon={
-                isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />
+                isPending ? <CircularProgress size={16} color="inherit" /> : <Box component={Plus} aria-hidden="true" sx={{ width: 16, height: 16 }} />
               }
             >
               Add Question

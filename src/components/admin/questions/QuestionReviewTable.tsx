@@ -65,7 +65,7 @@ export function QuestionReviewTable({
           >
             {/* lucide stays: adopting @mui/icons-material is deferred to C7 per
                 strategy §10, and MUI components take any icon as a child. */}
-            <Pencil className="h-3.5 w-3.5" />
+            <Box component={Pencil} aria-hidden="true" sx={{ width: 14, height: 14 }} />
           </IconButton>
         ),
       },
