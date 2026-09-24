@@ -11,19 +11,15 @@ interface PageContainerProps {
   mobileNavPadding?: boolean;
   /** Apply the radio-wave background effect */
   radioWaveBg?: boolean;
-  /** Additional className for the outer container */
-  className?: string;
   /** Additional sx for the outer container */
   sx?: SxProps<Theme>;
-  /** Additional className for the inner content container */
-  contentClassName?: string;
   /**
    * Additional sx for the inner content container.
    *
-   * The sx twin of contentClassName, and the only way to give children a flex
+   * The only way to give children a flex
    * context: `sx` lands on the outer Box, and Container sits between it and
    * them as a plain block, so a child's `flex: 1` has nothing to size against.
-   * TestResultReview has always reached for contentClassName to do this;
+   * TestResultReview needs this;
    * contentSx is the same thing for components past the Tailwind line.
    */
   contentSx?: SxProps<Theme>;
@@ -51,29 +47,24 @@ const MAX_WIDTHS = {
 } as const;
 
 /**
- * The page-level layout wrapper, on MUI.
+ * The page-level layout wrapper.
  *
- * Replaces src/components/ui/page-container.tsx. `className` is kept rather
- * than replaced by `sx` because radioWaveBg is a CSS class
- * (index.css:249 — two radial gradients keyed on --primary and --accent), and
- * a handful of callers still pass Tailwind layout classes through. That mix is
- * deliberate for the duration of the migration; it ends at C7 when index.css
- * goes.
+ * radioWaveBg sets a class rather than sx because the effect is two radial
+ * gradients keyed on --primary and --accent, written by hand in index.css.
+ * That is the only class this emits; callers style it through sx.
  */
 export const PageContainer = ({
   children,
   width = "standard",
   mobileNavPadding = false,
   radioWaveBg = false,
-  className,
   sx,
-  contentClassName,
   contentSx,
 }: PageContainerProps) => {
   return (
     <Box
       // radio-wave-bg is a CSS class, not a MUI concept — see the note above.
-      className={[radioWaveBg && "radio-wave-bg", className].filter(Boolean).join(" ") || undefined}
+      className={radioWaveBg ? "radio-wave-bg" : undefined}
       sx={[
         {
           flex: 1,
@@ -95,7 +86,6 @@ export const PageContainer = ({
       <Container
         disableGutters
         maxWidth={false}
-        className={contentClassName}
         sx={[
           { maxWidth: MAX_WIDTHS[width], mx: "auto" },
           ...(Array.isArray(contentSx) ? contentSx : [contentSx]),

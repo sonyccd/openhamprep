@@ -139,30 +139,9 @@ describe('PageContainer', () => {
   });
 
   describe('escape hatches', () => {
-    it('passes className through to the outer element', () => {
-      renderContainer({ className: 'custom-outer' });
 
-      expect(outer()).toHaveClass('custom-outer');
-    });
 
-    it('keeps the radio-wave class alongside a custom one', () => {
-      renderContainer({ radioWaveBg: true, className: 'custom-outer' });
 
-      expect(outer()).toHaveClass('radio-wave-bg');
-      expect(outer()).toHaveClass('custom-outer');
-    });
-
-    it('passes contentClassName through to the inner element', () => {
-      renderContainer({ contentClassName: 'custom-inner' });
-
-      expect(content()).toHaveClass('custom-inner');
-    });
-
-    it('keeps the width tier when contentClassName is given', () => {
-      renderContainer({ width: 'wide', contentClassName: 'custom-inner' });
-
-      expect(getComputedStyle(content()).maxWidth).toBe('1024px');
-    });
 
     it('passes contentSx through to the inner element', () => {
       renderContainer({ contentSx: { display: 'flex' } });
@@ -183,8 +162,7 @@ describe('PageContainer', () => {
      * children as a plain block — it emits no display and no height of its
      * own. So a child's `flex: 1` has nothing to size against, and a screen
      * that centres itself vertically silently stacks from the top instead.
-     * contentClassName has always been the Tailwind-era way round this
-     * (TestResultReview uses it); contentSx is the same for ported callers.
+     * contentSx is how a caller asks for one (TestResultReview needs it).
      */
     it('does not give the inner element a flex context from sx alone', () => {
       renderContainer({ sx: { display: 'flex', flexDirection: 'column' } });
