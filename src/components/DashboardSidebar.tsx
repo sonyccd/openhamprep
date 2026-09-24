@@ -216,15 +216,10 @@ export const DashboardSidebar = ({
         onTestChange={onTestChange}
       />
 
-      {/*
-        Mobile hamburger. top-safe-top is a Tailwind utility built on
-        env(safe-area-inset-top) for the iOS PWA notch — kept as a class
-        because it resolves a CSS environment variable, which is not something
-        the theme models. Documented as a deliberate mix until C7.
-      */}
+      {/* Mobile hamburger, below the notch on an iOS PWA. */}
       <Box
-        className="top-safe-top"
         sx={{
+          top: 'max(1rem, env(safe-area-inset-top, 1rem))',
           display: { xs: 'block', md: 'none' },
           position: 'fixed',
           left: 16,
