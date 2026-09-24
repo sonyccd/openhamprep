@@ -18,8 +18,7 @@ interface TopicGalleryProps {
   testType?: TestType;
 }
 
-// grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6. The breakpoint keys line up
-// with Tailwind's because muiTheme pins them to Tailwind's values.
+// One column, two at sm, three at lg.
 const cardGrid = {
   display: "grid",
   gap: 3,
@@ -61,7 +60,6 @@ export function TopicGallery({ testType }: TopicGalleryProps) {
 
   return (
     <PageContainer width="wide">
-      {/* space-y-8 became Stack spacing, so no Tailwind class is passed down. */}
       <Stack spacing={4}>
         <MotionBox
           initial={{ opacity: 0, y: 10 }}

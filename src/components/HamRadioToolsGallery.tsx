@@ -16,8 +16,7 @@ import { PageContainer } from "@/components/ohp/PageContainer";
 import { MotionBox } from "@/components/ohp/MotionBox";
 import { tokenAlpha } from "@/theme/muiTheme";
 
-// grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6, with the breakpoint keys
-// lining up with Tailwind's because muiTheme pins them to Tailwind's values.
+// One column, two at sm, three at lg.
 const cardGrid = {
   display: "grid",
   gap: 3,
@@ -67,7 +66,6 @@ export function HamRadioToolsGallery() {
 
   return (
     <PageContainer width="wide">
-      {/* space-y-6 became Stack spacing, so no Tailwind class is passed down. */}
       <Stack spacing={3}>
         <MotionBox
           initial={{ opacity: 0, y: 10 }}

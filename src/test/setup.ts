@@ -39,7 +39,7 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Mock ResizeObserver
 // Must be a real class (not an arrow-function mock) so `new ResizeObserver()`
-// works - consumers like Radix construct it directly.
+// works - consumers construct it directly with `new`.
 //
 // It also reports a non-zero size. jsdom gives every element a 0x0 box, and
 // MUI X DataGrid measures its viewport through ResizeObserver before deciding

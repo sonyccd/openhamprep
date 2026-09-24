@@ -83,16 +83,12 @@ export const muiTheme = createTheme({
   shape: {
     borderRadius: 12, // --radius: 0.75rem
   },
-  // Tailwind's breakpoints, not Material's. The two disagree by enough to move
-  // layout: sm is 640 against Material's 600, md 768 against 900, lg 1024
-  // against 1200. With 147 responsive utilities still in the app, a ported
-  // component using Material's values would change columns at a different width
-  // than the unported component beside it — a three-column grid would wait
-  // until 1200px instead of 1024px, so a 1100px laptop would show two.
-  //
-  // Values are Tailwind's own defaults (tailwindcss/defaultTheme), with 2xl
-  // pinned to 1400 by tailwind.config.ts. Asserted against both sources in the
-  // tests rather than trusted here.
+  // These were Tailwind's defaults, and every component's responsive sx was
+  // written against them while both systems were live. Material's own values
+  // are 40-176px away — sm 600 against 640, md 900 against 768, lg 1200
+  // against 1024 — so moving to them now would shift where every layout
+  // breaks: a three-column grid would wait until 1200px instead of 1024px,
+  // and a 1100px laptop would show two. Pinned by muiTheme.test.ts.
   breakpoints: {
     values: { xs: 0, sm: 640, md: 768, lg: 1024, xl: 1280 },
   },
