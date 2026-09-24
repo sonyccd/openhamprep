@@ -128,17 +128,18 @@ export const AppLayout = ({ children, currentView, onViewChange, selectedTest, o
           onTestChange={onTestChange}
           onSearch={onSearch}
         />
-        {/*
-          pt-safe-header stays a class: it is max(4rem, env(safe-area-inset-top)
-          + 3rem), and env() is a CSS environment variable the theme does not
-          model. It clears the fixed mobile hamburger; md:pt-0 drops it once the
-          desktop rail takes over.
-        */}
         <Box
           component="main"
           id="main-content"
-          className="pt-safe-header md:pt-0"
-          sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}
+          sx={{
+            flex: 1,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            // Clears the fixed mobile hamburger, and the notch on an iOS PWA.
+            // Dropped once the desktop rail takes the hamburger's place.
+            pt: { xs: 'max(4rem, calc(env(safe-area-inset-top, 0px) + 3rem))', md: 0 },
+          }}
         >
           {children}
         </Box>

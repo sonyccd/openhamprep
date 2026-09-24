@@ -1,28 +1,44 @@
 import { useTheme } from "next-themes";
 import { Toaster as Sonner } from "sonner";
 
-/**
- * sonner is the app's toast system, a deliberate exception to the MUI-only
- * rule (docs/MUI_MIGRATION_STRATEGY.md §5.3). The class names below are
- * Tailwind semantic tokens, so toasts follow the theme like everything else.
- */
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
+/**
+ * sonner is the app's toast system, a deliberate exception to the MUI-only
+ * rule (docs/MUI_MIGRATION_STRATEGY.md §5.3).
+ *
+ * It follows the theme through its own CSS custom properties, fed from MUI's
+ * palette variables. Those are what sonner's stylesheet already reads, so
+ * this needs no class names and no overriding of sonner's own rules.
+ */
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();
 
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
-      className="toaster group"
+      style={
+        {
+          "--normal-bg": "var(--mui-palette-background-default)",
+          "--normal-text": "var(--mui-palette-text-primary)",
+          "--normal-border": "var(--mui-palette-divider)",
+          "--success-bg": "var(--mui-palette-background-default)",
+          "--success-text": "var(--mui-palette-success-main)",
+          "--success-border": "var(--mui-palette-divider)",
+          "--error-bg": "var(--mui-palette-background-default)",
+          "--error-text": "var(--mui-palette-error-main)",
+          "--error-border": "var(--mui-palette-divider)",
+          "--warning-bg": "var(--mui-palette-background-default)",
+          "--warning-text": "var(--mui-palette-warning-main)",
+          "--warning-border": "var(--mui-palette-divider)",
+          "--info-bg": "var(--mui-palette-background-default)",
+          "--info-text": "var(--mui-palette-info-main)",
+          "--info-border": "var(--mui-palette-divider)",
+          "--gray": "var(--mui-palette-text-secondary)",
+        } as React.CSSProperties
+      }
       toastOptions={{
-        classNames: {
-          toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
-        },
+        style: { boxShadow: "var(--mui-shadows-8)" },
       }}
       {...props}
     />

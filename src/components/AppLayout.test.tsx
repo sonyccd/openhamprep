@@ -106,6 +106,30 @@ function createWrapper() {
 }
 
 describe('AppLayout', () => {
+
+  describe('safe area', () => {
+    /**
+     * The main region clears the fixed mobile hamburger and the iOS notch.
+     * It was a Tailwind utility (pt-safe-header md:pt-0) until Tailwind went.
+     */
+    it('pads the top on mobile by the notch inset, and not on desktop', () => {
+      render(
+        <AppLayout {...defaultProps}>
+          <div>Content</div>
+        </AppLayout>,
+        { wrapper: createWrapper() }
+      );
+      const main = screen.getByRole('main');
+
+      const cls = [...main.classList].find((c) => c.startsWith('css-'));
+      if (!cls) throw new Error(`no emotion class on main: ${main.className}`);
+      // happy-dom drops max()/env() from the CSSOM, so read what emotion wrote.
+      const css = [...document.querySelectorAll('style')].map((el) => el.textContent ?? '').join('');
+
+      expect(css).toContain(`.${cls}{padding-top:max(4rem, calc(env(safe-area-inset-top, 0px) + 3rem))`);
+      expect(css).toMatch(new RegExp(`min-width:768px\\)\\{\\.${cls}\\{padding-top:0`));
+    });
+  });
   const defaultProps = {
     currentView: 'dashboard' as const,
     onViewChange: vi.fn(),

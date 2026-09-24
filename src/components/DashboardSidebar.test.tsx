@@ -42,6 +42,23 @@ function createWrapper() {
 }
 
 describe('DashboardSidebar', () => {
+
+  describe('safe area', () => {
+    /** The hamburger sits below the iOS notch; top-safe-top did this before. */
+    it('offsets the hamburger by the notch inset', () => {
+      const { container } = render(<DashboardSidebar {...defaultProps} />, { wrapper: createWrapper() });
+      // querySelector, not a role query: the wrapper is display: none at this
+      // width, since happy-dom applies the md query.
+      const wrapper = container.querySelector('[aria-label="Open navigation menu"]')!.parentElement!;
+
+      const cls = [...wrapper.classList].find((c) => c.startsWith('css-'));
+      if (!cls) throw new Error(`no emotion class on the hamburger wrapper: ${wrapper.className}`);
+      // happy-dom drops max()/env() from the CSSOM, so read what emotion wrote.
+      const css = [...document.querySelectorAll('style')].map((el) => el.textContent ?? '').join('');
+
+      expect(css).toContain(`.${cls}{top:max(1rem, env(safe-area-inset-top, 1rem))`);
+    });
+  });
   const defaultProps = {
     currentView: 'dashboard' as const,
     onViewChange: vi.fn(),
