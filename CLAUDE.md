@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Open Ham Prep is a React-based web application for studying US Amateur Radio license exams (Technician, General, Extra). Built with React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, and Supabase.
+Open Ham Prep is a React-based web application for studying US Amateur Radio license exams (Technician, General, Extra). Built with React 18, TypeScript, Vite, MUI (Material UI) and Supabase.
 
 ## Essential Commands
 
@@ -118,7 +118,7 @@ queryClient.invalidateQueries({ queryKey: queryKeys.questions.root });
 **Empty string fallback pattern**: User-scoped keys accept `userId ?? ''` because hooks always set `enabled: !!user`, preventing queries from ever running with the empty key. The fallback just satisfies TypeScript.
 
 **Component Organization**:
-- `src/components/ui/` - Base shadcn components (rarely modified)
+- `src/components/ohp/` - Shared presentational primitives (PageContainer, Kbd, ScoreRing, …)
 - `src/components/admin/` - Admin-only components
 - `src/components/*.tsx` - Feature components
 - `src/pages/*.tsx` - Route page components
@@ -135,15 +135,19 @@ queryClient.invalidateQueries({ queryKey: queryKeys.questions.root });
 
 ### Design System (Critical)
 
-**Never use direct colors in components**. Always use semantic tokens defined in `src/index.css`:
+**Never use direct colors in components**. Always use the theme's semantic tokens, through `sx`:
 
-```typescript
-// ❌ WRONG - Direct colors break theme switching
-<div className="bg-white text-black">
+```tsx
+// ❌ WRONG - a literal colour breaks theme switching
+<Box sx={{ bgcolor: "#fff", color: "#000" }}>
 
-// ✅ CORRECT - Semantic tokens work in light/dark mode
-<div className="bg-background text-foreground">
+// ✅ CORRECT - palette tokens follow light/dark
+<Box sx={{ bgcolor: "background.default", color: "text.primary" }}>
 ```
+
+For a tinted surface use `tokenAlpha(theme.vars.palette.x.main, 10)`, which is
+`color-mix()` under the hood — note that happy-dom drops `color-mix()`, `max()`
+and `env()` from the CSSOM, so tests for those read emotion's raw style text.
 
 **Available Semantic Tokens**:
 - Layout: `background`, `foreground`, `border`
@@ -151,7 +155,11 @@ queryClient.invalidateQueries({ queryKey: queryKeys.questions.root });
 - States: `primary`, `secondary`, `destructive`, `success`
 - Sidebar: `sidebar-background`, `sidebar-foreground`, etc.
 
-All colors are HSL format defined as CSS custom properties. The design system supports both light and dark themes via the `dark` class.
+Colours live in `src/theme/muiTheme.ts`. `src/index.css` keeps the same HSL
+custom properties for the two hand-written CSS blocks that remain
+(`markdown-preview`, `radio-wave-bg`) and for `@font-face`; `muiTheme.test.ts`
+asserts the two stay in step. next-themes is the sole writer of the
+`light`/`dark` class, and MUI's variables are scoped to those selectors.
 
 ### Supabase Integration
 
@@ -205,7 +213,7 @@ When adding new code, prefer explicit typing but don't be overly strict to match
 - Components: `const Foo = (props: FooProps) => …` with an explicit `FooProps` interface
 - All server state through TanStack Query hooks in `src/hooks/` — never call `supabase` from a component directly
 - All mutations defined inside hooks (e.g. `useProgress.saveTestResult`), not inline in components
-- Tailwind with semantic tokens only (see Design System above); avoid arbitrary values like `p-[17px]`
+- MUI `sx` with theme tokens only (see Design System above); no Tailwind, no `className` except component-marker classes used as `sx` selectors
 - Keep component files under ~200 lines; extract sub-components when they grow
 
 ## Admin Features

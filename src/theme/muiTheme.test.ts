@@ -2,8 +2,6 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { muiTheme } from "./muiTheme";
-import tailwindConfig from "../../tailwind.config";
-import { screens as tailwindScreens } from "tailwindcss/defaultTheme";
 
 // muiTheme.ts duplicates the HSL tokens from index.css because MUI needs
 // concrete values at theme-build time. Asserting literals here would just
@@ -71,31 +69,18 @@ describe("muiTheme", () => {
     });
   });
 
-  it("matches the Tailwind sans stack", () => {
-    // Read from tailwind.config.ts for the same reason the colors are read from
-    // index.css: a literal here would only agree with muiTheme.ts's literal
-    // while both drifted from the Tailwind config.
-    const sans = tailwindConfig.theme.extend.fontFamily.sans as string[];
-    const expected = sans.map((f) => (f.includes(" ") ? `'${f}'` : f)).join(", ");
-
-    expect(muiTheme.typography.fontFamily).toBe(expected);
+  it("keeps the app's sans stack", () => {
+    // This was read from tailwind.config.ts while Tailwind was the other
+    // source of the stack. The theme is the only source now, so the value is
+    // stated here: the point is that a change to it is deliberate and visible.
+    expect(muiTheme.typography.fontFamily).toBe("'DM Sans', 'Space Grotesk', sans-serif");
   });
 
-  it("matches Tailwind's breakpoints", () => {
-    // Read from Tailwind rather than restated here, for the same reason the
-    // colours are read from index.css: a literal would only agree with
-    // muiTheme.ts's literal while both drifted from Tailwind.
-    //
-    // Material's own values are 40-176px away from these, so a ported component
-    // and an unported one would change layout at different widths.
-    const expected = Object.fromEntries(
-      Object.entries(tailwindScreens).map(([key, px]) => [key, parseInt(px as string, 10)]),
-    );
-
-    for (const key of ["sm", "md", "lg", "xl"] as const) {
-      expect(muiTheme.breakpoints.values[key]).toBe(expected[key]);
-    }
-    expect(muiTheme.breakpoints.values.xs).toBe(0);
+  it("keeps the breakpoints the ports were written against", () => {
+    // These were Tailwind's defaults, read from it while both existed. Every
+    // ported component's responsive sx was written against them, and
+    // Material's own values are 40-176px away, so they stay pinned.
+    expect(muiTheme.breakpoints.values).toMatchObject({ xs: 0, sm: 640, md: 768, lg: 1024, xl: 1280 });
   });
 
   it("matches --radius", () => {
