@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render as rtlRender, screen, fireEvent, cleanup } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { muiWrapper } from '@/test/utils';
 import { LinkPreview } from './LinkPreview';
 import type { LinkData } from '@/hooks/useQuestions';
+
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: muiWrapper });
 
 describe('LinkPreview', () => {
   const createLink = (overrides: Partial<LinkData> = {}): LinkData => ({
@@ -12,6 +16,30 @@ describe('LinkPreview', () => {
   });
 
   describe('Link Types', () => {
+    /**
+     * Each kind kept its own tinted chip; bgClass supplied it before. The
+     * tint is a color-mix(), which happy-dom drops from the CSSOM and from
+     * computed style, so the assertion reads the raw emotion style text.
+     */
+    it('tints the type chip per kind, and leaves website neutral', () => {
+      const chipBackground = (type: string) => {
+        cleanup();
+        const { container } = render(
+          <LinkPreview link={{ type, url: 'https://x.co', title: 'T' } as never} />
+        );
+        const chip = [...container.querySelectorAll('span')].find((el) => el.textContent && el.textContent.length < 20)!;
+        const cls = [...chip.classList].find((c) => c.startsWith('css-'))!;
+        const raw = [...document.querySelectorAll('style')].map((el) => el.textContent ?? '').join('');
+        const block = raw.slice(raw.indexOf(cls));
+        return (block.slice(0, block.indexOf('}')).match(/background-color:[^;]+/) ?? [''])[0];
+      };
+
+      expect(chipBackground('video')).toContain('--mui-palette-error-main');
+      expect(chipBackground('article')).toContain('--mui-palette-info-main');
+      expect(chipBackground('website')).toContain('--mui-palette-secondary-main');
+    });
+
+
     it('renders video type with correct icon and label', () => {
       const link = createLink({ type: 'video', title: 'Test Video' });
       render(<LinkPreview link={link} />);

@@ -1,10 +1,13 @@
+import Box from "@mui/material/Box";
+import ButtonBase from "@mui/material/ButtonBase";
+import Typography from "@mui/material/Typography";
 import { Question } from "@/hooks/useQuestions";
 import { getSafeUrl } from "@/lib/utils";
+import { tokenAlpha } from "@/theme/muiTheme";
 import { buildAiPrompt, getLicenseClass } from "@/lib/aiPrompt";
 import { trackAiPromptCopied } from "@/lib/amplitude";
 import { toast } from "sonner";
 import { BookOpen, Users, Sparkles, ExternalLink } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 /**
  * Constructs a Discourse auth URL that logs the user in via OIDC
@@ -23,7 +26,37 @@ function getForumAuthUrl(forumUrl: string): string | null {
   }
 }
 
-const actionStyle = "inline-flex items-center gap-2 text-sm text-foreground hover:text-foreground transition-colors py-2.5 px-4 rounded-lg bg-muted/30 hover:bg-muted/50";
+/** Every action here reads as the same kind of thing: a quiet, tappable pill. */
+const actionSx = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 1,
+  fontSize: "0.875rem",
+  py: 1.25,
+  px: 2,
+  borderRadius: "8px",
+  bgcolor: (t) => tokenAlpha(t.vars.palette.muted, 30),
+  transition: "background-color 200ms",
+  "&:hover": { bgcolor: (t) => tokenAlpha(t.vars.palette.muted, 50) },
+} as const;
+
+/** The small upper-case caption over each group of actions. */
+function GroupLabel({ children }: { children: string }) {
+  return (
+    <Typography
+      component="span"
+      sx={{
+        fontSize: "0.75rem",
+        fontWeight: 500,
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+        color: (t) => tokenAlpha(t.vars.palette.text.primary, 60),
+      }}
+    >
+      {children}
+    </Typography>
+  );
+}
 
 interface GetMoreHelpProps {
   question: Question;
@@ -66,53 +99,38 @@ export function GetMoreHelp({ question, selectedAnswer, onTopicClick }: GetMoreH
   };
 
   return (
-    <div className="mt-8 space-y-4">
-      {/* Study — topic lessons */}
+    <Box sx={{ mt: 4, display: "flex", flexDirection: "column", gap: 2 }}>
       {hasTopics && (
-        <div>
-          <span className="text-xs font-medium text-foreground/60 uppercase tracking-wider">Study</span>
-          <div className="flex flex-wrap gap-2 mt-1.5">
+        <Box>
+          <GroupLabel>Study</GroupLabel>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.75 }}>
             {question.topics!.map((topic) => (
-              <button
-                key={topic.id}
-                className={cn(actionStyle, onTopicClick && "cursor-pointer")}
-                onClick={() => onTopicClick?.(topic.slug)}
-              >
-                <BookOpen className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <ButtonBase key={topic.id} onClick={() => onTopicClick?.(topic.slug)} sx={actionSx}>
+                <Box component={BookOpen} aria-hidden="true" sx={{ width: 16, height: 16, flexShrink: 0 }} />
                 {topic.title}
-              </button>
+              </ButtonBase>
             ))}
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
 
-      {/* Ask — community and AI help */}
-      <div>
-        <span className="text-xs font-medium text-foreground/60 uppercase tracking-wider">Ask</span>
-        <div className="flex flex-wrap gap-2 mt-1.5">
+      <Box>
+        <GroupLabel>Ask</GroupLabel>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.75 }}>
           {hasForum && (
-            <a
-              href={authUrl!}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={actionStyle}
-            >
-              <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <ButtonBase component="a" href={authUrl!} target="_blank" rel="noopener noreferrer" sx={actionSx}>
+              <Box component={Users} aria-hidden="true" sx={{ width: 16, height: 16, flexShrink: 0 }} />
               Discuss with Other Hams
-              <ExternalLink className="w-3 h-3 opacity-50 shrink-0" aria-hidden="true" />
-            </a>
+              <Box component={ExternalLink} aria-hidden="true" sx={{ width: 12, height: 12, opacity: 0.5, flexShrink: 0 }} />
+            </ButtonBase>
           )}
 
-          <button
-            onClick={handleCopyPrompt}
-            className={actionStyle}
-            aria-label="Copy AI chatbot prompt to clipboard"
-          >
-            <Sparkles className="w-4 h-4 shrink-0" aria-hidden="true" />
+          <ButtonBase onClick={handleCopyPrompt} aria-label="Copy AI chatbot prompt to clipboard" sx={actionSx}>
+            <Box component={Sparkles} aria-hidden="true" sx={{ width: 16, height: 16, flexShrink: 0 }} />
             Get AI Prompt
-          </button>
-        </div>
-      </div>
-    </div>
+          </ButtonBase>
+        </Box>
+      </Box>
+    </Box>
   );
 }

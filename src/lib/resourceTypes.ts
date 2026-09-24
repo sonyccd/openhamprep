@@ -36,6 +36,10 @@ interface LinkTypeConfig {
   label: string;
   colorClass: string;
   bgClass: string;
+  /** The same colour as an MUI palette token, for ported components. */
+  token: string;
+  /** The palette key behind the chip's tint; absent where the tint is neutral. */
+  tintToken?: "error" | "info";
 }
 
 /**
@@ -100,18 +104,23 @@ export const LINK_TYPE_CONFIG: Record<LinkType, LinkTypeConfig> = {
     label: "Video",
     colorClass: "text-destructive",
     bgClass: "bg-destructive/10",
+    token: "error.main",
+    tintToken: "error",
   },
   article: {
     icon: FileText,
     label: "Article",
     colorClass: "text-info",
     bgClass: "bg-info/10",
+    token: "info.main",
+    tintToken: "info",
   },
   website: {
     icon: Globe,
     label: "Website",
     colorClass: "text-muted-foreground",
     bgClass: "bg-secondary",
+    token: "text.secondary",
   },
 };
 

@@ -1,89 +1,94 @@
+import Box from "@mui/material/Box";
+import Link from "@mui/material/Link";
+import type { SxProps, Theme } from "@mui/material/styles";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-import { cn, getSafeUrl } from "@/lib/utils";
 import { ExternalLink } from "lucide-react";
+import { getSafeUrl } from "@/lib/utils";
 
 interface MarkdownTextProps {
   text: string;
-  className?: string;
+  sx?: SxProps<Theme>;
 }
 
-export function MarkdownText({ text, className }: MarkdownTextProps) {
+const codeSx = { fontFamily: "monospace", fontSize: "0.75rem", bgcolor: "muted", borderRadius: "4px" } as const;
+
+/**
+ * A short piece of markdown — an explanation or a note — rendered compactly.
+ *
+ * Every element is mapped, so the surrounding page's typography does not leak
+ * in and nothing here depends on a stylesheet.
+ */
+export function MarkdownText({ text, sx }: MarkdownTextProps) {
   return (
-    <div className={cn("text-sm text-foreground leading-relaxed", className)}>
+    <Box sx={[{ fontSize: "0.875rem", lineHeight: 1.625 }, ...(Array.isArray(sx) ? sx : [sx])]}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}
         components={{
-          // Paragraphs - no extra margin for compact display
-          p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-          // Bold
-          strong: ({ children }) => (
-            <strong className="font-semibold text-foreground">{children}</strong>
-          ),
-          // Italic
-          em: ({ children }) => <em className="italic">{children}</em>,
-          // Inline code
+          p: ({ children }) => <Box component="p" sx={{ m: 0, mb: 1, "&:last-child": { mb: 0 } }}>{children}</Box>,
+          strong: ({ children }) => <Box component="strong" sx={{ fontWeight: 600 }}>{children}</Box>,
+          em: ({ children }) => <Box component="em" sx={{ fontStyle: "italic" }}>{children}</Box>,
           code: ({ children, className }) => {
-            // Check if this is a code block (has language class) vs inline code
+            // A language class means a fenced block; anything else is inline.
             const isCodeBlock = className?.includes("language-");
-            if (isCodeBlock) {
-              return (
-                <code className={cn("block bg-muted p-2 rounded font-mono text-xs overflow-x-auto", className)}>
-                  {children}
-                </code>
-              );
-            }
-            return (
-              <code className="px-1.5 py-0.5 rounded bg-muted font-mono text-xs">
+            return isCodeBlock ? (
+              <Box component="code" sx={{ ...codeSx, display: "block", p: 1, overflowX: "auto" }}>
                 {children}
-              </code>
+              </Box>
+            ) : (
+              <Box component="code" sx={{ ...codeSx, px: 0.75, py: 0.25 }}>
+                {children}
+              </Box>
             );
           },
-          // Code blocks
           pre: ({ children }) => (
-            <pre className="bg-muted p-2 rounded overflow-x-auto my-2">
+            <Box component="pre" sx={{ bgcolor: "muted", p: 1, borderRadius: "4px", overflowX: "auto", my: 1 }}>
               {children}
-            </pre>
+            </Box>
           ),
-          // Links with external icon and safe URL validation
           a: ({ href, children }) => {
+            // Anything that is not a safe http(s) URL renders as plain text.
             const safeUrl = href ? getSafeUrl(href) : null;
-            if (safeUrl) {
-              return (
-                <a
-                  href={safeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline inline-flex items-center gap-0.5"
-                >
-                  {children}
-                  <ExternalLink className="w-3 h-3 inline flex-shrink-0" />
-                </a>
-              );
-            }
-            return <span>{children}</span>;
+            if (!safeUrl) return <span>{children}</span>;
+            return (
+              <Link
+                href={safeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                // MUI underlines always by default; this was hover-only.
+                underline="hover"
+                sx={{ display: "inline-flex", alignItems: "center", gap: 0.25 }}
+              >
+                {children}
+                <Box component={ExternalLink} aria-hidden="true" sx={{ width: 12, height: 12, flexShrink: 0 }} />
+              </Link>
+            );
           },
-          // Lists
           ul: ({ children }) => (
-            <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>
+            <Box component="ul" sx={{ listStyle: "disc inside", m: 0, mb: 1, pl: 0, "& > li + li": { mt: 0.5 } }}>
+              {children}
+            </Box>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>
-          ),
-          li: ({ children }) => <li>{children}</li>,
-          // Blockquotes
-          blockquote: ({ children }) => (
-            <blockquote className="border-l-2 border-primary pl-3 italic text-muted-foreground my-2">
+            <Box component="ol" sx={{ listStyle: "decimal inside", m: 0, mb: 1, pl: 0, "& > li + li": { mt: 0.5 } }}>
               {children}
-            </blockquote>
+            </Box>
+          ),
+          blockquote: ({ children }) => (
+            <Box
+              component="blockquote"
+              sx={{ borderLeft: "2px solid", borderColor: "primary.main", pl: 1.5, fontStyle: "italic", color: "text.secondary", my: 1, mx: 0 }}
+            >
+              {children}
+            </Box>
           ),
         }}
       >
         {text}
       </ReactMarkdown>
-    </div>
+    </Box>
   );
 }
