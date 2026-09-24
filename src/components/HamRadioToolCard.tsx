@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -100,22 +101,14 @@ export function HamRadioToolCard({ tool }: HamRadioToolCardProps) {
                   `linear-gradient(to bottom right, ${tokenAlpha(theme.vars.palette.primary.main, 10)}, ${tokenAlpha(theme.vars.palette.primary.main, 5)})`,
               }}
             >
-              <Box
-                component={Wrench}
-                aria-hidden="true"
-                sx={{
-                  width: 48,
-                  height: 48,
-                  color: (theme) => tokenAlpha(theme.vars.palette.primary.main, 40),
-                }}
-              />
+              <Icon icon={Wrench} size={48} sx={{ color: (theme) => tokenAlpha(theme.vars.palette.primary.main, 40) }} />
             </Box>
           )}
 
           <Chip
             size="small"
             aria-hidden="true"
-            label={<Box component={ExternalLink} sx={{ width: 12, height: 12, display: "block" }} />}
+            label={<Icon icon={ExternalLink} size={12} sx={{ display: "block" }} />}
             sx={{ position: "absolute", top: 8, right: 8, ...overlayChip }}
           />
 

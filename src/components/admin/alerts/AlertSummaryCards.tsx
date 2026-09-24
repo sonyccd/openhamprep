@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -15,7 +16,7 @@ interface MetricCardProps {
   highlight?: boolean;
 }
 
-function MetricCard({ icon: Icon, title, children, highlight = false }: MetricCardProps) {
+function MetricCard({ icon: Glyph, title, children, highlight = false }: MetricCardProps) {
   return (
     <Card
       variant="outlined"
@@ -26,7 +27,7 @@ function MetricCard({ icon: Icon, title, children, highlight = false }: MetricCa
           component="h3"
           sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "0.875rem", fontWeight: 500, color: "text.secondary" }}
         >
-          <Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+          <Icon icon={Glyph} size={16} />
           {title}
         </Typography>
         {children}

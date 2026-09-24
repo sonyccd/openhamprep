@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ToggleButton from "@mui/material/ToggleButton";
@@ -27,7 +28,7 @@ export function FlashcardStart({
       <Button
         variant="text"
         onClick={onBack}
-        startIcon={<Box component={ArrowLeft} sx={{ width: 16, height: 16 }} />}
+        startIcon={<Icon icon={ArrowLeft} size={16} />}
         sx={{ alignSelf: "flex-start", mb: 4, color: "text.secondary" }}
       >
         Back
@@ -51,22 +52,14 @@ export function FlashcardStart({
           <Box
             sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, mb: 1.5 }}
           >
-            <Box
-              component={Waves}
-              aria-hidden="true"
-              sx={{ width: 24, height: 24, color: "primary.main" }}
-            />
+            <Icon icon={Waves} size={24} sx={{ color: "primary.main" }} />
             <Typography
               component="h1"
               sx={{ fontSize: "1.875rem", fontWeight: 700, letterSpacing: "-0.025em" }}
             >
               Study Terms
             </Typography>
-            <Box
-              component={Waves}
-              aria-hidden="true"
-              sx={{ width: 24, height: 24, color: "primary.main" }}
-            />
+            <Icon icon={Waves} size={24} sx={{ color: "primary.main" }} />
           </Box>
           <Typography sx={{ color: "text.secondary", fontFamily: "monospace" }}>
             {termCount} TERMS LOADED
@@ -122,7 +115,7 @@ export function FlashcardStart({
             variant="contained"
             size="large"
             onClick={onStart}
-            startIcon={<Box component={Shuffle} sx={{ width: 20, height: 20 }} />}
+            startIcon={<Icon icon={Shuffle} size={20} />}
             sx={{ px: 4, py: 1.5, fontSize: "1.125rem", fontWeight: 600, borderRadius: 1 }}
           >
             Start Studying

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -116,7 +117,7 @@ export function PWAInstallBanner() {
               justifyContent: "center",
             }}
           >
-            <Box component={Download} aria-hidden="true" sx={{ width: 20, height: 20, color: "primary.main" }} />
+            <Icon icon={Download} size={20} sx={{ color: "primary.main" }} />
           </Box>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography component="h3" id="pwa-install-title" sx={{ fontWeight: 500, fontSize: "0.875rem" }}>
@@ -132,7 +133,7 @@ export function PWAInstallBanner() {
             aria-label="Dismiss install prompt"
             sx={{ flexShrink: 0, color: "text.secondary", "&:hover": { color: "text.primary" } }}
           >
-            <Box component={X} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+            <Icon icon={X} size={16} />
           </IconButton>
         </Box>
         <Box sx={{ display: "flex", gap: 1, mt: 1.5, justifyContent: "flex-end" }}>

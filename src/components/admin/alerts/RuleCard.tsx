@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
@@ -107,7 +108,7 @@ export function RuleCard({ rule, onToggle, onEdit, onDelete, isToggling }: RuleC
               <span>Failures: {String(config.consecutive_failures)} consecutive</span>
             )}
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Box component={Clock} aria-hidden="true" sx={{ width: 12, height: 12 }} />
+              <Icon icon={Clock} size={12} />
               Cooldown: {rule.cooldown_minutes} min
             </Box>
           </Box>
@@ -135,14 +136,14 @@ export function RuleCard({ rule, onToggle, onEdit, onDelete, isToggling }: RuleC
             slotProps={{ input: { "aria-label": `Enable ${rule.name}` } }}
           />
           <IconButton aria-label={`Edit ${rule.name}`} onClick={() => onEdit(rule)}>
-            <Box component={Pencil} sx={{ width: 16, height: 16 }} />
+            <Icon icon={Pencil} size={16} />
           </IconButton>
           <IconButton
             aria-label={`Delete ${rule.name}`}
             onClick={() => onDelete(rule)}
             sx={{ color: "error.main" }}
           >
-            <Box component={Trash2} sx={{ width: 16, height: 16 }} />
+            <Icon icon={Trash2} size={16} />
           </IconButton>
         </Box>
       </Box>

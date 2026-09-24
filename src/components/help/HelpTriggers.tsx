@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Fab from "@mui/material/Fab";
 import IconButton from "@mui/material/IconButton";
@@ -44,7 +45,7 @@ export function HelpTriggers({ onOpen }: HelpTriggersProps) {
               "&:hover": { bgcolor: "background.paper" },
             }}
           >
-            <Box component={HelpCircle} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+            <Icon icon={HelpCircle} size={20} />
           </IconButton>
         </Tooltip>
       </Box>
@@ -62,7 +63,7 @@ export function HelpTriggers({ onOpen }: HelpTriggersProps) {
             zIndex: (t) => t.zIndex.appBar,
           }}
         >
-          <Box component={HelpCircle} aria-hidden="true" sx={{ width: 32, height: 32 }} />
+          <Icon icon={HelpCircle} size={32} />
         </Fab>
       </Tooltip>
     </>

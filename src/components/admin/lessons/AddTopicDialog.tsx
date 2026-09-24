@@ -1,4 +1,4 @@
-import Box from "@mui/material/Box";
+import { Icon } from "@/components/ohp/Icon";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -47,7 +47,7 @@ export function AddTopicDialog({ open, onClose, topics, searchTerm, onSearchChan
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <Box component={Search} aria-hidden="true" sx={{ width: 16, height: 16, color: "text.secondary" }} />
+                  <Icon icon={Search} size={16} sx={{ color: "text.secondary" }} />
                 </InputAdornment>
               ),
             },
@@ -78,7 +78,7 @@ export function AddTopicDialog({ open, onClose, topics, searchTerm, onSearchChan
                     slotProps={{ primary: { noWrap: true, sx: { fontWeight: 500 } }, secondary: { noWrap: true } }}
                   />
                   {!topic.is_published && <DraftChip />}
-                  <Box component={Plus} aria-hidden="true" sx={{ width: 16, height: 16, color: "text.secondary", flexShrink: 0 }} />
+                  <Icon icon={Plus} size={16} sx={{ color: "text.secondary", flexShrink: 0 }} />
                 </ListItemButton>
               </ListItem>
             ))}

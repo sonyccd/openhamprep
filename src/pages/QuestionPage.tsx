@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
@@ -101,7 +102,7 @@ export default function QuestionPage() {
               variant="text"
               color="inherit"
               onClick={() => navigate('/dashboard')}
-              startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+              startIcon={<Icon icon={ArrowLeft} size={16} />}
             >
               Dashboard
             </Button>
@@ -128,7 +129,7 @@ export default function QuestionPage() {
           <Button
             variant="contained"
             onClick={() => navigate(user ? '/dashboard?view=random-practice' : '/auth?returnTo=/dashboard?view=random-practice')}
-            startIcon={<Box component={Zap} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+            startIcon={<Icon icon={Zap} size={16} />}
           >
             {user ? 'Practice More Questions' : 'Start Practicing'}
           </Button>

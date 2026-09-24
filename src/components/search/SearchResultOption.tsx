@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { HelpCircle, BookText, Library, Wrench } from "lucide-react";
@@ -42,7 +43,7 @@ interface SearchResultOptionProps {
 
 /** One result row: type icon, title, and the subtitle under it. */
 export function SearchResultOption({ result, optionProps }: SearchResultOptionProps) {
-  const Icon = ICONS[result.type];
+  const Glyph = ICONS[result.type];
 
   return (
     <Box
@@ -70,11 +71,7 @@ export function SearchResultOption({ result, optionProps }: SearchResultOptionPr
       }}
     >
       <Box sx={{ mt: 0.25, flexShrink: 0 }}>
-        <Box
-          component={Icon}
-          aria-hidden="true"
-          sx={{ width: 16, height: 16, color: "text.secondary" }}
-        />
+        <Icon icon={Glyph} size={16} sx={{ color: "text.secondary" }} />
       </Box>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, overflow: "hidden" }}>
         <Typography

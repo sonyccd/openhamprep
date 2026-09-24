@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import { useState, useEffect } from 'react';
 import { Keyboard } from 'lucide-react';
 import Box from '@mui/material/Box';
@@ -97,7 +98,7 @@ export function KeyboardShortcutsHelp({
             aria-label="Keyboard shortcuts"
             sx={{ width: 32, height: 32, color: 'text.secondary' }}
           >
-            <Box component={Keyboard} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+            <Icon icon={Keyboard} size={16} />
           </IconButton>
         </Tooltip>
       )}
@@ -116,7 +117,7 @@ export function KeyboardShortcutsHelp({
         aria-describedby="shortcuts-description"
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box component={Keyboard} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+          <Icon icon={Keyboard} size={20} />
           Keyboard Shortcuts
         </DialogTitle>
         <DialogContent>

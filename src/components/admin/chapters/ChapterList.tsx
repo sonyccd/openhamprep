@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -26,18 +27,14 @@ export function ChapterList({
   if (chapters.length === 0) {
     return (
       <Box sx={{ textAlign: "center", py: 6 }}>
-        <Box
-          component={Book}
-          aria-hidden="true"
-          sx={{
+        <Icon icon={Book} sx={{
             width: 48,
             height: 48,
             mx: "auto",
             mb: 2,
             display: "block",
             color: (t) => tokenAlpha(t.vars.palette.text.secondary, 50),
-          }}
-        />
+          }} />
         <Typography sx={{ color: "text.secondary" }}>
           {searchTerm
             ? "No chapters match your search"
@@ -47,7 +44,7 @@ export function ChapterList({
           <Button
             variant="outlined"
             onClick={onAdd}
-            startIcon={<Box component={Plus} sx={{ width: 16, height: 16 }} />}
+            startIcon={<Icon icon={Plus} size={16} />}
             sx={{ mt: 2 }}
           >
             Add First Chapter
@@ -118,7 +115,7 @@ export function ChapterList({
                 <Chip
                   color="secondary"
                   size="small"
-                  icon={<Box component={FileText} sx={{ width: 12, height: 12 }} />}
+                  icon={<Icon icon={FileText} size={12} />}
                   label={`${chapter.questionCount} questions`}
                   sx={{ fontSize: "0.75rem" }}
                 />
@@ -130,7 +127,7 @@ export function ChapterList({
             onClick={() => onEdit(chapter)}
             sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }}
           >
-            <Box component={Pencil} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+            <Icon icon={Pencil} size={16} />
           </IconButton>
         </Box>
       ))}

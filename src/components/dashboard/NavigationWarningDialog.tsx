@@ -1,4 +1,4 @@
-import Box from '@mui/material/Box';
+import { Icon } from '@/components/ohp/Icon';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -35,11 +35,7 @@ export function NavigationWarningDialog({
       id="nav-warning-title"
       sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
     >
-      <Box
-        component={AlertTriangle}
-        aria-hidden="true"
-        sx={{ width: 20, height: 20, color: 'error.main' }}
-      />
+      <Icon icon={AlertTriangle} size={20} sx={{ color: 'error.main' }} />
       Test in Progress
     </DialogTitle>
     <DialogContent>

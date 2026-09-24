@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -85,12 +86,11 @@ export function ChoiceRow({ badge, title, onClick, index }: ChoiceRowProps) {
             {title}
           </Typography>
         </Box>
-        <Box
-          component={ChevronRight}
-          aria-hidden="true"
+        <Icon
+  icon={ChevronRight}
           className="ChoiceRow-chevron"
           sx={{ width: 20, height: 20, color: "text.secondary", transition: "color 150ms" }}
-        />
+/>
       </Box>
     </MotionBox>
   );

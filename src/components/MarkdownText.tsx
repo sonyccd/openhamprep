@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
 import type { SxProps, Theme } from "@mui/material/styles";
@@ -63,7 +64,7 @@ export function MarkdownText({ text, sx }: MarkdownTextProps) {
                 sx={{ display: "inline-flex", alignItems: "center", gap: 0.25 }}
               >
                 {children}
-                <Box component={ExternalLink} aria-hidden="true" sx={{ width: 12, height: 12, flexShrink: 0 }} />
+                <Icon icon={ExternalLink} size={12} sx={{ flexShrink: 0 }} />
               </Link>
             );
           },

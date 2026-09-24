@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
@@ -34,7 +35,7 @@ export function WeakQuestionHeader({
         <Button
           variant="text"
           onClick={onBack}
-          startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={ArrowLeft} size={16} />}
           sx={{ color: "text.primary" }}
         >
           Back to Weak Questions
@@ -64,7 +65,7 @@ export function WeakQuestionHeader({
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "success.main" }}>
-            <Box component={CheckCircle} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+            <Icon icon={CheckCircle} size={20} />
             <Box component="span" sx={{ fontWeight: 500 }}>
               Question cleared from weak areas!
             </Box>
@@ -85,7 +86,7 @@ export function WeakQuestionHeader({
         >
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Box component={Flame} aria-hidden="true" sx={{ width: 16, height: 16, color: "warning.main" }} />
+              <Icon icon={Flame} size={16} sx={{ color: "warning.main" }} />
               <Box component="span" sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
                 Streak to clear ({streakToClear} correct in a row)
               </Box>

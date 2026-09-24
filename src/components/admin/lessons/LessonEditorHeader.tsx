@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -44,7 +45,7 @@ export function LessonEditorHeader({
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
         {/* The old back button was an unnamed icon. */}
         <IconButton aria-label="Back to lessons" onClick={onBack}>
-          <Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+          <Icon icon={ArrowLeft} size={16} />
         </IconButton>
         <Box>
           <Typography component="h2" sx={{ fontWeight: 600 }}>
@@ -74,7 +75,7 @@ export function LessonEditorHeader({
           color="error"
           size="small"
           onClick={onDelete}
-          startIcon={<Box component={Trash2} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={Trash2} size={16} />}
         >
           Delete
         </Button>
@@ -87,7 +88,7 @@ export function LessonEditorHeader({
             isSaving ? (
               <CircularProgress size={16} color="inherit" />
             ) : (
-              <Box component={Save} sx={{ width: 16, height: 16 }} />
+              <Icon icon={Save} size={16} />
             )
           }
         >

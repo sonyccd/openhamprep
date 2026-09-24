@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -30,7 +31,7 @@ export function ProfileDangerZone({
     <Box sx={{ pt: 2, mt: 1, borderTop: "1px solid", borderColor: "divider" }}>
       <Stack spacing={1}>
         <Typography variant="body2" sx={sectionHeading}>
-          <Box component={Trash2} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+          <Icon icon={Trash2} size={16} />
           Danger Zone
         </Typography>
 
@@ -41,7 +42,7 @@ export function ProfileDangerZone({
               color="error"
               onClick={() => onShowDeleteConfirm(true)}
               fullWidth
-              startIcon={<Box component={Trash2} sx={{ width: 16, height: 16 }} />}
+              startIcon={<Icon icon={Trash2} size={16} />}
             >
               Delete Account
             </Button>
@@ -74,7 +75,7 @@ export function ProfileDangerZone({
                   bgcolor: (theme) => tokenAlpha(theme.vars.palette.error.main, 10),
                 }}
               >
-                <Box component={AlertTriangle} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+                <Icon icon={AlertTriangle} size={20} />
               </Box>
               <Stack spacing={0.5}>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: "error.main" }}>
@@ -125,7 +126,7 @@ export function ProfileDangerZone({
                     isDeleting ? (
                       <CircularProgress size={16} color="inherit" />
                     ) : (
-                      <Box component={Trash2} sx={{ width: 16, height: 16 }} />
+                      <Icon icon={Trash2} size={16} />
                     )
                   }
                 >

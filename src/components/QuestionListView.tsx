@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState, useMemo } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -87,7 +88,7 @@ export function QuestionListView({
           variant="contained"
           size="large"
           onClick={() => onStartPractice()}
-          startIcon={<Box component={Play} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={Play} size={16} />}
           sx={{ height: 48, px: 3, fontWeight: 500, flexShrink: 0 }}
         >
           Practice All Questions
@@ -102,10 +103,7 @@ export function QuestionListView({
           <Box component="label" htmlFor="question-search" sx={visuallyHidden}>
             Search questions
           </Box>
-          <Box
-            component={Search}
-            aria-hidden="true"
-            sx={{
+          <Icon icon={Search} sx={{
               position: "absolute",
               left: 12,
               top: "50%",
@@ -114,8 +112,7 @@ export function QuestionListView({
               height: 16,
               color: "text.secondary",
               pointerEvents: "none",
-            }}
-          />
+            }} />
           <InputBase
             id="question-search"
             type="text"

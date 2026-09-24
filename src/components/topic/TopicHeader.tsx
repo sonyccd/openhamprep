@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -27,7 +28,7 @@ export function TopicHeader({ topic, questionCount, backLabel, onBack }: TopicHe
           variant="text"
           size="small"
           onClick={onBack}
-          startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={ArrowLeft} size={16} />}
           sx={{ mb: 2, ml: -1, color: "text.secondary", "&:hover": { color: "text.primary" } }}
         >
           {backLabel}

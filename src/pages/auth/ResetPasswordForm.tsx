@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -55,11 +56,7 @@ export function ResetPasswordForm({ form }: ResetPasswordFormProps) {
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Box
-                      component={Mail}
-                      aria-hidden="true"
-                      sx={{ width: 16, height: 16, color: "text.secondary" }}
-                    />
+                    <Icon icon={Mail} size={16} sx={{ color: "text.secondary" }} />
                   </InputAdornment>
                 ),
               },

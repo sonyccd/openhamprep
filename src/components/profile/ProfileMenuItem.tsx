@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import ListItemButton from "@mui/material/ListItemButton";
 import Typography from "@mui/material/Typography";
@@ -23,7 +24,7 @@ interface ProfileMenuItemProps {
 }
 
 export function ProfileMenuItem({
-  icon: Icon,
+  icon: Glyph,
   label,
   description,
   onClick,
@@ -66,7 +67,7 @@ export function ProfileMenuItem({
             ),
         }}
       >
-        <Box component={Icon} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+        <Icon icon={Glyph} size={20} />
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -90,17 +91,13 @@ export function ProfileMenuItem({
         )}
       </Box>
 
-      <Box
-        component={ChevronRight}
-        aria-hidden="true"
-        sx={{
+      <Icon icon={ChevronRight} sx={{
           width: 20,
           height: 20,
           flexShrink: 0,
           color: (theme) =>
             danger ? tokenAlpha(theme.vars.palette.error.main, 50) : "text.secondary",
-        }}
-      />
+        }} />
     </ListItemButton>
   );
 }

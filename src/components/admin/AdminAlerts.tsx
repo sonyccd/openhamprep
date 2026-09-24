@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
@@ -71,7 +72,7 @@ export function AdminAlerts() {
     return (
       <Card variant="outlined">
         <CardContent sx={{ py: 4, textAlign: "center", color: "error.main" }}>
-          <Box component={AlertTriangle} aria-hidden="true" sx={{ width: 32, height: 32, mx: "auto", mb: 1 }} />
+          <Icon icon={AlertTriangle} size={32} sx={{ mx: "auto", mb: 1 }} />
           <Typography>Failed to load alerts: {error.message}</Typography>
         </CardContent>
       </Card>
@@ -109,7 +110,7 @@ export function AdminAlerts() {
           p: 1.5,
         }}
       >
-        <Box component={Info} aria-hidden="true" sx={{ width: 16, height: 16, flexShrink: 0, mt: 0.25 }} />
+        <Icon icon={Info} size={16} sx={{ flexShrink: 0, mt: 0.25 }} />
         <Typography sx={{ fontSize: "inherit" }}>
           The system monitor analyzes up to {MONITOR_LOG_LIMIT} error logs per check. During high-error
           incidents, some errors may not be captured. If you see "(limit)" above, consider checking the{" "}
@@ -141,7 +142,7 @@ export function AdminAlerts() {
           ) : alerts.length === 0 ? (
             <Card variant="outlined">
               <CardContent sx={{ py: 6, textAlign: "center", color: "text.secondary" }}>
-                <Box component={BellOff} aria-hidden="true" sx={{ width: 48, height: 48, mx: "auto", mb: 2, opacity: 0.5 }} />
+                <Icon icon={BellOff} size={48} sx={{ mx: "auto", mb: 2, opacity: 0.5 }} />
                 <Typography sx={{ fontWeight: 500 }}>No alerts</Typography>
                 <Typography sx={{ fontSize: "0.875rem", mt: 0.5 }}>
                   {filter === "active" || filter === "pending"

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -113,7 +114,7 @@ export function TopicQuizQuestion({
           variant="outlined"
           onClick={onPrevious}
           disabled={currentIndex === 0}
-          startIcon={<Box component={ChevronLeft} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={ChevronLeft} size={16} />}
           aria-label={`Go to previous question (${currentIndex} of ${questionCount})`}
         >
           Previous
@@ -123,7 +124,7 @@ export function TopicQuizQuestion({
           <Button
             variant="contained"
             onClick={onNext}
-            endIcon={<Box component={ChevronRight} sx={{ width: 16, height: 16 }} />}
+            endIcon={<Icon icon={ChevronRight} size={16} />}
             aria-label={`Go to next question (${currentIndex + 2} of ${questionCount})`}
           >
             Next
@@ -137,7 +138,7 @@ export function TopicQuizQuestion({
               isSubmitting ? (
                 <CircularProgress size={16} color="inherit" />
               ) : (
-                <Box component={CheckCircle2} sx={{ width: 16, height: 16 }} />
+                <Icon icon={CheckCircle2} size={16} />
               )
             }
             aria-label={`Submit quiz with ${answeredCount} of ${questionCount} questions answered`}

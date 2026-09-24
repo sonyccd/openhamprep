@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Skeleton from "@mui/material/Skeleton";
 import { HelpCircle } from "lucide-react";
@@ -94,7 +95,7 @@ export function TopicQuestionsPanel({ topicId, onQuestionClick }: TopicQuestions
       ))}
     </Box>
   );
-  const icon = <Box component={HelpCircle} aria-hidden="true" sx={{ width: 16, height: 16, color: "text.secondary" }} />;
+  const icon = <Icon icon={HelpCircle} size={16} sx={{ color: "text.secondary" }} />;
 
   return (
     <Box sx={{ mb: 3 }}>

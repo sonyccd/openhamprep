@@ -20,6 +20,23 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      // lucide-react emits an <svg> with no aria-hidden, role or focusable, so
+      // <Box component={SomeIcon} /> exposes an unnamed graphic unless every
+      // author remembers to hide it — which, across the migration, they did
+      // not (#312: 163 sites). ohp/Icon hides by default and names on request.
+      //
+      // Scoped to a capitalised component whose name is not one of the
+      // legitimate non-icon polymorphic targets, so `component={Link}` and
+      // `component={MotionBox}` stay allowed.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "JSXOpeningElement[name.name='Box'] > JSXAttribute[name.name='component'][value.expression.name=/^(?!Link$|RouterLink$|MotionBox$|Glyph$)[A-Z]/]",
+          message:
+            "Render lucide icons with <Icon icon={X} size={n} /> from @/components/ohp/Icon — it sets aria-hidden, which a bare Box does not (#312).",
+        },
+      ],
       // Was "off", which let the MUI migration's sub-component extractions
       // leave 26 orphaned imports behind a green `npm run lint` (#295).
       // tsconfig's noUnusedLocals is off too, so nothing else catches them.

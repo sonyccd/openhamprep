@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState, useEffect, useMemo } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -213,7 +214,7 @@ export function SubelementPractice({
             <Button
               variant="text"
               onClick={handleBackToQuestions}
-              startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+              startIcon={<Icon icon={ArrowLeft} size={16} />}
               sx={{ ml: -1, color: "text.primary" }}
             >
               Question List
@@ -267,11 +268,7 @@ export function SubelementPractice({
                   {session.askedIds.length}/{currentQuestions.length}
                 </Box>
                 {session.askedIds.length === currentQuestions.length && (
-                  <Box
-                    component={CheckCircle}
-                    aria-hidden="true"
-                    sx={{ width: 14, height: 14, color: "success.main" }}
-                  />
+                  <Icon icon={CheckCircle} size={14} sx={{ color: "success.main" }} />
                 )}
               </Box>
               <IconButton
@@ -280,7 +277,7 @@ export function SubelementPractice({
                 onClick={session.reset}
                 sx={{ color: "text.secondary", "&:hover": { color: "text.primary" } }}
               >
-                <Box component={RotateCcw} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                <Icon icon={RotateCcw} size={16} />
               </IconButton>
             </Box>
           </MotionBox>

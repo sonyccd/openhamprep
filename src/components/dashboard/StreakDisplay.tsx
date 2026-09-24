@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import Box from '@mui/material/Box';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { Flame } from 'lucide-react';
@@ -67,11 +68,10 @@ export function StreakDisplay({ sx, variant = 'full', onAction }: StreakDisplayP
           ...sx,
         }}
       >
-        <Box
-          component={Flame}
-          aria-hidden="true"
+        <Icon
+  icon={Flame}
           sx={{ width: 16, height: 16, ...(hasStreak && { color: 'warning.main' }) }}
-        />
+/>
         <Box component="span" sx={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.875rem' }}>
           {currentStreak}
         </Box>

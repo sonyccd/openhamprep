@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { LucideIcon } from 'lucide-react';
@@ -56,7 +57,7 @@ export function DashboardNextSteps({ steps }: DashboardNextStepsProps) {
         }}
       >
         {steps.map((step, index) => {
-          const Icon = step.icon;
+          const Glyph = step.icon;
           const token = STEP_TOKEN[step.variant];
 
           return (
@@ -90,11 +91,7 @@ export function DashboardNextSteps({ steps }: DashboardNextStepsProps) {
               }}
             >
               <Box sx={iconTileSx(token, 'secondary.main')}>
-                <Box
-                  component={Icon}
-                  aria-hidden="true"
-                  sx={{ width: 20, height: 20, color: tintColor(token) }}
-                />
+                <Icon icon={Glyph} size={20} sx={{ color: tintColor(token) }} />
               </Box>
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

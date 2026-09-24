@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -44,7 +45,7 @@ export function EditHistoryViewer({ history }: EditHistoryViewerProps) {
   if (!history || history.length === 0) {
     return (
       <Typography sx={{ ...metaSx, fontSize: "0.875rem", fontStyle: "italic", py: 1 }}>
-        <Box component={History} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+        <Icon icon={History} size={16} />
         No edit history recorded
       </Typography>
     );
@@ -62,7 +63,7 @@ export function EditHistoryViewer({ history }: EditHistoryViewerProps) {
         size="small"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
-        startIcon={<Box component={History} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+        startIcon={<Icon icon={History} size={16} />}
         sx={{ width: "100%", justifyContent: "flex-start", gap: 1, color: "text.secondary", "&:hover": { color: "text.primary" } }}
       >
         Edit History ({history.length} {history.length === 1 ? "change" : "changes"})
@@ -109,12 +110,12 @@ export function EditHistoryViewer({ history }: EditHistoryViewerProps) {
                     }}
                   />
                   <Box component="span" sx={metaSx}>
-                    <Box component={User} aria-hidden="true" sx={tinyIcon} />
+                    <Icon icon={User} sx={tinyIcon} />
                     {entry.user_email}
                   </Box>
                 </Box>
                 <Box component="span" sx={metaSx}>
-                  <Box component={Clock} aria-hidden="true" sx={tinyIcon} />
+                  <Icon icon={Clock} sx={tinyIcon} />
                   {format(new Date(entry.timestamp), "MMM d, yyyy h:mm a")}
                 </Box>
               </Box>

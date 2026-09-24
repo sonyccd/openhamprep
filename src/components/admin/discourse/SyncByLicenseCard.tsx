@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -10,10 +11,10 @@ import type { LucideIcon } from "lucide-react";
 import type { SyncOverviewRow } from "@/hooks/useDiscourseSyncStatus";
 import { syncedPercent } from "./syncMetrics";
 
-function Count({ icon: Icon, value, token, label }: { icon: LucideIcon; value: number; token: string; label: string }) {
+function Count({ icon: Glyph, value, token, label }: { icon: LucideIcon; value: number; token: string; label: string }) {
   return (
     <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.5, color: `${token}.main` }} aria-label={`${value} ${label}`}>
-      <Box component={Icon} aria-hidden="true" sx={{ width: 12, height: 12 }} />
+      <Icon icon={Glyph} size={12} />
       {value}
     </Box>
   );
@@ -31,7 +32,7 @@ export function SyncByLicenseCard({ overview }: SyncByLicenseCardProps) {
         disableTypography
         title={
           <Typography component="h3" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "1rem", fontWeight: 600 }}>
-            <Box component={MessageSquare} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+            <Icon icon={MessageSquare} size={20} />
             Sync Status by License Type
           </Typography>
         }

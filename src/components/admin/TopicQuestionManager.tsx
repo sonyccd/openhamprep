@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -82,9 +83,8 @@ export function TopicQuestionManager({ topicId }: TopicQuestionManagerProps) {
                   onClick={() => unlinkQuestion.mutate(q.id)}
                   disabled={unlinkQuestion.isPending}
                   trailing={
-                    <Box
-                      component={X}
-                      aria-hidden="true"
+                    <Icon
+  icon={X}
                       sx={{
                         width: 16,
                         height: 16,
@@ -94,7 +94,7 @@ export function TopicQuestionManager({ topicId }: TopicQuestionManagerProps) {
                         // The row is the control, so hovering it is what warns of the unlink.
                         ".MuiListItemButton-root:hover &": { color: "error.main" },
                       }}
-                    />
+/>
                   }
                 />
               ))}

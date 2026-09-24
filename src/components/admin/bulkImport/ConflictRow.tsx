@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
@@ -72,11 +73,7 @@ export function ConflictRow({
           aria-expanded={isExpanded}
           sx={{ display: "flex", alignItems: "center", gap: 1, borderRadius: "4px", px: 0.5 }}
         >
-          <Box
-            component={Chevron}
-            aria-hidden="true"
-            sx={{ width: 16, height: 16, color: "text.secondary" }}
-          />
+          <Icon icon={Chevron} size={16} sx={{ color: "text.secondary" }} />
           {/* span, not the default <p>: this sits inside a <button>. */}
           <Typography component="span" sx={{ fontWeight: 500 }}>
             {label}
@@ -119,11 +116,7 @@ export function ConflictRow({
           </Box>
 
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Box
-              component={ArrowRight}
-              aria-hidden="true"
-              sx={{ width: 20, height: 20, color: "text.secondary" }}
-            />
+            <Icon icon={ArrowRight} size={20} sx={{ color: "text.secondary" }} />
           </Box>
 
           <Box sx={panelSx(outcomeTone)}>

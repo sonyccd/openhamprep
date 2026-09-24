@@ -1,4 +1,4 @@
-import Box from "@mui/material/Box";
+import { Icon } from "@/components/ohp/Icon";
 import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";
 import { Search } from "lucide-react";
@@ -24,7 +24,7 @@ export function QuestionSearchField({ value, onChange, placeholder }: QuestionSe
         input: {
           startAdornment: (
             <InputAdornment position="start">
-              <Box component={Search} aria-hidden="true" sx={{ width: 16, height: 16, color: "text.secondary" }} />
+              <Icon icon={Search} size={16} sx={{ color: "text.secondary" }} />
             </InputAdornment>
           ),
         },

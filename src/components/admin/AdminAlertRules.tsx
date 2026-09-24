@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -75,11 +76,7 @@ export function AdminAlertRules() {
       <Card>
         <CardContent sx={{ py: 4 }}>
           <Box sx={{ textAlign: "center", color: "error.main" }}>
-            <Box
-              component={AlertTriangle}
-              aria-hidden="true"
-              sx={{ width: 32, height: 32, mx: "auto", mb: 1, display: "block" }}
-            />
+            <Icon icon={AlertTriangle} size={32} sx={{ mx: "auto", mb: 1, display: "block" }} />
             <Typography>Failed to load alert rules: {error.message}</Typography>
           </Box>
         </CardContent>
@@ -91,7 +88,7 @@ export function AdminAlertRules() {
     <Button
       variant="contained"
       onClick={() => setIsCreateOpen(true)}
-      startIcon={<Box component={Plus} sx={{ width: 16, height: 16 }} />}
+      startIcon={<Icon icon={Plus} size={16} />}
       sx={sx}
     >
       Create Rule
@@ -128,11 +125,7 @@ export function AdminAlertRules() {
         <Card>
           <CardContent sx={{ py: 6 }}>
             <Box sx={{ textAlign: "center", color: "text.secondary" }}>
-              <Box
-                component={Gauge}
-                aria-hidden="true"
-                sx={{ width: 48, height: 48, mx: "auto", mb: 2, opacity: 0.5, display: "block" }}
-              />
+              <Icon icon={Gauge} size={48} sx={{ mx: "auto", mb: 2, opacity: 0.5, display: "block" }} />
               <Typography sx={{ fontWeight: 500 }}>No alert rules</Typography>
               <Typography sx={{ fontSize: "0.875rem", mt: 0.5 }}>
                 Create your first rule to start monitoring system health.

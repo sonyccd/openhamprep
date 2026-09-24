@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import { visuallyHidden } from "@mui/utils";
 import { ChevronRight } from "lucide-react";
@@ -207,7 +208,7 @@ export function LessonPathRow({ topic, index, state, onClick }: LessonPathRowPro
             color: tone ? `${tone}.main` : "text.secondary",
           }}
         >
-          <Box component={ChevronRight} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+          <Icon icon={ChevronRight} size={20} />
         </MotionBox>
       </Box>
 

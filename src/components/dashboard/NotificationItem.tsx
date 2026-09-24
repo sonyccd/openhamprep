@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -34,7 +35,7 @@ export function NotificationItem({
   showPushPrompt: boolean;
   onRequestPush: () => void;
 }) {
-  const { icon: Icon, title, description, action, dismissible, variant } = notification;
+  const { icon: Glyph, title, description, action, dismissible, variant } = notification;
   const token = VARIANT_TOKEN[variant] ?? null;
 
   return (
@@ -48,11 +49,7 @@ export function NotificationItem({
     >
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
         <Box sx={iconTileSx(token)}>
-          <Box
-            component={Icon}
-            aria-hidden="true"
-            sx={{ width: 20, height: 20, color: tintColor(token) }}
-          />
+          <Icon icon={Glyph} size={20} sx={{ color: tintColor(token) }} />
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -85,13 +82,13 @@ export function NotificationItem({
                   borderRadius: 1,
                 }}
               >
-                <Box component={Bell} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                <Icon icon={Bell} size={16} />
               </IconButton>
               <Button
                 variant="outlined"
                 size="small"
                 onClick={onRequestPush}
-                startIcon={<Box component={Bell} sx={{ width: 16, height: 16 }} />}
+                startIcon={<Icon icon={Bell} size={16} />}
                 sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
               >
                 Enable alerts
@@ -111,7 +108,7 @@ export function NotificationItem({
               aria-label="Dismiss notification"
               sx={{ width: 32, height: 32, color: 'text.secondary' }}
             >
-              <Box component={X} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+              <Icon icon={X} size={16} />
             </IconButton>
           )}
         </Box>

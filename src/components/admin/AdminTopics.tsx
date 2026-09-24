@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -154,7 +155,7 @@ export function AdminTopics() {
               <Button
                 variant="contained"
                 onClick={() => setIsAddDialogOpen(true)}
-                startIcon={<Box component={Plus} sx={{ width: 16, height: 16 }} />}
+                startIcon={<Icon icon={Plus} size={16} />}
               >
                 Add Topic
               </Button>
@@ -175,11 +176,7 @@ export function AdminTopics() {
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Box
-                        component={Search}
-                        aria-hidden="true"
-                        sx={{ width: 16, height: 16, color: "text.secondary" }}
-                      />
+                      <Icon icon={Search} size={16} sx={{ color: "text.secondary" }} />
                     </InputAdornment>
                   ),
                 },

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { Search, ThumbsDown, X } from "lucide-react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -35,7 +36,7 @@ export function QuestionFiltersBar({
           input: {
             startAdornment: (
               <InputAdornment position="start">
-                <Box component={Search} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                <Icon icon={Search} size={16} />
               </InputAdornment>
             ),
           },
@@ -53,7 +54,7 @@ export function QuestionFiltersBar({
           }
           label={
             <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Box component={ThumbsDown} aria-hidden="true" sx={{ width: 12, height: 12 }} />
+              <Icon icon={ThumbsDown} size={12} />
               Negative feedback
             </Box>
           }
@@ -65,7 +66,7 @@ export function QuestionFiltersBar({
             size="small"
             color="inherit"
             onClick={() => onNegativeFeedbackChange(false)}
-            startIcon={<Box component={X} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+            startIcon={<Icon icon={X} size={16} />}
           >
             Clear filter
           </Button>

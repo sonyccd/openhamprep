@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
@@ -101,7 +102,7 @@ export function TopicQuizResults({
         <Button
           variant="outlined"
           onClick={onRetry}
-          startIcon={<Box component={RotateCcw} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={RotateCcw} size={16} />}
         >
           Try Again
         </Button>

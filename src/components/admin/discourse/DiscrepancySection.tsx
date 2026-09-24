@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
@@ -17,7 +18,7 @@ export function TopicLink({ href, questionName }: { href: string; questionName: 
       aria-label={`View topic for ${questionName}`}
       sx={{ fontSize: "0.875rem", display: "flex", alignItems: "center", gap: 0.5 }}
     >
-      View Topic <Box component={ExternalLink} aria-hidden="true" sx={{ width: 12, height: 12 }} />
+      View Topic <Icon icon={ExternalLink} size={12} />
     </Link>
   );
 }
@@ -65,12 +66,12 @@ interface DiscrepancySectionProps<T> {
  * so the count in the heading cannot disagree with the rows below it. Renders
  * nothing when there are none.
  */
-export function DiscrepancySection<T>({ icon: Icon, tint, title, items, itemKey, renderItem }: DiscrepancySectionProps<T>) {
+export function DiscrepancySection<T>({ icon: Glyph, tint, title, items, itemKey, renderItem }: DiscrepancySectionProps<T>) {
   if (items.length === 0) return null;
   return (
     <Box>
       <Typography component="h4" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "0.875rem", fontWeight: 500, mb: 1.5 }}>
-        <Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16, color: `${tint}.main` }} />
+        <Box component={Glyph} aria-hidden="true" sx={{ width: 16, height: 16, color: `${tint}.main` }} />
         {title} ({items.length})
       </Typography>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1, maxHeight: 256, overflowY: "auto" }}>

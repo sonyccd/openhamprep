@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
@@ -46,7 +47,7 @@ export function ProfileEditableField({
   isSaving,
   placeholder,
   helperText,
-  icon: Icon,
+  icon: Glyph,
 }: ProfileEditableFieldProps) {
   return (
     <Stack spacing={1}>
@@ -55,7 +56,7 @@ export function ProfileEditableField({
           variant="body2"
           sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 500, color: "text.secondary" }}
         >
-          <Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+          <Icon icon={Glyph} size={16} />
           {label}
         </Typography>
       )}
@@ -87,7 +88,7 @@ export function ProfileEditableField({
                 isSaving ? (
                   <CircularProgress size={16} color="inherit" />
                 ) : (
-                  <Box component={Check} sx={{ width: 16, height: 16 }} />
+                  <Icon icon={Check} size={16} />
                 )
               }
             >

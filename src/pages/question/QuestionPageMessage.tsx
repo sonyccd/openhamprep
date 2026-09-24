@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -36,7 +37,7 @@ export function QuestionPageMessage({ title, children, actionLabel, onAction }: 
             mb: 2,
           }}
         >
-          <Box component={AlertCircle} aria-hidden="true" sx={{ width: 32, height: 32, color: "error.main" }} />
+          <Icon icon={AlertCircle} size={32} sx={{ color: "error.main" }} />
         </Box>
         <Typography component="h1" sx={{ fontSize: "1.5rem", fontWeight: 700, mb: 1 }}>
           {title}
@@ -45,7 +46,7 @@ export function QuestionPageMessage({ title, children, actionLabel, onAction }: 
         <Button
           variant="contained"
           onClick={onAction}
-          startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={ArrowLeft} size={16} />}
         >
           {actionLabel}
         </Button>

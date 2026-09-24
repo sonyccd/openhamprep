@@ -1,5 +1,5 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import Menu from "@mui/material/Menu";
@@ -44,7 +44,7 @@ export function BulkExport<T>({ data, filename, formatCSV, formatJSON, itemLabel
         onClick={(e) => setAnchorEl(e.currentTarget)}
         aria-haspopup="menu"
         aria-expanded={anchorEl !== null}
-        startIcon={<Box component={Download} aria-hidden="true" sx={icon} />}
+        startIcon={<Icon icon={Download} sx={icon} />}
       >
         Export
       </Button>
@@ -57,13 +57,13 @@ export function BulkExport<T>({ data, filename, formatCSV, formatJSON, itemLabel
       >
         <MenuItem onClick={() => exportAs("CSV")}>
           <ListItemIcon sx={{ minWidth: 0, mr: 1, color: "success.main" }}>
-            <Box component={FileSpreadsheet} aria-hidden="true" sx={icon} />
+            <Icon icon={FileSpreadsheet} sx={icon} />
           </ListItemIcon>
           Export as CSV
         </MenuItem>
         <MenuItem onClick={() => exportAs("JSON")}>
           <ListItemIcon sx={{ minWidth: 0, mr: 1, color: "info.main" }}>
-            <Box component={FileJson} aria-hidden="true" sx={icon} />
+            <Icon icon={FileJson} sx={icon} />
           </ListItemIcon>
           Export as JSON
         </MenuItem>

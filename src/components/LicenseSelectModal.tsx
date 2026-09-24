@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import { Radio as RadioIcon, Zap, Award } from "lucide-react";
 import Box from "@mui/material/Box";
@@ -104,7 +105,7 @@ export function LicenseSelectModal({
           sx={{ gap: 1.5, py: 2 }}
         >
           {testTypes.map((test) => {
-            const Icon = licenseIcons[test.id];
+            const Glyph = licenseIcons[test.id];
             const config = testConfig[test.id];
             const isSelected = pendingSelection === test.id;
             const isCurrent = selectedTest === test.id;
@@ -168,7 +169,7 @@ export function LicenseSelectModal({
                         color: isSelected ? "primary.contrastText" : "text.secondary",
                       }}
                     >
-                      <Box component={Icon} aria-hidden="true" sx={{ width: 24, height: 24 }} />
+                      <Icon icon={Glyph} size={24} />
                     </Box>
 
                     <Box sx={{ flex: 1, minWidth: 0 }}>

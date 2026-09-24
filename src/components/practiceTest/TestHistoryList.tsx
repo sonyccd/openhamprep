@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
@@ -146,12 +147,11 @@ export function TestHistoryList({ tests, isLoading, error, onReviewTest }: TestH
             </Box>
 
             {onReviewTest && (
-              <Box
-                component={ChevronRight}
-                aria-hidden="true"
+              <Icon
+  icon={ChevronRight}
                 className="TestHistoryList-arrow"
                 sx={{ width: 16, height: 16, color: "text.secondary", flexShrink: 0, transition: "color 150ms" }}
-              />
+/>
             )}
           </MotionBox>
         );

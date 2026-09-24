@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import { ExternalLink } from 'lucide-react';
 import Box from '@mui/material/Box';
 import ButtonBase from '@mui/material/ButtonBase';
@@ -34,7 +35,7 @@ export const SidebarNavItem = ({
   showExpanded,
   onClick,
 }: SidebarNavItemProps) => {
-  const Icon = item.icon;
+  const Glyph = item.icon;
 
   // External link (opens in new tab)
   if (item.external) {
@@ -52,7 +53,7 @@ export const SidebarNavItem = ({
         }}
       >
         <Box sx={{ position: 'relative', flexShrink: 0 }}>
-          <Box component={Icon} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+          <Icon icon={Glyph} size={20} />
         </Box>
         {showExpanded && (
           <Typography
@@ -68,7 +69,7 @@ export const SidebarNavItem = ({
             }}
           >
             {item.label}
-            <Box component={ExternalLink} aria-hidden="true" sx={{ width: 12, height: 12 }} />
+            <Icon icon={ExternalLink} size={12} />
           </Typography>
         )}
       </Box>
@@ -113,7 +114,7 @@ export const SidebarNavItem = ({
       }}
     >
       <Box sx={{ position: 'relative', flexShrink: 0 }}>
-        <Box component={Icon} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+        <Icon icon={Glyph} size={20} />
       </Box>
       {showExpanded && (
         <Typography

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import { Download, ExternalLink, Link as LinkIcon } from "lucide-react";
@@ -24,7 +25,7 @@ const isYouTubeUrl = (url: string | null) => {
 
 function ResourceItem({ resource }: { resource: TopicResource }) {
   const config = RESOURCE_TYPE_CONFIG[resource.resource_type as keyof typeof RESOURCE_TYPE_CONFIG];
-  const Icon = config?.icon ?? LinkIcon;
+  const Glyph = config?.icon ?? LinkIcon;
   const token = config?.token ?? "text.secondary";
   const isUploaded = Boolean(resource.storage_path);
   const url = resource.storage_path ? topicContentUrl(resource.storage_path) : resource.url;
@@ -62,7 +63,7 @@ function ResourceItem({ resource }: { resource: TopicResource }) {
           bgcolor: "background.default",
         }}
       >
-        <Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16, color: token }} />
+        <Icon icon={Glyph} size={16} sx={{ color: token }} />
       </Box>
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -73,9 +74,9 @@ function ResourceItem({ resource }: { resource: TopicResource }) {
             {resource.title}
           </Box>
           {isUploaded ? (
-            <Box component={Download} aria-hidden="true" sx={{ width: 12, height: 12, color: "text.secondary", flexShrink: 0 }} />
+            <Icon icon={Download} size={12} sx={{ color: "text.secondary", flexShrink: 0 }} />
           ) : url ? (
-            <Box component={ExternalLink} aria-hidden="true" sx={{ width: 12, height: 12, color: "text.secondary", flexShrink: 0 }} />
+            <Icon icon={ExternalLink} size={12} sx={{ color: "text.secondary", flexShrink: 0 }} />
           ) : null}
         </Box>
         {resource.description && (
@@ -108,14 +109,14 @@ function ResourceItem({ resource }: { resource: TopicResource }) {
 
 function ResourceGroup({ type, resources }: { type: string; resources: TopicResource[] }) {
   const config = RESOURCE_TYPE_CONFIG[type as keyof typeof RESOURCE_TYPE_CONFIG];
-  const Icon = config?.icon ?? LinkIcon;
+  const Glyph = config?.icon ?? LinkIcon;
   const token = config?.token ?? "text.secondary";
   const label = config?.pluralLabel ?? "Resources";
 
   return (
     <CollapsibleSection
       title={label}
-      icon={<Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16, color: token }} />}
+      icon={<Icon icon={Glyph} size={16} sx={{ color: token }} />}
       count={resources.length}
     >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1, pb: 1.5 }}>
@@ -151,7 +152,7 @@ export function TopicResourcePanel({ resources }: TopicResourcePanelProps) {
       )}
     </Box>
   );
-  const icon = <Box component={LinkIcon} aria-hidden="true" sx={{ width: 16, height: 16, color: "text.secondary" }} />;
+  const icon = <Icon icon={LinkIcon} size={16} sx={{ color: "text.secondary" }} />;
 
   return (
     <Box>

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -120,13 +121,13 @@ export function AdminChapters() {
                 component="span"
                 sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "1.25rem" }}
               >
-                <Box component={Book} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+                <Icon icon={Book} size={20} />
                 ARRL Textbook Chapters
               </Box>
               <Button
                 variant="contained"
                 onClick={() => setIsAddDialogOpen(true)}
-                startIcon={<Box component={Plus} sx={{ width: 16, height: 16 }} />}
+                startIcon={<Icon icon={Plus} size={16} />}
               >
                 Add Chapter
               </Button>
@@ -157,11 +158,7 @@ export function AdminChapters() {
                   input: {
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Box
-                          component={Search}
-                          aria-hidden="true"
-                          sx={{ width: 16, height: 16, color: "text.secondary" }}
-                        />
+                        <Icon icon={Search} size={16} sx={{ color: "text.secondary" }} />
                       </InputAdornment>
                     ),
                   },

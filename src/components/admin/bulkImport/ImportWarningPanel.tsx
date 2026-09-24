@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -49,7 +50,7 @@ export function ImportWarningPanel({ heading, children, sx }: ImportWarningPanel
               mb: 1,
             }}
           >
-            <Box component={AlertTriangle} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+            <Icon icon={AlertTriangle} size={16} />
             {heading}
           </Typography>
           {children}
@@ -64,11 +65,7 @@ export function ImportWarningPanel({ heading, children, sx }: ImportWarningPanel
             color: "warning.main",
           }}
         >
-          <Box
-            component={AlertTriangle}
-            aria-hidden="true"
-            sx={{ width: 16, height: 16, mt: 0.25, flexShrink: 0 }}
-          />
+          <Icon icon={AlertTriangle} size={16} sx={{ mt: 0.25, flexShrink: 0 }} />
           <span>{children}</span>
         </Box>
       )}

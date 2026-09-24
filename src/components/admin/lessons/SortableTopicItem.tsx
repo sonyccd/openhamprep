@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
@@ -50,7 +51,7 @@ export function SortableTopicItem({ lessonTopic, index, onRemove, isRemoving }: 
         aria-label={`Reorder ${title}`}
         sx={{ cursor: "grab", color: "text.secondary", "&:active": { cursor: "grabbing" }, "&:hover": { color: "text.primary" } }}
       >
-        <Box component={GripVertical} aria-hidden="true" sx={icon} />
+        <Icon icon={GripVertical} sx={icon} />
       </IconButton>
       <Typography component="span" sx={{ fontSize: "0.875rem", fontWeight: 500, color: "text.secondary", width: 24 }}>
         {index + 1}.
@@ -73,7 +74,7 @@ export function SortableTopicItem({ lessonTopic, index, onRemove, isRemoving }: 
         aria-label={`Remove ${title} from lesson`}
         sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
       >
-        {isRemoving ? <CircularProgress size={16} color="inherit" /> : <Box component={Trash2} aria-hidden="true" sx={icon} />}
+        {isRemoving ? <CircularProgress size={16} color="inherit" /> : <Icon icon={Trash2} sx={icon} />}
       </IconButton>
     </Box>
   );

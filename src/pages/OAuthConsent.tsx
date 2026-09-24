@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -66,7 +67,7 @@ export default function OAuthConsent() {
                 component="h1"
                 sx={{ display: "flex", alignItems: "center", gap: 1, color: "error.main" }}
               >
-                <Box component={AlertCircle} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+                <Icon icon={AlertCircle} size={20} />
                 Authorization Error
               </Typography>
             }
@@ -109,11 +110,7 @@ export default function OAuthConsent() {
                   mb: 2,
                 }}
               >
-                <Box
-                  component={MessageCircle}
-                  aria-hidden="true"
-                  sx={{ width: 24, height: 24, color: "primary.main" }}
-                />
+                <Icon icon={MessageCircle} size={24} sx={{ color: "primary.main" }} />
               </Box>
               <Typography variant="h6" component="h1">
                 Create Your Forum Username

@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import LinearProgress from '@mui/material/LinearProgress';
@@ -95,11 +96,7 @@ export function StreakProgress({
               minWidth: 0,
             }}
           >
-            <Box
-              component={AlertCircle}
-              aria-hidden="true"
-              sx={{ width: 16, height: 16, flexShrink: 0 }}
-            />
+            <Icon icon={AlertCircle} size={16} sx={{ flexShrink: 0 }} />
             <Box component="span">
               Answer {questionsNeeded} more{' '}
               {questionsNeeded === 1 ? 'question' : 'questions'} to keep your streak!

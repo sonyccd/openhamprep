@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -147,7 +148,7 @@ export function DashboardHero({
               variant="contained"
               size="large"
               onClick={onAction}
-              startIcon={<Box component={ActionIcon} sx={{ width: 20, height: 20 }} />}
+              startIcon={<Icon icon={ActionIcon} size={20} />}
               sx={{ mt: 1, ...buttonTint }}
             >
               {nextAction.actionLabel}

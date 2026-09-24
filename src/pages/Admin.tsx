@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
@@ -71,7 +72,7 @@ export default function Admin() {
           gap: 2,
         }}
       >
-        <Box component={ShieldAlert} aria-hidden="true" sx={{ width: 64, height: 64, color: "error.main" }} />
+        <Icon icon={ShieldAlert} size={64} sx={{ color: "error.main" }} />
         <Typography component="h1" sx={{ fontSize: "1.5rem", fontWeight: 700 }}>
           Access Denied
         </Typography>

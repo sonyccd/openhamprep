@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
@@ -61,7 +62,7 @@ export function BookmarkQuestionView({
           <Button
             variant="text"
             onClick={onBackToList}
-            startIcon={<Box component={ArrowLeft} sx={{ width: 16, height: 16 }} />}
+            startIcon={<Icon icon={ArrowLeft} size={16} />}
             sx={{ color: "text.primary" }}
           >
             Back to Bookmarks
@@ -71,7 +72,7 @@ export function BookmarkQuestionView({
             <Box
               sx={{ display: "flex", alignItems: "center", gap: 1, color: "text.primary" }}
             >
-              <Box component={Bookmark} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+              <Icon icon={Bookmark} size={20} />
               <Box component="span" sx={{ fontFamily: "monospace", fontWeight: 600 }}>
                 Bookmarked
               </Box>
@@ -100,11 +101,7 @@ export function BookmarkQuestionView({
               }}
             >
               <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-                <Box
-                  component={MessageSquare}
-                  aria-hidden="true"
-                  sx={{ width: 16, height: 16, color: "accent", mt: 0.25 }}
-                />
+                <Icon icon={MessageSquare} size={16} sx={{ color: "accent", mt: 0.25 }} />
                 <Box>
                   <Typography
                     component="p"
@@ -139,7 +136,7 @@ export function BookmarkQuestionView({
           variant="outlined"
           onClick={onPrev}
           disabled={!canGoPrev}
-          startIcon={<Box component={ChevronLeft} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={ChevronLeft} size={16} />}
         >
           Previous
         </Button>
@@ -157,7 +154,7 @@ export function BookmarkQuestionView({
               disabled={total <= 1}
               aria-label="Jump to random question"
             >
-              <Box component={Dices} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+              <Icon icon={Dices} size={16} />
             </Button>
           </Box>
         </Tooltip>
@@ -170,7 +167,7 @@ export function BookmarkQuestionView({
           variant={showResult ? "contained" : "outlined"}
           onClick={onNext}
           disabled={!canGoNext}
-          endIcon={<Box component={ChevronRight} sx={{ width: 16, height: 16 }} />}
+          endIcon={<Icon icon={ChevronRight} size={16} />}
         >
           Next
         </Button>

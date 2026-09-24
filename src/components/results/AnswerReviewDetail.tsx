@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -40,7 +41,7 @@ export function AnswerReviewDetail({
         <Button
           variant="text"
           onClick={onBack}
-          startIcon={<Box component={ArrowLeft} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={ArrowLeft} size={16} />}
           sx={{ color: "text.primary" }}
         >
           Back to Results
@@ -62,7 +63,7 @@ export function AnswerReviewDetail({
           variant="outlined"
           onClick={onPrev}
           disabled={index === 0}
-          startIcon={<Box component={ArrowLeft} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={ArrowLeft} size={16} />}
         >
           Previous
         </Button>
@@ -70,7 +71,7 @@ export function AnswerReviewDetail({
           variant="outlined"
           onClick={onNext}
           disabled={index === total - 1}
-          endIcon={<Box component={ArrowRight} sx={{ width: 16, height: 16 }} />}
+          endIcon={<Icon icon={ArrowRight} size={16} />}
         >
           Next
         </Button>

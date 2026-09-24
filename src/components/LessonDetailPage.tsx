@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -73,11 +74,7 @@ export function LessonDetailPage({ slug, onBack }: LessonDetailPageProps) {
     return (
       <PageContainer width="narrow">
         <Box sx={{ textAlign: "center", py: 6 }}>
-          <Box
-            component={Route}
-            aria-hidden="true"
-            sx={{ width: 48, height: 48, mx: "auto", mb: 2, color: "text.secondary", display: "block" }}
-          />
+          <Icon icon={Route} size={48} sx={{ mx: "auto", mb: 2, color: "text.secondary", display: "block" }} />
           <Typography variant="h6" component="h2" sx={{ fontWeight: 600, mb: 1 }}>
             Lesson not found
           </Typography>
@@ -87,7 +84,7 @@ export function LessonDetailPage({ slug, onBack }: LessonDetailPageProps) {
           <Button
             variant="outlined"
             onClick={onBack}
-            startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+            startIcon={<Icon icon={ArrowLeft} size={16} />}
           >
             Back to Lessons
           </Button>
@@ -117,7 +114,7 @@ export function LessonDetailPage({ slug, onBack }: LessonDetailPageProps) {
           variant="text"
           size="small"
           onClick={onBack}
-          startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={ArrowLeft} size={16} />}
           sx={{ mb: 2, ml: -1, color: "text.secondary", "&:hover": { color: "text.primary" } }}
         >
           Back to Lessons
@@ -151,7 +148,7 @@ export function LessonDetailPage({ slug, onBack }: LessonDetailPageProps) {
             valueText={`${completedCount} of ${totalCount} topics completed`}
           >
             {isComplete ? (
-              <Box component={CheckCircle2} aria-hidden="true" sx={{ width: 20, height: 20, color: "success.main" }} />
+              <Icon icon={CheckCircle2} size={20} sx={{ color: "success.main" }} />
             ) : (
               <Box component="span" sx={{ fontSize: "0.75rem", fontWeight: 700 }}>
                 {completionPercentage}%
@@ -193,11 +190,7 @@ export function LessonDetailPage({ slug, onBack }: LessonDetailPageProps) {
             bgcolor: (t) => tokenAlpha(t.vars.palette.success.main, 5),
           }}
         >
-          <Box
-            component={CheckCircle2}
-            aria-hidden="true"
-            sx={{ width: 48, height: 48, mx: "auto", mb: 1.5, color: "success.main", display: "block" }}
-          />
+          <Icon icon={CheckCircle2} size={48} sx={{ mx: "auto", mb: 1.5, color: "success.main", display: "block" }} />
           <Typography variant="h6" component="h3" sx={{ fontWeight: 600, color: "success.main", mb: 0.5 }}>
             Lesson Complete!
           </Typography>

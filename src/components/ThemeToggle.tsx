@@ -1,6 +1,6 @@
+import { Icon } from "@/components/ohp/Icon";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 
@@ -49,20 +49,12 @@ export function ThemeToggle() {
           "&:hover": { backgroundColor: "secondary.main", color: "text.primary" },
         }}
       >
-        <Box
-          component={Sun}
-          aria-hidden="true"
-          sx={{ ...icon, transform: isDark ? "rotate(-90deg) scale(0)" : "none" }}
-        />
-        <Box
-          component={Moon}
-          aria-hidden="true"
-          sx={{
+        <Icon icon={Sun} sx={{ ...icon, transform: isDark ? "rotate(-90deg) scale(0)" : "none" }} />
+        <Icon icon={Moon} sx={{
             ...icon,
             position: "absolute",
             transform: isDark ? "none" : "rotate(90deg) scale(0)",
-          }}
-        />
+          }} />
       </IconButton>
     </Tooltip>
   );

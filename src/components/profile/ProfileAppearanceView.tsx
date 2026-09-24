@@ -1,4 +1,4 @@
-import Box from "@mui/material/Box";
+import { Icon } from "@/components/ohp/Icon";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { Palette } from "lucide-react";
@@ -11,7 +11,7 @@ export function ProfileAppearanceView() {
         variant="body2"
         sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 500, color: "text.secondary" }}
       >
-        <Box component={Palette} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+        <Icon icon={Palette} size={16} />
         Theme
       </Typography>
       <Typography variant="body2" sx={{ color: "text.secondary" }}>

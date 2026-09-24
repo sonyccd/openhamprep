@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
@@ -57,7 +58,7 @@ export function LessonList({ lessons: filteredLessons, onSelect }: LessonListPro
                 {lesson.is_published ? (
                   <Chip
                     size="small"
-                    icon={<Box component={Eye} sx={{ width: 12, height: 12 }} />}
+                    icon={<Icon icon={Eye} size={12} />}
                     label="Published"
                     sx={{
                       bgcolor: "success.main",
@@ -69,7 +70,7 @@ export function LessonList({ lessons: filteredLessons, onSelect }: LessonListPro
                   <Chip
                     size="small"
                     variant="outlined"
-                    icon={<Box component={EyeOff} sx={{ width: 12, height: 12 }} />}
+                    icon={<Icon icon={EyeOff} size={12} />}
                     label="Draft"
                   />
                 )}
@@ -117,11 +118,7 @@ export function LessonList({ lessons: filteredLessons, onSelect }: LessonListPro
                 ))}
               </Box>
             </Box>
-            <Box
-              component={Pencil}
-              aria-hidden="true"
-              sx={{ width: 16, height: 16, color: "text.secondary", flexShrink: 0 }}
-            />
+            <Icon icon={Pencil} size={16} sx={{ color: "text.secondary", flexShrink: 0 }} />
           </CardActionArea>
         </Card>
       ))}

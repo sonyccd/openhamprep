@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { AnimatePresence } from 'framer-motion';
@@ -34,11 +35,7 @@ export function StreakHeader({ currentStreak, longestStreak }: StreakHeaderProps
               : { bgcolor: 'muted' }),
           }}
         >
-          <Box
-            component={Flame}
-            aria-hidden="true"
-            sx={{ width: 20, height: 20, color: hasStreak ? 'warning.main' : 'text.secondary' }}
-          />
+          <Icon icon={Flame} size={20} sx={{ color: hasStreak ? 'warning.main' : 'text.secondary' }} />
         </Box>
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -93,7 +90,7 @@ export function StreakHeader({ currentStreak, longestStreak }: StreakHeaderProps
               : { bgcolor: 'muted', color: 'text.secondary' }),
           }}
         >
-          <Box component={Trophy} aria-hidden="true" sx={{ width: 12, height: 12 }} />
+          <Icon icon={Trophy} size={12} />
           <Box component="span" sx={{ fontFamily: 'monospace' }}>
             {longestStreak}
           </Box>

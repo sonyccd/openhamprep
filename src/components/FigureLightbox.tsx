@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useId } from "react";
 import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
@@ -76,7 +77,7 @@ export function FigureLightbox({ isOpen, onClose, figureUrl, questionId }: Figur
           "&:hover": { opacity: 1, bgcolor: (t) => tokenAlpha(t.vars.palette.background.default, 90) },
         }}
       >
-        <Box component={X} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+        <Icon icon={X} size={20} />
       </IconButton>
     </Dialog>
   );

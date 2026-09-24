@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
@@ -91,7 +92,7 @@ export function ProfileModal({
               onClick={handleBack}
               sx={{ width: 32, height: 32, flexShrink: 0, ml: -0.5 }}
             >
-              <Box component={ChevronLeft} sx={{ width: 16, height: 16 }} />
+              <Icon icon={ChevronLeft} size={16} />
             </IconButton>
           )}
           <DialogTitle sx={{ p: 0, fontSize: "1.125rem", fontWeight: 600 }}>

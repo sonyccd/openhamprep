@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -85,7 +86,7 @@ export function AlertCard({ alert, onAcknowledge, onResolve, isAcknowledging, is
                 <Chip
                   size="small"
                   color="secondary"
-                  icon={<Box component={Zap} aria-hidden="true" sx={smallIcon} />}
+                  icon={<Icon icon={Zap} sx={smallIcon} />}
                   label="Auto-resolved"
                   sx={{ fontSize: "0.75rem" }}
                 />
@@ -96,7 +97,7 @@ export function AlertCard({ alert, onAcknowledge, onResolve, isAcknowledging, is
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1, fontSize: "0.75rem", color: "text.secondary" }}>
               <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <Box component={Clock} aria-hidden="true" sx={smallIcon} />
+                <Icon icon={Clock} sx={smallIcon} />
                 {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true })}
               </Box>
               {alert.rule && <span>Rule: {alert.rule.name}</span>}
@@ -133,7 +134,7 @@ export function AlertCard({ alert, onAcknowledge, onResolve, isAcknowledging, is
                   isAcknowledging ? (
                     <CircularProgress size={16} color="inherit" />
                   ) : (
-                    <Box component={Check} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                    <Icon icon={Check} size={16} />
                   )
                 }
               >
@@ -150,7 +151,7 @@ export function AlertCard({ alert, onAcknowledge, onResolve, isAcknowledging, is
                   isResolving ? (
                     <CircularProgress size={16} color="inherit" />
                   ) : (
-                    <Box component={CheckCheck} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                    <Icon icon={CheckCheck} size={16} />
                   )
                 }
               >

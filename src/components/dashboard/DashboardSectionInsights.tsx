@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -140,12 +141,11 @@ export function DashboardSectionInsights({
               }}
             >
               Practice
-              <Box
-                component={ChevronRight}
+              <Icon
+  icon={ChevronRight}
                 className="FocusArea-chevron"
-                aria-hidden="true"
                 sx={{ width: 16, height: 16, transition: 'transform 200ms' }}
-              />
+/>
             </Box>
           </MotionBox>
         ))}

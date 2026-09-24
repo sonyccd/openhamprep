@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
@@ -92,7 +93,7 @@ export function LinkPreview({ link }: LinkPreviewProps) {
                 : "secondary.main",
             }}
           >
-            {TypeIcon && <Box component={TypeIcon} aria-hidden="true" sx={{ width: 12, height: 12 }} />}
+            {TypeIcon && <Icon icon={TypeIcon} size={12} />}
             {typeLabel}
           </Box>
           {link.siteName && (
@@ -117,12 +118,11 @@ export function LinkPreview({ link }: LinkPreviewProps) {
         )}
       </Box>
 
-      <Box
-        component={ExternalLink}
+      <Icon
+  icon={ExternalLink}
         className="LinkPreview-open"
-        aria-hidden="true"
         sx={{ flexShrink: 0, width: 16, height: 16, color: "text.secondary", transition: "color 200ms", mt: 0.5 }}
-      />
+/>
     </ButtonBase>
   );
 }

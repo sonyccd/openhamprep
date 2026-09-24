@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
@@ -29,7 +30,7 @@ export function FlashcardComplete({
       <Button
         variant="text"
         onClick={onBack}
-        startIcon={<Box component={ArrowLeft} sx={{ width: 16, height: 16 }} />}
+        startIcon={<Icon icon={ArrowLeft} size={16} />}
         sx={{ alignSelf: "flex-start", mb: 4, color: "text.secondary" }}
       >
         Back
@@ -67,11 +68,7 @@ export function FlashcardComplete({
                 )}, ${tokenAlpha(t.vars.palette.success.main, 5)})`,
             }}
           >
-            <Box
-              component={Zap}
-              aria-hidden="true"
-              sx={{ width: 40, height: 40, color: "success.main" }}
-            />
+            <Icon icon={Zap} size={40} sx={{ color: "success.main" }} />
           </Box>
         </MotionBox>
 
@@ -127,14 +124,14 @@ export function FlashcardComplete({
           <Button
             variant="outlined"
             onClick={onBack}
-            startIcon={<Box component={ArrowLeft} sx={{ width: 16, height: 16 }} />}
+            startIcon={<Icon icon={ArrowLeft} size={16} />}
           >
             Back
           </Button>
           <Button
             variant="contained"
             onClick={onRestart}
-            startIcon={<Box component={RotateCcw} sx={{ width: 16, height: 16 }} />}
+            startIcon={<Icon icon={RotateCcw} size={16} />}
           >
             New Session
           </Button>

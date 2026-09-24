@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -87,7 +88,7 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
             variant="text"
             size="small"
             onClick={onBack}
-            startIcon={<Box component={ArrowLeft} sx={{ width: 16, height: 16 }} />}
+            startIcon={<Icon icon={ArrowLeft} size={16} />}
             sx={{ ml: -1, color: "text.primary" }}
           >
             Back
@@ -103,7 +104,7 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
               {isPublished ? (
                 <Chip
                   size="small"
-                  icon={<Box component={Eye} sx={{ width: 12, height: 12 }} />}
+                  icon={<Icon icon={Eye} size={12} />}
                   label="Published"
                   sx={{
                     fontSize: "0.75rem",
@@ -116,7 +117,7 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
                 <Chip
                   color="secondary"
                   size="small"
-                  icon={<Box component={EyeOff} sx={{ width: 12, height: 12 }} />}
+                  icon={<Icon icon={EyeOff} size={12} />}
                   label="Draft"
                   sx={{ fontSize: "0.75rem" }}
                 />
@@ -134,7 +135,7 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
       >
         <Tab
           label="Content"
-          icon={<Box component={FileText} sx={{ width: 16, height: 16 }} />}
+          icon={<Icon icon={FileText} size={16} />}
           iconPosition="start"
           id="topic-tab-content"
           aria-controls="topic-panel-content"
@@ -146,7 +147,7 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
               {questionCount > 0 && <Chip color="secondary" size="small" label={questionCount} />}
             </Box>
           }
-          icon={<Box component={HelpCircle} sx={{ width: 16, height: 16 }} />}
+          icon={<Icon icon={HelpCircle} size={16} />}
           iconPosition="start"
           id="topic-tab-questions"
           aria-controls="topic-panel-questions"
@@ -158,14 +159,14 @@ export function TopicEditor({ topic, onBack }: TopicEditorProps) {
               {resourceCount > 0 && <Chip color="secondary" size="small" label={resourceCount} />}
             </Box>
           }
-          icon={<Box component={LinkIcon} sx={{ width: 16, height: 16 }} />}
+          icon={<Icon icon={LinkIcon} size={16} />}
           iconPosition="start"
           id="topic-tab-resources"
           aria-controls="topic-panel-resources"
         />
         <Tab
           label="Settings"
-          icon={<Box component={Settings} sx={{ width: 16, height: 16 }} />}
+          icon={<Icon icon={Settings} size={16} />}
           iconPosition="start"
           id="topic-tab-settings"
           aria-controls="topic-panel-settings"

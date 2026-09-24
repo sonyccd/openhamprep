@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useRef } from "react";
 import type { CSSProperties } from "react";
 import Box from "@mui/material/Box";
@@ -26,7 +27,7 @@ export function EditorToolbar({ hasChanges, isSaving, isUploading, onSave, onIma
   return (
     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, flexShrink: 0 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Box component={FileText} aria-hidden="true" sx={{ width: 20, height: 20, color: "primary.main" }} />
+        <Icon icon={FileText} size={20} sx={{ color: "primary.main" }} />
         <Typography component="h3" sx={{ fontWeight: 600 }}>
           Content Editor
         </Typography>
@@ -51,7 +52,7 @@ export function EditorToolbar({ hasChanges, isSaving, isUploading, onSave, onIma
           variant="outlined"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          startIcon={isUploading ? <CircularProgress size={16} color="inherit" /> : <Box component={ImagePlus} aria-hidden="true" sx={icon} />}
+          startIcon={isUploading ? <CircularProgress size={16} color="inherit" /> : <Icon icon={ImagePlus} sx={icon} />}
         >
           Image
         </Button>
@@ -60,7 +61,7 @@ export function EditorToolbar({ hasChanges, isSaving, isUploading, onSave, onIma
           variant="contained"
           onClick={onSave}
           disabled={!hasChanges || isSaving}
-          startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : <Box component={Save} aria-hidden="true" sx={icon} />}
+          startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : <Icon icon={Save} sx={icon} />}
         >
           Save
         </Button>

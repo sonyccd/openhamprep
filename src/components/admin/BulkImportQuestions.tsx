@@ -1,4 +1,4 @@
-import Box from "@mui/material/Box";
+import { Icon } from "@/components/ohp/Icon";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
@@ -99,7 +99,7 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
                 variant="contained"
                 onClick={() => setStep("conflicts")}
                 disabled={blocked}
-                startIcon={<Box component={GitMerge} sx={{ width: 16, height: 16 }} />}
+                startIcon={<Icon icon={GitMerge} size={16} />}
               >
                 Resolve {conflicts.length} Conflicts
               </Button>
@@ -112,7 +112,7 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
                   isImporting ? (
                     <CircularProgress size={16} color="inherit" />
                   ) : (
-                    <Box component={Upload} sx={{ width: 16, height: 16 }} />
+                    <Icon icon={Upload} size={16} />
                   )
                 }
               >
@@ -155,7 +155,7 @@ export function BulkImportQuestions({ testType }: BulkImportQuestionsProps) {
             gap: 0.5,
           }}
         >
-          <Box component={AlertTriangle} aria-hidden="true" sx={{ width: 12, height: 12 }} />
+          <Icon icon={AlertTriangle} size={12} />
           Question IDs must start with "{prefix}" for {testType} exam
         </Typography>
       </ImportFormatCard>

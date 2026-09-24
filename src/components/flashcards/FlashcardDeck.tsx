@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -55,7 +56,7 @@ export function FlashcardDeck({
           variant="text"
           size="small"
           onClick={onBack}
-          startIcon={<Box component={ArrowLeft} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={ArrowLeft} size={16} />}
           sx={{ ml: -1, color: "text.secondary" }}
         >
           <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
@@ -37,7 +38,7 @@ export function ForumReportForm({
         color="inherit"
         size="small"
         onClick={onBack}
-        startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+        startIcon={<Icon icon={ArrowLeft} size={16} />}
         sx={{ alignSelf: "flex-start", color: "text.secondary", "&:hover": { color: "text.primary" } }}
       >
         Back to options
@@ -79,7 +80,7 @@ export function ForumReportForm({
           onClick={onSubmit}
           disabled={!ready}
           fullWidth
-          endIcon={<Box component={ExternalLink} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+          endIcon={<Icon icon={ExternalLink} size={16} />}
         >
           Submit to Forum
         </Button>
