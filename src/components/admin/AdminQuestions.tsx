@@ -221,7 +221,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <QuestionEditDialog
         question={editingQuestion}
         highlightQuestionId={highlightQuestionId}
@@ -267,7 +267,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
               {testType.charAt(0).toUpperCase() + testType.slice(1)} Questions (
               {questions.length})
             </Typography>
-            <div className="flex items-center gap-2">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <BulkExport
                 data={questions}
                 filename={`${testType}_questions`}
@@ -326,7 +326,7 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
                 onFigureUrlChange={setNewFigureUrl}
                 onAdd={handleAddQuestion}
               />
-            </div>
+            </Box>
           </Stack>
           <QuestionFiltersBar
             searchTerm={searchTerm}
@@ -354,6 +354,6 @@ export function AdminQuestions({ testType, highlightQuestionId }: AdminQuestions
           )}
         </CardContent>
       </Card>
-    </div>
+    </Box>
   );
 }

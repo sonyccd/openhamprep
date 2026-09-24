@@ -35,7 +35,7 @@ export function QuestionFiltersBar({
           input: {
             startAdornment: (
               <InputAdornment position="start">
-                <Search className="w-4 h-4" aria-hidden="true" />
+                <Box component={Search} aria-hidden="true" sx={{ width: 16, height: 16 }} />
               </InputAdornment>
             ),
           },
@@ -53,7 +53,7 @@ export function QuestionFiltersBar({
           }
           label={
             <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <ThumbsDown className="w-3 h-3" aria-hidden="true" />
+              <Box component={ThumbsDown} aria-hidden="true" sx={{ width: 12, height: 12 }} />
               Negative feedback
             </Box>
           }
@@ -65,7 +65,7 @@ export function QuestionFiltersBar({
             size="small"
             color="inherit"
             onClick={() => onNegativeFeedbackChange(false)}
-            startIcon={<X className="w-4 h-4" aria-hidden="true" />}
+            startIcon={<Box component={X} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
           >
             Clear filter
           </Button>
