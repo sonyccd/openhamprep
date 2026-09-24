@@ -71,7 +71,7 @@ export function DiscrepancySection<T>({ icon: Glyph, tint, title, items, itemKey
   return (
     <Box>
       <Typography component="h4" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "0.875rem", fontWeight: 500, mb: 1.5 }}>
-        <Box component={Glyph} aria-hidden="true" sx={{ width: 16, height: 16, color: `${tint}.main` }} />
+        <Icon icon={Glyph} size={16} sx={{ color: `${tint}.main` }} />
         {title} ({items.length})
       </Typography>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1, maxHeight: 256, overflowY: "auto" }}>

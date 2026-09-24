@@ -27,14 +27,17 @@ export function ChapterList({
   if (chapters.length === 0) {
     return (
       <Box sx={{ textAlign: "center", py: 6 }}>
-        <Icon icon={Book} sx={{
+        <Icon
+          icon={Book}
+          sx={{
             width: 48,
             height: 48,
             mx: "auto",
             mb: 2,
             display: "block",
             color: (t) => tokenAlpha(t.vars.palette.text.secondary, 50),
-          }} />
+          }}
+        />
         <Typography sx={{ color: "text.secondary" }}>
           {searchTerm
             ? "No chapters match your search"

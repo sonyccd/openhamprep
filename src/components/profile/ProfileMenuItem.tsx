@@ -91,13 +91,16 @@ export function ProfileMenuItem({
         )}
       </Box>
 
-      <Icon icon={ChevronRight} sx={{
+      <Icon
+        icon={ChevronRight}
+        sx={{
           width: 20,
           height: 20,
           flexShrink: 0,
           color: (theme) =>
             danger ? tokenAlpha(theme.vars.palette.error.main, 50) : "text.secondary",
-        }} />
+        }}
+      />
     </ListItemButton>
   );
 }

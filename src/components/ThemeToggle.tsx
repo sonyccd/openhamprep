@@ -50,11 +50,14 @@ export function ThemeToggle() {
         }}
       >
         <Icon icon={Sun} sx={{ ...icon, transform: isDark ? "rotate(-90deg) scale(0)" : "none" }} />
-        <Icon icon={Moon} sx={{
+        <Icon
+          icon={Moon}
+          sx={{
             ...icon,
             position: "absolute",
             transform: isDark ? "none" : "rotate(90deg) scale(0)",
-          }} />
+          }}
+        />
       </IconButton>
     </Tooltip>
   );

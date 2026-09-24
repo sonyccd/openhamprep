@@ -103,7 +103,9 @@ export function QuestionListView({
           <Box component="label" htmlFor="question-search" sx={visuallyHidden}>
             Search questions
           </Box>
-          <Icon icon={Search} sx={{
+          <Icon
+            icon={Search}
+            sx={{
               position: "absolute",
               left: 12,
               top: "50%",
@@ -112,7 +114,8 @@ export function QuestionListView({
               height: 16,
               color: "text.secondary",
               pointerEvents: "none",
-            }} />
+            }}
+          />
           <InputBase
             id="question-search"
             type="text"

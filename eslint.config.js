@@ -25,14 +25,16 @@ export default tseslint.config(
       // author remembers to hide it — which, across the migration, they did
       // not (#312: 163 sites). ohp/Icon hides by default and names on request.
       //
-      // Scoped to a capitalised component whose name is not one of the
-      // legitimate non-icon polymorphic targets, so `component={Link}` and
-      // `component={MotionBox}` stay allowed.
+      // Scoped to a capitalised component whose name is not one of the three
+      // legitimate non-icon polymorphic targets. Deliberately no exemption for
+      // the local `Glyph` bindings this migration introduced: exempting a bare
+      // name would reopen the same blind spot for the next component that
+      // destructures `icon: Glyph` into a Box.
       "no-restricted-syntax": [
         "error",
         {
           selector:
-            "JSXOpeningElement[name.name='Box'] > JSXAttribute[name.name='component'][value.expression.name=/^(?!Link$|RouterLink$|MotionBox$|Glyph$)[A-Z]/]",
+            "JSXOpeningElement[name.name='Box'] > JSXAttribute[name.name='component'][value.expression.name=/^(?!Link$|RouterLink$|MotionBox$)[A-Z]/]",
           message:
             "Render lucide icons with <Icon icon={X} size={n} /> from @/components/ohp/Icon — it sets aria-hidden, which a bare Box does not (#312).",
         },
