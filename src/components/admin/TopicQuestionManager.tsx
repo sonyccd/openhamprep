@@ -84,17 +84,16 @@ export function TopicQuestionManager({ topicId }: TopicQuestionManagerProps) {
                   disabled={unlinkQuestion.isPending}
                   trailing={
                     <Icon
-  icon={X}
+                      icon={X}
+                      size={16}
                       sx={{
-                        width: 16,
-                        height: 16,
                         color: "text.secondary",
                         flexShrink: 0,
                         mt: 0.5,
-                        // The row is the control, so hovering it is what warns of the unlink.
+                        // The row is the control, so hovering it warns of the unlink.
                         ".MuiListItemButton-root:hover &": { color: "error.main" },
                       }}
-/>
+                    />
                   }
                 />
               ))}

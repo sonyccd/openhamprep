@@ -87,10 +87,11 @@ export function ChoiceRow({ badge, title, onClick, index }: ChoiceRowProps) {
           </Typography>
         </Box>
         <Icon
-  icon={ChevronRight}
+          icon={ChevronRight}
           className="ChoiceRow-chevron"
-          sx={{ width: 20, height: 20, color: "text.secondary", transition: "color 150ms" }}
-/>
+          size={20}
+          sx={{ color: "text.secondary", transition: "color 150ms" }}
+        />
       </Box>
     </MotionBox>
   );

@@ -42,6 +42,17 @@ describe('Icon', () => {
     expect(getComputedStyle(svg(container)).width).toBe('16px');
   });
 
+  /** sx comes after the size in the array, so a caller can override it. */
+  it("lets a caller's sx win over the size prop", () => {
+    const { container } = render(
+      <Icon icon={Search} size={16} sx={{ width: 32, height: 32 }} />,
+      { wrapper: muiWrapper }
+    );
+
+    expect(getComputedStyle(svg(container)).width).toBe('32px');
+    expect(getComputedStyle(svg(container)).height).toBe('32px');
+  });
+
   it('leaves sizing to sx when no size is given', () => {
     const { container } = render(<Icon icon={Search} sx={{ width: 24, height: 24 }} />, {
       wrapper: muiWrapper,

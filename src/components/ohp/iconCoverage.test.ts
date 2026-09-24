@@ -28,7 +28,10 @@ describe('icon coverage', () => {
 
     for (const [path, text] of Object.entries(sources)) {
       if (path.includes('.test.') || path.endsWith('/ohp/Icon.tsx')) continue;
-      for (const match of text.matchAll(/<Box\b[^>]*?component=\{([^}]*)\}/gs)) {
+      // Scan from each <Box to its component=, rather than stopping at the
+      // first ">": an earlier attribute can contain one, as sx={(t) => ({})}
+      // does, and [^>]*? would then never reach the component that follows.
+      for (const match of text.matchAll(/<Box\b[\s\S]{0,400}?component=\{([^}]*)\}/g)) {
         const expression = match[1].trim();
         if (NON_ICON.test(expression)) continue;
         offenders.push(`${path}: component={${expression}}`);

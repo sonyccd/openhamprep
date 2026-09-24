@@ -140,10 +140,11 @@ export function TestHistoryList({ tests, isLoading, error, onReviewTest }: TestH
 
             {onReviewTest && (
               <Icon
-  icon={ChevronRight}
+                icon={ChevronRight}
                 className="TestHistoryList-arrow"
-                sx={{ width: 16, height: 16, color: "text.secondary", flexShrink: 0, transition: "color 150ms" }}
-/>
+                size={16}
+                sx={{ color: "text.secondary", flexShrink: 0, transition: "color 150ms" }}
+              />
             )}
           </MotionBox>
         );

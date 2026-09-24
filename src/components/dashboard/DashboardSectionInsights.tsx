@@ -142,10 +142,11 @@ export function DashboardSectionInsights({
             >
               Practice
               <Icon
-  icon={ChevronRight}
+                icon={ChevronRight}
                 className="FocusArea-chevron"
-                sx={{ width: 16, height: 16, transition: 'transform 200ms' }}
-/>
+                size={16}
+                sx={{ transition: 'transform 200ms' }}
+              />
             </Box>
           </MotionBox>
         ))}

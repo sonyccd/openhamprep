@@ -93,9 +93,8 @@ export function ProfileMenuItem({
 
       <Icon
         icon={ChevronRight}
+        size={20}
         sx={{
-          width: 20,
-          height: 20,
           flexShrink: 0,
           color: (theme) =>
             danger ? tokenAlpha(theme.vars.palette.error.main, 50) : "text.secondary",

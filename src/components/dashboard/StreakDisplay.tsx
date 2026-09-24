@@ -69,9 +69,10 @@ export function StreakDisplay({ sx, variant = 'full', onAction }: StreakDisplayP
         }}
       >
         <Icon
-  icon={Flame}
-          sx={{ width: 16, height: 16, ...(hasStreak && { color: 'warning.main' }) }}
-/>
+          icon={Flame}
+          size={16}
+          sx={{ ...(hasStreak && { color: 'warning.main' }) }}
+        />
         <Box component="span" sx={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.875rem' }}>
           {currentStreak}
         </Box>

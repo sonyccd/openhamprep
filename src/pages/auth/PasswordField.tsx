@@ -1,6 +1,5 @@
 import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
-import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";

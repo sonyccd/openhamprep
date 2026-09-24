@@ -119,10 +119,11 @@ export function LinkPreview({ link }: LinkPreviewProps) {
       </Box>
 
       <Icon
-  icon={ExternalLink}
+        icon={ExternalLink}
         className="LinkPreview-open"
-        sx={{ flexShrink: 0, width: 16, height: 16, color: "text.secondary", transition: "color 200ms", mt: 0.5 }}
-/>
+        size={16}
+        sx={{ flexShrink: 0, color: "text.secondary", transition: "color 200ms", mt: 0.5 }}
+      />
     </ButtonBase>
   );
 }
