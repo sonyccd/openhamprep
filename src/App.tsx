@@ -66,10 +66,10 @@ const App = () => (
         colorSchemeNode={null} is what enforces that: MUI's cssVars provider
         otherwise runs classList.remove('light','dark') + add(its own resolved
         mode) on documentElement, which would overwrite an explicit user choice
-        that disagrees with the OS preference — and since Tailwind's dark:
-        variants read the same class, that would flip the entire app, not just
-        MUI components. MUI's own styles still follow next-themes, because the
-        theme's CSS variables are scoped to those same .light/.dark selectors.
+        that disagrees with the OS preference. MUI's own styles follow
+        next-themes because the theme's CSS variables are scoped to those same
+        .light/.dark selectors, and the hand-written CSS in index.css keys off
+        them too.
         storageManager={null} stops MUI keeping a competing copy of the
         preference in localStorage. CssBaseline is the reset now that Tailwind's
         preflight is gone; every page is MUI, so there is nothing left for it
