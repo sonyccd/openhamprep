@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
@@ -39,7 +40,7 @@ export function FlashcardControls({
         disabled={currentIndex === 0}
         sx={{ width: 40, height: 40, color: "text.secondary" }}
       >
-        <Box component={ChevronLeft} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+        <Icon icon={ChevronLeft} size={20} />
       </IconButton>
 
       <Button
@@ -72,7 +73,7 @@ export function FlashcardControls({
         disabled={currentIndex === total - 1}
         sx={{ width: 40, height: 40, color: "text.secondary" }}
       >
-        <Box component={ChevronRight} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+        <Icon icon={ChevronRight} size={20} />
       </IconButton>
     </Box>
   );

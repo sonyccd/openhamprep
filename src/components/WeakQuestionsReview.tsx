@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Box from "@mui/material/Box";
@@ -237,11 +238,7 @@ export function WeakQuestionsReview({
         <Card variant="outlined">
           <CardContent sx={{ pt: 3 }}>
             <MotionBox initial={{ opacity: 0 }} animate={{ opacity: 1 }} sx={{ textAlign: "center", py: 4 }}>
-              <Box
-                component={CheckCircle}
-                aria-hidden="true"
-                sx={{ width: 48, height: 48, color: "success.main", mx: "auto", mb: 2, display: "block" }}
-              />
+              <Icon icon={CheckCircle} size={48} sx={{ color: "success.main", mx: "auto", mb: 2, display: "block" }} />
               <Typography sx={{ fontWeight: 500, mb: 1 }}>
                 {allCleared ? "All weak questions cleared!" : "No weak questions!"}
               </Typography>
@@ -283,7 +280,7 @@ export function WeakQuestionsReview({
               variant="outlined"
               onClick={handlePrevQuestion}
               disabled={!canGoPrev || isJustCleared}
-              startIcon={<Box component={ChevronLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+              startIcon={<Icon icon={ChevronLeft} size={16} />}
             >
               Previous
             </Button>
@@ -294,7 +291,7 @@ export function WeakQuestionsReview({
               aria-label="Jump to random question"
               sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1 }}
             >
-              <Box component={Dices} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+              <Icon icon={Dices} size={16} />
             </IconButton>
             {showResult && !isJustCleared && (
               <Button variant="outlined" onClick={handleTryAgain}>
@@ -305,7 +302,7 @@ export function WeakQuestionsReview({
               variant={showResult ? "contained" : "outlined"}
               onClick={handleNextQuestion}
               disabled={!isJustCleared && !canGoNext}
-              endIcon={<Box component={ChevronRight} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+              endIcon={<Icon icon={ChevronRight} size={16} />}
             >
               {isJustCleared && !hasMoreQuestions ? 'Done' : 'Next'}
             </Button>

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
@@ -106,7 +107,7 @@ export function GetMoreHelp({ question, selectedAnswer, onTopicClick }: GetMoreH
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.75 }}>
             {question.topics!.map((topic) => (
               <ButtonBase key={topic.id} onClick={() => onTopicClick?.(topic.slug)} sx={actionSx}>
-                <Box component={BookOpen} aria-hidden="true" sx={{ width: 16, height: 16, flexShrink: 0 }} />
+                <Icon icon={BookOpen} size={16} sx={{ flexShrink: 0 }} />
                 {topic.title}
               </ButtonBase>
             ))}
@@ -119,14 +120,14 @@ export function GetMoreHelp({ question, selectedAnswer, onTopicClick }: GetMoreH
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 0.75 }}>
           {hasForum && (
             <ButtonBase component="a" href={authUrl!} target="_blank" rel="noopener noreferrer" sx={actionSx}>
-              <Box component={Users} aria-hidden="true" sx={{ width: 16, height: 16, flexShrink: 0 }} />
+              <Icon icon={Users} size={16} sx={{ flexShrink: 0 }} />
               Discuss with Other Hams
-              <Box component={ExternalLink} aria-hidden="true" sx={{ width: 12, height: 12, opacity: 0.5, flexShrink: 0 }} />
+              <Icon icon={ExternalLink} size={12} sx={{ opacity: 0.5, flexShrink: 0 }} />
             </ButtonBase>
           )}
 
           <ButtonBase onClick={handleCopyPrompt} aria-label="Copy AI chatbot prompt to clipboard" sx={actionSx}>
-            <Box component={Sparkles} aria-hidden="true" sx={{ width: 16, height: 16, flexShrink: 0 }} />
+            <Icon icon={Sparkles} size={16} sx={{ flexShrink: 0 }} />
             Get AI Prompt
           </ButtonBase>
         </Box>

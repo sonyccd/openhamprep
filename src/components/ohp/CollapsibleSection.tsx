@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useId, useState, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
@@ -106,7 +107,7 @@ export function CollapsibleSection({
       }}
     >
       {heading}
-      <Box component={open ? ChevronUp : ChevronDown} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+      <Icon icon={open ? ChevronUp : ChevronDown} size={16} />
     </ButtonBase>
   );
 

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -31,11 +32,7 @@ function EmptyState({ onStartPractice }: { onStartPractice: () => void }) {
           animate={{ opacity: 1 }}
           sx={{ textAlign: "center", py: 4 }}
         >
-          <Box
-            component={Bookmark}
-            aria-hidden="true"
-            sx={{ width: 48, height: 48, color: "text.secondary", mx: "auto", mb: 2 }}
-          />
+          <Icon icon={Bookmark} size={48} sx={{ color: "text.secondary", mx: "auto", mb: 2 }} />
           <Typography sx={{ color: "text.primary", fontWeight: 500, mb: 1 }}>
             No bookmarks yet
           </Typography>
@@ -77,7 +74,7 @@ export function BookmarkList({
             gap: 1,
           }}
         >
-          <Box component={Bookmark} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+          <Icon icon={Bookmark} size={20} />
           Bookmarked Questions
         </Typography>
         <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
@@ -120,7 +117,7 @@ export function BookmarkList({
                     {note && (
                       <Chip
                         icon={
-                          <Box component={MessageSquare} sx={{ width: 12, height: 12 }} />
+                          <Icon icon={MessageSquare} size={12} />
                         }
                         label="Has note"
                         size="small"
@@ -158,7 +155,7 @@ export function BookmarkList({
                     "&:hover": { color: "error.main" },
                   }}
                 >
-                  <Box component={Trash2} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                  <Icon icon={Trash2} size={16} />
                 </IconButton>
               </Box>
             </Card>

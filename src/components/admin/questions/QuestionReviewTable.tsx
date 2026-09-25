@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useMemo } from "react";
 import { Pencil } from "lucide-react";
 import Box from "@mui/material/Box";
@@ -65,7 +66,7 @@ export function QuestionReviewTable({
           >
             {/* lucide stays: adopting @mui/icons-material is deferred to C7 per
                 strategy §10, and MUI components take any icon as a child. */}
-            <Box component={Pencil} aria-hidden="true" sx={{ width: 14, height: 14 }} />
+            <Icon icon={Pencil} size={14} />
           </IconButton>
         ),
       },

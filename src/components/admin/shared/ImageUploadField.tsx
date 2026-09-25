@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import Box from "@mui/material/Box";
@@ -138,7 +139,7 @@ export function ImageUploadField({
             isUploading ? (
               <CircularProgress size={16} color="inherit" />
             ) : (
-              <Box component={displayUrl ? Upload : ImageIcon} aria-hidden="true" sx={icon} />
+              <Icon icon={displayUrl ? Upload : ImageIcon} sx={icon} />
             )
           }
           sx={{ flex: 1, ...(!displayUrl && { borderStyle: "dashed" }) }}
@@ -157,7 +158,7 @@ export function ImageUploadField({
             aria-label={`Remove ${noun.toLowerCase()}`}
             sx={{ minWidth: 0, px: 1 }}
           >
-            {isRemoving ? <CircularProgress size={16} color="inherit" /> : <Box component={Trash2} aria-hidden="true" sx={icon} />}
+            {isRemoving ? <CircularProgress size={16} color="inherit" /> : <Icon icon={Trash2} sx={icon} />}
           </Button>
         )}
       </Box>

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
@@ -44,7 +45,7 @@ export function TestNavigator({
           variant="outlined"
           onClick={onPrevious}
           disabled={currentIndex === 0}
-          startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={ArrowLeft} size={16} />}
         >
           Previous
         </Button>
@@ -98,7 +99,7 @@ export function TestNavigator({
             variant="contained"
             color={answeredCount === questions.length ? "primary" : "secondary"}
             onClick={onFinish}
-            startIcon={<Box component={CheckCircle} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+            startIcon={<Icon icon={CheckCircle} size={16} />}
           >
             Finish Test
           </Button>
@@ -106,7 +107,7 @@ export function TestNavigator({
           <Button
             variant="contained"
             onClick={onNext}
-            endIcon={<Box component={ArrowRight} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+            endIcon={<Icon icon={ArrowRight} size={16} />}
           >
             Next
           </Button>

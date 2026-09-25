@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -36,7 +37,7 @@ export function SyncActionsCard({
         disableTypography
         title={
           <Typography component="h3" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "1rem", fontWeight: 600 }}>
-            <Box component={Wrench} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+            <Icon icon={Wrench} size={20} />
             Sync Actions
           </Typography>
         }
@@ -47,7 +48,7 @@ export function SyncActionsCard({
             variant="outlined"
             onClick={onVerify}
             disabled={isVerifying}
-            startIcon={isVerifying ? <CircularProgress size={16} color="inherit" /> : <Box component={Search} aria-hidden="true" sx={icon} />}
+            startIcon={isVerifying ? <CircularProgress size={16} color="inherit" /> : <Icon icon={Search} sx={icon} />}
           >
             {isVerifying ? "Verifying..." : "Verify Sync Status"}
           </Button>
@@ -56,12 +57,12 @@ export function SyncActionsCard({
             variant="contained"
             onClick={onRepair}
             disabled={!canRepair}
-            startIcon={isRepairing ? <CircularProgress size={16} color="inherit" /> : <Box component={Wrench} aria-hidden="true" sx={icon} />}
+            startIcon={isRepairing ? <CircularProgress size={16} color="inherit" /> : <Icon icon={Wrench} sx={icon} />}
           >
             {isRepairing ? "Repairing..." : "Repair Missing URLs"}
           </Button>
 
-          <Button variant="text" color="inherit" onClick={onRefresh} startIcon={<Box component={RefreshCw} aria-hidden="true" sx={icon} />}>
+          <Button variant="text" color="inherit" onClick={onRefresh} startIcon={<Icon icon={RefreshCw} sx={icon} />}>
             Refresh
           </Button>
         </Box>

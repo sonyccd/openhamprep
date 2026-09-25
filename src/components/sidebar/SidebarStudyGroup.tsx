@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import Box from '@mui/material/Box';
 import ButtonBase from '@mui/material/ButtonBase';
@@ -79,7 +80,7 @@ export const SidebarStudyGroup = ({
           }}
         >
           <Box sx={{ position: 'relative', flexShrink: 0 }}>
-            <Box component={StudyIcon} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+            <Icon icon={StudyIcon} size={20} />
             {totalBadge > 0 && (
               <Box component="span" aria-hidden="true" sx={badgeSx(16)}>
                 {totalBadge > 9 ? '9+' : totalBadge}
@@ -106,7 +107,7 @@ export const SidebarStudyGroup = ({
         }}
       >
         <Box sx={{ position: 'relative', flexShrink: 0 }}>
-          <Box component={StudyIcon} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+          <Icon icon={StudyIcon} size={20} />
           {totalBadge > 0 && (
             <Box component="span" aria-hidden="true" sx={badgeSx(16)}>
               {totalBadge > 9 ? '9+' : totalBadge}
@@ -127,11 +128,7 @@ export const SidebarStudyGroup = ({
         >
           {group.label}
         </Typography>
-        <Box
-          component={isExpanded ? ChevronDown : ChevronRight}
-          aria-hidden="true"
-          sx={{ width: 16, height: 16 }}
-        />
+        <Icon icon={isExpanded ? ChevronDown : ChevronRight} size={16} />
         {totalBadge > 0 && (
           // The badge bubble is aria-hidden, so the count reaches assistive
           // tech as text here instead. visuallyHidden replaces the sr-only
@@ -152,7 +149,7 @@ export const SidebarStudyGroup = ({
         >
           {group.items.map((item) => {
             const isActive = !isOnAdminPage && currentView === item.id;
-            const Icon = item.icon;
+            const Glyph = item.icon;
             return (
               <ButtonBase
                 key={item.id}
@@ -169,7 +166,7 @@ export const SidebarStudyGroup = ({
                 }}
               >
                 <Box sx={{ position: 'relative', flexShrink: 0 }}>
-                  <Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                  <Icon icon={Glyph} size={16} />
                   {item.badge !== undefined && item.badge > 0 && (
                     <Box component="span" aria-hidden="true" sx={badgeSx(14)}>
                       {item.badge > 9 ? '9+' : item.badge}

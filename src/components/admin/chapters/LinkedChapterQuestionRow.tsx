@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Checkbox from "@mui/material/Checkbox";
@@ -104,7 +105,7 @@ export function LinkedChapterQuestionRow({ question, onUnlink, onPageChange, isP
               aria-label="Unlink question"
               sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
             >
-              <Box component={X} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+              <Icon icon={X} size={16} />
             </IconButton>
           </span>
         </Tooltip>

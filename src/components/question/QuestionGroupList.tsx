@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -148,11 +149,7 @@ export function QuestionGroupList({
                               bgcolor: (t) => tokenAlpha(t.vars.palette.primary.main, 10),
                             }}
                           >
-                            <Box
-                              component={Play}
-                              aria-hidden="true"
-                              sx={{ width: 14, height: 14, color: "primary.main", ml: "2px" }}
-                            />
+                            <Icon icon={Play} size={14} sx={{ color: "primary.main", ml: "2px" }} />
                           </Box>
                         </MotionBox>
                       )}

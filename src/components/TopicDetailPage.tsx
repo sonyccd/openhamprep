@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
@@ -75,11 +76,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
         contentSx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
       >
         <Box sx={{ textAlign: "center" }}>
-          <Box
-            component={FileText}
-            aria-hidden="true"
-            sx={{ width: 48, height: 48, mx: "auto", mb: 2, color: "text.secondary", display: "block" }}
-          />
+          <Icon icon={FileText} size={48} sx={{ mx: "auto", mb: 2, color: "text.secondary", display: "block" }} />
           <Typography variant="h6" component="h2" sx={{ fontSize: "1.125rem", fontWeight: 500, mb: 1 }}>
             Topic not found
           </Typography>
@@ -89,7 +86,7 @@ export function TopicDetailPage({ slug, onBack }: TopicDetailPageProps) {
           <Button
             variant="contained"
             onClick={onBack}
-            startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+            startIcon={<Icon icon={ArrowLeft} size={16} />}
           >
             {backLabel}
           </Button>

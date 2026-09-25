@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -96,7 +97,7 @@ export function LessonTopicManager({ lessonId, topics }: LessonTopicManagerProps
           variant="contained"
           size="small"
           onClick={() => setIsAddDialogOpen(true)}
-          startIcon={<Box component={Plus} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={Plus} size={16} />}
         >
           Add Topic
         </Button>

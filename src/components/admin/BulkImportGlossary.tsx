@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -99,7 +100,7 @@ export function BulkImportGlossary() {
                 variant="contained"
                 onClick={() => setStep("conflicts")}
                 disabled={isImporting}
-                startIcon={<Box component={GitMerge} sx={{ width: 16, height: 16 }} />}
+                startIcon={<Icon icon={GitMerge} size={16} />}
               >
                 Resolve {conflicts.length} Conflicts
               </Button>
@@ -112,7 +113,7 @@ export function BulkImportGlossary() {
                   isImporting ? (
                     <CircularProgress size={16} color="inherit" />
                   ) : (
-                    <Box component={Upload} sx={{ width: 16, height: 16 }} />
+                    <Icon icon={Upload} size={16} />
                   )
                 }
               >

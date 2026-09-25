@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState, useMemo } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -84,7 +85,7 @@ export function HamRadioToolsGallery() {
               component="h1"
               sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}
             >
-              <Box component={Wrench} aria-hidden="true" sx={{ width: 24, height: 24 }} />
+              <Icon icon={Wrench} size={24} />
               Tools
             </Typography>
             {tools && tools.length > 0 && (
@@ -106,11 +107,7 @@ export function HamRadioToolsGallery() {
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Box
-                      component={Search}
-                      aria-hidden="true"
-                      sx={{ width: 16, height: 16, color: "text.secondary" }}
-                    />
+                    <Icon icon={Search} size={16} sx={{ color: "text.secondary" }} />
                   </InputAdornment>
                 ),
               },
@@ -193,11 +190,7 @@ export function HamRadioToolsGallery() {
               bgcolor: (theme) => tokenAlpha(theme.vars.palette.muted, 30),
             }}
           >
-            <Box
-              component={Wrench}
-              aria-hidden="true"
-              sx={{ width: 48, height: 48, mx: "auto", mb: 2, color: "text.secondary" }}
-            />
+            <Icon icon={Wrench} size={48} sx={{ mx: "auto", mb: 2, color: "text.secondary" }} />
             <Typography variant="h6" component="h3" sx={{ fontWeight: 500, mb: 1 }}>
               {isFiltered ? "No tools found" : "No tools available"}
             </Typography>

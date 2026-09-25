@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -52,7 +53,7 @@ export function ChapterAddDialog({
         id="add-chapter-title"
         sx={{ display: "flex", alignItems: "center", gap: 1 }}
       >
-        <Box component={Book} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+        <Icon icon={Book} size={20} />
         Add New Chapter
       </DialogTitle>
       <DialogContent>
@@ -86,7 +87,7 @@ export function ChapterAddDialog({
             isPending ? (
               <CircularProgress size={16} color="inherit" />
             ) : (
-              <Box component={Plus} sx={{ width: 16, height: 16 }} />
+              <Icon icon={Plus} size={16} />
             )
           }
         >

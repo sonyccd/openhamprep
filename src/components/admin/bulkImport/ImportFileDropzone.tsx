@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import type { ChangeEvent, CSSProperties, RefObject } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -60,7 +61,7 @@ export function ImportFileDropzone({
           <Box
             sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.5 }}
           >
-            <Box component={Upload} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+            <Icon icon={Upload} size={20} />
             <span>{prompt}</span>
           </Box>
         )}

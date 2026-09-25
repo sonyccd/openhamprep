@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
@@ -63,7 +64,7 @@ export function PracticeTestStart({
               mb: 3,
             }}
           >
-            <Box component={Play} aria-hidden="true" sx={{ width: 32, height: 32, color: "primary.main" }} />
+            <Icon icon={Play} size={32} sx={{ color: "primary.main" }} />
           </Box>
 
           <Typography variant="h5" component="h1" sx={{ fontFamily: "monospace", fontWeight: 700, mb: 2 }}>
@@ -85,7 +86,7 @@ export function PracticeTestStart({
             variant="contained"
             size="large"
             onClick={onStart}
-            startIcon={<Box component={Play} aria-hidden="true" sx={{ width: 20, height: 20 }} />}
+            startIcon={<Icon icon={Play} size={20} />}
           >
             Start Test
           </Button>
@@ -100,7 +101,7 @@ export function PracticeTestStart({
           sx={{ p: 3, borderRadius: "12px" }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-            <Box component={History} aria-hidden="true" sx={{ width: 20, height: 20, color: "text.secondary" }} />
+            <Icon icon={History} size={20} sx={{ color: "text.secondary" }} />
             <Typography component="h2" sx={{ fontWeight: 600 }}>
               Recent Tests
             </Typography>

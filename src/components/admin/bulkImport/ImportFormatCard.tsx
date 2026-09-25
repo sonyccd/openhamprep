@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -41,11 +42,7 @@ export function ImportFormatRow({
 }: ImportFormatRowProps) {
   return (
     <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-      <Box
-        component={icon}
-        aria-hidden="true"
-        sx={{ width: 16, height: 16, mt: 0.25, color: iconColor }}
-      />
+      <Icon icon={icon} size={16} sx={{ mt: 0.25, color: iconColor }} />
       <Box sx={{ flex: 1 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Typography sx={{ fontWeight: 500 }}>{name}</Typography>
@@ -54,7 +51,7 @@ export function ImportFormatRow({
               variant="text"
               size="small"
               onClick={onDownload}
-              startIcon={<Box component={Download} sx={{ width: 12, height: 12 }} />}
+              startIcon={<Icon icon={Download} size={12} />}
               sx={{ fontSize: "0.75rem", minHeight: 24, py: 0, px: 1 }}
             >
               {/* Named per format: two buttons both called "Example" are

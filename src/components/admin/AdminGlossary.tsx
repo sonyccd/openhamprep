@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -108,7 +109,7 @@ export function AdminGlossary() {
                 <Button
                   variant="contained"
                   onClick={() => setIsAddDialogOpen(true)}
-                  startIcon={<Box component={Plus} sx={{ width: 16, height: 16 }} />}
+                  startIcon={<Icon icon={Plus} size={16} />}
                 >
                   Add Term
                 </Button>
@@ -130,11 +131,7 @@ export function AdminGlossary() {
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Box
-                        component={Search}
-                        aria-hidden="true"
-                        sx={{ width: 16, height: 16, color: "text.secondary" }}
-                      />
+                      <Icon icon={Search} size={16} sx={{ color: "text.secondary" }} />
                     </InputAdornment>
                   ),
                 },

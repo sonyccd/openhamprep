@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -33,11 +34,7 @@ export function VerificationResults({ result }: VerificationResultsProps) {
         disableTypography
         title={
           <Typography component="h3" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "1rem", fontWeight: 600 }}>
-            <Box
-              component={hasDiscrepancies ? AlertTriangle : CheckCircle}
-              aria-hidden="true"
-              sx={{ width: 20, height: 20, color: hasDiscrepancies ? "warning.main" : "success.main" }}
-            />
+            <Icon icon={hasDiscrepancies ? AlertTriangle : CheckCircle} size={20} sx={{ color: hasDiscrepancies ? "warning.main" : "success.main" }} />
             Verification Results
           </Typography>
         }
@@ -141,7 +138,7 @@ export function VerificationResults({ result }: VerificationResultsProps) {
 
         {!hasDiscrepancies && (
           <Box sx={{ textAlign: "center", py: 4 }}>
-            <Box component={CheckCircle} aria-hidden="true" sx={{ width: 48, height: 48, color: "success.main", mx: "auto", mb: 2 }} />
+            <Icon icon={CheckCircle} size={48} sx={{ color: "success.main", mx: "auto", mb: 2 }} />
             <Typography sx={{ color: "text.secondary" }}>All synced questions are in good shape!</Typography>
           </Box>
         )}

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import { visuallyHidden } from "@mui/utils";
 import { AnimatePresence } from "framer-motion";
@@ -49,15 +50,13 @@ export function StreakIndicator({ streak, celebrating }: StreakIndicatorProps) {
                 justifyContent: "center",
               }}
             >
-              <Box component={Trophy} sx={{ width: 24, height: 24 }} />
+              <Icon icon={Trophy} size={24} />
             </MotionBox>
           )}
-          <Box
-            component={Flame}
-            aria-hidden="true"
+          <Icon
+            icon={Flame}
+            size={16}
             sx={{
-              width: 16,
-              height: 16,
               // The flame pulses once the streak is worth noticing.
               ...(streak >= 5 && {
                 animation: "streak-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",

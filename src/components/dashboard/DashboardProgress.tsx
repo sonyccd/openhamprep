@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import LinearProgress from '@mui/material/LinearProgress';
@@ -108,7 +109,7 @@ export function DashboardProgress({
           onClick={onOpenGoalsModal}
           sx={{ width: 28, height: 28 }}
         >
-          <Box component={Settings2} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+          <Icon icon={Settings2} size={16} />
         </IconButton>
       </Box>
 

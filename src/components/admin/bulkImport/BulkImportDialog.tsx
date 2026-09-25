@@ -1,5 +1,5 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useId, type ReactNode } from "react";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -47,7 +47,7 @@ export function BulkImportDialog({
       <Button
         variant="outlined"
         onClick={() => onOpenChange(true)}
-        startIcon={<Box component={Upload} sx={{ width: 16, height: 16 }} />}
+        startIcon={<Icon icon={Upload} size={16} />}
       >
         Bulk Import
       </Button>

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useId, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -65,7 +66,7 @@ export function ResourceDialog({
             isPending ? (
               <CircularProgress size={16} color="inherit" />
             ) : showSubmitIcon ? (
-              <Box component={Plus} sx={{ width: 16, height: 16 }} />
+              <Icon icon={Plus} size={16} />
             ) : undefined
           }
         >

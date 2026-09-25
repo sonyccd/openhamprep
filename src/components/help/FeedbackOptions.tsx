@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import List from "@mui/material/List";
@@ -15,7 +16,7 @@ import type { ReportKind } from "./helpForumUrl";
 
 /** A tinted round icon, the marker for one kind of report. */
 export function OptionIcon({
-  icon: Icon,
+  icon: Glyph,
   token,
   size = 40,
 }: {
@@ -32,7 +33,7 @@ export function OptionIcon({
         bgcolor: (t) => tokenAlpha(t.vars.palette[token].main, 10),
       }}
     >
-      <Box component={Icon} aria-hidden="true" sx={{ width: size / 2, height: size / 2 }} />
+      <Icon icon={Glyph} sx={{ width: size / 2, height: size / 2 }} />
     </Avatar>
   );
 }
@@ -102,7 +103,7 @@ export function FeedbackOptions({ onPick }: FeedbackOptionsProps) {
               secondary="Check if services are running smoothly"
               slotProps={{ primary: { sx: { fontWeight: 500 } } }}
             />
-            <Box component={ExternalLink} aria-hidden="true" sx={{ width: 16, height: 16, color: "text.secondary" }} />
+            <Icon icon={ExternalLink} size={16} sx={{ color: "text.secondary" }} />
             <Box component="span" sx={visuallyHidden}>
               (opens in new window)
             </Box>

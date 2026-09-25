@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
@@ -52,11 +53,7 @@ export function TopicQuizResults({
             bgcolor: (t) => tokenAlpha(t.vars.palette[verdict].main, 10),
           }}
         >
-          <Box
-            component={results.passed ? Trophy : XCircle}
-            aria-hidden="true"
-            sx={{ width: 32, height: 32, color: `${verdict}.main` }}
-          />
+          <Icon icon={results.passed ? Trophy : XCircle} size={32} sx={{ color: `${verdict}.main` }} />
         </Box>
 
         <Typography
@@ -101,7 +98,7 @@ export function TopicQuizResults({
         <Button
           variant="outlined"
           onClick={onRetry}
-          startIcon={<Box component={RotateCcw} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={RotateCcw} size={16} />}
         >
           Try Again
         </Button>

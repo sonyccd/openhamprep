@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -18,11 +19,11 @@ interface IOSInstallDialogProps {
 }
 
 /** A named Safari control, with its icon, inline in a step's sentence. */
-function Control({ label, icon: Icon }: { label: string; icon: LucideIcon }) {
+function Control({ label, icon: Glyph }: { label: string; icon: LucideIcon }) {
   return (
     <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, fontWeight: 500 }}>
       {label}
-      <Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+      <Icon icon={Glyph} size={16} />
     </Box>
   );
 }
@@ -54,7 +55,7 @@ export function IOSInstallDialog({ onDismiss }: IOSInstallDialogProps) {
       aria-describedby="ios-install-description"
     >
       <DialogTitle id="ios-install-title" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Box component={Download} aria-hidden="true" sx={{ width: 20, height: 20, color: "primary.main" }} />
+        <Icon icon={Download} size={20} sx={{ color: "primary.main" }} />
         Install Open Ham Prep
       </DialogTitle>
       <DialogContent>

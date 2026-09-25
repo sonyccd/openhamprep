@@ -7,6 +7,7 @@ import {
   Book,
   RefreshCw,
 } from "lucide-react";
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -163,7 +164,7 @@ export function QuestionEditDialog({
 
           <Stack spacing={1.5}>
             <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Box component={Image} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+              <Icon icon={Image} size={16} />
               Question Figure (Optional)
             </Typography>
             <FigureUpload
@@ -178,7 +179,7 @@ export function QuestionEditDialog({
 
           <Stack spacing={1}>
             <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Box component={LinkIcon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+              <Icon icon={LinkIcon} size={16} />
               Learning Resources
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -210,7 +211,7 @@ export function QuestionEditDialog({
                       <Box component="span" sx={{ overflow: "hidden", textOverflow: "ellipsis" }}>
                         {link.title || link.url}
                       </Box>
-                      <Box component={ExternalLink} aria-hidden="true" sx={{ width: 12, height: 12, flexShrink: 0 }} />
+                      <Icon icon={ExternalLink} size={12} sx={{ flexShrink: 0 }} />
                     </Link>
                   </Stack>
                 ))}
@@ -222,7 +223,7 @@ export function QuestionEditDialog({
 
           <Stack spacing={1}>
             <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Box component={ExternalLink} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+              <Icon icon={ExternalLink} size={16} />
               Discourse Forum Topic (Optional)
             </Typography>
             <TextField
@@ -241,7 +242,7 @@ export function QuestionEditDialog({
                 variant="caption"
                 sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
               >
-                Open in Forum <Box component={ExternalLink} aria-hidden="true" sx={{ width: 12, height: 12 }} />
+                Open in Forum <Icon icon={ExternalLink} size={12} />
               </Link>
             ) : editForumUrl ? (
               <Typography variant="caption" color="error">
@@ -269,7 +270,7 @@ export function QuestionEditDialog({
                   variant="outlined"
                   size="small"
                   onClick={onRetrySync}
-                  startIcon={<Box component={RefreshCw} aria-hidden="true" sx={{ width: 12, height: 12 }} />}
+                  startIcon={<Icon icon={RefreshCw} size={12} />}
                 >
                   Retry
                 </Button>
@@ -282,7 +283,7 @@ export function QuestionEditDialog({
           {question && (
             <Stack spacing={1}>
               <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Box component={BookOpen} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                <Icon icon={BookOpen} size={16} />
                 Linked Topics
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -296,7 +297,7 @@ export function QuestionEditDialog({
                       color="secondary"
                       key={index}
                       size="small"
-                      icon={<Box component={BookOpen} aria-hidden="true" sx={{ width: 12, height: 12 }} />}
+                      icon={<Icon icon={BookOpen} size={12} />}
                       label={name}
                     />
                   ))}
@@ -313,7 +314,7 @@ export function QuestionEditDialog({
 
           <Stack spacing={2}>
             <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Box component={Book} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+              <Icon icon={Book} size={16} />
               ARRL Textbook Reference
             </Typography>
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
@@ -356,7 +357,7 @@ export function QuestionEditDialog({
         <Button
           color="error"
           onClick={() => onDeleteDialogOpenChange(true)}
-          startIcon={<Box component={Trash2} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={Trash2} size={16} />}
         >
           Delete Question
         </Button>

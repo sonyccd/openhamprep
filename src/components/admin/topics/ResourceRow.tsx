@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Chip from "@mui/material/Chip";
@@ -19,7 +20,7 @@ interface ResourceRowProps {
 
 /** One resource: its icon, title, where it points, and its row actions. */
 export function ResourceRow({ resource, fileUrl, onEdit, onDelete }: ResourceRowProps) {
-  const Icon = getResourceIcon(resource.resource_type);
+  const Glyph = getResourceIcon(resource.resource_type);
 
   return (
     <Card
@@ -50,11 +51,7 @@ export function ResourceRow({ resource, fileUrl, onEdit, onDelete }: ResourceRow
           flexShrink: 0,
         }}
       >
-        <Box
-          component={Icon}
-          aria-hidden="true"
-          sx={{ width: 16, height: 16, color: getResourceColorToken(resource.resource_type) }}
-        />
+        <Icon icon={Glyph} size={16} sx={{ color: getResourceColorToken(resource.resource_type) }} />
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -72,7 +69,7 @@ export function ResourceRow({ resource, fileUrl, onEdit, onDelete }: ResourceRow
             <Chip
               color="secondary"
               size="small"
-              icon={<Box component={Upload} sx={{ width: 12, height: 12 }} />}
+              icon={<Icon icon={Upload} size={12} />}
               label="Uploaded"
               sx={{ fontSize: "0.75rem", flexShrink: 0 }}
             />
@@ -94,7 +91,7 @@ export function ResourceRow({ resource, fileUrl, onEdit, onDelete }: ResourceRow
               "&:hover": { color: "primary.main" },
             }}
           >
-            <Box component={Download} aria-hidden="true" sx={{ width: 12, height: 12 }} />
+            <Icon icon={Download} size={12} />
             Download file
           </Link>
         ) : resource.url ? (
@@ -116,11 +113,7 @@ export function ResourceRow({ resource, fileUrl, onEdit, onDelete }: ResourceRow
             <Box component="span" sx={{ overflow: "hidden", textOverflow: "ellipsis" }}>
               {resource.url}
             </Box>
-            <Box
-              component={ExternalLink}
-              aria-hidden="true"
-              sx={{ width: 12, height: 12, flexShrink: 0 }}
-            />
+            <Icon icon={ExternalLink} size={12} sx={{ flexShrink: 0 }} />
           </Link>
         ) : null}
       </Box>
@@ -140,14 +133,14 @@ export function ResourceRow({ resource, fileUrl, onEdit, onDelete }: ResourceRow
           onClick={onEdit}
           sx={{ width: 32, height: 32 }}
         >
-          <Box component={Pencil} sx={{ width: 16, height: 16 }} />
+          <Icon icon={Pencil} size={16} />
         </IconButton>
         <IconButton
           aria-label={`Delete ${resource.title}`}
           onClick={onDelete}
           sx={{ width: 32, height: 32, color: "error.main" }}
         >
-          <Box component={Trash2} sx={{ width: 16, height: 16 }} />
+          <Icon icon={Trash2} size={16} />
         </IconButton>
       </Box>
     </Card>

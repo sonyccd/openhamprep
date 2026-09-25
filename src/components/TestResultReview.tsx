@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Box from "@mui/material/Box";
@@ -143,7 +144,7 @@ export function TestResultReview({ testResultId, onBack }: TestResultReviewProps
           <Box
             sx={{ display: "flex", alignItems: "center", gap: 1, color: "text.secondary", mb: 2 }}
           >
-            <Box component={Calendar} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+            <Icon icon={Calendar} size={16} />
             <Box component="span" sx={{ fontSize: "0.875rem" }}>
               {completedAt.toLocaleDateString()} at{" "}
               {completedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}

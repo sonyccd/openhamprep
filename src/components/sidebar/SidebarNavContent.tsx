@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import { Search } from 'lucide-react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -121,7 +122,7 @@ export const SidebarNavContent = ({
                 color: 'text.secondary',
                 '&:hover': { color: 'text.primary' },
               }}
-              startIcon={<Box component={Search} sx={{ width: 16, height: 16 }} />}
+              startIcon={<Icon icon={Search} size={16} />}
             >
               Search...
               <Box
@@ -153,7 +154,7 @@ export const SidebarNavContent = ({
                   '&:hover': { color: 'text.primary' },
                 }}
               >
-                <Box component={Search} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                <Icon icon={Search} size={16} />
               </IconButton>
             </Tooltip>
           )}

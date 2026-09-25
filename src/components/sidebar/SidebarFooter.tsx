@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import { Shield, LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
@@ -88,7 +89,7 @@ export const SidebarFooter = ({
                 aria-current={isOnAdminPage ? 'page' : undefined}
                 sx={{ width: '100%', height: 40, borderRadius: 2, ...adminColours }}
               >
-                <Box component={Shield} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+                <Icon icon={Shield} size={20} />
               </IconButton>
             </Tooltip>
           ) : (
@@ -97,7 +98,7 @@ export const SidebarFooter = ({
               aria-current={isOnAdminPage ? 'page' : undefined}
               fullWidth
               sx={{ justifyContent: 'flex-start', gap: 1.5, ...adminColours }}
-              startIcon={<Box component={Shield} sx={{ width: 20, height: 20 }} />}
+              startIcon={<Icon icon={Shield} size={20} />}
             >
               Admin
             </Button>
@@ -125,7 +126,7 @@ export const SidebarFooter = ({
                   '&:hover': { color: 'text.primary', bgcolor: 'secondary.main' },
                 }}
               >
-                <Box component={LogIn} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+                <Icon icon={LogIn} size={20} />
               </Box>
             </Tooltip>
           </Box>

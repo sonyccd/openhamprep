@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -34,7 +35,7 @@ export function TopicQuizCta({ questionCount, isCompleted, onStart }: TopicQuizC
           variant="contained"
           size="large"
           onClick={onStart}
-          startIcon={<Box component={PlayCircle} aria-hidden="true" sx={{ width: 20, height: 20 }} />}
+          startIcon={<Icon icon={PlayCircle} size={20} />}
         >
           {isCompleted ? "Retake Quiz" : "Take Quiz"}
         </Button>

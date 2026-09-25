@@ -1,5 +1,5 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState, useEffect, useRef } from "react";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -122,7 +122,7 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
         <Button
           variant="contained"
           onClick={onRetake}
-          startIcon={<Box component={RotateCcw} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={RotateCcw} size={16} />}
           sx={{ flex: 1 }}
         >
           Retake Test
@@ -130,7 +130,7 @@ export function TestResults({ questions, answers, onRetake, onBack, testType = '
         <Button
           variant="outlined"
           onClick={onBack}
-          startIcon={<Box component={Home} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={Home} size={16} />}
           sx={{ flex: 1 }}
         >
           Back to Menu

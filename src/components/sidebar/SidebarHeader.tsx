@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import { PanelLeftClose, PanelLeft } from 'lucide-react';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
@@ -42,11 +43,7 @@ export const SidebarHeader = ({
             aria-expanded={!isCollapsed}
             sx={{ width: 28, height: 28, flexShrink: 0, color: 'text.secondary' }}
           >
-            <Box
-              component={isCollapsed ? PanelLeft : PanelLeftClose}
-              aria-hidden="true"
-              sx={{ width: 16, height: 16 }}
-            />
+            <Icon icon={isCollapsed ? PanelLeft : PanelLeftClose} size={16} />
           </IconButton>
         </Tooltip>
       )}

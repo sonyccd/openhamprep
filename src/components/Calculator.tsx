@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState, useEffect, useCallback } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -197,7 +198,7 @@ export function Calculator() {
           onClick={() => setIsOpen(!isOpen)}
           aria-label={isOpen ? "Close calculator" : "Open calculator"}
           aria-expanded={isOpen}
-          startIcon={<Box component={CalculatorIcon} aria-hidden="true" sx={{ width: 16, height: 16, flexShrink: 0 }} />}
+          startIcon={<Icon icon={CalculatorIcon} size={16} sx={{ flexShrink: 0 }} />}
           sx={{
             minWidth: 0,
             width: { xs: 32, sm: 112 },

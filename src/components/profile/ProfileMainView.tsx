@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import List from "@mui/material/List";
@@ -33,7 +34,7 @@ export function ProfileMainView({ userInfo, onNavigate, onSignOut }: ProfileMain
             outlineColor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 20),
           }}
         >
-          <Box component={User} aria-hidden="true" sx={{ width: 28, height: 28 }} />
+          <Icon icon={User} size={28} />
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
@@ -82,7 +83,7 @@ export function ProfileMainView({ userInfo, onNavigate, onSignOut }: ProfileMain
             onClick={onSignOut}
             fullWidth
             sx={{ justifyContent: "flex-start", gap: 1.5, color: "text.secondary" }}
-            startIcon={<Box component={LogOut} sx={{ width: 20, height: 20 }} />}
+            startIcon={<Icon icon={LogOut} size={20} />}
           >
             Sign Out
           </Button>

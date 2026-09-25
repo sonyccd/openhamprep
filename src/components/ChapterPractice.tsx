@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState, useEffect, useMemo } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -168,11 +169,7 @@ export function ChapterPractice({
 
         {chaptersWithQuestions.length === 0 && emptyChapters.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 6 }}>
-            <Box
-              component={Book}
-              aria-hidden="true"
-              sx={{ width: 48, height: 48, mx: "auto", mb: 2, color: "text.secondary", opacity: 0.5, display: "block" }}
-            />
+            <Icon icon={Book} size={48} sx={{ mx: "auto", mb: 2, color: "text.secondary", opacity: 0.5, display: "block" }} />
             <Typography sx={{ color: "text.secondary" }}>No chapters have been defined yet.</Typography>
             <Typography sx={{ fontSize: "0.875rem", color: "text.secondary", mt: 1 }}>
               Ask an admin to add ARRL textbook chapters.
@@ -255,7 +252,7 @@ export function ChapterPractice({
             <Button
               variant="text"
               onClick={handleBackToQuestions}
-              startIcon={<Box component={ArrowLeft} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+              startIcon={<Icon icon={ArrowLeft} size={16} />}
               sx={{ color: "text.primary" }}
             >
               Question List
@@ -263,7 +260,7 @@ export function ChapterPractice({
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <KeyboardShortcutsHelp />
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "primary.main" }}>
-                <Box component={Book} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                <Icon icon={Book} size={16} />
                 <Box component="span" sx={{ fontFamily: "monospace", fontWeight: 700 }}>
                   Ch. {selectedChapter?.chapterNumber}
                 </Box>
@@ -288,7 +285,7 @@ export function ChapterPractice({
                 variant="text"
                 size="small"
                 onClick={session.reset}
-                startIcon={<Box component={RotateCcw} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+                startIcon={<Icon icon={RotateCcw} size={16} />}
               >
                 Reset
               </Button>

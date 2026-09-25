@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -88,7 +89,7 @@ export function ConflictResolutionDialog<T>({
             <Chip
               key={action}
               size="small"
-              icon={<Box component={icon} sx={{ width: 12, height: 12 }} />}
+              icon={<Icon icon={icon} size={12} />}
               label={`${countOf(action)} ${label}`}
               sx={{
                 color: `${tone}.main`,
@@ -118,7 +119,7 @@ export function ConflictResolutionDialog<T>({
           variant="outlined"
           size="small"
           onClick={() => applyToAll("keep")}
-          startIcon={<Box component={Database} sx={{ width: 12, height: 12 }} />}
+          startIcon={<Icon icon={Database} size={12} />}
         >
           Keep Existing
         </Button>
@@ -126,7 +127,7 @@ export function ConflictResolutionDialog<T>({
           variant="outlined"
           size="small"
           onClick={() => applyToAll("replace")}
-          startIcon={<Box component={Replace} sx={{ width: 12, height: 12 }} />}
+          startIcon={<Icon icon={Replace} size={12} />}
         >
           Replace All
         </Button>
@@ -134,7 +135,7 @@ export function ConflictResolutionDialog<T>({
           variant="outlined"
           size="small"
           onClick={() => applyToAll("merge")}
-          startIcon={<Box component={GitMerge} sx={{ width: 12, height: 12 }} />}
+          startIcon={<Icon icon={GitMerge} size={12} />}
         >
           Merge All
         </Button>
@@ -176,7 +177,7 @@ export function ConflictResolutionDialog<T>({
         <Button
           variant="contained"
           onClick={() => onResolve(resolvedConflicts)}
-          startIcon={<Box component={CheckCircle2} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={CheckCircle2} size={16} />}
         >
           Apply Resolutions
         </Button>

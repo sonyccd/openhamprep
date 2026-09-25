@@ -1,5 +1,5 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useId } from "react";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -51,7 +51,7 @@ export function RepairConfirmDialog({ open, missingUrls, missingStatuses, onCanc
         <Button
           variant="contained"
           onClick={onConfirm}
-          startIcon={<Box component={Wrench} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={Wrench} size={16} />}
         >
           Repair
         </Button>

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
@@ -96,18 +97,14 @@ export function LessonCard({ lesson, completion, onClick }: LessonCardProps) {
                   `linear-gradient(to bottom right, ${tokenAlpha(theme.vars.palette.accent, 10)}, ${tokenAlpha(theme.vars.palette.accent, 5)})`,
               }}
             >
-              <Box
-                component={Route}
-                aria-hidden="true"
-                sx={{ width: 48, height: 48, color: (theme) => tokenAlpha(theme.vars.palette.accent, 40) }}
-              />
+              <Icon icon={Route} size={48} sx={{ color: (theme) => tokenAlpha(theme.vars.palette.accent, 40) }} />
             </Box>
           )}
 
           {isComplete && (
             <Chip
               size="small"
-              icon={<Box component={CheckCircle2} sx={{ width: 12, height: 12 }} />}
+              icon={<Icon icon={CheckCircle2} size={12} />}
               label="Completed"
               sx={{
                 position: "absolute",

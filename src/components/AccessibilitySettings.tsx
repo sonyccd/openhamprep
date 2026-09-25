@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { Type, Bold, ZoomIn } from "lucide-react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
@@ -43,7 +44,7 @@ interface ToggleRowProps {
   onChange: (checked: boolean) => void;
 }
 
-function ToggleRow({ id, icon: Icon, label, description, checked, onChange }: ToggleRowProps) {
+function ToggleRow({ id, icon: Glyph, label, description, checked, onChange }: ToggleRowProps) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
@@ -60,7 +61,7 @@ function ToggleRow({ id, icon: Icon, label, description, checked, onChange }: To
             bgcolor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 10),
           }}
         >
-          <Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+          <Icon icon={Glyph} size={16} />
         </Box>
         <Box sx={{ minWidth: 0 }}>
           <Typography
@@ -100,7 +101,7 @@ export function AccessibilitySettings() {
     <Stack spacing={3}>
       <Stack spacing={1.5}>
         <Typography id="font-choice-label" variant="body2" sx={sectionHeading}>
-          <Box component={Type} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+          <Icon icon={Type} size={16} />
           Font
         </Typography>
         <ToggleButtonGroup

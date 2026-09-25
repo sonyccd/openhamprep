@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
@@ -71,7 +72,7 @@ function FeedbackButtons({ questionId }: { questionId: string }) {
                 }),
               }}
             >
-              <Box component={icon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+              <Icon icon={icon} size={16} />
             </IconButton>
           </Tooltip>
         );

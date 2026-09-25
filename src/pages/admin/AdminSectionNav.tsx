@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import ToggleButton from "@mui/material/ToggleButton";
@@ -51,8 +52,8 @@ export function AdminSectionNav({ value, onChange, unacknowledgedCount }: AdminS
         },
       }}
     >
-      {ADMIN_SECTIONS.map(({ value: section, label, icon: Icon }) => {
-        const icon = <Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16 }} />;
+      {ADMIN_SECTIONS.map(({ value: section, label, icon: Glyph }) => {
+        const icon = <Icon icon={Glyph} size={16} />;
         const badged = section === "alerts" && unacknowledgedCount > 0;
         return (
           <ToggleButton key={section} value={section} aria-label={label}>

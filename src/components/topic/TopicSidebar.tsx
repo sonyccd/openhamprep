@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
@@ -98,7 +99,7 @@ export function TopicSidebar({ resetKey, onOpenChange, children }: TopicSidebarP
             ...focusRing,
           }}
         >
-          <Box component={PanelLeftOpen} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+          <Icon icon={PanelLeftOpen} size={16} />
           <Box
             component="span"
             sx={{
@@ -138,7 +139,7 @@ export function TopicSidebar({ resetKey, onOpenChange, children }: TopicSidebarP
             }}
           >
             Hide
-            <Box component={PanelRightClose} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+            <Icon icon={PanelRightClose} size={16} />
           </ButtonBase>
           {children}
         </Box>

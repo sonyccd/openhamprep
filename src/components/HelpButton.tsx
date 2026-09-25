@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
@@ -69,7 +70,7 @@ export function HelpButton() {
         aria-describedby="help-dialog-description"
       >
         <DialogTitle id="help-dialog-title" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box component={HelpCircle} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+          <Icon icon={HelpCircle} size={20} />
           Help & Support
         </DialogTitle>
         <DialogContent>
@@ -91,7 +92,7 @@ export function HelpButton() {
                 id="help-tab-feedback"
                 aria-controls="help-panel-feedback"
                 label="Feedback"
-                icon={<Box component={Lightbulb} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+                icon={<Icon icon={Lightbulb} size={16} />}
                 iconPosition="start"
               />
               <Tab
@@ -99,7 +100,7 @@ export function HelpButton() {
                 id="help-tab-shortcuts"
                 aria-controls="help-panel-shortcuts"
                 label="Shortcuts"
-                icon={<Box component={Keyboard} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+                icon={<Icon icon={Keyboard} size={16} />}
                 iconPosition="start"
               />
             </Tabs>

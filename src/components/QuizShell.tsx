@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import type { ReactNode } from "react";
 import { SkipForward, ChevronLeft, ChevronRight } from "lucide-react";
 import Box from "@mui/material/Box";
@@ -119,7 +120,7 @@ export function QuizShellError({
  */
 export function QuizNavControls({
   session,
-  nextIcon = <Box component={ChevronRight} sx={{ width: 16, height: 16 }} />,
+  nextIcon = <Icon icon={ChevronRight} size={16} />,
   sx,
 }: {
   session: UseQuizSession;
@@ -147,7 +148,7 @@ export function QuizNavControls({
         <Button
           variant="outlined"
           onClick={session.previous}
-          startIcon={<Box component={ChevronLeft} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={ChevronLeft} size={16} />}
         >
           Previous
         </Button>
@@ -156,7 +157,7 @@ export function QuizNavControls({
         <Button
           variant="outlined"
           onClick={session.skip}
-          startIcon={<Box component={SkipForward} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={SkipForward} size={16} />}
         >
           Skip Question
         </Button>

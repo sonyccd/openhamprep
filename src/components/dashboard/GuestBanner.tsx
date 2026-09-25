@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -48,7 +49,7 @@ export function GuestBanner({ onDismiss }: { onDismiss: () => void }) {
         aria-label="Dismiss banner"
         sx={{ color: 'text.secondary', flexShrink: 0 }}
       >
-        <Box component={X} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+        <Icon icon={X} size={16} />
       </IconButton>
     </Box>
   );

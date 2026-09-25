@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useEffect, useId, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -95,7 +96,7 @@ export function ToolEditDialog({
               variant="text"
               color="error"
               onClick={() => setConfirmingDelete(true)}
-              startIcon={<Box component={Trash2} sx={{ width: 16, height: 16 }} />}
+              startIcon={<Icon icon={Trash2} size={16} />}
             >
               Delete Tool
             </Button>

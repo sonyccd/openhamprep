@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useMemo } from "react";
 import Box from "@mui/material/Box";
 import InputBase from "@mui/material/InputBase";
@@ -114,11 +115,7 @@ export function SearchPalette({
           borderColor: "divider",
         }}
       >
-        <Box
-          component={Search}
-          aria-hidden="true"
-          sx={{ width: 16, height: 16, color: "text.secondary", flexShrink: 0 }}
-        />
+        <Icon icon={Search} size={16} sx={{ color: "text.secondary", flexShrink: 0 }} />
         {/*
           getInputProps returns native <input> attributes plus a ref, so they go
           through inputProps/inputRef — InputBase's own props are a different

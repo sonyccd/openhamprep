@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
@@ -67,7 +68,7 @@ export function TermList({ terms, onEdit }: TermListProps) {
             onClick={() => onEdit(term)}
             sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }}
           >
-            <Box component={Pencil} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+            <Icon icon={Pencil} size={16} />
           </IconButton>
         </Box>
       ))}

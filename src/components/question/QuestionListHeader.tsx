@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -27,7 +28,7 @@ export function QuestionListHeader({
         <Button
           variant="text"
           onClick={onBack}
-          startIcon={<Box component={ArrowLeft} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={ArrowLeft} size={16} />}
           sx={{ mb: 3, ml: -1, color: "text.primary" }}
         >
           Back

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import { Zap } from "lucide-react";
 import { MotionBox } from "@/components/ohp/MotionBox";
@@ -110,7 +111,7 @@ export function LessonPath({
               justifyContent: "center",
             }}
           >
-            <Box component={Zap} aria-hidden="true" sx={{ width: 32, height: 32, color: "text.secondary" }} />
+            <Icon icon={Zap} size={32} sx={{ color: "text.secondary" }} />
           </Box>
           <Box sx={{ color: "text.secondary", fontWeight: 500 }}>
             No topics have been added to this lesson yet.

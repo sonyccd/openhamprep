@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -29,7 +30,7 @@ export function BulkLinkPanel({ value, onChange, onSubmit, isPending }: BulkLink
       }}
     >
       <Typography component="h4" sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "0.875rem", fontWeight: 500 }}>
-        <Box component={ListPlus} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+        <Icon icon={ListPlus} size={16} />
         Bulk Link Questions
       </Typography>
       <Typography sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
@@ -51,7 +52,7 @@ export function BulkLinkPanel({ value, onChange, onSubmit, isPending }: BulkLink
           size="small"
           onClick={onSubmit}
           disabled={isPending || !value.trim()}
-          startIcon={isPending ? <CircularProgress size={16} color="inherit" /> : <Box component={ListPlus} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+          startIcon={isPending ? <CircularProgress size={16} color="inherit" /> : <Icon icon={ListPlus} size={16} />}
         >
           Link Questions
         </Button>

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
@@ -74,15 +75,7 @@ export function ToolList({ tools, onEdit }: ToolListProps) {
                       )}, ${tokenAlpha(t.vars.palette.primary.main, 5)})`,
                   }}
                 >
-                  <Box
-                    component={Wrench}
-                    aria-hidden="true"
-                    sx={{
-                      width: 24,
-                      height: 24,
-                      color: (t) => tokenAlpha(t.vars.palette.primary.main, 40),
-                    }}
-                  />
+                  <Icon icon={Wrench} size={24} sx={{ color: (t) => tokenAlpha(t.vars.palette.primary.main, 40) }} />
                 </Box>
               )}
             </Box>
@@ -133,7 +126,7 @@ export function ToolList({ tools, onEdit }: ToolListProps) {
                 }}
               >
                 {tool.url}
-                <Box component={ExternalLink} aria-hidden="true" sx={{ width: 12, height: 12 }} />
+                <Icon icon={ExternalLink} size={12} />
               </Link>
             </Box>
 
@@ -146,7 +139,7 @@ export function ToolList({ tools, onEdit }: ToolListProps) {
               onClick={() => onEdit(tool)}
               sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }}
             >
-              <Box component={Pencil} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+              <Icon icon={Pencil} size={16} />
             </IconButton>
           </Box>
         );

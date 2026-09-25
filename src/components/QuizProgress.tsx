@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
 import { CheckCircle } from "lucide-react";
@@ -46,11 +47,7 @@ export function QuizProgress({ asked, total, variant = "bar", height = 6 }: Quiz
         {asked}/{total}
       </Box>
       {complete && (
-        <Box
-          component={CheckCircle}
-          aria-hidden="true"
-          sx={{ width: 16, height: 16, color: "success.main" }}
-        />
+        <Icon icon={CheckCircle} size={16} sx={{ color: "success.main" }} />
       )}
     </Box>
   );

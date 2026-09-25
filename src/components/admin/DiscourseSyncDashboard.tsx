@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -56,14 +57,14 @@ export function DiscourseSyncDashboard() {
   if (isError) {
     return (
       <Box sx={{ textAlign: "center", py: 6 }}>
-        <Box component={AlertTriangle} aria-hidden="true" sx={{ width: 48, height: 48, color: "error.main", mx: "auto", mb: 2 }} />
+        <Icon icon={AlertTriangle} size={48} sx={{ color: "error.main", mx: "auto", mb: 2 }} />
         <Typography sx={{ color: "text.secondary" }}>
           Failed to load sync status. Make sure you have admin access.
         </Typography>
         <Button
           variant="outlined"
           onClick={refreshOverview}
-          startIcon={<Box component={RefreshCw} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={RefreshCw} size={16} />}
           sx={{ mt: 2 }}
         >
           Retry

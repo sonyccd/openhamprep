@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
@@ -43,7 +44,7 @@ export function WeakQuestionList({
               component="h2"
               sx={{ fontSize: "1.125rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}
             >
-              <Box component={AlertTriangle} aria-hidden="true" sx={{ width: 20, height: 20, color: "error.main" }} />
+              <Icon icon={AlertTriangle} size={20} sx={{ color: "error.main" }} />
               Weak Questions
             </Typography>
             <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
@@ -61,11 +62,7 @@ export function WeakQuestionList({
               sx={{ m: 0, gap: 1 }}
               label={
                 <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Box
-                    component={Flame}
-                    aria-hidden="true"
-                    sx={{ width: 16, height: 16, color: streakModeEnabled ? "warning.main" : "text.secondary" }}
-                  />
+                  <Icon icon={Flame} size={16} sx={{ color: streakModeEnabled ? "warning.main" : "text.secondary" }} />
                   <Box component="span" sx={{ fontSize: "0.875rem" }}>Streak mode</Box>
                   <Box component="span" sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
                     ({streakModeEnabled ? `${streakToClear}x to clear` : "1x to clear"})

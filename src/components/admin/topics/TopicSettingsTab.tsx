@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useId } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -207,7 +208,7 @@ export function TopicSettingsTab({
             color="error"
             onClick={onDelete}
             disabled={isDeleting}
-            startIcon={<Box component={Trash2} sx={{ width: 16, height: 16 }} />}
+            startIcon={<Icon icon={Trash2} size={16} />}
             sx={{ flexShrink: 0 }}
           >
             Delete Topic
@@ -224,7 +225,7 @@ export function TopicSettingsTab({
             isSaving ? (
               <CircularProgress size={16} color="inherit" />
             ) : (
-              <Box component={Save} sx={{ width: 16, height: 16 }} />
+              <Icon icon={Save} size={16} />
             )
           }
         >

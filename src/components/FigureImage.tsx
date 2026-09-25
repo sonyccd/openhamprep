@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
@@ -43,7 +44,7 @@ export function FigureImage({ figureUrl, questionId }: FigureImageProps) {
           color: "text.secondary",
         }}
       >
-        <Box component={ImageOff} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+        <Icon icon={ImageOff} size={20} />
         <Typography component="span" sx={{ fontSize: "0.875rem" }}>
           Figure failed to load
         </Typography>
@@ -124,7 +125,7 @@ export function FigureImage({ figureUrl, questionId }: FigureImageProps) {
               transition: "opacity 200ms",
             }}
           >
-            <Box component={Maximize2} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+            <Icon icon={Maximize2} size={16} />
           </Box>
         </ButtonBase>
       </Box>

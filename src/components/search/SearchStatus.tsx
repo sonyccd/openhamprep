@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import { AlertCircle } from "lucide-react";
@@ -37,7 +38,7 @@ export function SearchStatus({
   if (error) {
     return (
       <Box role="alert" sx={{ ...centred, color: "error.main" }}>
-        <Box component={AlertCircle} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+        <Icon icon={AlertCircle} size={16} />
         Search failed. Please try again.
       </Box>
     );

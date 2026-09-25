@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import { Radio, Zap, Award } from 'lucide-react';
 import Box from '@mui/material/Box';
 import ButtonBase from '@mui/material/ButtonBase';
@@ -89,11 +90,7 @@ export const SidebarLicenseSelector = ({
                 bgcolor: (theme) => tokenAlpha(theme.vars.palette.primary.main, 10),
               }}
             >
-              <Box
-                component={CurrentLicenseIcon}
-                aria-hidden="true"
-                sx={{ width: 16, height: 16, color: 'primary.main' }}
-              />
+              <Icon icon={CurrentLicenseIcon} size={16} sx={{ color: 'primary.main' }} />
             </Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography id="sidebar-license-value" component="span" sx={{ fontWeight: 500 }}>
@@ -127,11 +124,7 @@ export const SidebarLicenseSelector = ({
               p: 1,
             }}
           >
-            <Box
-              component={CurrentLicenseIcon}
-              aria-hidden="true"
-              sx={{ width: 16, height: 16, color: 'primary.main' }}
-            />
+            <Icon icon={CurrentLicenseIcon} size={16} sx={{ color: 'primary.main' }} />
           </ButtonBase>
         </Tooltip>
       )}

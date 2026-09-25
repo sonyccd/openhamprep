@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
@@ -43,7 +44,7 @@ export function TopicList({ topics: filteredTopics, onSelect }: TopicListProps) 
               {topic.is_published ? (
                 <Chip
                   size="small"
-                  icon={<Box component={Eye} sx={{ width: 12, height: 12 }} />}
+                  icon={<Icon icon={Eye} size={12} />}
                   label="Published"
                   sx={{
                     fontSize: "0.75rem",
@@ -56,7 +57,7 @@ export function TopicList({ topics: filteredTopics, onSelect }: TopicListProps) 
                 <Chip
                   color="secondary"
                   size="small"
-                  icon={<Box component={EyeOff} sx={{ width: 12, height: 12 }} />}
+                  icon={<Icon icon={EyeOff} size={12} />}
                   label="Draft"
                   sx={{ fontSize: "0.75rem" }}
                 />
@@ -93,7 +94,7 @@ export function TopicList({ topics: filteredTopics, onSelect }: TopicListProps) 
             onClick={() => onSelect(topic)}
             sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }}
           >
-            <Box component={Pencil} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+            <Icon icon={Pencil} size={16} />
           </IconButton>
         </Box>
       ))}

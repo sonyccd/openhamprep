@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ohp/Icon';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import Box from '@mui/material/Box';
 import ButtonBase from '@mui/material/ButtonBase';
@@ -62,7 +63,7 @@ export const SidebarLearnGroup = ({
           }}
         >
           <Box sx={{ position: 'relative', flexShrink: 0 }}>
-            <Box component={LearnIcon} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+            <Icon icon={LearnIcon} size={20} />
           </Box>
         </ButtonBase>
       </Tooltip>
@@ -84,7 +85,7 @@ export const SidebarLearnGroup = ({
         }}
       >
         <Box sx={{ position: 'relative', flexShrink: 0 }}>
-          <Box component={LearnIcon} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+          <Icon icon={LearnIcon} size={20} />
         </Box>
         <Typography
           variant="body2"
@@ -100,11 +101,7 @@ export const SidebarLearnGroup = ({
         >
           {group.label}
         </Typography>
-        <Box
-          component={isExpanded ? ChevronDown : ChevronRight}
-          aria-hidden="true"
-          sx={{ width: 16, height: 16 }}
-        />
+        <Icon icon={isExpanded ? ChevronDown : ChevronRight} size={16} />
       </ButtonBase>
 
       {/* Learn items - shown when expanded */}
@@ -116,7 +113,7 @@ export const SidebarLearnGroup = ({
         >
           {group.items.map((item) => {
             const isActive = itemIsActive(item.id);
-            const Icon = item.icon;
+            const Glyph = item.icon;
             return (
               <ButtonBase
                 key={item.id}
@@ -133,7 +130,7 @@ export const SidebarLearnGroup = ({
                 }}
               >
                 <Box sx={{ position: 'relative', flexShrink: 0 }}>
-                  <Box component={Icon} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                  <Icon icon={Glyph} size={16} />
                 </Box>
                 <Typography
                   variant="body2"

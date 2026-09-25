@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -70,11 +71,7 @@ export function TopicResourceManager({ topicId, resources }: TopicResourceManage
     <Stack spacing={2}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box
-            component={LinkIcon}
-            aria-hidden="true"
-            sx={{ width: 20, height: 20, color: "primary.main" }}
-          />
+          <Icon icon={LinkIcon} size={20} sx={{ color: "primary.main" }} />
           <Typography variant="h6" component="h3" sx={{ fontSize: "1rem", fontWeight: 600 }}>
             Resources
           </Typography>
@@ -84,7 +81,7 @@ export function TopicResourceManager({ topicId, resources }: TopicResourceManage
           size="small"
           variant="contained"
           onClick={() => setIsAddOpen(true)}
-          startIcon={<Box component={Plus} sx={{ width: 16, height: 16 }} />}
+          startIcon={<Icon icon={Plus} size={16} />}
         >
           Add Resource
         </Button>
@@ -101,11 +98,7 @@ export function TopicResourceManager({ topicId, resources }: TopicResourceManage
             borderRadius: "8px",
           }}
         >
-          <Box
-            component={LinkIcon}
-            aria-hidden="true"
-            sx={{ width: 32, height: 32, mx: "auto", mb: 1, opacity: 0.5, display: "block" }}
-          />
+          <Icon icon={LinkIcon} size={32} sx={{ mx: "auto", mb: 1, opacity: 0.5, display: "block" }} />
           <Typography>No resources yet</Typography>
           <Typography sx={{ fontSize: "0.875rem" }}>
             Add videos, articles, and links for this topic

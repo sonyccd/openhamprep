@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -64,7 +65,7 @@ export function ChapterEditDialog({
         id="edit-chapter-title"
         sx={{ display: "flex", alignItems: "center", gap: 1 }}
       >
-        <Box component={Pencil} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+        <Icon icon={Pencil} size={20} />
         Edit Chapter {chapter?.chapterNumber}: {chapter?.title}
       </DialogTitle>
 
@@ -102,7 +103,7 @@ export function ChapterEditDialog({
                   variant="text"
                   color="error"
                   onClick={() => setConfirmingDelete(true)}
-                  startIcon={<Box component={Trash2} sx={{ width: 16, height: 16 }} />}
+                  startIcon={<Icon icon={Trash2} size={16} />}
                 >
                   Delete
                 </Button>

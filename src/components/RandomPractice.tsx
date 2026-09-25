@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState, useEffect, useRef, useMemo } from "react";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
@@ -94,7 +95,7 @@ export function RandomPractice({
         // Show special message for new all-time best
         if (newStreak > 1) {
           toast.success(`New all-time best: ${newStreak} streak!`, {
-            icon: <Box component={Award} aria-hidden="true" sx={{ width: 20, height: 20, color: "primary.main" }} />,
+            icon: <Icon icon={Award} size={20} sx={{ color: "primary.main" }} />,
             duration: 3000
           });
         }
@@ -104,7 +105,7 @@ export function RandomPractice({
     if (STREAK_MILESTONES.includes(newStreak)) {
       setShowStreakCelebration(true);
       toast.success(getMilestoneMessage(newStreak), {
-        icon: <Box component={Trophy} aria-hidden="true" sx={{ width: 20, height: 20, color: "primary.main" }} />,
+        icon: <Icon icon={Trophy} size={20} sx={{ color: "primary.main" }} />,
         duration: 3000
       });
       setTimeout(() => setShowStreakCelebration(false), 1500);
@@ -213,7 +214,7 @@ export function RandomPractice({
                 onClick={handleReset}
                 sx={{ color: "text.secondary", "&:hover": { color: "text.primary" } }}
               >
-                <Box component={RotateCcw} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+                <Icon icon={RotateCcw} size={16} />
               </IconButton>
             </Box>
           </Box>
@@ -222,7 +223,7 @@ export function RandomPractice({
       actions={
         <QuizNavControls
           session={session}
-          nextIcon={<Box component={Zap} aria-hidden="true" sx={{ width: 16, height: 16 }} />}
+          nextIcon={<Icon icon={Zap} size={16} />}
           sx={{ mt: 5 }}
         />
       }

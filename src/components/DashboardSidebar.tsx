@@ -17,6 +17,7 @@ import {
   Wrench,
   Users,
 } from 'lucide-react';
+import { Icon } from '@/components/ohp/Icon';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -244,7 +245,7 @@ export const DashboardSidebar = ({
               '&:hover': { bgcolor: 'background.paper' },
             }}
           >
-            <Box component={Menu} aria-hidden="true" sx={{ width: 20, height: 20 }} />
+            <Icon icon={Menu} size={20} />
           </IconButton>
         </Tooltip>
       </Box>

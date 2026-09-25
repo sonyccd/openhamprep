@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -102,7 +103,7 @@ export function ProfileAccountView({
 
       <Stack spacing={1}>
         <Typography variant="body2" sx={sectionHeading}>
-          <Box component={Mail} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+          <Icon icon={Mail} size={16} />
           Email Address
         </Typography>
         <Box
@@ -136,7 +137,7 @@ export function ProfileAccountView({
               isUpdatingEmail ? (
                 <CircularProgress size={16} color="inherit" />
               ) : (
-                <Box component={Mail} sx={{ width: 16, height: 16 }} />
+                <Icon icon={Mail} size={16} />
               )
             }
           >
@@ -147,7 +148,7 @@ export function ProfileAccountView({
 
       <Stack spacing={1}>
         <Typography variant="body2" sx={sectionHeading}>
-          <Box component={KeyRound} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+          <Icon icon={KeyRound} size={16} />
           Password
         </Typography>
         <Button
@@ -159,7 +160,7 @@ export function ProfileAccountView({
             isResettingPassword ? (
               <CircularProgress size={16} color="inherit" />
             ) : (
-              <Box component={KeyRound} sx={{ width: 16, height: 16 }} />
+              <Icon icon={KeyRound} size={16} />
             )
           }
         >

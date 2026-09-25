@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
-import { motion } from "framer-motion";
+import { MotionBox } from "@/components/ohp/MotionBox";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface AuthShellProps {
@@ -35,8 +35,7 @@ export function AuthShell({ children, padded = false }: AuthShellProps) {
       <Box sx={{ position: "absolute", top: 16, right: 16 }}>
         <ThemeToggle />
       </Box>
-      <Box
-        component={motion.div}
+      <MotionBox
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         sx={{ width: "100%", maxWidth: 448 }}
@@ -47,7 +46,7 @@ export function AuthShell({ children, padded = false }: AuthShellProps) {
         >
           {children}
         </Paper>
-      </Box>
+      </MotionBox>
     </Box>
   );
 }

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import { Check, Lock, Zap } from "lucide-react";
 import { MotionBox } from "@/components/ohp/MotionBox";
@@ -85,12 +86,12 @@ export function LessonPathNode({ state, index }: LessonPathNodeProps) {
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
               sx={{ display: "flex" }}
             >
-              <Box component={Check} aria-hidden="true" sx={{ width: 20, height: 20, strokeWidth: 3 }} />
+              <Icon icon={Check} size={20} sx={{ strokeWidth: 3 }} />
             </MotionBox>
           ) : isCurrent ? (
-            <Box component={Zap} aria-hidden="true" sx={{ width: 20, height: 20, fill: "currentColor" }} />
+            <Icon icon={Zap} size={20} sx={{ fill: "currentColor" }} />
           ) : isLocked ? (
-            <Box component={Lock} aria-hidden="true" sx={{ width: 16, height: 16 }} />
+            <Icon icon={Lock} size={16} />
           ) : (
             <Box component="span" sx={{ fontFamily: "monospace", fontWeight: 700, fontSize: "0.875rem" }}>
               {index + 1}

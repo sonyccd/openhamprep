@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -41,11 +42,7 @@ export function CheckEmailScreen({
           mb: 2,
         }}
       >
-        <Box
-          component={Mail}
-          aria-hidden="true"
-          sx={{ width: 32, height: 32, color: "primary.main" }}
-        />
+        <Icon icon={Mail} size={32} sx={{ color: "primary.main" }} />
       </Box>
       <Typography variant="h5" component="h2" sx={{ fontWeight: 700, mb: 1 }}>
         Check Your Email

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, BookText } from "lucide-react";
 import Box from "@mui/material/Box";
@@ -113,7 +114,7 @@ export function Glossary() {
           component="h1"
           sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}
         >
-          <Box component={BookText} aria-hidden="true" sx={{ width: 24, height: 24, color: "primary.main" }} />
+          <Icon icon={BookText} size={24} sx={{ color: "primary.main" }} />
           Glossary
         </Typography>
         <Typography sx={{ color: "text.secondary", mt: 0.5 }}>
@@ -138,7 +139,7 @@ export function Glossary() {
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <Box component={Search} aria-hidden="true" sx={{ width: 16, height: 16, color: "text.secondary" }} />
+                  <Icon icon={Search} size={16} sx={{ color: "text.secondary" }} />
                 </InputAdornment>
               ),
             },

@@ -1,5 +1,5 @@
+import { Icon } from "@/components/ohp/Icon";
 import { useState } from "react";
-import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";
@@ -51,11 +51,7 @@ export function PasswordField({
         input: {
           startAdornment: (
             <InputAdornment position="start">
-              <Box
-                component={Lock}
-                aria-hidden="true"
-                sx={{ width: 16, height: 16, color: "text.secondary" }}
-              />
+              <Icon icon={Lock} size={16} sx={{ color: "text.secondary" }} />
             </InputAdornment>
           ),
           endAdornment: (
@@ -67,7 +63,7 @@ export function PasswordField({
                 edge="end"
                 size="small"
               >
-                <Box component={visible ? EyeOff : Eye} sx={{ width: 16, height: 16 }} />
+                <Icon icon={visible ? EyeOff : Eye} size={16} />
               </IconButton>
             </InputAdornment>
           ),

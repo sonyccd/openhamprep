@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ohp/Icon";
 import type { ChangeEvent, CSSProperties, RefObject } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -55,11 +56,7 @@ export function ResourceFileField({
             bgcolor: (t) => tokenAlpha(t.vars.palette.secondary.main, 30),
           }}
         >
-          <Box
-            component={FileIcon}
-            aria-hidden="true"
-            sx={{ width: 20, height: 20, color: "text.secondary", flexShrink: 0 }}
-          />
+          <Icon icon={FileIcon} size={20} sx={{ color: "text.secondary", flexShrink: 0 }} />
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography noWrap sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
               {file.name}
@@ -73,7 +70,7 @@ export function ResourceFileField({
             onClick={onClear}
             sx={{ width: 32, height: 32, flexShrink: 0 }}
           >
-            <Box component={X} sx={{ width: 16, height: 16 }} />
+            <Icon icon={X} size={16} />
           </IconButton>
         </Box>
       ) : (
@@ -88,11 +85,7 @@ export function ResourceFileField({
           <Box
             sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}
           >
-            <Box
-              component={Upload}
-              aria-hidden="true"
-              sx={{ width: 24, height: 24, color: "text.secondary" }}
-            />
+            <Icon icon={Upload} size={24} sx={{ color: "text.secondary" }} />
             <Box component="span" sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
               Click to upload a file
             </Box>
