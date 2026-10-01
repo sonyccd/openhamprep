@@ -46,11 +46,11 @@ See [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) for details.
 
 ## Tech Stack
 
-**Frontend:** React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, TanStack Query, Framer Motion
+**Frontend:** React 18, TypeScript, Vite, MUI (Material UI) with Emotion, MUI X Charts & Data Grid (Community), TanStack Query, React Router, Framer Motion, lucide icons, next-themes
 
-**Backend:** Supabase (PostgreSQL, Auth, Edge Functions, Realtime)
+**Backend:** Supabase (PostgreSQL, Auth, Edge Functions)
 
-**Tooling:** Vitest, ESLint, Amplitude & Pendo (product analytics), Sentry (error tracking), Vercel Analytics & Speed Insights
+**Tooling:** Vitest + Testing Library (happy-dom), Playwright (e2e), ESLint, Amplitude & Pendo (product analytics), Sentry (error tracking), Vercel Analytics & Speed Insights
 
 ## Architecture
 
@@ -64,25 +64,27 @@ See [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) for details.
 ### Context Providers
 
 The app wraps components in this provider order, outermost → innermost (see `App.tsx`):
-1. ThemeProvider (next-themes)
-2. AccessibilityProvider (a11y prefs)
-3. QueryClientProvider (TanStack Query)
-4. AuthProvider (Supabase auth — gates user-scoped queries)
-5. PendoProvider + AmplitudeProvider (product analytics)
-6. AppNavigationProvider (global license filter)
-7. TooltipProvider (Radix)
+1. ThemeProvider (next-themes) — sole writer of the `light`/`dark` class on `<html>`
+2. MuiThemeProvider (MUI) + CssBaseline — mounted with `colorSchemeNode={null}` so it follows next-themes instead of competing with it
+3. AccessibilityProvider (a11y prefs)
+4. QueryClientProvider (TanStack Query)
+5. AuthProvider (Supabase auth — gates user-scoped queries)
+6. PendoProvider → AmplitudeProvider (product analytics)
+7. AppNavigationProvider (global license filter)
 
 ### Project Structure
 
 ```
 src/
 ├── components/      # React components
-│   ├── ui/          # Base shadcn components
+│   ├── ohp/         # Shared presentational primitives (PageContainer, Icon, ScoreRing, …)
 │   ├── admin/       # Admin-only components
+│   ├── <feature>/   # Sub-components grouped by feature (dashboard/, question/, …)
 │   └── *.tsx        # Feature components
 ├── hooks/           # Custom React hooks
 ├── pages/           # Route page components
 ├── services/        # Service layer + centralized query keys
+├── theme/           # MUI theme (palette, typography, component overrides)
 ├── lib/             # Utilities
 ├── integrations/    # Supabase client (auto-generated)
 ├── assets/          # Static assets
@@ -90,21 +92,31 @@ src/
 └── types/           # TypeScript types
 ```
 
+Outside `src/`: `supabase/` (migrations, seed data, Edge Functions), `e2e/` (Playwright tests), `website/` (static marketing site), `docs/` (guides and design specs).
+
 ## Design System
 
-**Important:** Never use direct colors. Always use semantic tokens:
+The UI is built entirely with [MUI](https://mui.com/material-ui/), styled through the `sx` prop. Use the library's components rather than hand-rolling your own, and never use direct colors — always use the theme's palette tokens so light and dark mode both work:
 
 ```tsx
-// Correct - works in light/dark mode
-<div className="bg-background text-foreground">
+// Correct - palette tokens follow light/dark
+<Box sx={{ bgcolor: "background.default", color: "text.primary" }}>
 
-// Wrong - breaks theme switching
-<div className="bg-white text-black">
+// Wrong - a literal color breaks theme switching
+<Box sx={{ bgcolor: "#fff", color: "#000" }}>
 ```
 
-Available tokens: `background`, `foreground`, `card`, `primary`, `secondary`, `muted`, `accent`, `destructive`, `success`, `border`
+| what you want | `sx` path |
+|---|---|
+| page background | `background.default` |
+| card / surface | `background.paper` |
+| body text | `text.primary` / `text.secondary` |
+| hairlines, borders | `divider` |
+| subtle surface / green accent | `muted` / `accent` (flat keys, no `.main`) |
+| brand | `primary.main`, `secondary.main` |
+| states | `error.main`, `warning.main`, `info.main`, `success.main` |
 
-See `src/index.css` for all token definitions.
+Colors live in `src/theme/muiTheme.ts`, which is the source of truth. Icons come from lucide and are rendered through `ohp/Icon`, which hides decorative icons from screen readers.
 
 ## Commands
 
@@ -113,7 +125,10 @@ npm run dev              # Start dev server
 npm run dev:full         # Start Supabase + dev server
 npm run supabase:stop    # Stop Supabase
 npm run supabase:reset   # Reset database
-npm test                 # Run tests
+npm run lint             # Run ESLint
+npm test                 # Run unit tests (watch mode)
+npm run test:run         # Run unit tests once (CI mode)
+npm run e2e              # Run Playwright end-to-end tests
 npm run build            # Production build
 ```
 
@@ -142,9 +157,11 @@ npm run dev
 - [Local Development Guide](LOCAL_DEVELOPMENT.md) - Setup with local Supabase
 - [Testing Guide](docs/TESTING.md) - Vitest testing patterns
 - [Contributing Guidelines](CONTRIBUTING.md) - Code style and PR process
-- [Deployment Guide](docs/DEPLOYMENT_STEPS.md) - GitHub Pages + Vercel setup
+- [Deployment Guide](docs/DEPLOYMENT_STEPS.md) - GitHub Pages (marketing site) + Vercel (app) setup
+- [MUI Migration Strategy](docs/MUI_MIGRATION_STRATEGY.md) - How and why the UI moved from Tailwind/shadcn to MUI
+- [Readiness Scoring Model](docs/Readiness_Scoring_Model.md) - How the readiness percentage is computed
+- [OAuth Setup](docs/OAUTH_SETUP.md) - Open Ham Prep as an OAuth provider (Discourse forum SSO)
 - [Claude Code Instructions](CLAUDE.md) - AI assistant guidelines
-- [OAuth Setup](docs/OAUTH_SETUP.md) - Social login configuration
 
 ## Contributing
 
@@ -157,7 +174,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-© Brad Bazemore
+Licensed under the [GNU General Public License v3.0](LICENSE). © Brad Bazemore
 
 ## Support
 
