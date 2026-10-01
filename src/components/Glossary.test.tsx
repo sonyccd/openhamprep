@@ -68,6 +68,30 @@ describe('Glossary', () => {
     });
   });
 
+  describe('Layout', () => {
+    /**
+     * sx lands on PageContainer's outer Box, but the Container between it and
+     * the children emits no display and no height of its own — so the term
+     * list's `flex: 1` had nothing to size against and the page stacked from
+     * the top instead of filling (#298).
+     */
+    it('gives the term list a parent it can fill', async () => {
+      const { container } = render(<Glossary />, { wrapper: createWrapper() });
+      // The loading branch is a different PageContainer; wait for the list.
+      await screen.findByText('Antenna');
+
+      // The Container PageContainer renders between its outer Box and the
+      // children — the element this bug is about.
+      const middle = container.querySelector('.MuiContainer-root') as HTMLElement;
+      const outer = middle.parentElement!;
+
+      expect(getComputedStyle(outer).display).toBe('flex');
+      expect(getComputedStyle(middle).display).toBe('flex');
+      expect(getComputedStyle(middle).flexGrow).toBe('1');
+      expect(parseInt(getComputedStyle(middle).minHeight, 10)).toBe(0);
+    });
+  });
+
   describe('Header', () => {
     it('displays glossary title', async () => {
       render(<Glossary />, { wrapper: createWrapper() });

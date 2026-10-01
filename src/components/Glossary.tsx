@@ -106,7 +106,14 @@ export function Glossary() {
   }
 
   return (
-    <PageContainer width="wide" sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <PageContainer
+      width="wide"
+      sx={{ display: "flex", flexDirection: "column", height: "100%" }}
+      // sx lands on the outer Box; the Container between it and these children
+      // is a plain block, so the scrolling list's flex: 1 has nothing to size
+      // against without this (#298).
+      contentSx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+    >
       {/* Header */}
       <MotionBox initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} sx={{ mb: 2 }}>
         <Typography
